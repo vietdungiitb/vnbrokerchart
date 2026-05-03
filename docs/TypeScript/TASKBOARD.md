@@ -23,7 +23,7 @@
 | TB-04 | Dựng indicator registry | P3 | Indicator owner | TB-02 | unit test + registry evidence | Ready |
 | TB-05 | Dựng drawing tools | P4 | Interaction owner | TB-03 | serialization + undo/redo evidence | Ready |
 | TB-06 | Dựng data adapter & realtime | P5 | Backend integration owner | TB-02 | adapter contract + mocked WS | Ready |
-| TB-07 | Chuyển examples sang stories | P6 | Demo/regression owner | TB-03, TB-04 | visual diff + browser smoke | Ready |
+| TB-07 | Chuyển examples sang stories | P6 | Demo/regression owner | TB-03, TB-04 | visual diff + browser smoke | Completed |
 | TB-08 | Bổ sung scale/perf soak | P5/P6 | QA owner | TB-06, TB-07 | k6/Locust + memory checks | Ready |
 | TB-09 | Đóng closeout và bàn giao | All | Release owner | TB-01..TB-08 | closeout pass | Ready |
 
@@ -37,7 +37,7 @@
 
 ## 4. Done lane
 
-- Chưa có task nào ở bộ handoff này được đánh dấu Done.
+- TB-07 — Chuyển examples sang stories (P6) → Completed.
 
 ---
 
@@ -291,24 +291,31 @@ vitest run src/lib/adapters/
 
 ### TB-07 — Chuyển examples sang stories (P6)
 
-**Mục tiêu:** Chuyển ít nhất 8 examples tiêu biểu thành stories/fixtures; visual diff và browser smoke pass; feature coverage map hoàn chỉnh.
+**Mục tiêu:** Chuyển ít nhất 8 examples tiêu biểu thành stories/fixtures; visual diff và browser smoke pass; feature coverage map hoàn chỉnh; Storybook regression dùng builder Vite.
 
 **Sources tham khảo (read-only):**
 ```
-react-stockcharts-examples/examples/CandleStickStockScaleChartWithVolumeBarV3/
-react-stockcharts-examples/examples/CandleStickChartWithMACDIndicator/
-react-stockcharts-examples/examples/CandleStickChartWithBrush/
-react-stockcharts-examples/examples/CandleStickChartWithAnnotation/
-react-stockcharts-examples/examples/CandleStickChartPanToLoadMore/
+react-stockcharts-examples/README.md
 ```
 
 **Files phải tạo mới:**
 ```
+.storybook/main.ts
+.storybook/preview.ts
 stories/                               ← thư mục mới, không nằm trong src/
-stories/MultiPaneWithVolume.stories.tsx
-stories/MACDIndicator.stories.tsx
-stories/DrawingTools.stories.tsx
-stories/DataAdapter.stories.tsx
+stories/support/chartTheme.ts
+stories/support/storyData.ts
+stories/support/StoryFrame.tsx
+stories/support/ChartSurface.tsx
+stories/support/exampleStories.tsx
+stories/CandleStickStockScaleChartWithVolumeBarV3.stories.tsx
+stories/CandleStickChartWithMACDIndicator.stories.tsx
+stories/CandleStickChartWithBrush.stories.tsx
+stories/CandleStickChartWithAnnotation.stories.tsx
+stories/CandleStickChartWithHoverTooltip.stories.tsx
+stories/CandleStickChartPanToLoadMore.stories.tsx
+stories/CandleStickChartWithRSIIndicator.stories.tsx
+stories/VolumeProfileChart.stories.tsx
 stories/CoverageMap.md                 ← liệt kê feature cũ → component mới
 ```
 
@@ -321,7 +328,7 @@ stories/CoverageMap.md                 ← liệt kê feature cũ → component 
 ```bash
 npm run type-check
 npm run build:storybook              # storybook build phải PASS
-# Browser smoke: mở story MultiPane, kiểm tra addPane/removePane hoạt động
+# Browser smoke: mở story CandleStickChartPanToLoadMore, kiểm tra sidebar và preview render hoạt động
 # Visual diff: screenshot so sánh với fixture (nếu đã set up)
 ```
 

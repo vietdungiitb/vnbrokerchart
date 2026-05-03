@@ -1,178 +1,66 @@
-# Phase 1 — Library Foundation
+# Phase 1 — Library Foundation (As-built Sync)
 
-> **Thuộc:** [ROADMAP.md](./ROADMAP.md)  
-> **Ước tính:** 2–3 tuần  
-> **Mục tiêu:** Đóng gói thành thư viện npm, setup build pipeline, public API ổn định
-
----
-
-## 1.1 Package Setup
-
-### `package.json` exports (dual CJS + ESM)
-```json
-{
-  "name": "@myorg/stock-charts",
-  "version": "0.1.0",
-  "type": "module",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "peerDependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "d3": "^7.0.0"
-  },
-  "devDependencies": {
-    "tsup": "^8.0.0",
-    "typescript": "^5.4.0",
-    "vitest": "^1.0.0",
-    "@storybook/react": "^8.0.0"
-  }
-}
-```
-
-### `tsup.config.ts` — build tool
-```typescript
-import { defineConfig } from 'tsup';
-
-export default defineConfig({
-    entry: ['src/index.ts'],
-    format: ['esm', 'cjs'],
-    dts: true,                    // generate .d.ts
-    splitting: true,              // code splitting cho tree-shaking
-    sourcemap: true,
-    clean: true,
-    external: ['react', 'react-dom', 'd3'],
-    treeshake: true,
-});
-```
+> Thuộc: [ROADMAP.md](./ROADMAP.md)  
+> Trạng thái hiện tại: Completed  
+> Chốt theo evidence: [SLICE_AUDIT.md](./SLICE_AUDIT.md), [AUDIT_LEDGER.md](./AUDIT_LEDGER.md)
 
 ---
 
-## 1.2 TypeScript Strict Mode
+## 1. Snapshot hiện trạng
 
-### `tsconfig.json`
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "noImplicitReturns": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "dist"
-  }
-}
-```
-
-**Mục tiêu:** Toàn bộ `src/` không dùng `any`. Dùng `unknown` + type guard ở boundaries.
+| Hạng mục | Thiết kế ban đầu | As-built hiện tại | Trạng thái |
+|---|---|---|---|
+| Build library | tsup ESM/CJS/d.ts | Đã chạy bằng `tsup` qua `npm run build` | Done |
+| Public entry | `src/index.ts` | Đã có root barrel `src/index.ts` | Done |
+| Public types | OHLCV, Pane, Indicator, Adapter | Đã có đủ trong `src/lib/types/` | Done |
+| Strict TypeScript | strict mode + type-check gate | Đã có `npm run type-check` và gate pass | Done |
+| Storybook | Storybook 8 (đề xuất cũ) | Storybook 10 + Vite builder | Updated |
 
 ---
 
-## 1.3 Public API Design
+## 2. Chênh lệch cần ghi nhận
 
-### `src/index.ts` — những gì người dùng import
-```typescript
-// Components
-export { ChartCanvas } from './lib/components/ChartCanvas';
-export { CandlestickSeries } from './lib/components/CandlestickSeries';
-export { LineSeries } from './lib/components/LineSeries';
-export { VolumeSeries } from './lib/components/VolumeSeries';
-export { XAxis, YAxis } from './lib/components/Axes';
-
-// Panels
-export { MultiPanelLayout } from './lib/layout/MultiPanelLayout';
-
-// Adapters
-export type { StockDataAdapter } from './lib/adapters/StockDataAdapter';
-export { createRestAdapter } from './lib/adapters/RestAdapter';
-
-// Types
-export type { OHLCVBar, OrderbookSnapshot, Trade } from './lib/types';
-
-// Hooks
-export { useIndicator } from './lib/hooks/useIndicator';
-export { useChartData } from './lib/hooks/useChartData';
-
-// Indicators (pure functions — tree-shakeable)
-export * from './lib/indicators';
-```
-
-**Quy tắc:** Không re-export barrel vòng. Mỗi module import trực tiếp từ nguồn.
+1. Tài liệu cũ mô tả Storybook 8, nhưng thực tế đang dùng Storybook 10 và Vite builder.
+2. Build contract của thư viện hiện giữ `tsup` làm chuẩn, webpack chỉ còn cho luồng demo cũ.
+3. Public surface đang ưu tiên tương thích với legacy exports, không phải greenfield API hoàn toàn mới.
 
 ---
 
-## 1.4 Testing Setup
+## 3. Cần bổ sung vào Phase 1
 
-### Vitest — test indicators (pure functions)
-```typescript
-// src/lib/indicators/__tests__/ema.test.ts
-import { describe, it, expect } from 'vitest';
-import { ema } from '../moving-averages/ema';
-
-describe('ema()', () => {
-    it('tính đúng EMA 3 kỳ', () => {
-        const closes = [10, 11, 12, 13, 14];
-        const result = ema(closes, 3);
-        expect(result[2]).toBeCloseTo(11.0);
-        expect(result[4]).toBeCloseTo(12.75);
-    });
-
-    it('trả về NaN cho các giá trị đầu chưa đủ kỳ', () => {
-        const result = ema([10, 11, 12], 5);
-        expect(result.slice(0, 4).every(isNaN)).toBe(true);
-    });
-});
-```
+1. Thêm mục "Toolchain baseline" chốt version và vai trò:
+   - `tsup` cho package build.
+   - Storybook regression dùng Vite builder.
+2. Thêm mục "Compatibility policy" cho `src/index.ts`:
+   - Public export nào stable.
+   - Export nào transitional/legacy.
+3. Thêm mục "Release gate":
+   - `npm run type-check` pass.
+   - `npm run build` pass.
+   - `npm run build:storybook` pass.
 
 ---
 
-## 1.5 Storybook 8
+## 4. Lộ trình tiếp theo cho nền tảng
 
-Thay thế `docs/` demo hiện tại bằng Storybook interactive stories:
+### M1 — Hardening (1 sprint)
+- Rà lại type của public APIs không để `any` lọt qua contract mới.
+- Chuẩn hóa changelog cho các export có nguy cơ breaking change.
 
-```
-src/
-└── stories/
-    ├── CandlestickChart.stories.tsx
-    ├── VolumeProfile.stories.tsx
-    ├── Orderbook.stories.tsx
-    └── WhaleAlerts.stories.tsx
-```
+### M2 — Packaging quality (1 sprint)
+- Thêm kiểm tra kích thước bundle theo budget.
+- Bổ sung smoke publish bằng `npm pack` trong pipeline CI.
 
-Mỗi story dùng **mock data** để không cần backend:
-```typescript
-// stories/CandlestickChart.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { CandlestickChart } from '../lib/components';
-import { generateOHLCV } from '../lib/utils/mockData';
-
-const meta: Meta<typeof CandlestickChart> = { component: CandlestickChart };
-export default meta;
-
-export const Default: StoryObj = {
-    args: { data: generateOHLCV(200), width: 800, height: 500 }
-};
-```
+### M3 — Developer ergonomics (1 sprint)
+- Bổ sung ví dụ tích hợp adapter + stories theo pattern hiện tại.
+- Bổ sung tài liệu migration ngắn cho user từ legacy API.
 
 ---
 
-## 1.6 Checklist hoàn thành Phase 1
+## 5. Definition of Done (duy trì)
 
-- [ ] `tsup` build thành công, output `dist/index.js` + `dist/index.d.ts`
-- [ ] `peerDependencies` đúng (react, d3 không bundle sẵn)
-- [ ] `strict: true` — 0 lỗi TypeScript
-- [ ] Public API export ổn định (không phá vỡ giữa minor versions)
-- [ ] Vitest chạy được: `npm test`
-- [ ] Storybook khởi động: `npm run storybook`
-- [ ] README hướng dẫn install + ví dụ cơ bản
-- [ ] `npm pack` → kiểm tra bundle size < 150KB (gzip)
+- [x] `npm run type-check` pass.
+- [x] `npm run build` pass (tsup).
+- [x] Root public entry và type contracts tồn tại, nhất quán với ledger.
+- [x] Storybook regression build chạy được với Vite.
+- [ ] Budget bundle và publish smoke được tự động hóa trong CI.

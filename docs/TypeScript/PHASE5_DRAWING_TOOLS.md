@@ -1,190 +1,62 @@
-# Phase 5 — Drawing Tools
+# Phase 5 — Drawing Tools (As-built Sync)
 
-> **Thuộc:** [ROADMAP.md](./ROADMAP.md)  
-> **Ước tính:** 3–4 tuần  
-> **Mục tiêu:** Drawing tools với state machine rõ ràng, state serializable thành JSON
-
----
-
-## 5.1 Danh sách Drawing Tools
-
-| Tool | Số điểm | Ưu tiên |
-|------|---------|---------|
-| TrendLine | 2 | P0 |
-| HorizontalLine | 1 (y only) | P0 |
-| VerticalLine | 1 (x only) | P1 |
-| Ray | 2 (extend one direction) | P1 |
-| ExtendedLine | 2 (extend both) | P1 |
-| FibonacciRetracement | 2 | P0 |
-| FibonacciExtension | 3 | P1 |
-| ParallelChannel | 3 | P1 |
-| PitchforkAndrews | 3 | P2 |
-| Rectangle | 2 (corners) | P1 |
-| Triangle | 3 | P2 |
-| ArrowMarker | 1 | P1 |
-| TextAnnotation | 1 | P1 |
-| MeasureRule | 2 (hiện %move + bars) | P1 |
+> Thuộc: [ROADMAP.md](./ROADMAP.md)  
+> Trạng thái hiện tại: Partial-Strong  
+> Slice đã đóng: P4
 
 ---
 
-## 5.2 State Machine
+## 1. Snapshot hiện trạng
 
-```typescript
-type DrawingState =
-    | { status: 'idle' }
-    | { status: 'drawing'; tool: DrawingToolType; points: DrawingPoint[] }
-    | { status: 'selected'; id: string }
-    | { status: 'moving'; id: string; offsetX: number; offsetY: number }
-    | { status: 'resizing'; id: string; handleIndex: number };
-```
-
-**Transitions:**
-```
-idle ──[select tool]──→ drawing
-drawing ──[click]──→ drawing (add point)
-drawing ──[enough points]──→ idle (save drawing)
-drawing ──[Escape]──→ idle
-idle ──[click on drawing]──→ selected
-selected ──[drag body]──→ moving
-selected ──[drag handle]──→ resizing
-selected ──[Delete key]──→ idle (remove drawing)
-moving/resizing ──[mouseup]──→ selected
-```
+| Hạng mục | Thiết kế ban đầu | As-built hiện tại | Trạng thái |
+|---|---|---|---|
+| State machine | Idle/Drawing/Selected/Moving/Resizing | Đã có reducer state machine | Done |
+| Serialization | JSON-safe DrawingObject | Đã có serialize/deserialize helpers | Done |
+| History stack | Undo/Redo | Đã có history reducer | Done |
+| Tool registry | Tool definition + factory | Đã có registry + built-ins lõi | Done |
+| Tool catalog mở rộng | Ray/Rectangle/Triangle/... | Mới có nhóm lõi trend/hline/vline/fibonacci/channel/text | Partial |
 
 ---
 
-## 5.3 TypeScript Data Model
+## 2. Chênh lệch cần đóng
 
-```typescript
-export interface DrawingPoint {
-    x: Date;    // timestamp
-    y: number;  // price
-}
-
-export interface DrawingStyle {
-    stroke: string;
-    strokeWidth: number;
-    strokeDasharray?: string;
-    fill?: string;
-    opacity?: number;
-    fontSize?: number;
-    fontFamily?: string;
-}
-
-export interface DrawingObject {
-    id: string;
-    type: DrawingToolType;
-    points: DrawingPoint[];
-    style: DrawingStyle;
-    text?: string;          // cho TextAnnotation
-    extendLeft?: boolean;   // cho lines
-    extendRight?: boolean;
-    locked?: boolean;       // không cho di chuyển
-    visible?: boolean;
-    createdAt: number;
-}
-
-// Toàn bộ state = DrawingObject[] → JSON.stringify() → lưu DB
-```
+1. Catalog tool hiện chưa đạt đầy đủ như thiết kế ban đầu.
+2. Chưa có lớp persistence adapter chuẩn trong chính module drawing.
+3. Chưa có bộ story/interaction test bao phủ toàn bộ tool transitions nâng cao.
 
 ---
 
-## 5.4 Fibonacci Retracement
+## 3. Bổ sung nên thêm
 
-```typescript
-const FIBO_LEVELS = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.272, 1.618];
-
-export function computeFiboLevels(
-    point1: DrawingPoint,
-    point2: DrawingPoint
-): Array<{ level: number; price: number }> {
-    const diff = point2.y - point1.y;
-    return FIBO_LEVELS.map(level => ({
-        level,
-        price: point2.y - diff * level,
-    }));
-}
-```
+1. Tool maturity matrix:
+   - Core-ready, Experimental, Backlog.
+2. Persistence contract:
+   - Interface lưu/tải/xóa drawings theo chart scope.
+3. Interaction QA matrix:
+   - Add/move/resize/delete/undo/redo cho từng tool.
 
 ---
 
-## 5.5 Undo/Redo
+## 4. Lộ trình tiếp theo
 
-```typescript
-// Dùng useReducer + history stack
-interface DrawingHistory {
-    past: DrawingObject[][];
-    present: DrawingObject[];
-    future: DrawingObject[][];
-}
+### M1 — Completeness
+- Bổ sung Rectangle và ArrowMarker trước.
+- Chuẩn hóa tool metadata cho toolbar mapping.
 
-function drawingReducer(state: DrawingHistory, action: DrawingAction): DrawingHistory {
-    switch (action.type) {
-        case 'ADD':
-            return {
-                past: [...state.past, state.present],
-                present: [...state.present, action.drawing],
-                future: [],
-            };
-        case 'UNDO':
-            const [prev, ...rest] = state.past.slice().reverse();
-            return prev ? {
-                past: state.past.slice(0, -1),
-                present: prev,
-                future: [state.present, ...state.future],
-            } : state;
-        case 'REDO':
-            const [next, ...remaining] = state.future;
-            return next ? {
-                past: [...state.past, state.present],
-                present: next,
-                future: remaining,
-            } : state;
-    }
-}
-```
+### M2 — Persistence
+- Định nghĩa `DrawingStorage` contract public.
+- Thêm adapter mẫu cho backend REST.
+
+### M3 — UX hardening
+- Keyboard shortcut map hoàn chỉnh.
+- Lock/unlock và handle visibility behavior.
+- Storybook interaction tests cho từng tool nhóm P0/P1.
 
 ---
 
-## 5.6 Persistence Interface
+## 5. Definition of Done (cập nhật)
 
-```typescript
-// Lưu/tải drawing state từ backend
-export interface DrawingStorage {
-    save(chartId: string, drawings: DrawingObject[]): Promise<void>;
-    load(chartId: string): Promise<DrawingObject[]>;
-    delete(chartId: string, drawingId: string): Promise<void>;
-}
-
-// Ví dụ implement cho Django:
-class DjangoDrawingStorage implements DrawingStorage {
-    async save(chartId, drawings) {
-        await fetch(`/api/charts/${chartId}/drawings/`, {
-            method: 'POST',
-            body: JSON.stringify(drawings),
-            headers: { 'Content-Type': 'application/json' },
-        });
-    }
-    async load(chartId) {
-        const res = await fetch(`/api/charts/${chartId}/drawings/`);
-        return res.json();
-    }
-}
-```
-
----
-
-## 5.7 Checklist hoàn thành Phase 5
-
-- [ ] DrawingState machine hoạt động đúng tất cả transitions
-- [ ] TrendLine: vẽ, di chuyển, resize 2 đầu
-- [ ] HorizontalLine với extend
-- [ ] FibonacciRetracement với labels giá
-- [ ] Rectangle
-- [ ] ArrowMarker + TextAnnotation
-- [ ] Undo/Redo (Ctrl+Z / Ctrl+Y)
-- [ ] DrawingObject serializable thành JSON
-- [ ] DrawingStorage interface
-- [ ] Keyboard: Delete xóa, Escape hủy đang vẽ
-- [ ] Lock/unlock drawing
-- [ ] Storybook stories cho từng tool
+- [x] State machine, history, serialization hoạt động.
+- [x] Built-in tool lõi đã có test cơ bản.
+- [ ] Catalog tool đầy đủ theo roadmap.
+- [ ] Persistence contract được đóng và có integration sample.

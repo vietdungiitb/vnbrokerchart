@@ -2,19 +2,31 @@
   "name": "react-stockcharts",
   "version": "2.0.0",
   "description": "Highly customizable stock charts with ReactJS and d3 - Modernized",
-  "main": "src/index.js",
-  "module": "src/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
   "author": {
     "name": "Ragu Ramaswamy"
   },
   "homepage": "http://rrag.github.io/react-stockcharts/",
   "license": "MIT",
   "scripts": {
-    "clean": "rimraf -rf ./build",
+    "clean": "rimraf -rf ./build ./dist",
+    "build": "tsup",
+    "storybook": "storybook dev -p 6006",
+    "build:storybook": "storybook build",
     "watch": "npm run clean && cross-env IP=0.0.0.0 PORT=8080 webpack serve --config config/webpack.config.js",
     "build:docs": "cross-env NODE_ENV=production webpack --config config/webpack.config.js",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx src --fix",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "d3-array": "^3.2.0",
@@ -42,6 +54,7 @@
     "@babel/preset-env": "^7.23.0",
     "@babel/preset-react": "^7.22.15",
     "@babel/preset-typescript": "^7.23.0",
+    "@storybook/react-vite": "^10.3.6",
     "@types/d3-array": "^3.2.2",
     "@types/d3-scale": "^4.0.9",
     "@types/d3-shape": "^3.1.8",
@@ -59,9 +72,13 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "rimraf": "^5.0.5",
+    "storybook": "^10.3.6",
     "style-loader": "^3.3.3",
     "ts-loader": "^9.5.0",
+    "tsup": "^8.0.0",
     "typescript": "^5.2.2",
+    "vite": "^8.0.10",
+    "vitest": "^1.6.1",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1"

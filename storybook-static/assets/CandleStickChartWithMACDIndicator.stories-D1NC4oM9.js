@@ -1,0 +1,3 @@
+import{n as e}from"./chunk-DnJy8xQt.js";import{a as t,l as n,u as r}from"./exampleStories-BK9DQyGg.js";var i,a,o,s;e((()=>{n(),i=r(),a={title:`Ví dụ/Nến với MACD (CandleStickChartWithMACDIndicator)`,component:t},o={render:()=>(0,i.jsx)(t,{})},o.parameters={...o.parameters,docs:{...o.parameters?.docs,source:{originalSource:`{
+  render: () => <CandleStickChartWithMACDIndicatorStory />
+}`,...o.parameters?.docs?.source}}},s=[`Default`]}))();export{o as Default,s as __namedExportsOrder,a as default};

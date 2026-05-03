@@ -1,0 +1,3 @@
+import{n as e}from"./chunk-DnJy8xQt.js";import{l as t,o as n,u as r}from"./exampleStories-BK9DQyGg.js";var i,a,o,s;e((()=>{t(),i=r(),a={title:`Ví dụ/Nến với RSI và Bollinger (CandleStickChartWithRSIIndicator)`,component:n},o={render:()=>(0,i.jsx)(n,{})},o.parameters={...o.parameters,docs:{...o.parameters?.docs,source:{originalSource:`{
+  render: () => <CandleStickChartWithRSIIndicatorStory />
+}`,...o.parameters?.docs?.source}}},s=[`Default`]}))();export{o as Default,s as __namedExportsOrder,a as default};

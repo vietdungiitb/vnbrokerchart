@@ -1,142 +1,64 @@
-# Phase 2 — Chart Types
+# Phase 2 — Chart Types (As-built Sync)
 
-> **Thuộc:** [ROADMAP.md](./ROADMAP.md)  
-> **Ước tính:** 3–4 tuần  
-> **Mục tiêu:** Đủ loại nến + series cho VN market
-
----
-
-## 2.1 Danh sách Series Components
-
-| Component | Mô tả | Ưu tiên |
-|-----------|--------|---------|
-| `CandlestickSeries` | Nến Nhật cơ bản (refactor từ hiện tại) | P0 |
-| `HollowCandlestickSeries` | Nến rỗng — tô màu đảo chiều trend | P0 |
-| `HeikinAshiSeries` | Lọc nhiễu, trend rõ hơn | P1 |
-| `BarSeries` | OHLC bar truyền thống | P1 |
-| `LineSeries` | Đường giá đóng cửa | P0 |
-| `AreaSeries` | Area dưới đường giá | P1 |
-| `BaselineSeries` | Delta so với reference price | P2 |
-| `RenkoBars` | Lọc thời gian, chỉ vẽ khi giá thay đổi đủ | P2 |
-| `VolumeSeries` | Cột volume dưới chart | P0 |
-| `OHLCSeries` | Tick chart theo từng giao dịch | P2 |
+> Thuộc: [ROADMAP.md](./ROADMAP.md)  
+> Trạng thái hiện tại: Partial  
+> Liên quan thực thi: P2 chart shell + P6 stories
 
 ---
 
-## 2.2 API Component chuẩn hóa
+## 1. Snapshot hiện trạng
 
-Mọi series dùng cùng prop interface:
-
-```typescript
-export interface SeriesProps {
-    // Data accessor
-    yAccessor?: (d: OHLCVBar) => number;          // cho LineSeries
-    
-    // Style
-    stroke?: string;
-    fill?: string | ((d: OHLCVBar) => string);
-    opacity?: number;
-    strokeWidth?: number;
-    
-    // Candlestick-specific
-    wickStroke?: string | ((d: OHLCVBar) => string);
-    candleStrokeWidth?: number;
-    
-    // Hollow candle config
-    hollowWhenRising?: boolean;                    // default true
-}
-```
-
-### Ví dụ sử dụng
-```tsx
-<ChartCanvas data={data} width={900} height={600}>
-    <Chart id={1} yExtents={(d) => [d.high, d.low]}>
-        <XAxis />
-        <YAxis />
-        <CandlestickSeries
-            wickStroke={(d) => d.close > d.open ? '#26a69a' : '#ef5350'}
-            fill={(d) => d.close > d.open ? '#26a69a' : '#ef5350'}
-        />
-        <VolumeSeries
-            fill={(d) => d.close > d.open ? 'rgba(38,166,154,0.4)' : 'rgba(239,83,80,0.4)'}
-        />
-    </Chart>
-</ChartCanvas>
-```
+| Nhóm | Thiết kế ban đầu | As-built hiện tại | Trạng thái |
+|---|---|---|---|
+| Chart shell | Multi-pane runtime | Có `ChartTerminal`, `ChartPane`, `PaneSplitter`, `usePaneManager` | Done |
+| Series cơ bản | Candlestick/Line/Bar/Volume/... | Series legacy đã có và được dùng trong stories | Done (legacy) |
+| Chart types mới | Hollow/HeikinAshi/Baseline/Renko mở rộng | Chưa có module mới theo thiết kế này | Backlog |
+| Story coverage | Mỗi loại chart có story | Đã có 8 story tiêu biểu cho regression | Partial |
 
 ---
 
-## 2.3 HollowCandlestickSeries
+## 2. Chênh lệch chính cần đóng
 
-Nến rỗng: thân nến được vẽ rỗng (outline) khi giá đóng cao hơn giá đóng kỳ trước,  
-dù nến đó close < open — thể hiện momentum tốt hơn nến Nhật thông thường.
-
-```typescript
-// Logic xác định hollow/filled:
-function isHollow(current: OHLCVBar, previous: OHLCVBar): boolean {
-    return current.close > previous.close;
-}
-
-// Màu sắc:
-// Close > prev.close && Close > Open  → xanh filled
-// Close > prev.close && Close < Open  → xanh hollow (rỗng)
-// Close < prev.close && Close > Open  → đỏ hollow
-// Close < prev.close && Close < Open  → đỏ filled
-```
+1. Tài liệu cũ giả định sẽ tạo mới nhiều series; thực tế đang tái sử dụng tốt legacy series để giữ tương thích.
+2. Chưa có lớp chuẩn hóa API prop cho tất cả series theo một interface chung.
+3. Non-time-series chart types vẫn còn ở trạng thái inventory, chưa thành module TypeScript mới.
 
 ---
 
-## 2.4 HeikinAshi Transform
+## 3. Bổ sung nên thêm ngay
 
-Heikin-Ashi không phải series mới — là **data transform** trước khi render:
-
-```typescript
-// src/lib/transforms/heikinAshi.ts
-export function toHeikinAshi(bars: OHLCVBar[]): OHLCVBar[] {
-    return bars.map((bar, i) => {
-        const prev = i === 0 ? bar : bars[i - 1]!;
-        const haClose = (bar.open + bar.high + bar.low + bar.close) / 4;
-        const haOpen = i === 0 ? (bar.open + bar.close) / 2 : (prev.open + prev.close) / 2;
-        return {
-            ...bar,
-            open: haOpen,
-            close: haClose,
-            high: Math.max(bar.high, haOpen, haClose),
-            low: Math.min(bar.low, haOpen, haClose),
-        };
-    });
-}
-
-// Dùng:
-const haData = useMemo(() => toHeikinAshi(rawData), [rawData]);
-<CandlestickSeries /> // render bình thường với haData
-```
+1. Bảng "Series status map" trong tài liệu:
+   - Có sẵn và đang dùng.
+   - Có sẵn nhưng chưa được regression story bao phủ.
+   - Chưa triển khai.
+2. Tiêu chí thoát phase 2 theo thực tế:
+   - Không bắt buộc viết lại toàn bộ series cũ ngay.
+   - Bắt buộc có coverage regression cho các luồng chính.
+3. Tách rõ hai track:
+   - Track A: giữ tương thích + hardening.
+   - Track B: series API chuẩn hóa thế hệ mới.
 
 ---
 
-## 2.5 BaselineSeries
+## 4. Lộ trình thực thi đề xuất
 
-Đường giá với fill màu khác nhau khi trên/dưới baseline (reference price):
+### M1 — Consolidation
+- Chuẩn hóa style/accessor props cho nhóm Candlestick, Line, Bar, Volume.
+- Thêm stories cho các series còn thiếu trong nhóm P0/P1.
 
-```typescript
-interface BaselineSeriesProps extends SeriesProps {
-    baseValue: number | ((data: OHLCVBar[]) => number); // giá cơ sở
-    topFill?: string;      // màu khi > baseline (default xanh)
-    bottomFill?: string;   // màu khi < baseline (default đỏ)
-}
-```
+### M2 — New chart types
+- Ưu tiên `HollowCandlestickSeries` và transform Heikin Ashi.
+- Đưa BaselineSeries vào backlog triển khai độc lập.
+
+### M3 — Advanced types
+- Lập milestone riêng cho Renko/Kagi/Point and Figure.
+- Bắt buộc có visual regression cho từng loại trước khi đóng.
 
 ---
 
-## 2.6 Checklist hoàn thành Phase 2
+## 5. Definition of Done (cập nhật)
 
-- [ ] CandlestickSeries refactor với prop API mới
-- [ ] HollowCandlestickSeries render đúng 4 trạng thái màu
-- [ ] HeikinAshi transform + story demo
-- [ ] BarSeries (OHLC stick) render
-- [ ] LineSeries với gradient fill
-- [ ] AreaSeries
-- [ ] VolumeSeries với buy/sell color split (nếu có buyVolume/sellVolume)
-- [ ] BaselineSeries
-- [ ] Tất cả series có Storybook story
-- [ ] Snapshot tests cho canvas output
+- [x] Shell runtime pane hoạt động ổn định.
+- [x] Regression stories đại diện đã có và build pass.
+- [ ] Bộ chart types mới theo thiết kế đã được triển khai module hóa.
+- [ ] API chuẩn hóa cho toàn bộ series được chốt và có migration notes.

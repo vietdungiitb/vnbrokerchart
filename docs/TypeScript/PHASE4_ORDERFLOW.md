@@ -1,204 +1,66 @@
-# Phase 4 — Orderflow Suite
+# Phase 4 — Orderflow Suite (As-built Sync)
 
-> **Thuộc:** [ROADMAP.md](./ROADMAP.md)  
-> **Ước tính:** 4–5 tuần  
-> **Ưu tiên cao nhất** — CVD, Volume Profile, Delta là tính năng cốt lõi
-
----
-
-## 4.1 CVD (Cumulative Volume Delta)
-
-### Render dưới dạng histogram + line
-```tsx
-<Chart id={3} yExtents={cvdExtents}>
-    <YAxis />
-    <CumulativeDeltaSeries
-        fill={(d, cvdValue) => cvdValue >= 0 ? '#26a69a' : '#ef5350'}
-        stroke="#94a3b8"
-        showLine        // vẽ thêm đường CVD ở trên histogram
-        lineStroke="#22d3ee"
-    />
-    <CVDTooltip />
-</Chart>
-```
-
-### Data flow
-```
-OHLCVBar[] có buyVolume + sellVolume
-    → delta[] = buyVolume - sellVolume (per bar)
-    → cvd[] = cumulative sum of delta
-    → render histogram màu xanh/đỏ theo cvdValue
-```
+> Thuộc: [ROADMAP.md](./ROADMAP.md)  
+> Trạng thái hiện tại: Early Partial  
+> Lưu ý: Đây là phase có phụ thuộc dữ liệu backend lớn nhất.
 
 ---
 
-## 4.2 Volume Profile
+## 1. Snapshot hiện trạng
 
-### 3 modes
-```typescript
-type VolumeProfileMode =
-    | 'session'       // 1 phiên giao dịch (mặc định cho intraday)
-    | 'visible'       // chỉ tính bars đang hiển thị trên chart
-    | 'fixed-range'   // chọn range cố định bằng tay
-    | 'composite';    // gộp nhiều phiên
-
-interface VolumeProfileConfig {
-    mode: VolumeProfileMode;
-    numBins: number;             // số hàng ngang, default 48
-    showValueArea: boolean;      // tô màu Value Area (70% volume)
-    showPOC: boolean;            // đường POC (Price of Control)
-    splitBuySell: boolean;       // chia 2 màu buy/sell
-    width: number;               // % chiều rộng panel chiếm
-    position: 'left' | 'right';
-}
-```
-
-### Render
-```
-Price │    ██████████████  ← POC (dày nhất)
-      │ █████████
-      │ ███████████████
-      │   █████████████   ← Value Area (70% volume)
-      │ ██████
-      │ ████
-      │ ██████████
-      └───────────────────
-```
-
-### Computation (pure TS)
-```typescript
-export interface PriceBin {
-    priceFrom: number;
-    priceTo: number;
-    buyVolume: number;
-    sellVolume: number;
-    totalVolume: number;
-}
-
-export interface VolumeProfileResult {
-    bins: PriceBin[];
-    poc: number;                 // price at max volume bin
-    valueAreaHigh: number;
-    valueAreaLow: number;
-    totalVolume: number;
-}
-
-export function computeVolumeProfile(
-    bars: OHLCVBar[],
-    numBins: number
-): VolumeProfileResult
-```
+| Hạng mục | Thiết kế ban đầu | As-built hiện tại | Trạng thái |
+|---|---|---|---|
+| CVD nền tảng | compute + render + tooltip | Có built-in CVD ở registry; UI orderflow đầy đủ chưa hoàn tất | Partial |
+| Volume Profile | session/visible/fixed/composite | Đang có VolumeProfileSeries legacy dùng được cho regression | Partial |
+| Footprint | Tick-level bid/ask per price | Chưa có pipeline tick aggregate chuẩn | Backlog |
+| Delta Candle | Màu theo delta | Chưa có series module riêng | Backlog |
+| Market Profile/TPO | TPO computation + render | Chưa triển khai | Backlog |
 
 ---
 
-## 4.3 Footprint Candle
+## 2. Chênh lệch cần đóng trước khi scale
 
-Mỗi nến hiển thị bid × ask tại từng mức giá bên trong nến.  
-Cần **tick data** (từng giao dịch riêng lẻ).
-
-```
-Price  │  Bid × Ask
-78,755 │  120 × 340   ← nhiều buy hơn → delta dương
-78,754 │  890 × 210   ← nhiều sell hơn → delta âm → tô đỏ
-78,753 │  456 × 456   ← balanced
-78,752 │  230 × 890
-```
-
-### TypeScript interfaces
-```typescript
-export interface Tick {
-    timestamp: number;
-    price: number;
-    size: number;
-    side: 'buy' | 'sell';
-}
-
-export interface FootprintLevel {
-    price: number;
-    bidVolume: number;
-    askVolume: number;
-    delta: number;
-    imbalance: number | null; // ratio nếu > threshold
-}
-
-export interface FootprintBar extends OHLCVBar {
-    levels: FootprintLevel[];
-    totalDelta: number;
-    maxVolume: number; // để normalize bar width
-}
-
-export function aggregateFootprint(
-    ticks: Tick[],
-    bars: OHLCVBar[],
-    tickSize: number
-): FootprintBar[]
-```
+1. Tài liệu cũ giả định dữ liệu tick luôn sẵn, nhưng hệ thống hiện mới chốt contract adapter ở mức OHLCV + stream cơ bản.
+2. Chưa có acceptance matrix riêng cho orderflow theo từng loại data feed.
+3. Chưa có benchmark hiệu năng khi khối lượng điểm dữ liệu orderflow tăng cao.
 
 ---
 
-## 4.4 Delta Candle
+## 3. Bổ sung bắt buộc cho phase 4
 
-Nến tô màu theo delta của nến đó (không phải open/close):
-
-```typescript
-// Màu:
-// delta > 0 (buy pressure) → xanh
-// delta < 0 (sell pressure) → đỏ
-// Độ đậm nhạt theo magnitude
-
-const fill = (d: OHLCVBar) => {
-    const delta = (d.buyVolume ?? 0) - (d.sellVolume ?? 0);
-    const intensity = Math.min(Math.abs(delta) / d.volume, 1);
-    return delta > 0
-        ? `rgba(38, 166, 154, ${0.3 + intensity * 0.7})`
-        : `rgba(239, 83, 80, ${0.3 + intensity * 0.7})`;
-};
-```
+1. Data readiness matrix:
+   - Feed nào cung cấp `buyVolume`, `sellVolume`, tick side.
+   - Feed nào chỉ có OHLCV thuần.
+2. Degradation policy:
+   - Nếu thiếu tick data thì fallback hiển thị gì.
+3. Validation gates:
+   - Correctness test cho compute.
+   - Soak test cho khối lượng dữ liệu lớn.
+   - Browser smoke cho density hiển thị, không ẩn sai lệch tín hiệu.
 
 ---
 
-## 4.5 Market Profile (TPO)
+## 4. Lộ trình đề xuất
 
-Time Price Opportunity — mỗi chữ cái đại diện cho 30 phút giao dịch tại 1 mức giá.
+### M1 — Production CVD + VP baseline
+- Chốt compute CVD với contract rõ ràng cho field volume side.
+- Chuẩn hóa Volume Profile mode `visible` trước.
+- Bổ sung stories riêng cho CVD và VP trong điều kiện dữ liệu thực.
 
-```
-Price │ TPO Letters
-78,755 │ A
-78,754 │ A B
-78,753 │ A B C D
-78,752 │ A B B C D D    ← POC (nhiều chữ nhất)
-78,751 │ A B C
-78,750 │ B C
-```
+### M2 — Delta Candle + session profiles
+- Bổ sung Delta Candle series.
+- Mở rộng VP sang `session` và `fixed-range`.
 
-```typescript
-export interface TPOBar {
-    price: number;
-    letters: string[];      // ['A', 'B', 'C', ...]
-    count: number;          // số lần ghé thăm
-    isValueArea: boolean;
-    isPOC: boolean;
-}
-
-export function computeTPO(
-    bars: OHLCVBar[],
-    tickSize: number,
-    periodMinutes: number   // thường 30
-): TPOBar[]
-```
+### M3 — Footprint/TPO
+- Thêm tick aggregation pipeline.
+- Triển khai Footprint và TPO theo milestone độc lập.
+- Chỉ đóng phase khi có benchmark + evidence regression đủ lớn.
 
 ---
 
-## 4.6 Checklist hoàn thành Phase 4
+## 5. Definition of Done (cập nhật)
 
-- [ ] `computeVolumeProfile` với 4 modes
-- [ ] VolumeProfileSeries render đúng với POC, Value Area
-- [ ] CumulativeDeltaSeries (histogram + line)
-- [ ] CVDTooltip
-- [ ] DeltaCandleSeries (màu theo delta)
-- [ ] `aggregateFootprint` từ tick data
-- [ ] FootprintCandleSeries render bid×ask per level
-- [ ] Footprint imbalance highlight
-- [ ] `computeTPO`
-- [ ] MarketProfileSeries render TPO letters
-- [ ] Storybook stories cho tất cả
+- [ ] CVD production-ready với data contract rõ.
+- [ ] Volume Profile có mode vận hành ổn định tối thiểu.
+- [ ] Storybook + smoke cho orderflow core pass.
+- [ ] Footprint/TPO có thể để milestone sau, nhưng phải có planning artifact và gate rõ.

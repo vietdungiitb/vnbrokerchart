@@ -1,263 +1,70 @@
-# Phase 6 — Multi-Panel Layout
+# Phase 6-7 — Layout and Adapter (As-built Sync)
 
-> **Thuộc:** [ROADMAP.md](./ROADMAP.md)  
-> **Ước tính:** 2–3 tuần  
-> **Mục tiêu:** Layout engine chia panel như TradingView, crosshair đồng bộ
-
----
-
-## 6.1 API
-
-```tsx
-<ChartLayout
-    panels={[
-        {
-            id: 'price',
-            height: '60%',
-            label: 'BTCUSD',
-            children: (
-                <ChartCanvas>
-                    <CandlestickSeries />
-                    <BollingerBandOverlay />
-                    <VolumeProfileSeries />
-                </ChartCanvas>
-            ),
-        },
-        {
-            id: 'volume',
-            height: '15%',
-            label: 'Volume',
-            children: (
-                <ChartCanvas>
-                    <VolumeSeries />
-                </ChartCanvas>
-            ),
-        },
-        {
-            id: 'rsi',
-            height: '12.5%',
-            label: 'RSI(14)',
-            children: (
-                <ChartCanvas>
-                    <RSISeries period={14} />
-                    <RSILevels levels={[30, 70]} />
-                </ChartCanvas>
-            ),
-        },
-        {
-            id: 'cvd',
-            height: '12.5%',
-            label: 'CVD',
-            children: (
-                <ChartCanvas>
-                    <CumulativeDeltaSeries />
-                </ChartCanvas>
-            ),
-        },
-    ]}
-    syncCrosshair   // crosshair dọc đồng bộ tất cả panels
-    syncZoom        // zoom đồng bộ tất cả panels
-    resizable       // kéo divider để resize panel
-/>
-```
+> Thuộc: [ROADMAP.md](./ROADMAP.md)  
+> Trạng thái hiện tại: Partial-Strong  
+> Slice liên quan đã đóng: P2, P5, P6
 
 ---
 
-## 6.2 Context đồng bộ
+## 1. Snapshot tổng hợp
 
-```typescript
-// ChartSyncContext — shared state giữa tất cả panels
-interface ChartSyncContext {
-    // Crosshair
-    crosshairX: number | null;
-    setCrosshairX: (x: number | null) => void;
-
-    // Zoom/pan
-    xDomain: [number, number];
-    setXDomain: (domain: [number, number]) => void;
-
-    // Data
-    data: OHLCVBar[];
-    visibleData: OHLCVBar[];
-}
-
-const ChartSyncProvider: React.FC<{
-    children: React.ReactNode;
-    data: OHLCVBar[];
-}>;
-```
-
-Mỗi panel subscribe vào context, khi panel chính zoom thì tất cả panels khác cập nhật `xDomain` → hiển thị cùng khoảng thời gian.
+| Track | Thiết kế ban đầu | As-built hiện tại | Trạng thái |
+|---|---|---|---|
+| Layout runtime | Multi-panel sync như TradingView | Đã có pane manager, splitter, core contexts | Done (core) |
+| Panel UX nâng cao | Toolbar, reorder, settings | Chưa hoàn thiện đầy đủ | Backlog |
+| Adapter contract | StockDataAdapter chuẩn | Đã có interface + Base/Django/Mock adapters | Done |
+| Realtime integration | subscribe bars/trades/orderbook | Đã có hợp đồng và test cơ bản | Partial |
+| Examples regression | stories đại diện | Đã có 8 stories, Storybook Vite build pass | Done |
 
 ---
 
-## 6.3 Resizable Dividers
+## 2. Chênh lệch cần đóng
 
-```tsx
-// Kéo divider thay đổi chiều cao panels
-<ResizableDivider
-    onDrag={(deltaY) => {
-        setPanelHeights(prev => adjustHeights(prev, panelIndex, deltaY));
-    }}
-/>
-```
-
-Min height mỗi panel: 60px để không bị collapse hoàn toàn.
+1. Layout hiện đã có nền tảng kỹ thuật nhưng chưa có đầy đủ UX controls theo thiết kế.
+2. Adapter layer có contract tốt, nhưng cần hardening thêm cho reliability và retry ở môi trường tải thật.
+3. Storybook migration đã về Vite, cần giữ baseline này và không quay lại builder webpack cho stories.
 
 ---
 
-## 6.4 Panel Toolbar
+## 3. Bổ sung vào phase 6-7
 
-Mỗi panel có thanh toolbar nhỏ phía trên:
-```
-┌─ RSI(14) ──────────────────────── ⚙ ✕ ─┐
-│                                          │
-│  [RSI chart here]                        │
-└──────────────────────────────────────────┘
-```
-- **⚙** → mở settings (thay đổi period, màu)
-- **✕** → ẩn/xóa panel
-- Drag label → sắp xếp lại thứ tự panels
-
----
-
-## 6.5 Checklist hoàn thành Phase 6
-
-- [ ] ChartSyncContext hoạt động đúng
-- [ ] syncCrosshair: crosshair dọc hiện trên tất cả panels
-- [ ] syncZoom: zoom 1 panel → tất cả panels sync
-- [ ] ResizableDivider kéo được
-- [ ] Panel min/max height constraints
-- [ ] Panel toolbar (settings + close)
-- [ ] Drag-to-reorder panels
-- [ ] Storybook story với 4-panel layout
+1. Tách hai checklist độc lập:
+   - Checklist Layout runtime.
+   - Checklist Adapter production readiness.
+2. Thêm reliability gates cho adapter:
+   - reconnect policy.
+   - timeout/backoff.
+   - invalid payload handling.
+3. Thêm regression gates cho stories:
+   - `npm run build:storybook` pass.
+   - Browser smoke trên bản static.
 
 ---
 
-# Phase 7 — Data Adapter Layer
+## 4. Lộ trình tiếp theo
 
-> **Thuộc:** [ROADMAP.md](./ROADMAP.md)  
-> **Ước tính:** 2 tuần  
-> **Mục tiêu:** Interface chuẩn tích hợp bất kỳ backend nào
+### M1 — Layout UX completion
+- Bổ sung toolbar, panel close/hide.
+- Thiết kế drag reorder cho panes.
+- Chốt constraints min/max height bằng test.
 
----
+### M2 — Adapter hardening
+- Chuẩn hóa retry/backoff cho REST và WS.
+- Thêm contract tests cho payload lỗi và reconnect.
 
-## 7.1 StockDataAdapter Interface
-
-```typescript
-// src/lib/adapters/StockDataAdapter.ts
-
-export type Unsubscribe = () => void;
-
-export interface StockDataAdapter {
-    // ── REST ──────────────────────────────────────────
-    /** Lấy OHLCV bars theo timeframe và khoảng thời gian */
-    fetchBars(
-        symbol: string,
-        timeframe: Timeframe,
-        from: Date,
-        to: Date
-    ): Promise<OHLCVBar[]>;
-
-    /** Infinite scroll ngược — tải thêm bars cũ hơn */
-    fetchMoreBars(
-        symbol: string,
-        timeframe: Timeframe,
-        before: Date,
-        limit?: number
-    ): Promise<OHLCVBar[]>;
-
-    /** Tìm kiếm symbol */
-    searchSymbols(query: string): Promise<SymbolInfo[]>;
-
-    // ── WebSocket ─────────────────────────────────────
-    /** Subscribe real-time bar updates */
-    subscribeToBar(
-        symbol: string,
-        timeframe: Timeframe,
-        onBar: (bar: OHLCVBar) => void
-    ): Unsubscribe;
-
-    /** Subscribe orderbook (L2) */
-    subscribeToOrderbook(
-        symbol: string,
-        onUpdate: (snapshot: OrderbookSnapshot) => void
-    ): Unsubscribe;
-
-    /** Subscribe trade stream (cho T&S, Whale Alerts) */
-    subscribeToTrades(
-        symbol: string,
-        onTrade: (trade: Trade) => void
-    ): Unsubscribe;
-}
-
-export type Timeframe = '1m' | '3m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1D' | '1W' | '1M';
-
-export interface SymbolInfo {
-    symbol: string;
-    name: string;
-    exchange: string;
-    type: 'stock' | 'crypto' | 'forex' | 'futures' | 'index';
-    currency: string;
-    pricePrecision: number;
-    volumePrecision: number;
-}
-```
+### M3 — Integration closeout
+- Bổ sung docs tích hợp Django/vnstock từ adapter hiện có.
+- Khóa release checklist cho app dùng nhiều users đồng thời.
 
 ---
 
-## 7.2 DjangoVnstockAdapter (ví dụ)
+## 5. Definition of Done (cập nhật)
 
-```typescript
-// Người dùng tự implement trong project của họ:
-import type { StockDataAdapter, OHLCVBar, Timeframe } from '@myorg/stock-charts';
-
-export class DjangoVnstockAdapter implements StockDataAdapter {
-    constructor(private baseUrl = '') {}
-
-    async fetchBars(symbol, timeframe, from, to): Promise<OHLCVBar[]> {
-        const params = new URLSearchParams({
-            tf: timeframe,
-            from: from.toISOString(),
-            to: to.toISOString(),
-        });
-        const res = await fetch(`${this.baseUrl}/api/bars/${symbol}/?${params}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json() as Array<{ date: string } & Omit<OHLCVBar, 'date'>>;
-        return json.map(b => ({ ...b, date: new Date(b.date) }));
-    }
-
-    async fetchMoreBars(symbol, timeframe, before, limit = 300): Promise<OHLCVBar[]> {
-        const params = new URLSearchParams({
-            tf: timeframe,
-            before: before.toISOString(),
-            limit: String(limit),
-        });
-        const res = await fetch(`${this.baseUrl}/api/bars/${symbol}/?${params}`);
-        const json = await res.json() as Array<{ date: string } & Omit<OHLCVBar, 'date'>>;
-        return json.map(b => ({ ...b, date: new Date(b.date) }));
-    }
-
-    subscribeToBar(symbol, timeframe, onBar) {
-        const ws = new WebSocket(`ws://${location.host}/ws/bars/${symbol}/${timeframe}/`);
-        ws.onmessage = (e) => {
-            const raw = JSON.parse(e.data as string) as { date: string } & Omit<OHLCVBar, 'date'>;
-            onBar({ ...raw, date: new Date(raw.date) });
-        };
-        return () => ws.close();
-    }
-
-    subscribeToOrderbook(symbol, onUpdate) {
-        const ws = new WebSocket(`ws://${location.host}/ws/orderbook/${symbol}/`);
-        ws.onmessage = (e) => onUpdate(JSON.parse(e.data as string));
-        return () => ws.close();
-    }
-
-    subscribeToTrades(symbol, onTrade) {
-        const ws = new WebSocket(`ws://${location.host}/ws/trades/${symbol}/`);
-        ws.onmessage = (e) => onTrade(JSON.parse(e.data as string));
-        return () => ws.close();
-    }
+- [x] Core layout runtime hoạt động.
+- [x] Adapter contract và implementations mẫu có test.
+- [x] Regression stories đã chuyển đổi và build pass trên Vite.
+- [ ] Panel UX nâng cao hoàn chỉnh.
+- [ ] Adapter reliability matrix hoàn tất và có soak evidence.
 
     async searchSymbols(query) {
         const res = await fetch(`${this.baseUrl}/api/symbols/search/?q=${encodeURIComponent(query)}`);

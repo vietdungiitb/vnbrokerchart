@@ -28,6 +28,7 @@ Chọn `tsup` làm build tool chính cho package thư viện. Giữ `webpack` ch
 - Dùng `tsup` cho `src/index.ts` và mọi entry public của package.
 - Dùng `webpack` chỉ nếu cần giữ nguyên build demo hiện tại trong giai đoạn chuyển tiếp.
 - Không phụ thuộc vào `webpack` cho contract public của thư viện.
+- Storybook regression/build cho P6 dùng builder Vite; không quay lại pipeline Webpack cho stories.
 
 ---
 
@@ -221,12 +222,26 @@ Thư viện chart chỉ là một phần. Với các ứng dụng tài chính c�
 
 ## 8. Audit file list của lần cập nhật này
 
-- `docs/TypeScript/ROADMAP.md`
+- `package.json`
+- `package-lock.json`
+- `.storybook/main.ts`
+- `.storybook/preview.ts`
+- `stories/CandleStickStockScaleChartWithVolumeBarV3.stories.tsx`
+- `stories/CandleStickChartWithMACDIndicator.stories.tsx`
+- `stories/CandleStickChartWithBrush.stories.tsx`
+- `stories/CandleStickChartWithAnnotation.stories.tsx`
+- `stories/CandleStickChartWithHoverTooltip.stories.tsx`
+- `stories/CandleStickChartPanToLoadMore.stories.tsx`
+- `stories/CandleStickChartWithRSIIndicator.stories.tsx`
+- `stories/VolumeProfileChart.stories.tsx`
+- `stories/CoverageMap.md`
+- `stories/support/chartTheme.ts`
+- `stories/support/storyData.ts`
+- `stories/support/StoryFrame.tsx`
+- `stories/support/ChartSurface.tsx`
+- `stories/support/exampleStories.tsx`
 - `docs/TypeScript/IMPLEMENTATION_PLAN.md`
-- `docs/TypeScript/DEVELOPMENT_RULES.md`
-- `docs/TypeScript/HANDOFF_MANIFEST.md`
-- `docs/TypeScript/AUDIT_LEDGER.md`
-- `docs/TypeScript/AUDIT_TEST_MATRIX.md`
-- `docs/TypeScript/SLICE_AUDIT.md`
 - `docs/TypeScript/TASKBOARD.md`
-- `docs/TypeScript/DELIVERY_CLOSEOUT.md`
+- `docs/TypeScript/AUDIT_LEDGER.md`
+- `docs/TypeScript/SLICE_AUDIT.md`
+- `module_tree_full.md`

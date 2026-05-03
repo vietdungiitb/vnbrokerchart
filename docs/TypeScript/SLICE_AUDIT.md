@@ -88,6 +88,38 @@ ls src/lib/types/                                              # phải có 4+ f
 npx tsc --strict --noImplicitAny --noEmit 2>&1 | grep "src/lib/types"  # phải trống
 ```
 
+**Evidence — P1 Foundation đã hoàn tất:**
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Slice: P1 — Foundation
+- Mục tiêu: dựng build pipeline tsup, public type surface, và root barrel export ổn định.
+- Files touched:
+  - `package.json`
+  - `package-lock.json`
+  - `tsup.config.ts`
+  - `src/index.ts`
+  - `src/lib/types/ohlcv.ts`
+  - `src/lib/types/pane.ts`
+  - `src/lib/types/adapter.ts`
+  - `src/lib/types/indicator.ts`
+  - `src/lib/types/index.ts`
+  - `module_tree_full.md`
+- Lệnh xác minh:
+  - `npm run type-check`
+  - `npm install`
+  - `npm run build`
+  - `node -e "require('./dist/index.cjs'); console.log('CJS_OK')"`
+  - `node -e "const lib = require('./dist/index.cjs'); console.log(Object.keys(lib).sort().join(','))"`
+- Kết quả quan sát:
+  - `npm run type-check` → PASS.
+  - `npm run build` → PASS; tsup xuất ra `dist/index.js`, `dist/index.cjs`, `dist/index.d.ts`, `dist/index.d.mts`.
+  - Runtime smoke trên `dist/index.cjs` → PASS.
+  - Runtime export surface giữ nguyên: `BackgroundText,Chart,ChartCanvas,GenericChartComponent,GenericComponent,ZoomButtons,version`.
+  - Public type exports được xác minh qua TypeScript compile, không cần runtime value export.
+- Rủi ro còn lại:
+  - `dist/` là output build; không cần commit, nhưng phải được tạo trong pipeline publish.
+- Kết luận: PASS
+
 ### P2 — Chart shell
 
 - Scope: ChartTerminal, ChartPane, usePaneManager, PaneSplitter, dual Y-axis.
@@ -134,6 +166,42 @@ grep -rn "\.style\.height\|\.style\.flex" src/lib/core/PaneSplitter.tsx
 # phải không có kết quả
 ```
 
+**Evidence — P2 Chart shell đã hoàn tất:**
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Slice: P2 — Chart shell
+- Mục tiêu: dựng `ChartTerminal`, `ChartPane`, `PaneSplitter`, `usePaneManager`, và các context/scale hook nền tảng cho runtime pane.
+- Files touched:
+  - `package.json`
+  - `package-lock.json`
+  - `module_tree_full.md`
+  - `src/index.ts`
+  - `src/lib/core/index.ts`
+  - `src/lib/core/ChartTerminal.tsx`
+  - `src/lib/core/ChartPane.tsx`
+  - `src/lib/core/PaneSplitter.tsx`
+  - `src/lib/core/hooks/usePaneManager.ts`
+  - `src/lib/core/hooks/useCanvasResize.ts`
+  - `src/lib/core/hooks/usePaneManager.test.ts`
+  - `src/lib/core/context/PaneManagerContext.ts`
+  - `src/lib/core/context/DataContext.ts`
+  - `src/lib/core/context/ChartSyncContext.ts`
+  - `src/lib/core/scales/computeScales.ts`
+- Lệnh xác minh:
+  - `npm run type-check`
+  - `npm run build`
+  - `npm run test -- src/lib/core/hooks/usePaneManager.test.ts`
+  - `node -e "const lib = require('./dist/index.cjs'); console.log(['ChartTerminal','ChartPane','PaneSplitter','usePaneManager'].map((name) => name + ':' + (typeof lib[name])).join(','))"`
+- Kết quả quan sát:
+  - `npm run type-check` → PASS.
+  - `npm run build` → PASS; tsup xuất ra `dist/index.js`, `dist/index.cjs`, `dist/index.d.ts`, `dist/index.d.mts`.
+  - `vitest run src/lib/core/hooks/usePaneManager.test.ts` → PASS; 4/4 tests passed.
+  - Runtime export surface giữ nguyên và có thêm shell exports: `ChartTerminal:function,ChartPane:function,PaneSplitter:function,usePaneManager:function`.
+  - `computeScales` bị cô lập trong `src/lib/core/scales/` và `ChartPane` không gọi `scaleLinear` trực tiếp.
+- Rủi ro còn lại:
+  - Shell hiện là façade mỏng; series/indicator rendering thực tế sẽ được ghép ở các slice sau.
+- Kết luận: PASS
+
 ### P3 — Indicator registry
 
 - Scope: registry, compute/render split, built-in indicators.
@@ -178,6 +246,42 @@ grep -rn ": any" src/lib/indicators/registry.ts src/lib/indicators/types.ts
 node -e "const {getIndicator}=require('./dist/index.cjs'); ['EMA','SMA','RSI','MACD','Volume'].forEach(n=>{const i=getIndicator(n);if(!i)throw new Error('Missing: '+n);console.log('OK:',n)})"
 ```
 
+**Evidence — P3 Indicator registry đã hoàn tất:**
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Slice: P3 — Indicator registry
+- Mục tiêu: dựng registry-based indicator layer, tách compute/render, và đăng ký built-in EMA/SMA/RSI/MACD/Bollinger/Volume/CVD.
+- Files touched:
+  - `module_tree_full.md`
+  - `src/index.ts`
+  - `src/lib/core/scales/computeScales.ts`
+  - `src/lib/indicators/index.ts`
+  - `src/lib/indicators/registry.ts`
+  - `src/lib/indicators/types.ts`
+  - `src/lib/indicators/utils.ts`
+  - `src/lib/indicators/builtin/ema.ts`
+  - `src/lib/indicators/builtin/sma.ts`
+  - `src/lib/indicators/builtin/rsi.ts`
+  - `src/lib/indicators/builtin/macd.ts`
+  - `src/lib/indicators/builtin/bollinger.ts`
+  - `src/lib/indicators/builtin/volume.ts`
+  - `src/lib/indicators/builtin/cvd.ts`
+  - `src/lib/indicators/registry.test.ts`
+- Lệnh xác minh:
+  - `npm run type-check`
+  - `npm run build`
+  - `npm run test -- src/lib/indicators/registry.test.ts`
+  - `node -e "const lib = require('./dist/index.cjs'); const ema = lib.getIndicator('EMA'); console.log(['ChartTerminal','ChartPane','PaneSplitter','usePaneManager'].map((name) => name + ':' + (typeof lib[name])).join(',')); console.log('EMA:' + (ema ? ema.name : 'missing'));"`
+- Kết quả quan sát:
+  - `npm run type-check` → PASS.
+  - `npm run build` → PASS; tsup xuất ra `dist/index.js`, `dist/index.cjs`, `dist/index.d.ts`, `dist/index.d.mts`.
+  - `vitest run src/lib/indicators/registry.test.ts` → PASS; 4/4 tests passed.
+  - Runtime smoke trên `dist/index.cjs` → PASS; `getIndicator('EMA')` trả đúng registry entry.
+  - `computeScales` hiện dùng registry extents khi indicator cung cấp `computeExtents`.
+- Rủi ro còn lại:
+  - Render callback hiện là façade/no-op; slice sau sẽ ghép series rendering thực tế vào registry.
+- Kết luận: PASS
+
 ### P4 — Drawing tools
 
 - Scope: drawing state machine, serialization, undo/redo.
@@ -220,6 +324,43 @@ grep -rn "CanvasRenderingContext2D" src/lib/drawing/types.ts
 # phải không có kết quả (chỉ được phép trong DrawingDefinition.render)
 ```
 
+**Evidence — P4 Drawing tools đã hoàn tất:**
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Slice: P4 — Drawing tools
+- Mục tiêu: dựng drawing tool registry, state machine, serializable DrawingObject, history stack, và bộ builtin tools nền tảng.
+- Files touched:
+  - `module_tree_full.md`
+  - `src/index.ts`
+  - `src/lib/drawing/index.ts`
+  - `src/lib/drawing/shared.ts`
+  - `src/lib/drawing/stateMachine.ts`
+  - `src/lib/drawing/history.ts`
+  - `src/lib/drawing/serialization.ts`
+  - `src/lib/drawing/registry.ts`
+  - `src/lib/drawing/types.ts`
+  - `src/lib/drawing/drawing.test.ts`
+  - `src/lib/drawing/builtin/trendLine.ts`
+  - `src/lib/drawing/builtin/hLine.ts`
+  - `src/lib/drawing/builtin/vLine.ts`
+  - `src/lib/drawing/builtin/fibonacci.ts`
+  - `src/lib/drawing/builtin/channel.ts`
+  - `src/lib/drawing/builtin/text.ts`
+- Lệnh xác minh:
+  - `npm run type-check`
+  - `npm run build`
+  - `npm run test -- src/lib/drawing/`
+  - `node -e "const lib = require('./dist/index.cjs'); console.log(['createDrawingTool','drawingReducer','historyReducer','serializeDrawings','registerDrawingTool'].map((name) => name + ':' + (typeof lib[name])).join(','))"`
+- Kết quả quan sát:
+  - `npm run type-check` → PASS.
+  - `npm run build` → PASS; tsup xuất ra `dist/index.js`, `dist/index.cjs`, `dist/index.d.ts`, `dist/index.d.mts`.
+  - `vitest run src/lib/drawing/` → PASS; 5/5 tests passed.
+  - Runtime smoke trên `dist/index.cjs` → PASS; `createDrawingTool`, `drawingReducer`, `historyReducer`, `serializeDrawings`, `registerDrawingTool` đều có mặt.
+  - `DrawingObject` và history đều serialize/deserialize được bằng JSON không mất dữ liệu.
+- Rủi ro còn lại:
+  - Rendering thực của từng tool sẽ được ghép vào slice sau, hiện registry và state machine đã khóa.
+- Kết luận: PASS
+
 ### P5 — Data adapter
 
 - Scope: StockDataAdapter, DjangoVnstockAdapter, realtime loader.
@@ -255,6 +396,36 @@ npx tsc --noEmit --strict 2>&1 | grep DjangoVnstockAdapter
 # vitest run src/lib/adapters/MockAdapter.test.ts
 ```
 
+**Evidence — P5 Data adapter đã hoàn tất:**
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Slice: P5 — Data adapter
+- Mục tiêu: dựng StockDataAdapter contract đầy đủ, DjangoVnstockAdapter, MockAdapter, BaseAdapter helper, và contract test cho REST/WS path.
+- Files touched:
+  - `module_tree_full.md`
+  - `src/index.ts`
+  - `src/lib/types/adapter.ts`
+  - `src/lib/adapters/StockDataAdapter.ts`
+  - `src/lib/adapters/BaseAdapter.ts`
+  - `src/lib/adapters/DjangoVnstockAdapter.ts`
+  - `src/lib/adapters/MockAdapter.ts`
+  - `src/lib/adapters/index.ts`
+  - `src/lib/adapters/adapters.test.ts`
+- Lệnh xác minh:
+  - `npm run type-check`
+  - `npm run build`
+  - `npm run test -- src/lib/adapters/`
+  - `node -e "const lib = require('./dist/index.cjs'); console.log(['BaseAdapter','DjangoVnstockAdapter','MockAdapter','createRestAdapter','createMockBars'].map((name) => name + ':' + (typeof lib[name])).join(','))"`
+- Kết quả quan sát:
+  - `npm run type-check` → PASS.
+  - `npm run build` → PASS; tsup xuất ra `dist/index.js`, `dist/index.cjs`, `dist/index.d.ts`, `dist/index.d.mts`.
+  - `vitest run src/lib/adapters/` → PASS; 3/3 tests passed.
+  - Runtime smoke trên `dist/index.cjs` → PASS; adapter exports đều có mặt.
+  - `MockAdapter` đáp ứng contract đầy đủ và `DjangoVnstockAdapter` map payload REST/WS sang OHLCVBar/Trade/OrderbookSnapshot đúng kiểu.
+- Rủi ro còn lại:
+  - `DjangoVnstockAdapter` vẫn phụ thuộc backend thực; slice sau sẽ nối data loader runtime vào shell.
+- Kết luận: PASS
+
 ### P6 — Examples conversion
 
 - Scope: chuyển examples sang stories/regression fixtures.
@@ -268,6 +439,48 @@ npx tsc --noEmit --strict 2>&1 | grep DjangoVnstockAdapter
   - browser smoke
 - Pass criteria:
   - Stories chạy được, layout và behavior khớp mục tiêu kiến trúc.
+
+**Evidence — P6 Examples conversion đã hoàn tất:**
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Slice: P6 — Examples conversion
+- Mục tiêu: chuyển 8 example tiêu biểu sang Storybook stories, dựng Storybook bằng Vite, và giữ coverage map khớp catalog.
+- Files touched:
+  - `package.json`
+  - `package-lock.json`
+  - `.storybook/main.ts`
+  - `.storybook/preview.ts`
+  - `stories/CandleStickStockScaleChartWithVolumeBarV3.stories.tsx`
+  - `stories/CandleStickChartWithMACDIndicator.stories.tsx`
+  - `stories/CandleStickChartWithBrush.stories.tsx`
+  - `stories/CandleStickChartWithAnnotation.stories.tsx`
+  - `stories/CandleStickChartWithHoverTooltip.stories.tsx`
+  - `stories/CandleStickChartPanToLoadMore.stories.tsx`
+  - `stories/CandleStickChartWithRSIIndicator.stories.tsx`
+  - `stories/VolumeProfileChart.stories.tsx`
+  - `stories/CoverageMap.md`
+  - `stories/support/chartTheme.ts`
+  - `stories/support/storyData.ts`
+  - `stories/support/StoryFrame.tsx`
+  - `stories/support/ChartSurface.tsx`
+  - `stories/support/exampleStories.tsx`
+  - `docs/TypeScript/IMPLEMENTATION_PLAN.md`
+  - `docs/TypeScript/TASKBOARD.md`
+  - `docs/TypeScript/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Lệnh xác minh:
+  - `npm run type-check`
+  - `npm run build:storybook`
+  - browser smoke trên `storybook-static/index.html`
+- Kết quả quan sát:
+  - `npm run type-check` → PASS.
+  - `npm run build:storybook` → PASS trên Storybook v10.3.6 với framework Vite v8.0.10; 518 modules transformed.
+  - Browser smoke → PASS; Storybook static mở được, sidebar liệt kê đủ 8 stories, và preview render story `CandleStickChartPanToLoadMore`.
+  - Coverage map đã ghi rõ source example → story file tương ứng.
+- Rủi ro còn lại:
+  - Storybook build vẫn có cảnh báo chunk size lớn và cảnh báo `PopoverProvider` ariaLabel; không chặn build.
+  - `reactDocgen` đã được tắt để tránh parse legacy source tree; docs tables của Storybook không còn tự sinh.
+- Kết luận: PASS
 
 ---
 
