@@ -1,0 +1,39 @@
+{
+	"presets": [
+		"@babel/preset-react",
+		"@babel/preset-env"
+	],
+	"plugins": [
+		"transform-flow-strip-types"
+	],
+	"env": {
+		"cjs": {
+			"presets": [["@babel/preset-env"]]
+		},
+		"es": {
+			"presets": [
+				["@babel/preset-env", { "modules": false  }]
+			]
+		},
+		"watch": {
+			"presets": [
+				["@babel/preset-env", {
+					"targets": {
+						"chrome": 59
+					},
+					"modules": false
+				}]
+			]
+		},
+		"server": {
+			"presets": [
+				["@babel/preset-env", {
+					"targets": {
+						"node": 7.5
+					},
+					"loose": true
+				}]
+			]
+		}
+	}
+}
