@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-03 23:37:26`
+Generated at: `2026-05-03 23:51:20`
 
 ## Summary
 
@@ -10,8 +10,8 @@ Generated at: `2026-05-03 23:37:26`
 - Python modules: 1
 - JS/TS modules: 593
 - Total classes: 348
-- Total functions: 3429
-- Total top-level variables: 7091
+- Total functions: 3428
+- Total top-level variables: 7081
 
 ## Python Modules
 
@@ -2109,9 +2109,9 @@ Generated at: `2026-05-03 23:37:26`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `addDrawing`, `addPane`, `applyPreset`, `clearDrawing`, `createPaneTemplate`, `normalizeDate`, `redoDrawing`, `removePane`, `restoreDrawing`, `summarizeIndicatorValue`, `toDateRange`, `toggleIndicator`, `undoDrawing`, `updateSize`
+  - `addDrawing`, `addPane`, `chartDomain`, `clearDrawing`, `normalizeDate`, `paneTemplate`, `redoDrawing`, `removePane`, `restoreDrawing`, `summarizeIndicator`, `toggleIndicator`, `undoDrawing`, `update`
 - Top-level variables:
-  - `DRAWING_TOOL_NAMES`, `INDICATOR_CATALOG`, `adapter`, `bestAsk`, `bestBid`, `compact`, `computed`, `coreProbe`, `data`, `dateFormat`, `disposed`, `draft`, `drawingProbe`, `end`, `existingPaneIds`, `exists`, `finalized`, `from`, `indicator`, `indicatorInput`, `indicatorProbe`, `indicators`, `isActive`, `lastValue`, `mid`, `newPaneIds`, `node`, `observer`, `paneId`, `paneManager`, `paneNumber`, `priceFormat`, `priceHeight`, `ratio`, `ready`, `restored`, `sample`, `selectedPane`, `serialized`, `spreadBps`, `start`, `stopBars`, `stopOrderbook`, `stopTrades`, `surfaceRef`, `templates`, `timerId`, `to`, `tools`, `totalHeight`, `volumeFormat`, `volumeHeight`, `xExtents`
+  - `DRAWING_TOOLS`, `INDICATOR_OPTIONS`, `active`, `adapter`, `bestAsk`, `bestBid`, `chartReady`, `completed`, `data`, `dateFormat`, `disposed`, `draft`, `drawingProbe`, `end`, `from`, `hasIt`, `id`, `indicator`, `indicatorProbe`, `indicators`, `input`, `lastValue`, `mid`, `node`, `observer`, `paneManager`, `priceFormat`, `ratio`, `restored`, `sample`, `selectedPane`, `serialized`, `shellRef`, `spreadBps`, `start`, `startX`, `stopBars`, `stopOrderbook`, `stopTrades`, `timerId`, `to`, `volumeFormat`, `xExtents`
 
 ### `src/demo/LiveDemo.tsx`
 

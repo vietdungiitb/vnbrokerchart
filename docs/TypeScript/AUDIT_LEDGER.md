@@ -316,6 +316,22 @@
 	- `python scripts/generate_module_tree.py` -> PASS (Modules: 594)
 - Kết luận: Demo đã có runtime controls cho add/remove pane, kéo splitter, toggle indicators, drawing actions (push/undo/redo/clear/restore), adapter telemetry (bars/trades/orderbook), cùng chart canvas hoạt động trên cùng màn hình.
 
+### Terminal UI Redesign Evidence (GoCharting-inspired)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: làm lại giao diện demo theo phong cách terminal sáng, bố cục rõ ràng (topbar, toolbar trái, chart workspace, side controls, bottombar) thay cho bố cục dashboard rối.
+- Files modified:
+	- `src/demo/LibraryShowcaseDemo.tsx`
+	- `src/demo/demo.css`
+	- `module_tree_full.md`
+- Validation:
+	- `npm run type-check` -> PASS
+	- `npm run build:docs` -> PASS
+	- `npm run test:soak` -> PASS (2 files, 3 tests)
+	- `python scripts/generate_module_tree.py` -> PASS (Modules: 594)
+- Kết luận: Demo đã chuyển sang terminal layout gần mẫu tham chiếu và giữ đầy đủ runtime features của thư viện.
+
 ---
 
 ## 4. Modified-file rule

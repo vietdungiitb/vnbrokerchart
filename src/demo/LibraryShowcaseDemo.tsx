@@ -4,8 +4,6 @@ import { scaleTime } from "d3-scale";
 import { timeFormat } from "d3-time-format";
 
 import {
-	ChartPane,
-	ChartTerminal,
 	MockAdapter,
 	type OHLCVBar,
 	PaneSplitter,
@@ -28,6 +26,8 @@ import { CrossHairCursor, MouseCoordinateX, MouseCoordinateY } from "../lib/coor
 import BarSeries from "../lib/series/BarSeries";
 import CandlestickSeries from "../lib/series/CandlestickSeries";
 import LineSeries from "../lib/series/LineSeries";
+import MACDSeries from "../lib/series/MACDSeries";
+import RSISeries from "../lib/series/RSISeries";
 import { OHLCTooltip } from "../lib/tooltip";
 import { getOfflineDemoData, type DemoDatum } from "./demoData";
 import "./demo.css";
@@ -36,18 +36,17 @@ const priceFormat = format(".2f");
 const volumeFormat = format(".3s");
 const dateFormat = timeFormat("%d/%m/%Y %H:%M");
 
-const INDICATOR_CATALOG = ["EMA", "SMA", "RSI", "MACD", "BOLLINGER", "VOLUME", "CVD"] as const;
-const DRAWING_TOOL_NAMES = ["trendLine", "hLine", "vLine", "fibonacci", "channel", "text"] as const;
+const INDICATOR_OPTIONS = ["EMA", "SMA", "RSI", "MACD", "BOLLINGER", "VOLUME", "CVD"] as const;
+const DRAWING_TOOLS = ["trendLine", "hLine", "vLine", "fibonacci", "channel", "text"] as const;
 
-type TerminalPreset = "Terminal" | "Orderflow" | "Stress";
-type DrawingToolName = typeof DRAWING_TOOL_NAMES[number];
+type DrawingToolName = typeof DRAWING_TOOLS[number];
 
 type AdapterProbe = {
 	barsFetched: number;
 	barTicks: number;
 	tradeTicks: number;
 	orderbookTicks: number;
-	lastSpreadBps: string;
+	spreadBps: string;
 	status: "idle" | "running" | "done";
 };
 
@@ -55,36 +54,13 @@ function normalizeDate(value: Date | number) {
 	return value instanceof Date ? value : new Date(value);
 }
 
-function toDateRange(data: DemoDatum[]) {
+function chartDomain(data: DemoDatum[]) {
 	const end = data.length - 1;
 	const start = Math.max(0, end - 140);
 	return [normalizeDate(data[start].date), normalizeDate(data[end].date)] as [Date, Date];
 }
 
-function summarizeIndicatorValue(value: unknown) {
-	if (Array.isArray(value)) {
-		if (value.length === 0) {
-			return "empty";
-		}
-		const lastValue = value[value.length - 1];
-		if (typeof lastValue === "number") {
-			return priceFormat(lastValue);
-		}
-		if (lastValue && typeof lastValue === "object") {
-			const compact = JSON.stringify(lastValue);
-			return compact.length > 42 ? `${compact.slice(0, 42)}...` : compact;
-		}
-		return String(lastValue);
-	}
-
-	if (value && typeof value === "object") {
-		return "object";
-	}
-
-	return String(value ?? "n/a");
-}
-
-function createPaneTemplate(label: string, heightPx: number, indicatorNames: readonly string[]) {
+function paneTemplate(label: string, heightPx: number, indicatorNames: readonly string[]) {
 	const indicators: IndicatorConfig[] = indicatorNames.map((name) => ({
 		name,
 		visible: true,
@@ -99,30 +75,46 @@ function createPaneTemplate(label: string, heightPx: number, indicatorNames: rea
 	};
 }
 
+function summarizeIndicator(value: unknown) {
+	if (Array.isArray(value)) {
+		if (value.length === 0) {
+			return "empty";
+		}
+		const lastValue = value[value.length - 1];
+		if (typeof lastValue === "number") {
+			return priceFormat(lastValue);
+		}
+		if (lastValue && typeof lastValue === "object") {
+			return JSON.stringify(lastValue).slice(0, 36);
+		}
+		return String(lastValue);
+	}
+	return String(value ?? "n/a");
+}
+
 export default function LibraryShowcaseDemo() {
-	const surfaceRef = useRef<HTMLDivElement | null>(null);
+	const shellRef = useRef<HTMLDivElement | null>(null);
 	const [chartWidth, setChartWidth] = useState(0);
 	const [timeframe, setTimeframe] = useState("30m");
-	const [preset, setPreset] = useState<TerminalPreset>("Terminal");
 	const [selectedPaneId, setSelectedPaneId] = useState("");
 	const [adapterProbe, setAdapterProbe] = useState<AdapterProbe>({
 		barsFetched: 0,
 		barTicks: 0,
 		tradeTicks: 0,
 		orderbookTicks: 0,
-		lastSpreadBps: "0.00",
+		spreadBps: "0.00",
 		status: "idle",
 	});
-	const [drawingHistoryState, setDrawingHistoryState] = useState(() => createDrawingHistory([]));
+	const [drawingState, setDrawingState] = useState(() => createDrawingHistory([]));
 
 	const paneManager = usePaneManager([
-		createPaneTemplate("Price", 170, ["EMA", "BOLLINGER"]),
-		createPaneTemplate("Volume", 120, ["VOLUME"]),
-		createPaneTemplate("Momentum", 120, ["RSI", "MACD"]),
+		paneTemplate("Price", 170, ["EMA", "BOLLINGER"]),
+		paneTemplate("Volume", 110, ["VOLUME"]),
+		paneTemplate("Momentum", 120, ["RSI", "MACD"]),
 	]);
 
 	const data = useMemo(() => getOfflineDemoData().map((datum) => ({ ...datum })), []);
-	const xExtents = useMemo(() => toDateRange(data), [data]);
+	const xExtents = useMemo(() => chartDomain(data), [data]);
 
 	const selectedPane = useMemo(() => {
 		return paneManager.panes.find((pane) => pane.id === selectedPaneId) ?? paneManager.panes[0];
@@ -135,22 +127,22 @@ export default function LibraryShowcaseDemo() {
 	}, [paneManager.panes, selectedPane]);
 
 	useEffect(() => {
-		const node = surfaceRef.current;
+		const node = shellRef.current;
 		if (!node) {
 			return;
 		}
 
-		const updateSize = () => {
+		const update = () => {
 			setChartWidth(Math.floor(node.getBoundingClientRect().width));
 		};
-		updateSize();
+		update();
 
-		const observer = new ResizeObserver(updateSize);
+		const observer = new ResizeObserver(update);
 		observer.observe(node);
-		window.addEventListener("resize", updateSize);
+		window.addEventListener("resize", update);
 		return () => {
 			observer.disconnect();
-			window.removeEventListener("resize", updateSize);
+			window.removeEventListener("resize", update);
 		};
 	}, []);
 
@@ -170,7 +162,7 @@ export default function LibraryShowcaseDemo() {
 			barTicks: 0,
 			tradeTicks: 0,
 			orderbookTicks: 0,
-			lastSpreadBps: "0.00",
+			spreadBps: "0.00",
 		}));
 
 		adapter.fetchBars("BTCUSD", timeframe, from, to)
@@ -179,6 +171,7 @@ export default function LibraryShowcaseDemo() {
 					return;
 				}
 				setAdapterProbe((prev) => ({ ...prev, barsFetched: bars.length }));
+
 				stopBars = adapter.subscribeToBar("BTCUSD", timeframe, () => {
 					setAdapterProbe((prev) => ({ ...prev, barTicks: prev.barTicks + 1 }));
 				});
@@ -188,20 +181,21 @@ export default function LibraryShowcaseDemo() {
 				stopOrderbook = adapter.subscribeToOrderbook("BTCUSD", (snapshot) => {
 					const bestBid = snapshot.bids[0]?.price ?? 0;
 					const bestAsk = snapshot.asks[0]?.price ?? 0;
-					const mid = (bestBid + bestAsk) / 2;
-					const spreadBps = mid > 0 ? ((bestAsk - bestBid) / mid) * 10_000 : 0;
+					const mid = (bestAsk + bestBid) / 2;
+					const spreadBps = mid > 0 ? ((bestAsk - bestBid) / mid) * 10000 : 0;
 					setAdapterProbe((prev) => ({
 						...prev,
 						orderbookTicks: prev.orderbookTicks + 1,
-						lastSpreadBps: spreadBps.toFixed(2),
+						spreadBps: spreadBps.toFixed(2),
 					}));
 				});
+
 				timerId = window.setTimeout(() => {
 					stopBars?.();
 					stopTrades?.();
 					stopOrderbook?.();
 					setAdapterProbe((prev) => ({ ...prev, status: "done" }));
-				}, 1600);
+				}, 1800);
 			})
 			.catch(() => {
 				if (disposed) {
@@ -223,7 +217,7 @@ export default function LibraryShowcaseDemo() {
 
 	const indicatorProbe = useMemo(() => {
 		const sample = data.slice(Math.max(0, data.length - 90));
-		const indicatorInput: OHLCVBar[] = sample.map((datum, index) => ({
+		const input: OHLCVBar[] = sample.map((datum, index) => ({
 			date: normalizeDate(datum.date),
 			open: datum.open,
 			high: datum.high,
@@ -237,65 +231,48 @@ export default function LibraryShowcaseDemo() {
 			dataIndex: index,
 		}));
 
-		return INDICATOR_CATALOG.map((name) => {
+		return INDICATOR_OPTIONS.map((name) => {
 			const indicator = getIndicator(name);
 			if (!indicator) {
-				return { name, status: "missing", value: "n/a" };
+				return { name, status: "missing", sample: "n/a" };
 			}
-			const computed = indicator.compute(indicatorInput);
-			return { name, status: "ok", value: summarizeIndicatorValue(computed) };
+			return {
+				name,
+				status: "ok",
+				sample: summarizeIndicator(indicator.compute(input)),
+			};
 		});
 	}, [data]);
 
 	const drawingProbe = useMemo(() => {
-		const tools = listDrawingTools().map((tool) => tool.name);
-		const serialized = serializeDrawings(drawingHistoryState.present);
+		const serialized = serializeDrawings(drawingState.present);
 		return {
-			toolCount: tools.length,
-			toolNames: tools,
-			serializedLength: serialized.length,
-			historyDepth: drawingHistoryState.past.length,
-			futureDepth: drawingHistoryState.future.length,
-			drawingsNow: drawingHistoryState.present.length,
+			toolNames: listDrawingTools().map((tool) => tool.name),
+			count: drawingState.present.length,
+			past: drawingState.past.length,
+			future: drawingState.future.length,
 			serialized,
 		};
-	}, [drawingHistoryState]);
+	}, [drawingState]);
 
-	const coreProbe = useMemo(() => {
-		return [
-			{ name: "ChartTerminal", ok: typeof ChartTerminal === "function" },
-			{ name: "ChartPane", ok: typeof ChartPane === "function" },
-			{ name: "PaneSplitter", ok: typeof PaneSplitter === "function" },
-			{ name: "usePaneManager", ok: typeof usePaneManager === "function" },
-		];
-	}, []);
-
-	const ready = chartWidth > 0 && data.length > 0;
+	const chartReady = chartWidth > 0 && data.length > 0;
 	const ratio = window.devicePixelRatio || 1;
-	const priceHeight = 430;
-	const volumeHeight = 130;
-	const totalHeight = priceHeight + volumeHeight;
 
 	const toggleIndicator = (name: string) => {
 		if (!selectedPane) {
 			return;
 		}
-		const exists = selectedPane.indicators.some((indicator) => indicator.name === name);
-		if (exists) {
+		const hasIt = selectedPane.indicators.some((indicator) => indicator.name === name);
+		if (hasIt) {
 			paneManager.removeIndicator(selectedPane.id, name);
 			return;
 		}
-		paneManager.addIndicator(selectedPane.id, {
-			name,
-			visible: true,
-			yAxis: "right",
-		});
+		paneManager.addIndicator(selectedPane.id, { name, yAxis: "right", visible: true });
 	};
 
 	const addPane = () => {
-		const paneNumber = paneManager.panes.length + 1;
-		const paneId = paneManager.addPane(createPaneTemplate(`Pane ${paneNumber}`, 110, ["EMA"]));
-		setSelectedPaneId(paneId);
+		const id = paneManager.addPane(paneTemplate(`Pane ${paneManager.panes.length + 1}`, 105, ["EMA"]));
+		setSelectedPaneId(id);
 	};
 
 	const removePane = () => {
@@ -305,276 +282,193 @@ export default function LibraryShowcaseDemo() {
 		paneManager.removePane(selectedPane.id);
 	};
 
-	const applyPreset = (nextPreset: TerminalPreset) => {
-		setPreset(nextPreset);
-		const existingPaneIds = paneManager.panes.map((pane) => pane.id);
-		existingPaneIds.forEach((paneId) => paneManager.removePane(paneId));
-
-		const templates = nextPreset === "Orderflow"
-			? [
-				createPaneTemplate("Price", 170, ["EMA", "BOLLINGER", "CVD"]),
-				createPaneTemplate("Volume", 110, ["VOLUME"]),
-				createPaneTemplate("Execution", 110, ["RSI"]),
-			]
-			: nextPreset === "Stress"
-				? [
-					createPaneTemplate("Price", 160, ["EMA", "BOLLINGER"]),
-					createPaneTemplate("Volume", 105, ["VOLUME"]),
-					createPaneTemplate("Momentum", 105, ["RSI", "MACD"]),
-					createPaneTemplate("Flow", 105, ["CVD"]),
-				]
-				: [
-					createPaneTemplate("Price", 170, ["EMA", "BOLLINGER"]),
-					createPaneTemplate("Volume", 120, ["VOLUME"]),
-					createPaneTemplate("Momentum", 120, ["RSI", "MACD"]),
-				];
-
-		const newPaneIds = templates.map((template) => paneManager.addPane(template));
-		if (newPaneIds[0]) {
-			setSelectedPaneId(newPaneIds[0]);
-		}
-	};
-
 	const addDrawing = (tool: DrawingToolName) => {
-		const draft = createDraftFromTool(tool, {
-			x: 40 + drawingHistoryState.present.length * 14,
-			y: 48 + drawingHistoryState.present.length * 9,
-		});
-		const finalized = createDrawingTool(tool).updateDraft(draft, {
-			x: draft.points[0].x + 132,
-			y: draft.points[0].y + 42,
-		});
-		setDrawingHistoryState((prev) => historyReducer(prev, { type: "PUSH", drawing: finalized }));
+		const startX = 24 + drawingState.present.length * 12;
+		const draft = createDraftFromTool(tool, { x: startX, y: 42 });
+		const completed = createDrawingTool(tool).updateDraft(draft, { x: startX + 120, y: 84 });
+		setDrawingState((prev) => historyReducer(prev, { type: "PUSH", drawing: completed }));
 	};
 
-	const undoDrawing = () => {
-		setDrawingHistoryState((prev) => historyReducer(prev, { type: "UNDO" }));
-	};
-
-	const redoDrawing = () => {
-		setDrawingHistoryState((prev) => historyReducer(prev, { type: "REDO" }));
-	};
-
-	const clearDrawing = () => {
-		setDrawingHistoryState((prev) => historyReducer(prev, { type: "CLEAR" }));
-	};
-
+	const undoDrawing = () => setDrawingState((prev) => historyReducer(prev, { type: "UNDO" }));
+	const redoDrawing = () => setDrawingState((prev) => historyReducer(prev, { type: "REDO" }));
+	const clearDrawing = () => setDrawingState((prev) => historyReducer(prev, { type: "CLEAR" }));
 	const restoreDrawing = () => {
 		const restored = deserializeDrawings(drawingProbe.serialized);
-		setDrawingHistoryState((prev) => historyReducer(prev, { type: "REPLACE", drawings: restored }));
+		setDrawingState((prev) => historyReducer(prev, { type: "REPLACE", drawings: restored }));
 	};
 
 	return (
-		<div className="demo-page terminal-shell">
-			<div className="demo-frame terminal-frame">
-				<section className="terminal-topbar">
-					<div className="terminal-ticker">BYBIT:BTCUSD · {timeframe}</div>
-					<div className="terminal-actions">
-						{(["15m", "30m", "1h"] as const).map((value) => (
-							<button
-								type="button"
-								key={value}
-								onClick={() => setTimeframe(value)}
-								className={`control-button ${timeframe === value ? "control-button--active" : ""}`}
+		<div className="gc-terminal">
+			<header className="gc-topbar">
+				<div className="gc-topbar__left">
+					<div className="gc-logo">BT</div>
+					<div className="gc-symbol">BTCUSD</div>
+					<select className="gc-select" value={timeframe} onChange={(event) => setTimeframe(event.target.value)}>
+						<option value="15m">15m</option>
+						<option value="30m">30m</option>
+						<option value="1h">1h</option>
+					</select>
+					<button type="button" className="gc-tab">Charts</button>
+					<button type="button" className="gc-tab">Compare</button>
+					<button type="button" className="gc-tab">Study</button>
+				</div>
+				<div className="gc-topbar__right">
+					<span className="gc-version">v{version}</span>
+					<button type="button" className="gc-upgrade">Upgrade</button>
+				</div>
+			</header>
+
+			<div className="gc-main">
+				<aside className="gc-tools">
+					{["+", "↗", "T", "╳", "◧", "◫", "⚑", "✎", "⌖", "⚙"].map((symbol) => (
+						<button key={symbol} type="button" className="gc-tool-btn">{symbol}</button>
+					))}
+				</aside>
+
+				<section className="gc-chart-area">
+					<div className="gc-ohlc-strip">
+						<span>BYBIT:BTCUSD ({timeframe})</span>
+						<span>O: {priceFormat(data[data.length - 1]?.open ?? 0)}</span>
+						<span>H: {priceFormat(data[data.length - 1]?.high ?? 0)}</span>
+						<span>L: {priceFormat(data[data.length - 1]?.low ?? 0)}</span>
+						<span>C: {priceFormat(data[data.length - 1]?.close ?? 0)}</span>
+					</div>
+
+					<div className="gc-chart-shell" ref={shellRef}>
+						{chartReady ? (
+							<ChartCanvas
+								height={620}
+								width={chartWidth}
+								margin={{ left: 60, right: 60, top: 8, bottom: 28 }}
+								type="hybrid"
+								seriesName="terminal-like-demo"
+								data={data}
+								xScale={scaleTime()}
+								xAccessor={(datum: DemoDatum) => datum.date}
+								displayXAccessor={(datum: DemoDatum) => datum.date}
+								xExtents={xExtents}
+								ratio={ratio}
+								mouseMoveEvent
+								zoomEvent
+								panEvent
+								useCrossHairStyleCursor
 							>
-								{value}
-							</button>
-						))}
-						{(["Terminal", "Orderflow", "Stress"] as const).map((value) => (
-							<button
-								type="button"
-								key={value}
-								onClick={() => applyPreset(value)}
-								className={`control-button ${preset === value ? "control-button--active" : ""}`}
-							>
-								Preset {value}
-							</button>
-						))}
+								<Chart id={1} height={380} yExtents={(datum: DemoDatum) => [datum.high, datum.low, datum.ema20, datum.ema50, datum.bollingerBand?.top, datum.bollingerBand?.bottom]}>
+									<XAxis axisAt="bottom" orient="bottom" />
+									<YAxis axisAt="right" orient="right" ticks={6} />
+									<CandlestickSeries />
+									<LineSeries yAccessor={(datum: DemoDatum) => datum.ema20} stroke="#2d9cdb" />
+									<LineSeries yAccessor={(datum: DemoDatum) => datum.ema50} stroke="#f2994a" />
+									<OHLCTooltip xDisplayFormat={dateFormat} volumeFormat={volumeFormat} displayTexts={{ d: "Ngay", o: "Mo", h: "Cao", l: "Thap", c: "Dong", v: "KL", na: "n/a" }} />
+									<MouseCoordinateX displayFormat={dateFormat} />
+									<MouseCoordinateY rectWidth={58} displayFormat={priceFormat} />
+								</Chart>
+								<Chart id={2} height={110} origin={(_w: number, h: number) => [0, h - 230]} yExtents={(datum: DemoDatum) => datum.volume}>
+									<YAxis axisAt="right" orient="right" ticks={4} tickFormat={volumeFormat} />
+									<BarSeries yAccessor={(datum: DemoDatum) => datum.volume} fill={(datum: DemoDatum) => (datum.close >= datum.open ? "#27ae60" : "#eb5757")} />
+								</Chart>
+								<Chart id={3} height={120} origin={(_w: number, h: number) => [0, h - 120]} yExtents={(datum: DemoDatum) => [datum.macd?.macd, datum.macd?.signal, datum.macd?.divergence, datum.rsi]}>
+									<YAxis axisAt="right" orient="right" ticks={4} />
+									<RSISeries yAccessor={(datum: DemoDatum) => datum.rsi} />
+									<MACDSeries yAccessor={(datum: DemoDatum) => datum.macd} />
+								</Chart>
+								<CrossHairCursor />
+							</ChartCanvas>
+						) : (
+							<div className="gc-chart-placeholder">Dang khoi tao terminal...</div>
+						)}
 					</div>
 				</section>
 
-				<section className="demo-grid terminal-grid">
-					<div className="demo-side terminal-left">
-						<div className="demo-panel">
-							<h2>Pane runtime controls</h2>
-							<div className="control-grid">
-								<button type="button" className="control-button" onClick={addPane}>Add pane</button>
-								<button type="button" className="control-button" onClick={removePane} disabled={paneManager.panes.length <= 1}>Remove selected</button>
-							</div>
-							<p className="demo-note">Pane hiện tại: {selectedPane?.label ?? "n/a"} ({selectedPane?.id ?? "-"})</p>
+				<aside className="gc-sidepanel">
+					<div className="gc-panel">
+						<div className="gc-panel__title">Pane Runtime</div>
+						<div className="gc-row">
+							<button type="button" className="gc-btn" onClick={addPane}>Add Pane</button>
+							<button type="button" className="gc-btn" onClick={removePane} disabled={paneManager.panes.length <= 1}>Remove</button>
 						</div>
-
-						<div className="demo-panel">
-							<h2>Indicators</h2>
-							<div className="control-grid">
-								{INDICATOR_CATALOG.map((name) => {
-									const isActive = Boolean(selectedPane?.indicators.some((indicator) => indicator.name === name));
-									return (
-										<button
-											type="button"
-											key={name}
-											onClick={() => toggleIndicator(name)}
-											className={`control-button ${isActive ? "control-button--active" : ""}`}
-										>
-											{name}
-										</button>
-									);
-								})}
-							</div>
+						<div className="gc-pane-lab">
+							{paneManager.panes.map((pane, index) => (
+								<Fragment key={pane.id}>
+									<div
+										className={`gc-pane-item ${pane.id === selectedPane?.id ? "gc-pane-item--active" : ""}`}
+										style={{ height: pane.heightPx, minHeight: pane.minHeightPx ?? 90 }}
+										onClick={() => setSelectedPaneId(pane.id)}
+									>
+										<div className="gc-pane-item__head">
+											<span>{pane.label ?? pane.id}</span>
+											<span>{pane.heightPx ?? 0}px</span>
+										</div>
+										<div className="gc-tag-wrap">
+											{pane.indicators.map((indicator) => (
+												<span key={`${pane.id}-${indicator.name}`} className="gc-tag">{indicator.name}</span>
+											))}
+										</div>
+									</div>
+									{index < paneManager.panes.length - 1 ? (
+										<PaneSplitter className="gc-splitter" onResize={(heightPx) => paneManager.resizePane(pane.id, heightPx)} minTopHeight={90} minBottomHeight={90} />
+									) : null}
+								</Fragment>
+							))}
 						</div>
+					</div>
 
-						<div className="demo-panel">
-							<h2>Drawing tools</h2>
-							<div className="control-grid">
-								{DRAWING_TOOL_NAMES.map((tool) => (
-									<button type="button" key={tool} className="control-button" onClick={() => addDrawing(tool)}>
-										{tool}
+					<div className="gc-panel">
+						<div className="gc-panel__title">Indicators</div>
+						<div className="gc-row gc-wrap">
+							{INDICATOR_OPTIONS.map((name) => {
+								const active = Boolean(selectedPane?.indicators.some((indicator) => indicator.name === name));
+								return (
+									<button key={name} type="button" className={`gc-btn ${active ? "gc-btn--active" : ""}`} onClick={() => toggleIndicator(name)}>
+										{name}
 									</button>
-								))}
-							</div>
-							<div className="control-grid">
-								<button type="button" className="control-button" onClick={undoDrawing}>Undo</button>
-								<button type="button" className="control-button" onClick={redoDrawing}>Redo</button>
-								<button type="button" className="control-button" onClick={clearDrawing}>Clear</button>
-								<button type="button" className="control-button" onClick={restoreDrawing}>Restore</button>
-							</div>
+								);
+							})}
+						</div>
+						<div className="gc-telemetry-list">
+							{indicatorProbe.map((item) => (
+								<div key={item.name} className="gc-telemetry-item">
+									<span>{item.name}</span>
+									<span>{item.sample}</span>
+								</div>
+							))}
 						</div>
 					</div>
 
-					<div className="demo-chart-card terminal-center">
-						<div className="demo-chart-card__header">
-							<div>
-								<h2 className="demo-chart-card__title">Chart canvas + runtime pane lab</h2>
-								<p className="demo-chart-card__meta">Layout mô phỏng terminal: chart trung tâm, pane lab kéo splitter, controls runtime bên cạnh.</p>
-							</div>
-							<span className={`source-chip ${ready ? "source-chip--positive" : "source-chip--neutral"}`}>
-								{ready ? "Chart ready" : "Initializing"}
-							</span>
+					<div className="gc-panel">
+						<div className="gc-panel__title">Drawing + Adapter</div>
+						<div className="gc-row gc-wrap">
+							{DRAWING_TOOLS.map((tool) => (
+								<button key={tool} type="button" className="gc-btn" onClick={() => addDrawing(tool)}>{tool}</button>
+							))}
 						</div>
-						<div className="chart-shell" ref={surfaceRef}>
-							{ready ? (
-								<>
-									<div className="chart-surface">
-										<ChartCanvas
-											height={totalHeight}
-											width={chartWidth}
-											margin={{ left: 80, right: 80, top: 16, bottom: 34 }}
-											type="hybrid"
-											seriesName="terminal-showcase"
-											data={data}
-											xScale={scaleTime()}
-											xAccessor={(datum: DemoDatum) => datum.date}
-											displayXAccessor={(datum: DemoDatum) => datum.date}
-											xExtents={xExtents}
-											ratio={ratio}
-											mouseMoveEvent
-											zoomEvent
-											panEvent
-											useCrossHairStyleCursor
-										>
-											<Chart id={1} height={priceHeight} yExtents={(datum: DemoDatum) => [datum.high, datum.low, datum.ema20, datum.ema50]}>
-												<XAxis axisAt="bottom" orient="bottom" />
-												<YAxis axisAt="right" orient="right" ticks={5} />
-												<CandlestickSeries />
-												<LineSeries yAccessor={(datum: DemoDatum) => datum.ema20} stroke="#22d3ee" />
-												<LineSeries yAccessor={(datum: DemoDatum) => datum.ema50} stroke="#f59e0b" />
-												<OHLCTooltip xDisplayFormat={dateFormat} volumeFormat={volumeFormat} displayTexts={{ d: "Ngày", o: "Mở", h: "Cao", l: "Thấp", c: "Đóng", v: "KL", na: "n/a" }} />
-												<MouseCoordinateX displayFormat={dateFormat} />
-												<MouseCoordinateY rectWidth={60} displayFormat={priceFormat} />
-											</Chart>
-											<Chart id={2} height={volumeHeight} origin={(_w: number, h: number) => [0, h - volumeHeight]} yExtents={(datum: DemoDatum) => datum.volume}>
-												<XAxis axisAt="bottom" orient="bottom" />
-												<YAxis axisAt="right" orient="right" ticks={4} tickFormat={volumeFormat} />
-												<BarSeries yAccessor={(datum: DemoDatum) => datum.volume} fill={(datum: DemoDatum) => (datum.close >= datum.open ? "#10b981" : "#ef4444")} />
-											</Chart>
-											<CrossHairCursor />
-										</ChartCanvas>
-									</div>
-
-									<div className="runtime-lab">
-										{paneManager.panes.map((pane, index) => (
-											<Fragment key={pane.id}>
-												<div
-													className={`runtime-pane ${pane.id === selectedPane?.id ? "runtime-pane--selected" : ""}`}
-													style={{
-														height: pane.heightPx,
-														minHeight: pane.minHeightPx ?? 90,
-													}}
-													onClick={() => setSelectedPaneId(pane.id)}
-												>
-													<div className="runtime-pane__header">
-														<span>{pane.label ?? pane.id}</span>
-														<span>{pane.heightPx ?? 0}px</span>
-													</div>
-													<div className="runtime-pane__indicators">
-														{pane.indicators.length === 0 ? (
-															<span className="runtime-chip runtime-chip--muted">No indicator</span>
-														) : (
-															pane.indicators.map((indicator) => (
-																<span className="runtime-chip" key={`${pane.id}-${indicator.name}`}>{indicator.name}</span>
-															))
-														)}
-													</div>
-												</div>
-												{index < paneManager.panes.length - 1 ? (
-													<PaneSplitter className="runtime-splitter" onResize={(heightPx) => paneManager.resizePane(pane.id, heightPx)} minTopHeight={90} minBottomHeight={90} />
-												) : null}
-											</Fragment>
-										))}
-									</div>
-								</>
-							) : (
-								<div className="chart-placeholder">Dang khoi tao chart showcase...</div>
-							)}
+						<div className="gc-row">
+							<button type="button" className="gc-btn" onClick={undoDrawing}>Undo</button>
+							<button type="button" className="gc-btn" onClick={redoDrawing}>Redo</button>
+							<button type="button" className="gc-btn" onClick={clearDrawing}>Clear</button>
+							<button type="button" className="gc-btn" onClick={restoreDrawing}>Restore</button>
+						</div>
+						<div className="gc-telemetry-list">
+							<div className="gc-telemetry-item"><span>Drawings</span><span>{drawingProbe.count}</span></div>
+							<div className="gc-telemetry-item"><span>History</span><span>{drawingProbe.past}/{drawingProbe.future}</span></div>
+							<div className="gc-telemetry-item"><span>Adapter</span><span>{adapterProbe.status}</span></div>
+							<div className="gc-telemetry-item"><span>Bars/Trades/Book</span><span>{adapterProbe.barTicks}/{adapterProbe.tradeTicks}/{adapterProbe.orderbookTicks}</span></div>
+							<div className="gc-telemetry-item"><span>Spread</span><span>{adapterProbe.spreadBps} bps</span></div>
 						</div>
 					</div>
-
-					<div className="demo-side">
-						<div className="demo-panel">
-							<h2>Core API checks</h2>
-							<div className="legend-list">
-								{coreProbe.map((item) => (
-									<div className="legend-row" key={item.name}>
-										<div className="legend-row__key">
-											<span className="legend-swatch legend-swatch--block" style={{ background: item.ok ? "#10b981" : "#ef4444" }} />
-											<div className="legend-row__label">{item.name}</div>
-										</div>
-										<div className="legend-row__detail">{item.ok ? "Export ready" : "Missing"}</div>
-									</div>
-								))}
-							</div>
-						</div>
-
-						<div className="demo-panel">
-							<h2>Indicator registry</h2>
-							<div className="legend-list">
-								{indicatorProbe.map((item) => (
-									<div className="legend-row" key={item.name}>
-										<div className="legend-row__key">
-											<span className="legend-swatch legend-swatch--line" style={{ background: item.status === "ok" ? "#22d3ee" : "#ef4444" }} />
-											<div className="legend-row__label">{item.name}</div>
-										</div>
-										<div className="legend-row__detail">Sample: {item.value}</div>
-									</div>
-								))}
-							</div>
-						</div>
-
-						<div className="demo-panel">
-							<h2>Drawing + Adapter telemetry</h2>
-							<div className="feature-list">
-								<div className="feature-item"><span className="feature-dot" /><div>Tools: {drawingProbe.toolNames.join(", ")}</div></div>
-								<div className="feature-item"><span className="feature-dot" /><div>Drawings: {drawingProbe.drawingsNow} | Past: {drawingProbe.historyDepth} | Future: {drawingProbe.futureDepth}</div></div>
-								<div className="feature-item"><span className="feature-dot" /><div>Serialized bytes: {drawingProbe.serializedLength}</div></div>
-								<div className="feature-item"><span className="feature-dot" /><div>Adapter status: {adapterProbe.status}</div></div>
-								<div className="feature-item"><span className="feature-dot" /><div>Ticks bars/trades/orderbook: {adapterProbe.barTicks}/{adapterProbe.tradeTicks}/{adapterProbe.orderbookTicks}</div></div>
-								<div className="feature-item"><span className="feature-dot" /><div>Last spread: {adapterProbe.lastSpreadBps} bps</div></div>
-							</div>
-							<p className="demo-note">Layout tham chiếu terminal trading: thanh công cụ, khu chart trung tâm, panel điều khiển trái/phải, pane splitter runtime.</p>
-						</div>
-					</div>
-				</section>
+				</aside>
 			</div>
+
+			<footer className="gc-bottombar">
+				<button type="button" className="gc-bottom-btn gc-bottom-btn--active">1D</button>
+				<button type="button" className="gc-bottom-btn">5D</button>
+				<button type="button" className="gc-bottom-btn">1M</button>
+				<button type="button" className="gc-bottom-btn">Script</button>
+				<button type="button" className="gc-bottom-btn">Alert</button>
+				<button type="button" className="gc-bottom-btn">Trade</button>
+				<div className="gc-grow" />
+				<button type="button" className="gc-publish">Publish</button>
+			</footer>
 		</div>
 	);
 }
