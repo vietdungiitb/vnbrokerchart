@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-03 23:18:17`
+Generated at: `2026-05-03 23:25:11`
 
 ## Summary
 
-- Total modules: 593
+- Total modules: 594
 - Python modules: 1
-- JS/TS modules: 592
+- JS/TS modules: 593
 - Total classes: 348
-- Total functions: 3415
-- Total top-level variables: 7038
+- Total functions: 3419
+- Total top-level variables: 7078
 
 ## Python Modules
 
@@ -2105,6 +2105,13 @@ Generated at: `2026-05-03 23:18:17`
 
 - Top-level variables:
   - `container`, `root`
+
+### `src/demo/LibraryShowcaseDemo.tsx`
+
+- Functions:
+  - `normalizeDate`, `summarizeIndicatorValue`, `toDateRange`, `updateSize`
+- Top-level variables:
+  - `adapter`, `checks`, `compact`, `computed`, `coreProbe`, `data`, `dateFormat`, `disposed`, `drawingProbe`, `end`, `firstDraft`, `from`, `history`, `indicator`, `indicatorInput`, `indicatorProbe`, `lastValue`, `names`, `next`, `node`, `observer`, `priceFormat`, `priceHeight`, `ratio`, `ready`, `restored`, `sample`, `serialized`, `start`, `stopBars`, `stopTrades`, `surfaceRef`, `timerId`, `to`, `tools`, `totalHeight`, `updated`, `volumeFormat`, `volumeHeight`, `xExtents`
 
 ### `src/demo/LiveDemo.tsx`
 
