@@ -387,6 +387,38 @@ Browser smoke: zoom + pan + brush + indicators đầy đủ
 
 **Kết luận**: PASS — landing page simplified, brush span retained.
 
+### Post-close original-like restoration ✅
+
+**Checklist**:
+- [x] `src/demo/index.tsx` → render `OriginalLikeDemo`
+- [x] `src/lib/ChartCanvas.tsx` → reset khi `xExtents` đổi
+- [x] `src/lib/tooltip/MovingAverageTooltip.tsx` → tolerate chartConfig array/object
+- [x] `src/demo/SimpleDemo.tsx` → delete
+- [x] `module_tree_full.md` → regenerate
+
+**Bằng chứng**:
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Files added/updated:
+  - `src/demo/OriginalLikeDemo.tsx`
+  - `src/demo/index.tsx`
+  - `src/demo/demo.css`
+  - `src/lib/ChartCanvas.tsx`
+  - `src/lib/tooltip/MovingAverageTooltip.tsx`
+  - `src/lib/tooltip/OHLCTooltip.tsx`
+  - `src/lib/tooltip/MACDTooltip.tsx`
+  - `module_tree_full.md`
+- Files deleted:
+  - `src/demo/SimpleDemo.tsx`
+- Lệnh xác minh:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS (3 warnings; non-blocking)
+  - `python scripts/generate_module_tree.py` → Modules: 320
+  - Browser smoke on `http://127.0.0.1:4173/index.html` → PASS
+  - `xExtents` reset verified via browser state after brush callback
+
+**Kết luận**: PASS — original-like layout restored, wheel zoom and brush span verified.
+
 ## 2. Audit template chung
 
 Mỗi slice nên ghi theo mẫu sau:

@@ -49,8 +49,12 @@ body::before {
 .demo-page {
 	position: relative;
 	min-height: 100%;
-	padding: clamp(20px, 3vw, 40px);
+	padding: 12px;
 	background: transparent;
+}
+
+.demo-page--classic {
+	padding: 12px;
 }
 
 .demo-page::before,
@@ -85,7 +89,12 @@ body::before {
 	max-width: 1640px;
 	margin: 0 auto;
 	display: grid;
-	gap: 24px;
+	gap: 12px;
+}
+
+.demo-frame--classic {
+	max-width: 1400px;
+	gap: 12px;
 }
 
 .demo-hero {
@@ -260,9 +269,13 @@ body::before {
 	justify-content: space-between;
 	align-items: flex-start;
 	gap: 16px;
-	padding: 22px 24px 18px;
+	padding: 12px 16px 10px;
 	border-bottom: 1px solid rgba(148, 163, 184, 0.12);
 	flex-wrap: wrap;
+}
+
+.demo-chart-card__header--classic {
+	padding: 12px 16px 10px;
 }
 
 .demo-chart-card__title {
@@ -314,11 +327,15 @@ body::before {
 }
 
 .chart-shell {
-	padding: 18px;
+	padding: 8px;
+}
+
+.chart-shell--classic {
+	padding: 8px;
 }
 
 .chart-surface {
-	min-height: 520px;
+	min-height: 600px;
 	width: 100%;
 	border-radius: 24px;
 	overflow: hidden;
@@ -326,8 +343,12 @@ body::before {
 	border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
+.chart-surface--classic {
+	min-height: 600px;
+}
+
 .chart-placeholder {
-	min-height: 520px;
+	min-height: 600px;
 	display: grid;
 	place-items: center;
 	padding: 24px;

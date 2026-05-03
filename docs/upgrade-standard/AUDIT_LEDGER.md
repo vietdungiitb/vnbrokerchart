@@ -225,6 +225,30 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - Browser smoke on `http://127.0.0.1:4173/index.html` → PASS
 - Kết luận: PASS — demo landing simplified và brush span vẫn giữ được.
 
+### Demo restoration — original-like layout
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: `src/demo/`, `src/lib/tooltip/`, `src/lib/ChartCanvas.tsx`
+- Files added/updated:
+  - `src/demo/OriginalLikeDemo.tsx`
+  - `src/demo/index.tsx`
+  - `src/demo/demo.css`
+  - `src/lib/ChartCanvas.tsx`
+  - `src/lib/tooltip/MovingAverageTooltip.tsx`
+  - `src/lib/tooltip/OHLCTooltip.tsx`
+  - `src/lib/tooltip/MACDTooltip.tsx`
+  - `module_tree_full.md`
+- Files deleted:
+  - `src/demo/SimpleDemo.tsx`
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS (3 warnings; non-blocking)
+  - `python scripts/generate_module_tree.py` → Modules: 320
+  - Browser smoke on `http://127.0.0.1:4173/index.html` → PASS
+  - `xExtents` reset verified via browser state after brush callback
+- Kết luận: PASS — demo gọn nhưng giữ cấu trúc gốc; wheel zoom và brush span đều hoạt động.
+
 ## 3. Modified-file rule
 
 Mọi slice đã hoàn thành phải liệt kê chính xác tên file đã sửa. File không có trong ledger không được đóng audit.

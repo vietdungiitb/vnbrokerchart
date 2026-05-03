@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-03 15:56:05`
+Generated at: `2026-05-03 16:44:46`
 
 ## Summary
 
@@ -10,8 +10,8 @@ Generated at: `2026-05-03 15:56:05`
 - Python modules: 1
 - JS/TS modules: 319
 - Total classes: 218
-- Total functions: 321
-- Total top-level variables: 1869
+- Total functions: 319
+- Total top-level variables: 1887
 
 ## Python Modules
 
@@ -885,12 +885,12 @@ Generated at: `2026-05-03 15:56:05`
 - Top-level variables:
   - `cancelled`, `height`, `margin`, `width`
 
-### `src/demo/SimpleDemo.tsx`
+### `src/demo/OriginalLikeDemo.tsx`
 
 - Functions:
-  - `SimpleDemo`, `createOrigin`, `getInitialExtents`, `handleBrush`, `handleResetView`, `handleResize`, `normalizeBrushExtents`, `updateWidth`
+  - `OriginalLikeDemo`, `createOrigin`, `handleBrush`, `handleResetView`, `handleResize`, `updateWidth`
 - Top-level variables:
-  - `axisTheme`, `bearishColor`, `bullishColor`, `chartData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `dateFormat`, `ema20Stroke`, `ema50Stroke`, `endDate`, `endIndex`, `gridWidth`, `initialExtents`, `margin`, `node`, `observer`, `overviewHeight`, `overviewOrigin`, `plotHeight`, `priceFormat`, `priceHeight`, `priceYAxisTheme`, `resolvedChartWidth`, `startDate`, `startIndex`, `themeFontFamily`, `topXAxisTheme`, `volumeFormat`
+  - `BRUSH_TYPE`, `axisTheme`, `bearishColor`, `bullishColor`, `calculatedData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `ema12`, `ema12Stroke`, `ema26`, `ema26Stroke`, `endIndex`, `initialXExtents`, `left`, `macdAppearance`, `macdCalculator`, `macdDateFormat`, `macdFormat`, `macdHeight`, `macdOrigin`, `macdYAxisTheme`, `margin`, `node`, `observer`, `priceFormat`, `priceHeight`, `priceYAxisTheme`, `rawData`, `resolvedChartWidth`, `right`, `smaVolume10`, `startIndex`, `themeFontFamily`, `tooltipDateFormat`, `volumeAxisFormat`, `volumeFormat`, `volumeHeight`, `volumeMouseFormat`, `volumeOrigin`, `volumeYAxisTheme`, `xScaleProvider`
 
 ### `src/index.ts`
 
@@ -1958,14 +1958,14 @@ Generated at: `2026-05-03 15:56:05`
 - Classes:
   - `MACDTooltip`
 - Top-level variables:
-  - `currentItem`, `divergence`, `macd`, `macdValue`, `origin`, `signal`
+  - `chartConfigList`, `config`, `currentItem`, `divergence`, `macd`, `macdValue`, `origin`, `signal`
 
 ### `src/lib/tooltip/MovingAverageTooltip.tsx`
 
 - Classes:
   - `MovingAverageTooltip`, `SingleMAToolTip`
 - Top-level variables:
-  - `config`, `currentItem`, `origin`, `tooltipLabel`, `translate`, `yDisplayValue`, `yValue`
+  - `chartConfigList`, `config`, `currentItem`, `origin`, `tooltipLabel`, `translate`, `yDisplayValue`, `yValue`
 
 ### `src/lib/tooltip/OHLCTooltip.tsx`
 
@@ -1974,7 +1974,7 @@ Generated at: `2026-05-03 15:56:05`
 - Functions:
   - `defaultDisplay`
 - Top-level variables:
-  - `currentItem`, `displayDate`, `displayTextsDefault`, `item`, `itemsToDisplay`, `origin`
+  - `chartConfigList`, `config`, `currentItem`, `displayDate`, `displayTextsDefault`, `item`, `itemsToDisplay`, `origin`
 
 ### `src/lib/tooltip/RSITooltip.tsx`
 

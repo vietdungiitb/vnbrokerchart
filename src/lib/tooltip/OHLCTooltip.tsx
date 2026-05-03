@@ -28,7 +28,12 @@ class OHLCTooltip extends Component<any, any> {
 			displayTexts
 		} = this.props;
 
-		const { chartConfig: { width, height } } = moreProps;
+		const chartConfigList = moreProps.chartConfig;
+		const config = Array.isArray(chartConfigList)
+			? chartConfigList.find((each: any) => each.id === moreProps.chartId) || chartConfigList[0]
+			: chartConfigList;
+		if (!config) return null;
+		const { width, height } = config;
 		const { displayXAccessor } = moreProps;
 
 		const currentItem = displayValuesFor(this.props, moreProps);

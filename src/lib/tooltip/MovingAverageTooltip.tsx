@@ -65,14 +65,17 @@ class MovingAverageTooltip extends Component<any, any> {
 		const { displayValuesFor } = this.props;
 
 		const { chartId } = moreProps;
-		const { chartConfig } = moreProps;
+		const chartConfigList = moreProps.chartConfig;
+		const config = Array.isArray(chartConfigList)
+			? chartConfigList.find((each: any) => each.id === chartId) || chartConfigList[0]
+			: chartConfigList;
 
 		const { className, onClick, width, fontFamily, fontSize, textFill, labelFill } = this.props;
 		const { origin: originProp, displayFormat, options } = this.props;
-		const { chartConfig: { height } } = moreProps;
+		const { height } = config;
 
 		const currentItem = displayValuesFor(this.props, moreProps);
-		const config = chartConfig;
+		if (!config) return null;
 
 		const origin = functor(originProp);
 		const [x, y] = origin(width, height);

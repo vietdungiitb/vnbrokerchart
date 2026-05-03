@@ -22,7 +22,12 @@ class MACDTooltip extends Component<any, any> {
 		const { yAccessor, options, appearance, labelFill } = this.props;
 		const { displayValuesFor } = this.props;
 
-		const { chartConfig: { width, height } } = moreProps;
+		const chartConfigList = moreProps.chartConfig;
+		const config = Array.isArray(chartConfigList)
+			? chartConfigList.find((each: any) => each.id === moreProps.chartId) || chartConfigList[0]
+			: chartConfigList;
+		if (!config) return null;
+		const { width, height } = config;
 
 		const currentItem = displayValuesFor(this.props, moreProps);
 		const macdValue = currentItem && yAccessor(currentItem);

@@ -44,6 +44,7 @@ const log = getLogger("ChartCanvas");
 
 const CANDIDATES_FOR_RESET = [
 	"seriesName",
+	"xExtents",
 ];
 
 function shouldResetChart(thisProps: AnyRecord, nextProps: AnyRecord) {
