@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-03 18:23:10`
+Generated at: `2026-05-03 21:09:39`
 
 ## Summary
 
-- Total modules: 320
+- Total modules: 508
 - Python modules: 1
-- JS/TS modules: 319
-- Total classes: 218
-- Total functions: 321
-- Total top-level variables: 1900
+- JS/TS modules: 507
+- Total classes: 339
+- Total functions: 485
+- Total top-level variables: 2518
 
 ## Python Modules
 
@@ -832,6 +832,1224 @@ Generated at: `2026-05-03 18:23:10`
 - Functions:
   - `getDevServerJs`, `getDocumentationContent`, `getExternalAssets`, `getIndexContent`
 
+### `react-stockcharts-examples/examples/AreaChart/src/Chart.js`
+
+- Classes:
+  - `AreaChart`
+- Top-level variables:
+  - `canvasGradient`
+
+### `react-stockcharts-examples/examples/AreaChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/AreaChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/AreaChartWithYPercent/src/Chart.js`
+
+- Classes:
+  - `AreaChartWithYPercent`
+
+### `react-stockcharts-examples/examples/AreaChartWithYPercent/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/AreaChartWithYPercent/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/AreaChartWithZoomPan/src/Chart.js`
+
+- Classes:
+  - `AreaChartWithEdge`
+- Top-level variables:
+  - `end`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/AreaChartWithZoomPan/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/AreaChartWithZoomPan/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/BarChart/src/Chart.js`
+
+- Classes:
+  - `BarChart`
+- Top-level variables:
+  - `data`
+
+### `react-stockcharts-examples/examples/BarChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/BarChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `promiseBarData`
+
+### `react-stockcharts-examples/examples/BubbleChart/src/Chart.js`
+
+- Classes:
+  - `BubbleChart`
+- Functions:
+  - `fill`, `radius`
+- Top-level variables:
+  - `data`, `f`, `r`
+
+### `react-stockcharts-examples/examples/BubbleChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/BubbleChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `promiseBubbleData`
+
+### `react-stockcharts-examples/examples/CandleStickChart/src/Chart.js`
+
+- Classes:
+  - `CandleStickChart`
+- Functions:
+  - `xAccessor`
+- Top-level variables:
+  - `xExtents`
+
+### `react-stockcharts-examples/examples/CandleStickChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartForContinuousIntraDay/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartForContinuousIntraDay`
+- Functions:
+  - `xAccessor`
+- Top-level variables:
+  - `end`, `start`, `xExtents`
+
+### `react-stockcharts-examples/examples/CandleStickChartForContinuousIntraDay/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartForContinuousIntraDay/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDateTime`, `promiseIntraDayContinuous`
+
+### `react-stockcharts-examples/examples/CandleStickChartForDiscontinuousIntraDay/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartForDiscontinuousIntraDay`
+- Top-level variables:
+  - `end`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartForDiscontinuousIntraDay/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartForDiscontinuousIntraDay/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `promiseIntraDayDiscontinuous`
+
+### `react-stockcharts-examples/examples/CandleStickChartPanToLoadMore/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartPanToLoadMore`
+- Functions:
+  - `getMaxUndefined`
+- Top-level variables:
+  - `LENGTH_TO_SHOW`, `calculatedData`, `dataToCalculate`, `ema12`, `ema26`, `indexCalculator`, `macdAppearance`, `macdCalculator`, `maxWindowSize`, `rowsToDownload`, `smaVolume50`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartPanToLoadMore/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartPanToLoadMore/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithAnnotation/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithAnnotation`
+- Top-level variables:
+  - `annotationProps`, `end`, `height`, `margin`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithAnnotation/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithAnnotation/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithBollingerBandOverlay/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithBollingerBandOverlay`
+- Top-level variables:
+  - `bb`, `bbFill`, `bbStroke`, `calculatedData`, `ema20`, `ema50`, `end`, `sma20`, `smaVolume50`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithBollingerBandOverlay/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithBollingerBandOverlay/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithBrush/src/Chart.js`
+
+- Classes:
+  - `CandlestickChart`
+- Top-level variables:
+  - `BRUSH_TYPE`, `CandleStickChartWithBrush`, `calculatedData`, `ema12`, `ema26`, `end`, `high`, `keyCode`, `left`, `low`, `macdAppearance`, `macdCalculator`, `right`, `smaVolume50`, `start`, `xExtents`, `xScaleProvider`, `yExtents1`, `yExtents3`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithBrush/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithBrush/src/interactiveutils.js`
+
+- Functions:
+  - `getInteractiveNodes`, `handleSelection`, `saveInteractiveNode`, `saveInteractiveNodes`
+- Top-level variables:
+  - `interactive`, `key`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithBrush/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithCHMousePointer/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithCHMousePointer`
+- Top-level variables:
+  - `end`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithCHMousePointer/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithCHMousePointer/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithClickHandlerCallback/src/Chart.js`
+
+- Classes:
+  - `CandlestickChart`
+- Top-level variables:
+  - `CandleStickChartWithClickHandlerCallback`, `calculatedData`, `ema12`, `ema26`, `end`, `macdAppearance`, `macdCalculator`, `smaVolume50`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithClickHandlerCallback/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithClickHandlerCallback/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithCompare/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithCompare`
+- Top-level variables:
+  - `compareCalculator`, `end`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithCompare/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithCompare/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseCompare`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithDarkTheme/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithDarkTheme`
+- Top-level variables:
+  - `bb`, `bbAppearance`, `calculatedData`, `ema20`, `ema50`, `end`, `fastSTO`, `fullSTO`, `gridHeight`, `gridWidth`, `height`, `margin`, `showGrid`, `slowSTO`, `start`, `stoAppearance`, `xExtents`, `xGrid`, `xScaleProvider`, `yGrid`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithDarkTheme/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithDarkTheme/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithEdge/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithEdge`
+- Top-level variables:
+  - `calculatedData`, `ema20`, `ema50`, `end`, `smaVolume70`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithEdge/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithEdge/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithEquidistantChannel/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithEquidistantChannel`
+- Top-level variables:
+  - `calculatedData`, `channels_1`, `channels_3`, `ema12`, `ema26`, `end`, `keyCode`, `macdAppearance`, `macdCalculator`, `start`, `state`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithEquidistantChannel/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithEquidistantChannel/src/interactiveutils.js`
+
+- Functions:
+  - `getInteractiveNodes`, `handleSelection`, `saveInteractiveNode`, `saveInteractiveNodes`
+- Top-level variables:
+  - `interactive`, `key`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithEquidistantChannel/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithFibonacciInteractiveIndicator/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithFibonacciInteractiveIndicator`
+- Top-level variables:
+  - `calculatedData`, `ema12`, `ema26`, `end`, `keyCode`, `macdAppearance`, `macdCalculator`, `retracements_1`, `retracements_3`, `smaVolume50`, `start`, `state`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithFibonacciInteractiveIndicator/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithFibonacciInteractiveIndicator/src/interactiveutils.js`
+
+- Functions:
+  - `getInteractiveNodes`, `handleSelection`, `saveInteractiveNode`, `saveInteractiveNodes`
+- Top-level variables:
+  - `interactive`, `key`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithFibonacciInteractiveIndicator/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithForceIndexIndicator/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithForceIndexIndicator`
+- Top-level variables:
+  - `calculatedData`, `end`, `fi`, `fiEMA13`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithForceIndexIndicator/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithForceIndexIndicator/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithFullStochasticsIndicator/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithFullStochasticsIndicator`
+- Top-level variables:
+  - `calculatedData`, `ema20`, `ema50`, `end`, `fastSTO`, `fullSTO`, `gridHeight`, `gridWidth`, `height`, `margin`, `showGrid`, `slowSTO`, `start`, `stoAppearance`, `xExtents`, `xGrid`, `xScaleProvider`, `yGrid`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithFullStochasticsIndicator/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithFullStochasticsIndicator/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithGannFan/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithGannFan`
+- Top-level variables:
+  - `end`, `fans`, `keyCode`, `start`, `state`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithGannFan/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithGannFan/src/interactiveutils.js`
+
+- Functions:
+  - `getInteractiveNodes`, `handleSelection`, `saveInteractiveNode`, `saveInteractiveNodes`
+- Top-level variables:
+  - `interactive`, `key`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithGannFan/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithHoverTooltip/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithHoverTooltip`
+- Functions:
+  - `tooltipContent`
+- Top-level variables:
+  - `calculatedData`, `dateFormat`, `ema20`, `ema50`, `end`, `keyValues`, `margin`, `newItem`, `numberFormat`, `numberOfDeletion`, `randomKey`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithHoverTooltip/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithHoverTooltip/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithInteractiveIndicator/src/Chart.js`
+
+- Classes:
+  - `CandlestickChart`
+- Top-level variables:
+  - `CandleStickChartWithInteractiveIndicator`, `calculatedData`, `ema12`, `ema26`, `end`, `keyCode`, `macdAppearance`, `macdCalculator`, `start`, `state`, `trends_1`, `trends_3`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithInteractiveIndicator/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithInteractiveIndicator/src/interactiveutils.js`
+
+- Functions:
+  - `getInteractiveNodes`, `handleSelection`, `saveInteractiveNode`, `saveInteractiveNodes`
+- Top-level variables:
+  - `interactive`, `key`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithInteractiveIndicator/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithInteractiveYCoordinate/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithInteractiveYCoordinate`, `Dialog`
+- Functions:
+  - `round`
+- Top-level variables:
+  - `CandleStickChart`, `alert`, `alertDragged`, `buy`, `calculatedData`, `chartId`, `d`, `end`, `first`, `independentCharts`, `key`, `keyCode`, `list`, `macdAppearance`, `macdCalculator`, `morePropsForChart`, `newAlert`, `newAlertList`, `sell`, `start`, `state`, `xExtents`, `xScaleProvider`, `yCoordinateList`, `yValue`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithInteractiveYCoordinate/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithInteractiveYCoordinate/src/interactiveutils.js`
+
+- Functions:
+  - `getInteractiveNodes`, `handleSelection`, `saveInteractiveNode`, `saveInteractiveNodes`
+- Top-level variables:
+  - `interactive`, `key`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithInteractiveYCoordinate/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithMA/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithMA`
+- Top-level variables:
+  - `calculatedData`, `ema20`, `ema50`, `end`, `sma20`, `smaVolume50`, `start`, `tma20`, `wma20`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithMA/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithMA/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithMACDIndicator/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithMACDIndicator`
+- Top-level variables:
+  - `calculatedData`, `ema12`, `ema26`, `macdAppearance`, `macdCalculator`, `mouseEdgeAppearance`, `smaVolume50`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithMACDIndicator/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithMACDIndicator/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithPriceMarkers/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithPriceMarkers`
+- Top-level variables:
+  - `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithPriceMarkers/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithPriceMarkers/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithRSIIndicator/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithRSIIndicator`
+- Top-level variables:
+  - `atr14`, `calculatedData`, `ema12`, `ema26`, `end`, `rsiCalculator`, `smaVolume50`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithRSIIndicator/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithRSIIndicator/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithSAR/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithSAR`
+- Top-level variables:
+  - `accelerationFactor`, `calculatedData`, `defaultSar`, `end`, `maxAccelerationFactor`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithSAR/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithSAR/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithStandardDeviationChannel/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithStandardDeviationChannel`
+- Top-level variables:
+  - `channels_1`, `end`, `keyCode`, `start`, `state`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithStandardDeviationChannel/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithStandardDeviationChannel/src/interactiveutils.js`
+
+- Functions:
+  - `getInteractiveNodes`, `handleSelection`, `saveInteractiveNode`, `saveInteractiveNodes`
+- Top-level variables:
+  - `interactive`, `key`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithStandardDeviationChannel/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithText/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithText`, `Dialog`
+- Top-level variables:
+  - `CandleStickChart`, `allButLast`, `calculatedData`, `end`, `first`, `independentCharts`, `keyCode`, `lastText`, `macdAppearance`, `macdCalculator`, `morePropsForChart`, `newText`, `position`, `start`, `state`, `textList`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithText/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithText/src/interactiveutils.js`
+
+- Functions:
+  - `getInteractiveNodes`, `handleSelection`, `saveInteractiveNode`, `saveInteractiveNodes`
+- Top-level variables:
+  - `interactive`, `key`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithText/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithUpdatingData/src/CandleStickChartWithMACDIndicator.js`
+
+- Classes:
+  - `CandleStickChartWithMACDIndicator`
+- Top-level variables:
+  - `calculatedData`, `ema12`, `ema26`, `macdAppearance`, `macdCalculator`, `mouseEdgeAppearance`, `smaVolume50`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithUpdatingData/src/Chart.js`
+
+- Top-level variables:
+  - `CandleStickChartWithUpdatingData`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithUpdatingData/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithUpdatingData/src/updatingDataWrapper.js`
+
+- Classes:
+  - `UpdatingComponentHOC`
+- Functions:
+  - `getDisplayName`
+- Top-level variables:
+  - `LENGTH`, `delta`, `keyCode`, `name`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithUpdatingData/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithZoomPan/src/Chart.js`
+
+- Classes:
+  - `CandleStickChartWithZoomPan`
+- Top-level variables:
+  - `end`, `gridHeight`, `gridWidth`, `height`, `margin`, `showGrid`, `start`, `xExtents`, `xGrid`, `xScaleProvider`, `yGrid`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithZoomPan/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickChartWithZoomPan/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChart/src/Chart.js`
+
+- Classes:
+  - `CandleStickStockScaleChart`
+- Top-level variables:
+  - `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChartWithVolumeBarV1/src/Chart.js`
+
+- Classes:
+  - `CandleStickStockScaleChartWithVolumeBarV1`
+- Top-level variables:
+  - `end`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChartWithVolumeBarV1/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChartWithVolumeBarV1/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChartWithVolumeBarV2/src/Chart.js`
+
+- Classes:
+  - `CandleStickStockScaleChartWithVolumeBarV2`
+- Top-level variables:
+  - `end`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChartWithVolumeBarV2/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChartWithVolumeBarV2/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChartWithVolumeBarV3/src/Chart.js`
+
+- Classes:
+  - `CandleStickStockScaleChartWithVolumeBarV3`
+- Top-level variables:
+  - `end`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChartWithVolumeBarV3/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/CandleStickStockScaleChartWithVolumeBarV3/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/GroupedBarChart/src/Chart.js`
+
+- Classes:
+  - `GroupedBarChart`
+- Functions:
+  - `fill`
+- Top-level variables:
+  - `f`
+
+### `react-stockcharts-examples/examples/GroupedBarChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/GroupedBarChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `promiseBarData`
+
+### `react-stockcharts-examples/examples/HeikinAshi/src/Chart.js`
+
+- Classes:
+  - `HeikinAshi`
+- Top-level variables:
+  - `calculatedData`, `ema20`, `ema50`, `end`, `ha`, `smaVolume50`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/HeikinAshi/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/HeikinAshi/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/HorizontalBarChart/src/Chart.js`
+
+- Classes:
+  - `HorizontalBarChart`
+
+### `react-stockcharts-examples/examples/HorizontalBarChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/HorizontalBarChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `promiseBarData`
+
+### `react-stockcharts-examples/examples/HorizontalStackedBarChart/src/Chart.js`
+
+- Classes:
+  - `HorizontalStackedBarChart`
+- Functions:
+  - `fill`
+- Top-level variables:
+  - `f`
+
+### `react-stockcharts-examples/examples/HorizontalStackedBarChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/HorizontalStackedBarChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `promiseBarData`
+
+### `react-stockcharts-examples/examples/Kagi/src/Chart.js`
+
+- Classes:
+  - `Kagi`
+- Top-level variables:
+  - `calculatedData`, `end`, `kagiCalculator`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/Kagi/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/Kagi/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/KagiWithUpdatingData/src/Chart.js`
+
+- Top-level variables:
+  - `KagiWithUpdatingData`
+
+### `react-stockcharts-examples/examples/KagiWithUpdatingData/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/KagiWithUpdatingData/src/Kagi.js`
+
+- Classes:
+  - `Kagi`
+- Top-level variables:
+  - `calculatedData`, `end`, `kagiCalculator`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/KagiWithUpdatingData/src/updatingDataWrapper.js`
+
+- Classes:
+  - `UpdatingComponentHOC`
+- Functions:
+  - `getDisplayName`
+- Top-level variables:
+  - `LENGTH`, `delta`, `keyCode`, `name`
+
+### `react-stockcharts-examples/examples/KagiWithUpdatingData/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/LineAndScatterChart/src/Chart.js`
+
+- Classes:
+  - `LineAndScatterChart`
+- Top-level variables:
+  - `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/LineAndScatterChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/LineAndScatterChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseCompare`
+
+### `react-stockcharts-examples/examples/LineAndScatterChartGrid/src/Chart.js`
+
+- Classes:
+  - `LineAndScatterChartGrid`
+- Top-level variables:
+  - `Series`, `end`, `gridHeight`, `gridWidth`, `height`, `margin`, `showGrid`, `start`, `xExtents`, `xGrid`, `xScaleProvider`, `yGrid`
+
+### `react-stockcharts-examples/examples/LineAndScatterChartGrid/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/LineAndScatterChartGrid/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/MovingAverageCrossOverAlgorithmV1/src/Chart.js`
+
+- Classes:
+  - `MovingAverageCrossOverAlgorithmV1`
+- Top-level variables:
+  - `buySell`, `calculatedData`, `defaultAnnotationProps`, `ema20`, `ema50`, `end`, `height`, `longAnnotationProps`, `margin`, `shortAnnotationProps`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/MovingAverageCrossOverAlgorithmV1/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/MovingAverageCrossOverAlgorithmV1/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/MovingAverageCrossOverAlgorithmV2/src/Chart.js`
+
+- Classes:
+  - `MovingAverageCrossOverAlgorithmV2`
+- Top-level variables:
+  - `buySell`, `calculatedData`, `defaultAnnotationProps`, `ema20`, `ema50`, `end`, `height`, `longAnnotationProps`, `margin`, `shortAnnotationProps`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/MovingAverageCrossOverAlgorithmV2/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/MovingAverageCrossOverAlgorithmV2/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/OHLCChartWithElderImpulseIndicator/src/Chart.js`
+
+- Classes:
+  - `OHLCChartWithElderImpulseIndicator`
+- Top-level variables:
+  - `calculatedData`, `changeCalculator`, `elderImpulseCalculator`, `ema12`, `end`, `macdAppearance`, `macdCalculator`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/OHLCChartWithElderImpulseIndicator/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/OHLCChartWithElderImpulseIndicator/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/OHLCChartWithElderRayIndicator/src/Chart.js`
+
+- Classes:
+  - `OHLCChartWithElderRayIndicator`
+- Top-level variables:
+  - `calculatedData`, `changeCalculator`, `elder`, `end`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/OHLCChartWithElderRayIndicator/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/OHLCChartWithElderRayIndicator/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/PointAndFigure/src/Chart.js`
+
+- Classes:
+  - `PointAndFigure`
+- Top-level variables:
+  - `calculatedData`, `end`, `pAndF`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/PointAndFigure/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/PointAndFigure/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/PointAndFigureWithUpdatingData/src/Chart.js`
+
+- Top-level variables:
+  - `PointAndFigureWithUpdatingData`
+
+### `react-stockcharts-examples/examples/PointAndFigureWithUpdatingData/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/PointAndFigureWithUpdatingData/src/PointAndFigure.js`
+
+- Classes:
+  - `PointAndFigure`
+- Top-level variables:
+  - `calculatedData`, `end`, `pAndF`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/PointAndFigureWithUpdatingData/src/updatingDataWrapper.js`
+
+- Classes:
+  - `UpdatingComponentHOC`
+- Functions:
+  - `getDisplayName`
+- Top-level variables:
+  - `LENGTH`, `delta`, `keyCode`, `name`
+
+### `react-stockcharts-examples/examples/PointAndFigureWithUpdatingData/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/Renko/src/Chart.js`
+
+- Classes:
+  - `Renko`
+- Top-level variables:
+  - `calculatedData`, `end`, `renkoCalculator`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/Renko/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/Renko/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/RenkoWithUpdatingData/src/Chart.js`
+
+- Top-level variables:
+  - `RenkoWithUpdatingData`
+
+### `react-stockcharts-examples/examples/RenkoWithUpdatingData/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/RenkoWithUpdatingData/src/Renko.js`
+
+- Classes:
+  - `Renko`
+- Top-level variables:
+  - `calculatedData`, `end`, `renkoCalculator`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/RenkoWithUpdatingData/src/updatingDataWrapper.js`
+
+- Classes:
+  - `UpdatingComponentHOC`
+- Functions:
+  - `getDisplayName`
+- Top-level variables:
+  - `LENGTH`, `delta`, `keyCode`, `name`
+
+### `react-stockcharts-examples/examples/RenkoWithUpdatingData/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/StackedBarChart/src/Chart.js`
+
+- Classes:
+  - `StackedBarChart`
+- Functions:
+  - `fill`
+- Top-level variables:
+  - `f`
+
+### `react-stockcharts-examples/examples/StackedBarChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/StackedBarChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/VolumeProfileBySessionChart/src/Chart.js`
+
+- Classes:
+  - `VolumeProfileBySessionChart`
+- Top-level variables:
+  - `calculatedData`, `changeCalculator`, `end`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/VolumeProfileBySessionChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/VolumeProfileBySessionChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/examples/VolumeProfileChart/src/Chart.js`
+
+- Classes:
+  - `VolumeProfileChart`
+- Top-level variables:
+  - `calculatedData`, `changeCalculator`, `end`, `start`, `xExtents`, `xScaleProvider`
+
+### `react-stockcharts-examples/examples/VolumeProfileChart/src/index.js`
+
+- Classes:
+  - `ChartComponent`
+
+### `react-stockcharts-examples/examples/VolumeProfileChart/src/utils.js`
+
+- Functions:
+  - `getData`, `parseData`
+- Top-level variables:
+  - `parseDate`, `promiseMSFT`
+
+### `react-stockcharts-examples/scripts/buildexamples.js`
+
+- Classes:
+  - `ChartComponent`
+- Functions:
+  - `getData`, `parseData`, `publish`, `remove`
+- Top-level variables:
+  - `args`, `barData`, `base`, `bubbleData`, `comparison`, `continuous`, `destDir`, `destExample`, `discontinuous`, `endOfDayMSFT`, `examplesToPublish`, `fse`, `groupedBarData`, `horizontalBarData`, `horizontalGroupedBarData`, `index`, `mode`, `parseData`, `parseDate`, `parseDateTime`, `path`, `promiseBarData`, `promiseBubbleData`, `promiseCompare`, `promiseIntraDayContinuous`, `promiseIntraDayDiscontinuous`, `promiseMSFT`, `srcDir`, `srcExample`, `template`, `templatePackage`
+
 ### `scripts/parseIntraday.js`
 
 - Functions:
@@ -890,7 +2108,7 @@ Generated at: `2026-05-03 18:23:10`
 - Functions:
   - `OriginalLikeDemo`, `createOrigin`, `handleBrush`, `handleResetView`, `handleResize`, `handleVisibleDomainChange`, `updateWidth`, `xAxisTickFormat`
 - Top-level variables:
-  - `BRUSH_TYPE`, `axisTheme`, `bearishColor`, `bullishColor`, `calculatedData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `ema12`, `ema12Stroke`, `ema26`, `ema26Stroke`, `endIndex`, `initialXExtents`, `isZoomedIn`, `left`, `macdAppearance`, `macdCalculator`, `macdDateFormat`, `macdFormat`, `macdFormat3`, `macdHeight`, `macdOrigin`, `macdYAxisTheme`, `macdYAxisTickFormat`, `macdYAxisTicks`, `margin`, `node`, `observer`, `priceFormat`, `priceFormat1`, `priceFormat3`, `priceHeight`, `priceYAxisTheme`, `priceYAxisTickFormat`, `priceYAxisTicks`, `rawData`, `resolvedChartWidth`, `right`, `smaVolume10`, `startIndex`, `themeFontFamily`, `tickDatum`, `tickIndex`, `tooltipDateFormat`, `visibleBars`, `visibleDomainLabel`, `volumeAxisFormat`, `volumeFormat`, `volumeHeight`, `volumeMouseFormat`, `volumeOrigin`, `volumeYAxisTheme`, `xScaleProvider`
+  - `BRUSH_TYPE`, `axisTheme`, `calculatedData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `e`, `ema12`, `ema12Stroke`, `ema26`, `ema26Stroke`, `endIdx`, `endIndex`, `fmt`, `initialXExtents`, `isZoomedIn`, `left`, `macdAppearance`, `macdCalculator`, `macdDateFormat`, `macdFormat`, `macdFormat3`, `macdHeight`, `macdOrigin`, `macdYAxisTheme`, `macdYAxisTickFormat`, `macdYAxisTicks`, `margin`, `node`, `observer`, `priceFormat`, `priceFormat3`, `priceHeight`, `priceYAxisTheme`, `priceYAxisTickFormat`, `priceYAxisTicks`, `rawData`, `resolvedChartWidth`, `right`, `s`, `smaVolume10`, `startIdx`, `startIndex`, `themeFontFamily`, `tickDatum`, `tickIndex`, `tooltipDateFormat`, `visibleBars`, `visibleDomainLabel`, `volumeAxisFormat`, `volumeFormat`, `volumeHeight`, `volumeMouseFormat`, `volumeOrigin`, `volumeYAxisTheme`, `xScaleProvider`
 
 ### `src/index.ts`
 

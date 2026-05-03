@@ -2,6 +2,11 @@
 
 > **Mục tiêu:** Đóng gói `react-stockcharts-master` thành thư viện npm thuần TypeScript,  
 > tích hợp được vào bất kỳ dự án nào — đặc biệt là backend Django + vnstock.
+>
+> **Điểm vào triển khai chi tiết:** xem [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md).
+> **Quy định bắt buộc trước khi coding:** xem [DEVELOPMENT_RULES.md](./DEVELOPMENT_RULES.md).
+> **Bộ tài liệu bàn giao cho đội code:** xem [HANDOFF_MANIFEST.md](./HANDOFF_MANIFEST.md).
+> **Nếu hệ thống phải chịu tải lớn:** xem thêm mục công nghệ quy mô lớn trong [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md).
 
 ---
 
@@ -47,11 +52,12 @@ export interface OHLCVBar {
 | [3](./PHASE3_INDICATORS.md) | Indicators (pure TS) | 4–5 | Phase 1 |
 | [4](./PHASE4_ORDERFLOW.md) | Orderflow Suite | 4–5 | Phase 2, 3 |
 | [5](./PHASE5_DRAWING_TOOLS.md) | Drawing Tools | 3–4 | Phase 2 |
-| [6](./PHASE6_LAYOUT.md) | Multi-Panel Layout | 2–3 | Phase 2, 3 |
-| [7](./PHASE7_DATA_ADAPTER.md) | Data Adapter Layer | 2 | Tất cả |
+| [6–7](./PHASE6_7_LAYOUT_ADAPTER.md) | Multi-Panel Layout + Data Adapter | 2–3 | Phase 2, 3 |
 
 **Thứ tự ưu tiên khởi đầu:**
-Phase 1 → Phase 2 + 3 (song song) → Phase 4 (CVD/Orderflow — cốt lõi VN market) → Phase 5, 6, 7
+Phase 1 → Phase 2 + 3 (song song) → Phase 4 (CVD/Orderflow — cốt lõi VN market) → Phase 5 → Phase 6–7.
+
+**Build system khuyến nghị:** `tsup` cho thư viện publish; `webpack` chỉ nên giữ cho demo/preview cũ nếu cần.
 
 ---
 

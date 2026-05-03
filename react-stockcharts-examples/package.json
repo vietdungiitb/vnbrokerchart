@@ -1,0 +1,24 @@
+{
+  "name": "react-stockcharts-examples2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "publish": "node scripts/buildexamples.js",
+    "updateTemplate": "cd scripts/templatePackage && npm run reinstall-deps",
+    "push": "git add -A && git commit -m 'updating examples' && git push"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rrag/react-stockcharts-examples2.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rrag/react-stockcharts-examples2/issues"
+  },
+  "homepage": "https://github.com/rrag/react-stockcharts-examples2#readme",
+  "dependencies": {
+    "fs-extra": "^4.0.2"
+  }
+}
