@@ -284,6 +284,22 @@
 	- `git diff --check` → PASS
 - Kết luận: Chuỗi triển khai theo tài liệu đã hoàn tất đến closeout.
 
+### Demo Showcase Refresh Evidence
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: cập nhật trang demo để phản ánh đầy đủ các module thư viện đã đóng trong P1-P7.
+- Files modified:
+	- `src/demo/index.tsx`
+	- `src/demo/LibraryShowcaseDemo.tsx`
+	- `module_tree_full.md`
+- Validation:
+	- `npm run type-check` -> PASS
+	- `npm run build:docs` -> PASS
+	- `npm run test:soak` -> PASS (2 files, 3 tests)
+	- `python scripts/generate_module_tree.py` -> PASS (Modules: 594)
+- Kết luận: Demo đã hiển thị chart runtime và probe trực tiếp cho core API, indicator registry, drawing engine, và adapter layer.
+
 ---
 
 ## 4. Modified-file rule
