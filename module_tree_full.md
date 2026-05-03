@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-03 22:55:48`
+Generated at: `2026-05-03 23:18:17`
 
 ## Summary
 
-- Total modules: 591
+- Total modules: 593
 - Python modules: 1
-- JS/TS modules: 590
+- JS/TS modules: 592
 - Total classes: 348
-- Total functions: 3413
-- Total top-level variables: 7017
+- Total functions: 3415
+- Total top-level variables: 7038
 
 ## Python Modules
 
@@ -3779,6 +3779,20 @@ Generated at: `2026-05-03 22:55:48`
 ### `storybook-static/vite-inject-mocker-entry.js`
 
 - No parseable top-level symbols found
+
+### `tests/soak/adapter_concurrent.test.ts`
+
+- Functions:
+  - `heapUsed`
+- Top-level variables:
+  - `adapter`, `baseline`, `deltaMb`, `eventCount`, `frozenCount`, `peak`, `unsubs`
+
+### `tests/soak/render_heavy.test.ts`
+
+- Functions:
+  - `createBars`
+- Top-level variables:
+  - `avgPerLoop`, `bars`, `close`, `drift`, `elapsedMs`, `high`, `lastLeftDomain`, `lastRightDomain`, `loops`, `low`, `open`, `pane`, `result`, `startedAt`
 
 ### `tsup.config.ts`
 

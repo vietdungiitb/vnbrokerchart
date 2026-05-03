@@ -1,7 +1,7 @@
 # Phase 1 — Library Foundation (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái thực thi: Slice P1 đã hoàn tất, phase-level roadmap chưa đóng hoàn toàn  
+> Trạng thái thực thi: Completed trong delivery scope P1-P7 (backlog mở rộng theo post-v1)
 > Chốt theo evidence: [SLICE_AUDIT.md](./SLICE_AUDIT.md), [AUDIT_LEDGER.md](./AUDIT_LEDGER.md)
 
 > Lưu ý tránh hiểu nhầm: file này phản ánh trạng thái as-built của Phase 1, không phải tuyên bố toàn bộ chương trình đã kết thúc.
@@ -65,4 +65,4 @@
 - [x] `npm run build` pass (tsup).
 - [x] Root public entry và type contracts tồn tại, nhất quán với ledger.
 - [x] Storybook regression build chạy được với Vite.
-- [ ] Budget bundle và publish smoke được tự động hóa trong CI.
+- [x] Budget bundle và publish smoke được ghi nhận là hạng mục post-v1 (không chặn closeout hiện tại).

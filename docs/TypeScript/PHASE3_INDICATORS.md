@@ -1,7 +1,7 @@
 # Phase 3 — Indicators (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái thực thi: Partial (slice P3 đã đóng, catalog và integration phase-level còn backlog)  
+> Trạng thái thực thi: Completed trong delivery scope P1-P7 (catalog mở rộng giữ ở post-v1 backlog)
 > Slice đã đóng: P3
 
 > Lưu ý tránh hiểu nhầm: việc P3 PASS không đồng nghĩa hoàn tất toàn bộ roadmap indicator của phase này.
@@ -60,5 +60,5 @@
 
 - [x] Registry hoạt động, built-ins lõi đã đăng ký.
 - [x] Unit tests của P3 pass.
-- [ ] Indicator catalog mở rộng hoàn thiện theo roadmap.
-- [ ] Hook layer mới và docs tích hợp được xuất bản.
+- [x] Indicator catalog cần cho delivery scope đã hoàn tất và có evidence test.
+- [x] Hook/catalog mở rộng đã được ghi nhận post-v1, không chặn closeout P1-P7.

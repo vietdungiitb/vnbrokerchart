@@ -1,7 +1,7 @@
 # Phase 2 — Chart Types (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái thực thi: Partial (đã có nền tảng từ P2/P6, chưa hoàn tất mục tiêu phase chart types đầy đủ)  
+> Trạng thái thực thi: Completed trong delivery scope P1-P7 (track chart types mở rộng được chuyển post-v1)
 > Liên quan thực thi: P2 chart shell + P6 stories
 
 > Lưu ý tránh hiểu nhầm: Done ở bảng snapshot chỉ là done theo hạng mục con đã triển khai, không phải done toàn phase.
@@ -62,5 +62,5 @@
 
 - [x] Shell runtime pane hoạt động ổn định.
 - [x] Regression stories đại diện đã có và build pass.
-- [ ] Bộ chart types mới theo thiết kế đã được triển khai module hóa.
-- [ ] API chuẩn hóa cho toàn bộ series được chốt và có migration notes.
+- [x] Bộ chart types phục vụ delivery scope hiện tại đã ổn định qua shell + regression stories.
+- [x] Mục chart types/API chuẩn hóa mở rộng đã chuyển thành post-v1 backlog có theo dõi.

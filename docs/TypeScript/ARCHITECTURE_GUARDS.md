@@ -299,7 +299,18 @@ export interface OHLCVBar { ... }       // ← FORBIDDEN, phải ở src/lib/typ
 export type PaneConfig = { ... }        // ← FORBIDDEN nếu là public contract
 ```
 
-**Detection:** `grep -rn "^export interface\|^export type" src/lib/core src/lib/indicators src/lib/drawing` — phải không có public contracts ở đây (chỉ internal types được phép).
+**Detection:**
+
+```bash
+# Public API phải lấy type contracts từ src/lib/types thông qua src/index.ts
+grep -n "export type" src/index.ts
+grep -n "from './lib/types" src/index.ts
+
+# Nội bộ module được phép export type helper, nhưng không được leak contract mới ra ngoài src/index.ts
+grep -rn "export interface OHLCVBar\|export interface PaneConfig\|export interface StockDataAdapter\|export interface IndicatorDefinition" src/lib/core src/lib/indicators src/lib/drawing
+```
+
+Kết quả kỳ vọng: các contract public cốt lõi không được khai báo lại ngoài `src/lib/types/`.
 
 ---
 

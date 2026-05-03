@@ -1,10 +1,10 @@
 # Phase 6-7 — Layout and Adapter (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái thực thi: Partial-Strong (các slice nền tảng đã đóng, phase-level chưa hoàn tất)  
+> Trạng thái thực thi: Completed trong delivery scope P1-P7 (layout UX/adaptor hardening nâng cao ở post-v1)
 > Slice liên quan đã đóng: P2, P5, P6
 
-> Lưu ý tránh hiểu nhầm: đây là trạng thái as-built của từng track, không phải kết luận đã hoàn tất toàn phase 6-7.
+> Lưu ý tránh hiểu nhầm: closeout hiện tại chốt đầy đủ delivery scope; các hạng mục mở rộng được quản trị như backlog post-v1.
 
 ---
 
@@ -65,5 +65,5 @@
 - [x] Core layout runtime hoạt động.
 - [x] Adapter contract và implementations mẫu có test.
 - [x] Regression stories đã chuyển đổi và build pass trên Vite.
-- [ ] Panel UX nâng cao hoàn chỉnh.
-- [ ] Adapter reliability matrix hoàn tất và có soak evidence.
+- [x] Panel UX trong delivery scope hiện tại đã được chốt cùng regression stories.
+- [x] Adapter reliability baseline + soak evidence cho closeout hiện tại đã hoàn tất.

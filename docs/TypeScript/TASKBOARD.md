@@ -17,27 +17,35 @@
 
 | ID | Task | Slice | Owner role | Dependency | Evidence gate | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| TB-01 | Khóa bộ tài liệu bàn giao | P0 | Release owner | — | Manifest + ledger + rules pass | Ready |
-| TB-02 | Chốt foundation build | P1 | Tooling owner | TB-01 | type-check + tsup + export smoke | Ready |
-| TB-03 | Dựng chart shell runtime | P2 | Core owner | TB-02 | pane manager + splitter smoke | Ready |
-| TB-04 | Dựng indicator registry | P3 | Indicator owner | TB-02 | unit test + registry evidence | Ready |
-| TB-05 | Dựng drawing tools | P4 | Interaction owner | TB-03 | serialization + undo/redo evidence | Ready |
-| TB-06 | Dựng data adapter & realtime | P5 | Backend integration owner | TB-02 | adapter contract + mocked WS | Ready |
+| TB-01 | Khóa bộ tài liệu bàn giao | P0 | Release owner | — | Manifest + ledger + rules pass | Completed |
+| TB-02 | Chốt foundation build | P1 | Tooling owner | TB-01 | type-check + tsup + export smoke | Completed |
+| TB-03 | Dựng chart shell runtime | P2 | Core owner | TB-02 | pane manager + splitter smoke | Completed |
+| TB-04 | Dựng indicator registry | P3 | Indicator owner | TB-02 | unit test + registry evidence | Completed |
+| TB-05 | Dựng drawing tools | P4 | Interaction owner | TB-03 | serialization + undo/redo evidence | Completed |
+| TB-06 | Dựng data adapter & realtime | P5 | Backend integration owner | TB-02 | adapter contract + mocked WS | Completed |
 | TB-07 | Chuyển examples sang stories | P6 | Demo/regression owner | TB-03, TB-04 | visual diff + browser smoke | Completed |
-| TB-08 | Bổ sung scale/perf soak | P5/P6 | QA owner | TB-06, TB-07 | k6/Locust + memory checks | Ready |
-| TB-09 | Đóng closeout và bàn giao | All | Release owner | TB-01..TB-08 | closeout pass | Ready |
+| TB-08 | Bổ sung scale/perf soak | P5/P6 | QA owner | TB-06, TB-07 | k6/Locust + memory checks | Completed |
+| TB-09 | Đóng closeout và bàn giao | All | Release owner | TB-01..TB-08 | closeout pass | Completed |
 
 ---
 
 ## 3. In progress lane
 
-- Chưa có task nào được kéo vào In progress.
+- Không còn task In progress.
 
 ---
 
 ## 4. Done lane
 
+- TB-01 — Khóa bộ tài liệu bàn giao (P0) → Completed.
+- TB-02 — Chốt foundation build (P1) → Completed.
+- TB-03 — Dựng chart shell runtime (P2) → Completed.
+- TB-04 — Dựng indicator registry (P3) → Completed.
+- TB-05 — Dựng drawing tools (P4) → Completed.
+- TB-06 — Dựng data adapter & realtime (P5) → Completed.
 - TB-07 — Chuyển examples sang stories (P6) → Completed.
+- TB-08 — Bổ sung scale/perf soak (P5/P6) → Completed.
+- TB-09 — Đóng closeout và bàn giao (All) → Completed.
 
 ---
 

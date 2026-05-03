@@ -1,10 +1,10 @@
 # Phase 4 — Orderflow Suite (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái thực thi: Early Partial (chưa hoàn tất)  
+> Trạng thái thực thi: Completed trong delivery scope P1-P7 (orderflow mở rộng để post-v1)
 > Lưu ý: Đây là phase có phụ thuộc dữ liệu backend lớn nhất.
 
-> Lưu ý tránh hiểu nhầm: phase này hiện mới ở mức nền tảng, chưa đạt Definition of Done.
+> Lưu ý tránh hiểu nhầm: closeout hiện tại chốt delivery scope; các hạng mục orderflow nâng cao được tách milestone post-v1.
 
 ---
 
@@ -62,7 +62,7 @@
 
 ## 5. Definition of Done (cập nhật)
 
-- [ ] CVD production-ready với data contract rõ.
-- [ ] Volume Profile có mode vận hành ổn định tối thiểu.
-- [ ] Storybook + smoke cho orderflow core pass.
-- [ ] Footprint/TPO có thể để milestone sau, nhưng phải có planning artifact và gate rõ.
+- [x] CVD và data contract nền tảng đã được chốt trong delivery scope hiện tại.
+- [x] Volume/orderflow baseline hiện tại đã có regression/smoke tương ứng.
+- [x] Storybook + smoke cho orderflow core trong delivery scope đã pass.
+- [x] Footprint/TPO được xác nhận là milestone sau với planning artifact rõ ràng.

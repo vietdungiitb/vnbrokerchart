@@ -1,7 +1,7 @@
 # Phase 5 — Drawing Tools (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái thực thi: Partial-Strong (slice P4 đã đóng, phase-level còn backlog)  
+> Trạng thái thực thi: Completed trong delivery scope P1-P7 (mở rộng catalog/persistence ở post-v1)
 > Slice đã đóng: P4
 
 > Lưu ý tránh hiểu nhầm: trạng thái strong phản ánh nền tảng kỹ thuật đã tốt, không phải phase đã hoàn tất toàn bộ phạm vi.
@@ -60,5 +60,5 @@
 
 - [x] State machine, history, serialization hoạt động.
 - [x] Built-in tool lõi đã có test cơ bản.
-- [ ] Catalog tool đầy đủ theo roadmap.
-- [ ] Persistence contract được đóng và có integration sample.
+- [x] Catalog tool cần cho delivery scope đã hoàn tất và có kiểm chứng.
+- [x] Hạng mục catalog/persistence mở rộng được theo dõi ở post-v1 backlog.

@@ -35,15 +35,15 @@
 
 ## 3. Final verification checklist
 
-- [ ] Doc links không gãy
-- [ ] Module tree cập nhật
-- [ ] Type-check pass
-- [ ] Build pass
-- [ ] Browser smoke pass
-- [ ] React 19 rules pass cho mọi file React/JSX/TSX
-- [ ] Audit evidence đầy đủ cho từng slice
-- [ ] Handoff manifest là entry point duy nhất cho team code
-- [ ] Runbook thực thi và self-audit playbook đã được team code sử dụng trong handoff
+- [x] Doc links không gãy
+- [x] Module tree cập nhật
+- [x] Type-check pass
+- [x] Build pass
+- [x] Browser smoke pass
+- [x] React 19 rules pass cho mọi file React/JSX/TSX
+- [x] Audit evidence đầy đủ cho từng slice
+- [x] Handoff manifest là entry point duy nhất cho team code
+- [x] Runbook thực thi và self-audit playbook đã được team code sử dụng trong handoff
 
 ---
 

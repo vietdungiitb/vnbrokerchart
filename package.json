@@ -26,7 +26,8 @@
     "build:docs": "cross-env NODE_ENV=production webpack --config config/webpack.config.js",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx src --fix",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:soak": "vitest run tests/soak"
   },
   "dependencies": {
     "d3-array": "^3.2.0",

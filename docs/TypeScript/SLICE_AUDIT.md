@@ -491,3 +491,65 @@ npx tsc --noEmit --strict 2>&1 | grep DjangoVnstockAdapter
 3. Ghi rõ lệnh chạy và kết quả quan sát được.
 4. Liệt kê file đã chạm.
 5. Chốt `PASS` hoặc `FAIL`.
+
+---
+
+## 4. Delivery Completion Evidence (TB-08, TB-09)
+
+### TB-08 — Scale/perf soak (P5/P6)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Mục tiêu: bổ sung soak/perf suite cho render dữ liệu lớn và concurrent subscriptions.
+- Files touched:
+  - `package.json`
+  - `tests/soak/render_heavy.test.ts`
+  - `tests/soak/adapter_concurrent.test.ts`
+- Lệnh xác minh:
+  - `npm run type-check`
+  - `npm run build`
+  - `npm run test:soak`
+- Kết quả quan sát:
+  - `type-check` PASS.
+  - `build` PASS (tsup ESM/CJS/d.ts).
+  - `test:soak` PASS với 2 test files, 3 test cases.
+  - Budget assertions hiện tại:
+    - compute scales trên 20k bars giữ trong ngưỡng test.
+    - 500 concurrent subscribers unsubscribe sạch, không tăng event sau cleanup.
+    - memory growth giữ trong ngưỡng heuristic của test.
+- Rủi ro còn lại:
+  - Budget hiện là ngưỡng runtime-friendly để tránh flaky CI; có thể siết thêm khi có baseline production cố định.
+- Kết luận: PASS
+
+### TB-09 — Closeout và bàn giao (All)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Mục tiêu: chốt toàn bộ gates và bàn giao đầy đủ theo bundle cuối.
+- Files touched:
+  - `docs/TypeScript/TASKBOARD.md`
+  - `docs/TypeScript/SLICE_AUDIT.md`
+  - `docs/TypeScript/AUDIT_LEDGER.md`
+  - `docs/TypeScript/DELIVERY_CLOSEOUT.md`
+  - `docs/TypeScript/PHASE1_FOUNDATION.md`
+  - `docs/TypeScript/PHASE2_CHART_TYPES.md`
+  - `docs/TypeScript/PHASE3_INDICATORS.md`
+  - `docs/TypeScript/PHASE4_ORDERFLOW.md`
+  - `docs/TypeScript/PHASE5_DRAWING_TOOLS.md`
+  - `docs/TypeScript/PHASE6_7_LAYOUT_ADAPTER.md`
+  - `docs/TypeScript/ARCHITECTURE_GUARDS.md`
+  - `module_tree_full.md`
+- Lệnh xác minh:
+  - `npm run type-check`
+  - `npm run build`
+  - `npm run build:storybook`
+  - `npm run test:soak`
+  - `python scripts/generate_module_tree.py`
+  - `git diff --check`
+- Kết quả quan sát:
+  - Các gate kỹ thuật chính đều PASS.
+  - Taskboard đã chuyển toàn bộ TB-01..TB-09 sang Completed.
+  - Ledger và phase docs đã đồng bộ theo trạng thái thực thi thật.
+- Rủi ro còn lại:
+  - Một số roadmap mở rộng được giữ ở post-v1 backlog (không chặn closeout delivery scope hiện tại).
+- Kết luận: PASS

@@ -28,13 +28,14 @@
 
 | Slice | Mục tiêu | Owner role | Required evidence | Required test gates | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| P0 | Audit & chuẩn hóa | Release owner | Handoff manifest, module tree snapshot, doc link check | Markdown link check, module tree check | Ready for work |
+| P0 | Audit & chuẩn hóa | Release owner | Handoff manifest, module tree snapshot, doc link check | Markdown link check, module tree check | Completed |
 | P1 | Foundation | Tooling owner | tsup config, strict tsconfig, entrypoint, public types | `type-check`, `tsup` build, API export smoke, G07+G08+G13+G14 guards clean | Completed |
 | P2 | Chart shell | Core owner | ChartTerminal, ChartPane, PaneSplitter, usePaneManager | RTL, browser smoke, drag-resize check, G01+G02+G03+G11+G12+G15 guards clean | Completed |
 | P3 | Indicator registry | Indicator owner | Registry, compute/render split, built-in set | Unit tests, schema tests, sample-data smoke, G04+G05+G08+G14 guards clean | Completed |
 | P4 | Drawing tools | Interaction owner | Drawing registry, state machine, serialization, undo/redo | Interaction tests, serialize/deserialize checks, G09+G10+G12 guards clean | Completed |
 | P5 | Data adapter | Backend integration owner | StockDataAdapter, DjangoVnstockAdapter, realtime loader | Contract tests, mocked REST/WS integration, G06+G08+G14 guards clean | Completed |
 | P6 | Examples conversion | Demo/regression owner | Converted stories, regression fixtures, coverage map | Visual diff, storybook build, browser smoke, all guards clean | Completed |
+| P7 | Delivery closeout | Release owner | Closeout checklist, final bundle, module tree sync | type-check, build, storybook build, soak, diff-check | Completed |
 
 ---
 
@@ -239,6 +240,7 @@
 	- Đã kiểm tra liên kết chéo giữa manifest/roadmap/runbook/playbook/ledger hoạt động theo cùng một luồng.
 	- Đã bổ sung rõ entry points cho thực thi, tự-audit và handover.
 	- Đã hiệu chỉnh cách diễn giải trạng thái phase để tránh hiểu nhầm "slice done" thành "phase done".
+	- Kết luận: Bộ handoff đã self-contained cho triển khai slice và bàn giao audit.
 
 ### Documentation Correctness Evidence (Phase status clarification)
 
@@ -256,8 +258,31 @@
 - Validation:
 	- Đối chiếu trạng thái phase với `TASKBOARD.md` và `AUDIT_LEDGER.md` hiện hành.
 	- Xóa block nội dung thừa cuối file phase 6-7 để khớp ngữ cảnh as-built.
-- Kết luận: Bộ phase docs đã rõ trạng thái "partial/backlog" và không còn gây hiểu nhầm tiến độ.
-- Kết luận: Bộ handoff đã self-contained cho triển khai slice và bàn giao audit.
+- Kết luận: Bộ phase docs đã rõ trạng thái "completed delivery scope + post-v1 backlog" và không còn gây hiểu nhầm tiến độ.
+
+### Delivery Completion Evidence (TB-08, TB-09)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: hoàn tất các task còn lại TB-08 và TB-09 để đóng toàn bộ chuỗi bàn giao P0-P7.
+- Files modified:
+	- `package.json`
+	- `tests/soak/render_heavy.test.ts`
+	- `tests/soak/adapter_concurrent.test.ts`
+	- `docs/TypeScript/TASKBOARD.md`
+	- `docs/TypeScript/SLICE_AUDIT.md`
+	- `docs/TypeScript/AUDIT_LEDGER.md`
+	- `docs/TypeScript/DELIVERY_CLOSEOUT.md`
+	- `docs/TypeScript/ARCHITECTURE_GUARDS.md`
+	- `module_tree_full.md`
+- Validation:
+	- `npm run type-check` → PASS
+	- `npm run build` → PASS
+	- `npm run build:storybook` → PASS
+	- `npm run test:soak` → PASS
+	- `python scripts/generate_module_tree.py` → PASS
+	- `git diff --check` → PASS
+- Kết luận: Chuỗi triển khai theo tài liệu đã hoàn tất đến closeout.
 
 ---
 
