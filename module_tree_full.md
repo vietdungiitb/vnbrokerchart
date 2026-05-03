@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-03 23:25:11`
+Generated at: `2026-05-03 23:37:26`
 
 ## Summary
 
@@ -10,8 +10,8 @@ Generated at: `2026-05-03 23:25:11`
 - Python modules: 1
 - JS/TS modules: 593
 - Total classes: 348
-- Total functions: 3419
-- Total top-level variables: 7078
+- Total functions: 3429
+- Total top-level variables: 7091
 
 ## Python Modules
 
@@ -2109,9 +2109,9 @@ Generated at: `2026-05-03 23:25:11`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `normalizeDate`, `summarizeIndicatorValue`, `toDateRange`, `updateSize`
+  - `addDrawing`, `addPane`, `applyPreset`, `clearDrawing`, `createPaneTemplate`, `normalizeDate`, `redoDrawing`, `removePane`, `restoreDrawing`, `summarizeIndicatorValue`, `toDateRange`, `toggleIndicator`, `undoDrawing`, `updateSize`
 - Top-level variables:
-  - `adapter`, `checks`, `compact`, `computed`, `coreProbe`, `data`, `dateFormat`, `disposed`, `drawingProbe`, `end`, `firstDraft`, `from`, `history`, `indicator`, `indicatorInput`, `indicatorProbe`, `lastValue`, `names`, `next`, `node`, `observer`, `priceFormat`, `priceHeight`, `ratio`, `ready`, `restored`, `sample`, `serialized`, `start`, `stopBars`, `stopTrades`, `surfaceRef`, `timerId`, `to`, `tools`, `totalHeight`, `updated`, `volumeFormat`, `volumeHeight`, `xExtents`
+  - `DRAWING_TOOL_NAMES`, `INDICATOR_CATALOG`, `adapter`, `bestAsk`, `bestBid`, `compact`, `computed`, `coreProbe`, `data`, `dateFormat`, `disposed`, `draft`, `drawingProbe`, `end`, `existingPaneIds`, `exists`, `finalized`, `from`, `indicator`, `indicatorInput`, `indicatorProbe`, `indicators`, `isActive`, `lastValue`, `mid`, `newPaneIds`, `node`, `observer`, `paneId`, `paneManager`, `paneNumber`, `priceFormat`, `priceHeight`, `ratio`, `ready`, `restored`, `sample`, `selectedPane`, `serialized`, `spreadBps`, `start`, `stopBars`, `stopOrderbook`, `stopTrades`, `surfaceRef`, `templates`, `timerId`, `to`, `tools`, `totalHeight`, `volumeFormat`, `volumeHeight`, `xExtents`
 
 ### `src/demo/LiveDemo.tsx`
 

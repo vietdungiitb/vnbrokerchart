@@ -300,6 +300,22 @@
 	- `python scripts/generate_module_tree.py` -> PASS (Modules: 594)
 - Kết luận: Demo đã hiển thị chart runtime và probe trực tiếp cho core API, indicator registry, drawing engine, và adapter layer.
 
+### Terminal-style Full Feature Demo Evidence
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: nâng demo thành terminal layout học theo trải nghiệm trading terminal (toolbar, control panel, chart trung tâm, pane lab runtime, telemetry panel).
+- Files modified:
+	- `src/demo/LibraryShowcaseDemo.tsx`
+	- `src/demo/demo.css`
+	- `module_tree_full.md`
+- Validation:
+	- `npm run type-check` -> PASS
+	- `npm run build:docs` -> PASS
+	- `npm run test:soak` -> PASS (2 files, 3 tests)
+	- `python scripts/generate_module_tree.py` -> PASS (Modules: 594)
+- Kết luận: Demo đã có runtime controls cho add/remove pane, kéo splitter, toggle indicators, drawing actions (push/undo/redo/clear/restore), adapter telemetry (bars/trades/orderbook), cùng chart canvas hoạt động trên cùng màn hình.
+
 ---
 
 ## 4. Modified-file rule
