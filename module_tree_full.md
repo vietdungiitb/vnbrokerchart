@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-03 15:29:11`
+Generated at: `2026-05-03 15:56:05`
 
 ## Summary
 
-- Total modules: 319
+- Total modules: 320
 - Python modules: 1
-- JS/TS modules: 318
+- JS/TS modules: 319
 - Total classes: 218
-- Total functions: 313
-- Total top-level variables: 1840
+- Total functions: 321
+- Total top-level variables: 1869
 
 ## Python Modules
 
@@ -884,6 +884,13 @@ Generated at: `2026-05-03 15:29:11`
   - `LiveDemo`
 - Top-level variables:
   - `cancelled`, `height`, `margin`, `width`
+
+### `src/demo/SimpleDemo.tsx`
+
+- Functions:
+  - `SimpleDemo`, `createOrigin`, `getInitialExtents`, `handleBrush`, `handleResetView`, `handleResize`, `normalizeBrushExtents`, `updateWidth`
+- Top-level variables:
+  - `axisTheme`, `bearishColor`, `bullishColor`, `chartData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `dateFormat`, `ema20Stroke`, `ema50Stroke`, `endDate`, `endIndex`, `gridWidth`, `initialExtents`, `margin`, `node`, `observer`, `overviewHeight`, `overviewOrigin`, `plotHeight`, `priceFormat`, `priceHeight`, `priceYAxisTheme`, `resolvedChartWidth`, `startDate`, `startIndex`, `themeFontFamily`, `topXAxisTheme`, `volumeFormat`
 
 ### `src/index.ts`
 

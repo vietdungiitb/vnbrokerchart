@@ -209,6 +209,22 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - `src/` → 0 `.js` files
   - Browser smoke on `http://127.0.0.1:4173/index.html` → PASS
 
+### Demo simplification — clean chart landing
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: `src/demo/`
+- Files added/updated:
+  - `src/demo/SimpleDemo.tsx`
+  - `src/demo/index.tsx`
+  - `module_tree_full.md`
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS (3 warnings; non-blocking)
+  - `python scripts/generate_module_tree.py` → Modules: 320
+  - Browser smoke on `http://127.0.0.1:4173/index.html` → PASS
+- Kết luận: PASS — demo landing simplified và brush span vẫn giữ được.
+
 ## 3. Modified-file rule
 
 Mọi slice đã hoàn thành phải liệt kê chính xác tên file đã sửa. File không có trong ledger không được đóng audit.

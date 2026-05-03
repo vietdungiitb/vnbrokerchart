@@ -1,13 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import FullDemo from "./FullDemo";
+import SimpleDemo from "./SimpleDemo";
 
 const container = document.getElementById("root");
 if (container) {
     const root = createRoot(container);
     root.render(
         <StrictMode>
-            <FullDemo />
+            <SimpleDemo />
         </StrictMode>
     );
 }

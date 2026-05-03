@@ -365,6 +365,28 @@ Browser smoke: zoom + pan + brush + indicators đầy đủ
 
 **Kết luận**: PASS — S22 closed.
 
+### Post-close demo simplification ✅
+
+**Checklist**:
+- [x] `src/demo/index.tsx` → render `SimpleDemo`
+- [x] `src/demo/SimpleDemo.tsx` → chart landing tối giản
+- [x] `module_tree_full.md` → regenerate
+
+**Bằng chứng**:
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Files added/updated:
+  - `src/demo/SimpleDemo.tsx`
+  - `src/demo/index.tsx`
+  - `module_tree_full.md`
+- Lệnh xác minh:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS (3 warnings; non-blocking)
+  - `python scripts/generate_module_tree.py` → Modules: 320
+  - Browser smoke on `http://127.0.0.1:4173/index.html` → PASS
+
+**Kết luận**: PASS — landing page simplified, brush span retained.
+
 ## 2. Audit template chung
 
 Mỗi slice nên ghi theo mẫu sau:
