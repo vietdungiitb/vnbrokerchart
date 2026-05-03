@@ -63,7 +63,11 @@ module.exports = (env, argv) => {
       compress: true,
       port: 8080,
       hot: true,
+      client: {
+        overlay: false,
+      },
     },
+    mode: isProduction ? "production" : "development",
     devtool: isProduction ? "source-map" : "eval-cheap-module-source-map",
   };
 };

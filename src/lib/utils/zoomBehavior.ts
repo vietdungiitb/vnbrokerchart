@@ -3,7 +3,8 @@ import {
 } from "./ChartDataUtil";
 
 import {
-	last
+	last,
+	isDefined
 } from "./index";
 /* eslint-disable no-unused-vars */
 
@@ -15,7 +16,10 @@ export function mouseBasedZoomAnchor({
 	fullData,
 }: any) {
 	const currentItem = getCurrentItem(xScale, xAccessor, mouseXY, plotData);
-	return xAccessor(currentItem);
+	if (isDefined(currentItem)) return xAccessor(currentItem);
+	if (isDefined(xScale.invert)) return xScale.invert(mouseXY[0]);
+	const lastItem = last(fullData);
+	return isDefined(lastItem) ? xAccessor(lastItem) : xScale.domain()[1];
 }
 
 export function lastVisibleItemBasedZoomAnchor({

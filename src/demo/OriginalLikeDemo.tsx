@@ -44,10 +44,12 @@ type OriginalLikeDatum = DemoDatum & {
 };
 
 const priceFormat = format(".2f");
+const priceFormat3 = format(".3f");
 const volumeFormat = format(".3s");
 const volumeAxisFormat = format(".2s");
 const volumeMouseFormat = format(".4s");
 const macdFormat = format(".2f");
+const macdFormat3 = format(".3f");
 const tooltipDateFormat = timeFormat("%d/%m/%Y %H:%M");
 const macdDateFormat = timeFormat("%Y-%m-%d");
 const themeFontFamily = '"Segoe UI Variable Text", "Aptos", "Segoe UI", sans-serif';
@@ -72,8 +74,6 @@ const coordinateTheme = {
     textFill: "#e2e8f0",
 };
 
-const bullishColor = "#10b981";
-const bearishColor = "#ef4444";
 const ema12Stroke = "#22d3ee";
 const ema26Stroke = "#f59e0b";
 
@@ -159,13 +159,17 @@ const OriginalLikeDemo = () => {
     const initialXExtents = useMemo<[number, number]>(() => {
         const endIndex = data.length - 1;
         const startIndex = Math.max(0, data.length - 150);
-        return [xAccessor(last(data)), xAccessor(data[startIndex])] as [number, number];
+        return [xAccessor(data[startIndex]), xAccessor(last(data))] as [number, number];
     }, [data, xAccessor]);
 
+    const [visibleDomain, setVisibleDomain] = useState<[number, number]>(initialXExtents);
     const [xExtents, setXExtents] = useState<[number, number]>(initialXExtents);
+    const [brushEnabled, setBrushEnabled] = useState(false);
+    const [resetToken, setResetToken] = useState(0);
 
     useEffect(() => {
         setXExtents(initialXExtents);
+        setVisibleDomain(initialXExtents);
     }, [initialXExtents]);
 
     useEffect(() => {
@@ -202,23 +206,57 @@ const OriginalLikeDemo = () => {
     const handleBrush = ({ start, end }: BrushSelection) => {
         const left = Math.min(start.xValue as number, end.xValue as number);
         const right = Math.max(start.xValue as number, end.xValue as number);
+        setBrushEnabled(false);
         setXExtents([left, right]);
     };
 
+    const handleVisibleDomainChange = (domain: [number, number]) => {
+        setVisibleDomain(domain);
+    };
+
     const handleResetView = () => {
+        setBrushEnabled(false);
+        setResetToken(t => t + 1);
         setXExtents(initialXExtents);
+        setVisibleDomain(initialXExtents);
+    };
+
+    const visibleBars = Math.max(1, Math.min(data.length, Math.round(Math.abs(visibleDomain[1] - visibleDomain[0]))));
+    const isZoomedIn = visibleBars <= 120;
+    const visibleDomainLabel = useMemo(() => {
+        const fmt = timeFormat("%d/%m %H:%M");
+        const startIdx = Math.max(0, Math.min(data.length - 1, Math.round(visibleDomain[0])));
+        const endIdx = Math.max(0, Math.min(data.length - 1, Math.round(visibleDomain[1])));
+        const s = data[startIdx]?.date;
+        const e = data[endIdx]?.date;
+        return (s && e) ? `${fmt(s)} → ${fmt(e)}` : `${visibleDomain[0].toFixed(0)} → ${visibleDomain[1].toFixed(0)}`;
+    }, [data, visibleDomain]);
+    const priceYAxisTicks = visibleBars <= 120 ? 7 : 5;
+    const priceYAxisTickFormat = visibleBars <= 120 ? priceFormat3 : priceFormat;
+    const macdYAxisTicks = visibleBars <= 120 ? 5 : 2;
+    const macdYAxisTickFormat = visibleBars <= 120 ? macdFormat3 : macdFormat;
+    const xAxisTickFormat = (tickValue: number) => {
+        const tickIndex = Math.max(0, Math.min(data.length - 1, Math.round(tickValue)));
+        const tickDatum = data[tickIndex];
+
+        if (!tickDatum) return "";
+        if (visibleBars <= 35) return timeFormat("%H:%M:%S")(tickDatum.date);
+        if (visibleBars <= 70) return timeFormat("%H:%M")(tickDatum.date);
+        if (visibleBars <= 120) return timeFormat("%I:%M %p")(tickDatum.date);
+        return timeFormat("%I %p")(tickDatum.date);
     };
 
     const resolvedChartWidth = chartWidth || Math.max(960, Math.floor(window.innerWidth - 48));
-    const chartHeight = 600;
+    const chartHeight = Math.max(480, viewportHeight - 118);
     const margin = { left: 70, right: 70, top: 20, bottom: 30 };
-    const priceHeight = 400;
-    const volumeHeight = 150;
-    const macdHeight = 150;
+    const priceHeight = Math.round(chartHeight * 0.64);
+    const volumeHeight = Math.round(chartHeight * 0.18);
+    const macdHeight = chartHeight - priceHeight - volumeHeight;
     const priceYAxisTheme = {
         ...axisTheme,
         innerTickSize: -(resolvedChartWidth - margin.left - margin.right),
         tickStrokeOpacity: 0.08,
+        tickFormat: priceYAxisTickFormat,
     };
     const volumeYAxisTheme = {
         ...axisTheme,
@@ -227,11 +265,11 @@ const OriginalLikeDemo = () => {
     };
     const macdYAxisTheme = {
         ...axisTheme,
-        ticks: 2,
-        tickFormat: macdFormat,
+        ticks: macdYAxisTicks,
+        tickFormat: macdYAxisTickFormat,
     };
-    const volumeOrigin = createOrigin(300);
-    const macdOrigin = createOrigin(150);
+    const volumeOrigin = createOrigin(macdHeight + volumeHeight);
+    const macdOrigin = createOrigin(macdHeight);
 
     return (
         <main className="demo-page demo-page--classic">
@@ -244,7 +282,17 @@ const OriginalLikeDemo = () => {
                                 Candlestick, volume, MACD, zoom bằng scroll, pan bằng drag và brush span theo mẫu gốc.
                             </p>
                         </div>
-                        <span className="source-chip source-chip--accent">Brush span + wheel zoom</span>
+                        <div className="demo-chart-card__chips">
+                            <span className="source-chip source-chip--neutral">Khung nhìn: {visibleBars}/{data.length} nến</span>
+                            <span className="source-chip source-chip--accent">X: {visibleDomainLabel}</span>
+                            <button
+                                className={`source-chip source-chip--btn${brushEnabled ? " source-chip--btn-active" : ""}`}
+                                onClick={() => setBrushEnabled(v => !v)}
+                                title={brushEnabled ? "Tắt chế độ chọn vùng (Brush)" : "Bật chế độ chọn vùng (Brush)"}
+                            >
+                                {brushEnabled ? "✂ Đang chọn vùng" : "✂ Chọn vùng"}
+                            </button>
+                        </div>
                     </header>
 
                     <div className="chart-shell chart-shell--classic">
@@ -256,7 +304,7 @@ const OriginalLikeDemo = () => {
                                     ratio={window.devicePixelRatio || 1}
                                     margin={margin}
                                     type="hybrid"
-                                    seriesName="BTCUSD-brush-demo"
+                                    seriesName={`BTCUSD-brush-demo-${resetToken}`}
                                     data={data}
                                     xScale={xScale}
                                     xAccessor={xAccessor}
@@ -266,6 +314,9 @@ const OriginalLikeDemo = () => {
                                     panEvent
                                     zoomEvent
                                     useCrossHairStyleCursor
+                                    clamp={true}
+                                    onVisibleDomainChange={handleVisibleDomainChange}
+
                                 >
                                     <Chart
                                         id={1}
@@ -273,9 +324,16 @@ const OriginalLikeDemo = () => {
                                         yExtents={[(datum: OriginalLikeDatum) => [datum.high, datum.low], ema26.accessor(), ema12.accessor()]}
                                         padding={{ top: 10, bottom: 20 }}
                                     >
-                                        <XAxis axisAt="bottom" orient="bottom" showTicks={false} outerTickSize={0} />
-                                        <YAxis axisAt="right" orient="right" ticks={5} {...priceYAxisTheme} tickFormat={priceFormat} />
-                                        <MouseCoordinateY {...coordinateTheme} at="right" orient="right" displayFormat={priceFormat} />
+                                        <XAxis
+                                            axisAt="bottom"
+                                            orient="bottom"
+                                            showTicks={isZoomedIn}
+                                            outerTickSize={isZoomedIn ? 5 : 0}
+                                            ticks={isZoomedIn ? 8 : 6}
+                                            tickFormat={xAxisTickFormat}
+                                        />
+                                        <YAxis axisAt="right" orient="right" ticks={priceYAxisTicks} {...priceYAxisTheme} />
+                                        <MouseCoordinateY {...coordinateTheme} at="right" orient="right" displayFormat={priceYAxisTickFormat} />
                                         <CandlestickSeries />
                                         <LineSeries yAccessor={ema26.accessor()} stroke={ema26Stroke} />
                                         <LineSeries yAccessor={ema12.accessor()} stroke={ema12Stroke} />
@@ -308,8 +366,12 @@ const OriginalLikeDemo = () => {
                                             ]}
                                         />
                                         <Brush
-                                            enabled={true}
+                                            enabled={brushEnabled}
                                             type={BRUSH_TYPE}
+                                            stroke="#22d3ee"
+                                            fill="#22d3ee"
+                                            fillOpacity={0.18}
+                                            strokeOpacity={0.95}
                                             onStart={() => {}}
                                             onBrush={handleBrush}
                                         />
@@ -340,13 +402,24 @@ const OriginalLikeDemo = () => {
                                         yExtents={macdCalculator.accessor()}
                                         padding={{ top: 10, bottom: 10 }}
                                     >
-                                        <XAxis axisAt="bottom" orient="bottom" />
+                                        <XAxis
+                                            axisAt="bottom"
+                                            orient="bottom"
+                                            showTicks={isZoomedIn}
+                                            outerTickSize={isZoomedIn ? 5 : 0}
+                                            ticks={isZoomedIn ? 10 : 6}
+                                            tickFormat={xAxisTickFormat}
+                                        />
                                         <YAxis axisAt="right" orient="right" {...macdYAxisTheme} />
                                         <MouseCoordinateX at="bottom" orient="bottom" displayFormat={macdDateFormat} />
-                                        <MouseCoordinateY {...coordinateTheme} at="right" orient="right" displayFormat={macdFormat} />
+                                        <MouseCoordinateY {...coordinateTheme} at="right" orient="right" displayFormat={macdYAxisTickFormat} />
                                         <Brush
-                                            enabled={true}
+                                            enabled={brushEnabled}
                                             type={BRUSH_TYPE}
+                                            stroke="#22d3ee"
+                                            fill="#22d3ee"
+                                            fillOpacity={0.18}
+                                            strokeOpacity={0.95}
                                             onStart={() => {}}
                                             onBrush={handleBrush}
                                         />

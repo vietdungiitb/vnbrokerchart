@@ -213,6 +213,8 @@ export function getChartConfigWithUpdatedYScales(
 }
 
 export function getCurrentItem(xScale: any, xAccessor: any, mouseXY: any, plotData: any[]) {
+	if (!plotData || plotData.length === 0) return undefined;
+
 	let xValue, item;
 	if (xScale.invert) {
 		xValue = xScale.invert(mouseXY[0]);
@@ -225,6 +227,9 @@ export function getCurrentItem(xScale: any, xAccessor: any, mouseXY: any, plotDa
 }
 
 export function getXValue(xScale: any, xAccessor: any, mouseXY: any, plotData: any[]) {
+	if (!plotData || plotData.length === 0) {
+		return isDefined(xScale.invert) ? xScale.invert(mouseXY[0]) : undefined;
+	}
 
 	let xValue, item;
 	if (xScale.invert) {

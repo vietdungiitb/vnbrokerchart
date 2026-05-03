@@ -99,24 +99,29 @@ class Brush extends Component<any, any> {
 		this.lastMoreProps = moreProps;
 		this.removeWindowListeners();
 		const {
-			mouseXY: [, mouseY],
+			mouseXY,
 			currentItem,
 			chartConfig: { yScale },
 			xAccessor,
 			xScale,
 		} = moreProps;
+		const [mouseX, mouseY] = mouseXY;
+		const xValue = isDefined(currentItem)
+			? xAccessor(currentItem)
+			: isDefined(xScale.invert)
+			? xScale.invert(mouseX)
+			: mouseX;
 
-		const x1y1 = [
-			xScale(xAccessor(currentItem)),
-			mouseY
-		];
+		const x1y1 = isDefined(currentItem)
+			? [xScale(xAccessor(currentItem)), mouseY]
+			: [mouseX, mouseY];
 
 		this.setState({
 			selected: true,
 			x1y1,
 			start: {
 				item: currentItem,
-				xValue: xAccessor(currentItem),
+				xValue,
 				yValue: yScale.invert(mouseY),
 			},
 		}, () => {
@@ -133,17 +138,22 @@ class Brush extends Component<any, any> {
 		this.lastMoreProps = moreProps;
 
 		const {
-			mouseXY: [, mouseY],
+			mouseXY,
 			currentItem,
 			chartConfig: { yScale },
 			xAccessor,
 			xScale,
 		} = moreProps;
+		const [mouseX, mouseY] = mouseXY;
+		const xValue = isDefined(currentItem)
+			? xAccessor(currentItem)
+			: isDefined(xScale.invert)
+			? xScale.invert(mouseX)
+			: mouseX;
 
-		const [x2, y2] = [
-			xScale(xAccessor(currentItem)),
-			mouseY
-		];
+		const [x2, y2] = isDefined(currentItem)
+			? [xScale(xAccessor(currentItem)), mouseY]
+			: [mouseX, mouseY];
 
 		const { x1y1: [x1, y1] } = this.state;
 
@@ -156,7 +166,7 @@ class Brush extends Component<any, any> {
 			selected: true,
 			end: {
 				item: currentItem,
-				xValue: xAccessor(currentItem),
+				xValue,
 				yValue: yScale.invert(mouseY),
 			},
 			rect: {
@@ -189,6 +199,8 @@ class Brush extends Component<any, any> {
 			<GenericChartComponent
 				{...({ ref: this.saveNode } as any)}
 				disablePan={enabled}
+				selected={this.state.selected}
+				interactiveCursorClass="react-stockcharts-crosshair-cursor"
 
 				svgDraw={this.renderSVG}
 				canvasToDraw={getMouseCanvas}

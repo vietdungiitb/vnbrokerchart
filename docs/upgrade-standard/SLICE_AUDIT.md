@@ -419,6 +419,100 @@ Browser smoke: zoom + pan + brush + indicators đầy đủ
 
 **Kết luận**: PASS — original-like layout restored, wheel zoom and brush span verified.
 
+### Runtime brush-drag fix — visible span selection ✅
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: `src/lib/EventCapture.tsx`, `src/lib/ChartCanvas.tsx`, `src/demo/OriginalLikeDemo.tsx`, `src/demo/demo.css`
+- Files added/updated:
+  - `src/lib/EventCapture.tsx`
+  - `src/lib/ChartCanvas.tsx`
+  - `src/demo/OriginalLikeDemo.tsx`
+  - `src/demo/demo.css`
+  - `module_tree_full.md`
+- Lệnh xác minh:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS (3 warnings; non-blocking)
+  - `python scripts/generate_module_tree.py` → Modules: 320
+  - Browser smoke on `http://127.0.0.1:4173/index.html` → PASS
+- Kết quả quan sát:
+  - Demo gốc gọn đã fit vào viewport 504px cao.
+  - Brush span ở panel dưới nhận drag thật và cập nhật `xExtents`.
+  - Browser state sau drag đổi domain từ `[50,199]` sang `[85,122]`.
+- Rủi ro còn lại:
+  - Bundle vẫn lớn; webpack warnings còn tồn tại nhưng không chặn chức năng.
+- Kết luận: PASS
+
+### Runtime wheel-focus + visible range badge fix ✅
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: `src/lib/EventCapture.tsx`, `src/lib/ChartCanvas.tsx`, `src/demo/OriginalLikeDemo.tsx`, `src/demo/demo.css`
+- Files added/updated:
+  - `src/lib/EventCapture.tsx`
+  - `src/lib/ChartCanvas.tsx`
+  - `src/demo/OriginalLikeDemo.tsx`
+  - `src/demo/demo.css`
+  - `module_tree_full.md`
+- Lệnh xác minh:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS (3 warnings; non-blocking)
+  - `python scripts/generate_module_tree.py` → Modules: 320
+  - Browser smoke on a fresh tab without click focus → PASS
+- Kết quả quan sát:
+  - Wheel zoom works immediately after load without needing a focus click.
+  - Header badge changes from `149 nến` to `291 nến` on the first wheel interaction.
+  - Brush span remains visible on the dark background.
+- Rủi ro còn lại:
+  - Bundle still emits webpack size warnings; they do not block the demo.
+- Kết luận: PASS
+
+### Zoom-sensitive axis labels ✅
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: `src/demo/OriginalLikeDemo.tsx`, `src/lib/ChartCanvas.tsx`
+- Files added/updated:
+  - `src/demo/OriginalLikeDemo.tsx`
+  - `src/lib/ChartCanvas.tsx`
+  - `module_tree_full.md`
+- Lệnh xác minh:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS (3 warnings; non-blocking)
+  - `python scripts/generate_module_tree.py` → Modules: 320
+  - Browser smoke on a fresh tab while zoomed in → PASS
+- Kết quả quan sát:
+  - Visible-range badge is capped to the real dataset size.
+  - X-axis switches to finer time labels as the visible candle count drops.
+  - Upper axis becomes visible when zoomed in, so the axis itself now changes visibly.
+- Rủi ro còn lại:
+  - Webpack size warnings remain non-blocking.
+- Kết luận: PASS
+
+### Empty-plot safety + synced view state ✅
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: `src/lib/utils/ChartDataUtil.ts`, `src/lib/utils/zoomBehavior.ts`, `src/lib/interactive/Brush.tsx`, `src/demo/OriginalLikeDemo.tsx`
+- Files added/updated:
+  - `src/lib/utils/ChartDataUtil.ts`
+  - `src/lib/utils/zoomBehavior.ts`
+  - `src/lib/interactive/Brush.tsx`
+  - `src/demo/OriginalLikeDemo.tsx`
+  - `module_tree_full.md`
+- Lệnh xác minh:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - `python scripts/generate_module_tree.py` → Modules: 320
+  - Browser smoke on a fresh tab: wheel zoom, brush drag, reset button → PASS
+- Kết quả quan sát:
+  - Zoom no longer produces `NaN` in the visible range badge.
+  - Brush drag completes safely even when the pointer is over a sparse or empty part of the plot.
+  - Reset View returns the demo to `149/200` and `X: 50.0 → 199.0`.
+- Rủi ro còn lại:
+  - Webpack size warnings remain non-blocking.
+- Kết luận: PASS
+
 ## 2. Audit template chung
 
 Mỗi slice nên ghi theo mẫu sau:

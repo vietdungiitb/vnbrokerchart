@@ -802,6 +802,101 @@ Every completed slice must update this ledger with the exact files changed in th
 - [docs/upgrade-standard/SLICE_AUDIT.md](../../docs/upgrade-standard/SLICE_AUDIT.md)
 - [module_tree_full.md](../../module_tree_full.md)
 
+## 19. Runtime brush-drag fix — visible span selection
+
+### Completed
+
+- Shrunk the original-like demo layout so the brush overview stays inside the visible viewport on the 504px browser height used here.
+- Wired `EventCapture` to keep window `mousemove` attached during brush presses, then moved the `ChartCanvas` mousemove state update out of the RAF gate so brush drags cannot get stuck waiting for redraw timing.
+- Regenerated `module_tree_full.md` after the source changes and confirmed the browser span drag now changes the visible range.
+
+### Validation
+
+- Command run: `npm run type-check`
+- Command run: `npm run build:docs`
+- Command run: `python scripts/generate_module_tree.py`
+- Browser drag smoke on `http://127.0.0.1:4173/index.html`
+- Result: span brush now works in the visible viewport and the x-domain changes from `[50,199]` to `[85,122]` after a real drag.
+
+### Files touched in this slice
+
+- [src/lib/EventCapture.tsx](../../src/lib/EventCapture.tsx)
+- [src/lib/ChartCanvas.tsx](../../src/lib/ChartCanvas.tsx)
+- [src/demo/OriginalLikeDemo.tsx](../../src/demo/OriginalLikeDemo.tsx)
+- [src/demo/demo.css](../../src/demo/demo.css)
+- [module_tree_full.md](../../module_tree_full.md)
+
+## 20. Runtime wheel-focus + visible range badge fix
+
+### Completed
+
+- Removed the wheel-focus gate from `EventCapture` so a fresh load can zoom immediately without requiring an initial click.
+- Added a live visible-range badge to the demo header so wheel zoom and brush spans are obvious even when the chart change is subtle.
+- Kept the brush selection styling visible on the dark theme and regenerated `module_tree_full.md` after the runtime change.
+
+### Validation
+
+- Command run: `npm run type-check`
+- Command run: `npm run build:docs`
+- Command run: `python scripts/generate_module_tree.py`
+- Browser smoke on a fresh tab without click focus
+- Result: wheel zoom changed the badge from `149 nến` to `291 nến` immediately, and brush drag updated the badge and visible span styling.
+
+### Files touched in this slice
+
+- [src/lib/EventCapture.tsx](../../src/lib/EventCapture.tsx)
+- [src/lib/ChartCanvas.tsx](../../src/lib/ChartCanvas.tsx)
+- [src/demo/OriginalLikeDemo.tsx](../../src/demo/OriginalLikeDemo.tsx)
+- [src/demo/demo.css](../../src/demo/demo.css)
+- [module_tree_full.md](../../module_tree_full.md)
+
+## 21. Zoom-sensitive axis labels
+
+### Completed
+
+- Added zoom-sensitive x-axis formatting so the time labels shift to finer granularity when the visible candle count is small.
+- Enabled the upper price chart x-axis while zoomed in, making the axis itself visibly change instead of relying only on the candle density.
+- Kept the visible-range badge capped to the real dataset size so the header stays truthful to the rendered candles.
+
+### Validation
+
+- Command run: `npm run type-check`
+- Command run: `npm run build:docs`
+- Command run: `python scripts/generate_module_tree.py`
+- Browser smoke on a fresh tab while zoomed in
+- Result: visible range badge and x-axis format both update with zoom; the page no longer relies on a static axis presentation.
+
+### Files touched in this slice
+
+- [src/demo/OriginalLikeDemo.tsx](../../src/demo/OriginalLikeDemo.tsx)
+- [src/lib/ChartCanvas.tsx](../../src/lib/ChartCanvas.tsx)
+- [module_tree_full.md](../../module_tree_full.md)
+
+## 22. Empty-plot safety + synced view state
+
+### Completed
+
+- Hardened `getCurrentItem` and `getXValue` so empty plot windows do not crash hover, drag, or zoom anchors.
+- Added Brush fallbacks for start/end x-values when the mouse is not over a data point, so selection can still complete safely.
+- Synced the demo `xExtents` state to the current visible domain and reset it with the chart so rerenders do not snap the chart back to an old brush range.
+- Regenerated `module_tree_full.md` after the source changes.
+
+### Validation
+
+- Command run: `npm run type-check`
+- Command run: `npm run build:docs`
+- Command run: `python scripts/generate_module_tree.py`
+- Browser smoke on a fresh tab: wheel zoom, brush drag, reset button
+- Result: no NaN after zoom, brush drag updates the visible range, and Reset View returns to `149/200` with `X: 50.0 → 199.0`.
+
+### Files touched in this slice
+
+- [src/lib/utils/ChartDataUtil.ts](../../src/lib/utils/ChartDataUtil.ts)
+- [src/lib/utils/zoomBehavior.ts](../../src/lib/utils/zoomBehavior.ts)
+- [src/lib/interactive/Brush.tsx](../../src/lib/interactive/Brush.tsx)
+- [src/demo/OriginalLikeDemo.tsx](../../src/demo/OriginalLikeDemo.tsx)
+- [module_tree_full.md](../../module_tree_full.md)
+
 ## 7. Slice 2 Evidence
 
 ### Completed

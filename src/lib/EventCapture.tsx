@@ -113,7 +113,7 @@ class EventCapture extends Component<any, any> {
 		const mouseXY = mousePosition(e);
 		e.preventDefault();
 
-		if (zoom && this.focus && yZoom && !panInProgress) {
+		if (zoom && yZoom && !panInProgress) {
 			const zoomDir = e.deltaY > 0 ? 1 : -1;
 
 			onZoom(zoomDir, mouseXY, e);
@@ -313,8 +313,12 @@ class EventCapture extends Component<any, any> {
 				select(win)
 					.on(MOUSEMOVE, this.handlePan)
 					.on(MOUSEUP, this.handlePanEnd);
+			} else {
+				const win = d3Window(this.node);
+				select(win)
+					.on(MOUSEMOVE, this.handleMouseMove);
 
-			} else if (somethingSelected) {
+				if (somethingSelected) {
 				this.setState({
 					panInProgress: false,
 					dragInProgress: true,
@@ -327,6 +331,7 @@ class EventCapture extends Component<any, any> {
 				select(win)
 					.on(MOUSEMOVE, this.handleDrag)
 					.on(MOUSEUP, this.handleDragEnd);
+				}
 			}
 
 			onMouseDown(mouseXY, currentCharts, e);

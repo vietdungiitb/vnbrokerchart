@@ -244,6 +244,7 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		this.saveCanvasContainerNode = this.saveCanvasContainerNode.bind(this);
 		this.setCursorClass = this.setCursorClass.bind(this);
 		this.getMutableState = this.getMutableState.bind(this);
+		this.notifyVisibleDomainChange = this.notifyVisibleDomainChange.bind(this);
 
 		this.subscriptions = [];
 		this.interactiveState = [];
@@ -261,13 +262,18 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		if (reset || prevProps.data !== this.props.data || prevProps.width !== this.props.width || prevProps.height !== this.props.height) {
 			const { fullData, ...state } = resetChart(this.props);
 			this.fullData = fullData;
-			this.setState(state);
+			this.setState(state, () => {
+				this.notifyVisibleDomainChange();
+			});
 		}
 	}
 
 	saveEventCaptureNode(node: any) { this.eventCaptureNode = node; }
 	saveCanvasContainerNode(node: any) { this.canvasContainerNode = node; }
 	getMutableState() { return this.mutableState; }
+	notifyVisibleDomainChange(xScale = this.state.xScale) {
+		this.props.onVisibleDomainChange?.(xScale.domain());
+	}
 	getDataInfo() { return { ...this.state, fullData: this.fullData }; }
 	getCanvasContexts() { return this.canvasContainerNode?.getCanvasContexts(); }
 	generateSubscriptionId() { return ++this.lastSubscriptionId; }
@@ -309,7 +315,9 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 	}
 
 	handleMouseDown(mouseXY: MouseXY, currentCharts: any, e: unknown) {
-		this.triggerEvent("mousedown", { mouseXY, currentCharts }, e);
+		const { xScale, xAccessor, plotData } = this.state;
+		const currentItem = getCurrentItem(xScale, xAccessor, mouseXY, plotData);
+		this.triggerEvent("mousedown", { mouseXY, currentCharts, currentItem }, e);
 	}
 
 	calculateStateForDomain(newDomain: any[]) {
@@ -342,14 +350,22 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		const c = zoomDirection > 0 ? 1 * zoomMultiplier : 1 / zoomMultiplier;
 		const newDomain = initialXScale.range().map((x: number) => cx + (x - cx) * c).map(initialXScale.invert);
 		const { xScale, plotData, chartConfig } = this.calculateStateForDomain(newDomain);
-		this.clearThreeCanvas();
-		this.setState({ xScale, plotData, chartConfig });
+		this.setState({ xScale, plotData, chartConfig }, () => {
+			this.triggerEvent("zoom", { xScale, plotData, chartConfig }, e);
+			this.clearThreeCanvas();
+			this.draw({ force: true });
+			this.notifyVisibleDomainChange(xScale);
+		});
 	}
 
 	xAxisZoom(newDomain: any[]) {
 		const { xScale, plotData, chartConfig } = this.calculateStateForDomain(newDomain);
-		this.clearThreeCanvas();
-		this.setState({ xScale, plotData, chartConfig });
+		this.setState({ xScale, plotData, chartConfig }, () => {
+			this.triggerEvent("zoom", { xScale, plotData, chartConfig }, undefined);
+			this.clearThreeCanvas();
+			this.draw({ force: true });
+			this.notifyVisibleDomainChange(xScale);
+		});
 	}
 
 	yAxisZoom(chartId: string | number, newDomain: any[]) {
@@ -395,18 +411,21 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		const state = this.panHelper(mousePosition, panStartXScale, dxdy, chartsToPan);
 		this.panInProgress = false;
 		this.clearThreeCanvas();
-		this.setState(state);
+		this.setState(state, () => {
+			this.notifyVisibleDomainChange(state.xScale);
+		});
 	}
 
 	handleMouseMove(mouseXY: MouseXY, inputType: string, e: unknown) {
+		const { chartConfig, plotData, xScale, xAccessor } = this.state;
+		const currentCharts = getCurrentCharts(chartConfig, mouseXY);
+		const currentItem = getCurrentItem(xScale, xAccessor, mouseXY, plotData);
+		this.triggerEvent("mousemove", { show: true, mouseXY, prevMouseXY: this.prevMouseXY, currentItem, currentCharts }, e);
+		this.prevMouseXY = mouseXY;
+		this.mutableState = { mouseXY, currentItem, currentCharts };
+
 		if (!this.waitingForMouseMoveAnimationFrame) {
 			this.waitingForMouseMoveAnimationFrame = true;
-			const { chartConfig, plotData, xScale, xAccessor } = this.state;
-			const currentCharts = getCurrentCharts(chartConfig, mouseXY);
-			const currentItem = getCurrentItem(xScale, xAccessor, mouseXY, plotData);
-			this.triggerEvent("mousemove", { show: true, mouseXY, prevMouseXY: this.prevMouseXY, currentItem, currentCharts }, e);
-			this.prevMouseXY = mouseXY;
-			this.mutableState = { mouseXY, currentItem, currentCharts };
 			requestAnimationFrame(() => {
 				this.clearMouseCanvas();
 				this.draw({ trigger: "mousemove" });
@@ -555,6 +574,7 @@ ChartCanvas.propTypes = {
 	clamp: PropTypes.oneOfType([PropTypes.string, PropTypes.bool, PropTypes.func]),
 	zoomEvent: PropTypes.bool,
 	onSelect: PropTypes.func,
+	onVisibleDomainChange: PropTypes.func,
 	maintainPointsPerPixelOnResize: PropTypes.bool,
 	disableInteraction: PropTypes.bool,
 };
@@ -573,10 +593,11 @@ ChartCanvas.defaultProps = {
 	defaultFocus: true,
 	onLoadMore: noop,
 	onSelect: noop,
+	onVisibleDomainChange: noop,
 	mouseMoveEvent: true,
 	panEvent: true,
 	zoomEvent: true,
-	zoomMultiplier: 1.1,
+	zoomMultiplier: 1.2,
 	clamp: false,
 	zoomAnchor: mouseBasedZoomAnchor,
 	maintainPointsPerPixelOnResize: true,

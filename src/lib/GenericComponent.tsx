@@ -208,6 +208,10 @@ class GenericComponent extends Component<GenericComponentProps, GenericComponent
 		this.evaluationInProgress = true;
 		this.evaluateType(type, e);
 		this.evaluationInProgress = false;
+
+		if (isDefined(this.props.svgDraw) && this.props.drawOn.indexOf(aliases[type] || type) > -1) {
+			this.forceUpdate();
+		}
 	}
 
 	evaluateType(type: string, e: unknown) {

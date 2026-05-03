@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-03 16:44:46`
+Generated at: `2026-05-03 18:23:10`
 
 ## Summary
 
@@ -10,8 +10,8 @@ Generated at: `2026-05-03 16:44:46`
 - Python modules: 1
 - JS/TS modules: 319
 - Total classes: 218
-- Total functions: 319
-- Total top-level variables: 1887
+- Total functions: 321
+- Total top-level variables: 1900
 
 ## Python Modules
 
@@ -888,9 +888,9 @@ Generated at: `2026-05-03 16:44:46`
 ### `src/demo/OriginalLikeDemo.tsx`
 
 - Functions:
-  - `OriginalLikeDemo`, `createOrigin`, `handleBrush`, `handleResetView`, `handleResize`, `updateWidth`
+  - `OriginalLikeDemo`, `createOrigin`, `handleBrush`, `handleResetView`, `handleResize`, `handleVisibleDomainChange`, `updateWidth`, `xAxisTickFormat`
 - Top-level variables:
-  - `BRUSH_TYPE`, `axisTheme`, `bearishColor`, `bullishColor`, `calculatedData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `ema12`, `ema12Stroke`, `ema26`, `ema26Stroke`, `endIndex`, `initialXExtents`, `left`, `macdAppearance`, `macdCalculator`, `macdDateFormat`, `macdFormat`, `macdHeight`, `macdOrigin`, `macdYAxisTheme`, `margin`, `node`, `observer`, `priceFormat`, `priceHeight`, `priceYAxisTheme`, `rawData`, `resolvedChartWidth`, `right`, `smaVolume10`, `startIndex`, `themeFontFamily`, `tooltipDateFormat`, `volumeAxisFormat`, `volumeFormat`, `volumeHeight`, `volumeMouseFormat`, `volumeOrigin`, `volumeYAxisTheme`, `xScaleProvider`
+  - `BRUSH_TYPE`, `axisTheme`, `bearishColor`, `bullishColor`, `calculatedData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `ema12`, `ema12Stroke`, `ema26`, `ema26Stroke`, `endIndex`, `initialXExtents`, `isZoomedIn`, `left`, `macdAppearance`, `macdCalculator`, `macdDateFormat`, `macdFormat`, `macdFormat3`, `macdHeight`, `macdOrigin`, `macdYAxisTheme`, `macdYAxisTickFormat`, `macdYAxisTicks`, `margin`, `node`, `observer`, `priceFormat`, `priceFormat1`, `priceFormat3`, `priceHeight`, `priceYAxisTheme`, `priceYAxisTickFormat`, `priceYAxisTicks`, `rawData`, `resolvedChartWidth`, `right`, `smaVolume10`, `startIndex`, `themeFontFamily`, `tickDatum`, `tickIndex`, `tooltipDateFormat`, `visibleBars`, `visibleDomainLabel`, `volumeAxisFormat`, `volumeFormat`, `volumeHeight`, `volumeMouseFormat`, `volumeOrigin`, `volumeYAxisTheme`, `xScaleProvider`
 
 ### `src/index.ts`
 
@@ -1461,7 +1461,7 @@ Generated at: `2026-05-03 16:44:46`
 - Classes:
   - `Brush`
 - Top-level variables:
-  - `dashArray`, `height`, `shouldBrush`, `width`, `x`, `x1y1`, `y`
+  - `dashArray`, `height`, `shouldBrush`, `width`, `x`, `x1y1`, `xValue`, `y`
 
 ### `src/lib/interactive/ClickCallback.tsx`
 
