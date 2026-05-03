@@ -7,6 +7,8 @@
 > Trước khi bắt đầu coding, bắt buộc đọc [DEVELOPMENT_RULES.md](./DEVELOPMENT_RULES.md).
 >
 > Bộ tài liệu bàn giao, audit và evidence: [HANDOFF_MANIFEST.md](./HANDOFF_MANIFEST.md), [AUDIT_LEDGER.md](./AUDIT_LEDGER.md), [AUDIT_TEST_MATRIX.md](./AUDIT_TEST_MATRIX.md), [SLICE_AUDIT.md](./SLICE_AUDIT.md), [TASKBOARD.md](./TASKBOARD.md), [DELIVERY_CLOSEOUT.md](./DELIVERY_CLOSEOUT.md).
+>
+> Tài liệu vận hành thực thi và tự audit không hỏi lại: [EXECUTION_RUNBOOK.md](./EXECUTION_RUNBOOK.md), [SELF_AUDIT_PLAYBOOK.md](./SELF_AUDIT_PLAYBOOK.md).
 
 ---
 

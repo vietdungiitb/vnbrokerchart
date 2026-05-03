@@ -6,6 +6,8 @@
 > **Điểm vào triển khai chi tiết:** xem [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md).
 > **Quy định bắt buộc trước khi coding:** xem [DEVELOPMENT_RULES.md](./DEVELOPMENT_RULES.md).
 > **Bộ tài liệu bàn giao cho đội code:** xem [HANDOFF_MANIFEST.md](./HANDOFF_MANIFEST.md).
+> **Runbook thực thi và bàn giao theo từng bước:** xem [EXECUTION_RUNBOOK.md](./EXECUTION_RUNBOOK.md).
+> **Playbook tự audit minh chứng cho từng slice:** xem [SELF_AUDIT_PLAYBOOK.md](./SELF_AUDIT_PLAYBOOK.md).
 > **Nếu hệ thống phải chịu tải lớn:** xem thêm mục công nghệ quy mô lớn trong [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md).
 
 ---
@@ -58,6 +60,23 @@ export interface OHLCVBar {
 Phase 1 → Phase 2 + 3 (song song) → Phase 4 (CVD/Orderflow — cốt lõi VN market) → Phase 5 → Phase 6–7.
 
 **Build system khuyến nghị:** `tsup` cho thư viện publish; `webpack` chỉ nên giữ cho demo/preview cũ nếu cần.
+
+---
+
+## Quy trình bàn giao không hỏi lại
+
+Để đội code làm việc độc lập từ bộ tài liệu này, bắt buộc đi theo chuỗi:
+
+1. [HANDOFF_MANIFEST.md](./HANDOFF_MANIFEST.md)
+2. [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
+3. [TASKBOARD.md](./TASKBOARD.md)
+4. [EXECUTION_RUNBOOK.md](./EXECUTION_RUNBOOK.md)
+5. [AUDIT_TEST_MATRIX.md](./AUDIT_TEST_MATRIX.md)
+6. [SELF_AUDIT_PLAYBOOK.md](./SELF_AUDIT_PLAYBOOK.md)
+7. [SLICE_AUDIT.md](./SLICE_AUDIT.md)
+8. [AUDIT_LEDGER.md](./AUDIT_LEDGER.md)
+
+Chuỗi trên là bắt buộc để đảm bảo mọi task đều có scope, gate test, bằng chứng và điều kiện closeout rõ ràng.
 
 ---
 

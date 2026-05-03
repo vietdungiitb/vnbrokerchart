@@ -17,6 +17,8 @@
 | [AUDIT_LEDGER.md](./AUDIT_LEDGER.md) | Ledger này | Ready |
 | [AUDIT_TEST_MATRIX.md](./AUDIT_TEST_MATRIX.md) | Ma trận test theo slice | Ready |
 | [SLICE_AUDIT.md](./SLICE_AUDIT.md) | Minh chứng từng slice | Ready |
+| [EXECUTION_RUNBOOK.md](./EXECUTION_RUNBOOK.md) | Quy trình thực thi end-to-end cho đội code | Ready |
+| [SELF_AUDIT_PLAYBOOK.md](./SELF_AUDIT_PLAYBOOK.md) | Chuẩn tự-audit và minh chứng PASS/FAIL | Ready |
 | [TASKBOARD.md](./TASKBOARD.md) | Bảng công việc + per-task spec | Ready |
 | [DELIVERY_CLOSEOUT.md](./DELIVERY_CLOSEOUT.md) | Điều kiện đóng bàn giao | Ready |
 
@@ -221,6 +223,22 @@
 - Validation:
 	- `python scripts/generate_module_tree.py` → PASS
 - Kết luận: Bộ phase docs đã đồng bộ với implementation và ledger hiện tại.
+
+### Documentation Completeness Evidence (No-question handoff pack)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: hoàn thiện bộ tài liệu thực thi và tự-audit để đội code có thể làm việc độc lập, không cần hỏi lại owner.
+- Files modified:
+	- `docs/TypeScript/HANDOFF_MANIFEST.md`
+	- `docs/TypeScript/ROADMAP.md`
+	- `docs/TypeScript/AUDIT_LEDGER.md`
+	- `docs/TypeScript/EXECUTION_RUNBOOK.md`
+	- `docs/TypeScript/SELF_AUDIT_PLAYBOOK.md`
+- Validation:
+	- Đã kiểm tra liên kết chéo giữa manifest/roadmap/runbook/playbook/ledger hoạt động theo cùng một luồng.
+	- Đã bổ sung rõ entry points cho thực thi, tự-audit và handover.
+- Kết luận: Bộ handoff đã self-contained cho triển khai slice và bàn giao audit.
 
 ---
 

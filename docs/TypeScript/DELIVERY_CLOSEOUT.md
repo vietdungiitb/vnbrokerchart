@@ -25,6 +25,8 @@
 - `AUDIT_LEDGER.md`
 - `AUDIT_TEST_MATRIX.md`
 - `SLICE_AUDIT.md`
+- `EXECUTION_RUNBOOK.md`
+- `SELF_AUDIT_PLAYBOOK.md`
 - `TASKBOARD.md`
 - `DELIVERY_CLOSEOUT.md`
 - `module_tree_full.md`
@@ -41,6 +43,7 @@
 - [ ] React 19 rules pass cho mọi file React/JSX/TSX
 - [ ] Audit evidence đầy đủ cho từng slice
 - [ ] Handoff manifest là entry point duy nhất cho team code
+- [ ] Runbook thực thi và self-audit playbook đã được team code sử dụng trong handoff
 
 ---
 

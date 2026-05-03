@@ -2,7 +2,7 @@
 
 > Đây là cổng vào duy nhất cho đội code và AI code trước khi bắt đầu thực thi kế hoạch TypeScript.
 >
-> Trình tự đọc bắt buộc: [DEVELOPMENT_RULES.md](./DEVELOPMENT_RULES.md) → [HANDOFF_MANIFEST.md](./HANDOFF_MANIFEST.md) → [ROADMAP.md](./ROADMAP.md) → [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) → [ARCHITECTURE.md](./ARCHITECTURE.md).
+> Trình tự đọc bắt buộc: [DEVELOPMENT_RULES.md](./DEVELOPMENT_RULES.md) → [HANDOFF_MANIFEST.md](./HANDOFF_MANIFEST.md) → [ROADMAP.md](./ROADMAP.md) → [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) → [EXECUTION_RUNBOOK.md](./EXECUTION_RUNBOOK.md) → [SELF_AUDIT_PLAYBOOK.md](./SELF_AUDIT_PLAYBOOK.md) → [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ---
 
@@ -26,6 +26,8 @@
 | [AUDIT_LEDGER.md](./AUDIT_LEDGER.md) | Sổ đăng ký slice, evidence và gate | Ready |
 | [AUDIT_TEST_MATRIX.md](./AUDIT_TEST_MATRIX.md) | Ma trận test cho từng slice | Ready |
 | [SLICE_AUDIT.md](./SLICE_AUDIT.md) | Template minh chứng từng slice | Ready |
+| [EXECUTION_RUNBOOK.md](./EXECUTION_RUNBOOK.md) | Runbook thực thi end-to-end không cần hỏi lại | Ready |
+| [SELF_AUDIT_PLAYBOOK.md](./SELF_AUDIT_PLAYBOOK.md) | Playbook tự audit và mẫu minh chứng bắt buộc | Ready |
 | [TASKBOARD.md](./TASKBOARD.md) | Bảng công việc triển khai + per-task execution spec | Ready |
 | [DELIVERY_CLOSEOUT.md](./DELIVERY_CLOSEOUT.md) | Điều kiện đóng bàn giao | Ready |
 
@@ -51,10 +53,12 @@
 2. Đọc [ARCHITECTURE_GUARDS.md](./ARCHITECTURE_GUARDS.md) để biết G01–G15 ALLOWED/FORBIDDEN áp dụng cho slice nào.
 3. Đọc manifest này để biết phải mở tài liệu nào tiếp theo.
 4. Đọc [ROADMAP.md](./ROADMAP.md) và [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) để xác định slice hiện tại.
-5. Mở [TASKBOARD.md](./TASKBOARD.md) để lấy thứ tự triển khai, dependency và per-task execution spec.
-6. Mở [AUDIT_TEST_MATRIX.md](./AUDIT_TEST_MATRIX.md) để biết test bắt buộc.
-7. Sau khi code xong, điền [SLICE_AUDIT.md](./SLICE_AUDIT.md) và cập nhật [AUDIT_LEDGER.md](./AUDIT_LEDGER.md).
-8. Kết thúc bằng [DELIVERY_CLOSEOUT.md](./DELIVERY_CLOSEOUT.md) khi toàn bộ slice đã pass.
+5. Mở [EXECUTION_RUNBOOK.md](./EXECUTION_RUNBOOK.md) để chạy đúng quy trình thực thi và handover.
+6. Mở [TASKBOARD.md](./TASKBOARD.md) để lấy thứ tự triển khai, dependency và per-task execution spec.
+7. Mở [AUDIT_TEST_MATRIX.md](./AUDIT_TEST_MATRIX.md) để biết test bắt buộc.
+8. Mở [SELF_AUDIT_PLAYBOOK.md](./SELF_AUDIT_PLAYBOOK.md) để điền minh chứng đúng chuẩn PASS/FAIL.
+9. Sau khi code xong, điền [SLICE_AUDIT.md](./SLICE_AUDIT.md) và cập nhật [AUDIT_LEDGER.md](./AUDIT_LEDGER.md).
+10. Kết thúc bằng [DELIVERY_CLOSEOUT.md](./DELIVERY_CLOSEOUT.md) khi toàn bộ slice đã pass.
 
 ---
 
