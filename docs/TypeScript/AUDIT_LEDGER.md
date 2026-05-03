@@ -238,6 +238,25 @@
 - Validation:
 	- Đã kiểm tra liên kết chéo giữa manifest/roadmap/runbook/playbook/ledger hoạt động theo cùng một luồng.
 	- Đã bổ sung rõ entry points cho thực thi, tự-audit và handover.
+	- Đã hiệu chỉnh cách diễn giải trạng thái phase để tránh hiểu nhầm "slice done" thành "phase done".
+
+### Documentation Correctness Evidence (Phase status clarification)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-03
+- Scope: hiệu chỉnh 6 tài liệu phase theo trạng thái thực thi thật và loại bỏ nội dung dư sai ngữ cảnh.
+- Files modified:
+	- `docs/TypeScript/PHASE1_FOUNDATION.md`
+	- `docs/TypeScript/PHASE2_CHART_TYPES.md`
+	- `docs/TypeScript/PHASE3_INDICATORS.md`
+	- `docs/TypeScript/PHASE4_ORDERFLOW.md`
+	- `docs/TypeScript/PHASE5_DRAWING_TOOLS.md`
+	- `docs/TypeScript/PHASE6_7_LAYOUT_ADAPTER.md`
+	- `docs/TypeScript/AUDIT_LEDGER.md`
+- Validation:
+	- Đối chiếu trạng thái phase với `TASKBOARD.md` và `AUDIT_LEDGER.md` hiện hành.
+	- Xóa block nội dung thừa cuối file phase 6-7 để khớp ngữ cảnh as-built.
+- Kết luận: Bộ phase docs đã rõ trạng thái "partial/backlog" và không còn gây hiểu nhầm tiến độ.
 - Kết luận: Bộ handoff đã self-contained cho triển khai slice và bàn giao audit.
 
 ---

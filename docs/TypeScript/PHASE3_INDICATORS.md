@@ -1,8 +1,10 @@
 # Phase 3 — Indicators (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái hiện tại: Partial  
+> Trạng thái thực thi: Partial (slice P3 đã đóng, catalog và integration phase-level còn backlog)  
 > Slice đã đóng: P3
+
+> Lưu ý tránh hiểu nhầm: việc P3 PASS không đồng nghĩa hoàn tất toàn bộ roadmap indicator của phase này.
 
 ---
 

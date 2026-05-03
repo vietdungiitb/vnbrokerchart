@@ -1,8 +1,10 @@
 # Phase 1 — Library Foundation (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái hiện tại: Completed  
+> Trạng thái thực thi: Slice P1 đã hoàn tất, phase-level roadmap chưa đóng hoàn toàn  
 > Chốt theo evidence: [SLICE_AUDIT.md](./SLICE_AUDIT.md), [AUDIT_LEDGER.md](./AUDIT_LEDGER.md)
+
+> Lưu ý tránh hiểu nhầm: file này phản ánh trạng thái as-built của Phase 1, không phải tuyên bố toàn bộ chương trình đã kết thúc.
 
 ---
 

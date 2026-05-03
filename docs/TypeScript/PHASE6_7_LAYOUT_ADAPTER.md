@@ -1,8 +1,10 @@
 # Phase 6-7 — Layout and Adapter (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái hiện tại: Partial-Strong  
+> Trạng thái thực thi: Partial-Strong (các slice nền tảng đã đóng, phase-level chưa hoàn tất)  
 > Slice liên quan đã đóng: P2, P5, P6
+
+> Lưu ý tránh hiểu nhầm: đây là trạng thái as-built của từng track, không phải kết luận đã hoàn tất toàn phase 6-7.
 
 ---
 
@@ -65,27 +67,3 @@
 - [x] Regression stories đã chuyển đổi và build pass trên Vite.
 - [ ] Panel UX nâng cao hoàn chỉnh.
 - [ ] Adapter reliability matrix hoàn tất và có soak evidence.
-
-    async searchSymbols(query) {
-        const res = await fetch(`${this.baseUrl}/api/symbols/search/?q=${encodeURIComponent(query)}`);
-        return res.json();
-    }
-}
-
-// Dùng:
-const adapter = new DjangoVnstockAdapter();
-<ChartCanvas adapter={adapter} symbol="VCB" timeframe="1D" />
-```
-
----
-
-## 7.3 Checklist hoàn thành Phase 7
-
-- [ ] `StockDataAdapter` interface đầy đủ + exported
-- [ ] `useChartData` hook dùng adapter (fetchBars + infinite scroll)
-- [ ] `useRealtimeBar` hook (subscribeToBar)
-- [ ] `useOrderbook` hook
-- [ ] `useTrades` hook
-- [ ] `createRestAdapter(baseUrl)` helper cho REST-only backends
-- [ ] Mock adapter cho testing/Storybook
-- [ ] README ví dụ DjangoVnstockAdapter đầy đủ

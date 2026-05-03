@@ -1,8 +1,10 @@
 # Phase 5 — Drawing Tools (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái hiện tại: Partial-Strong  
+> Trạng thái thực thi: Partial-Strong (slice P4 đã đóng, phase-level còn backlog)  
 > Slice đã đóng: P4
+
+> Lưu ý tránh hiểu nhầm: trạng thái strong phản ánh nền tảng kỹ thuật đã tốt, không phải phase đã hoàn tất toàn bộ phạm vi.
 
 ---
 

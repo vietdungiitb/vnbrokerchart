@@ -1,8 +1,10 @@
 # Phase 4 — Orderflow Suite (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái hiện tại: Early Partial  
+> Trạng thái thực thi: Early Partial (chưa hoàn tất)  
 > Lưu ý: Đây là phase có phụ thuộc dữ liệu backend lớn nhất.
+
+> Lưu ý tránh hiểu nhầm: phase này hiện mới ở mức nền tảng, chưa đạt Definition of Done.
 
 ---
 

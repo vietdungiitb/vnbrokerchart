@@ -1,8 +1,10 @@
 # Phase 2 — Chart Types (As-built Sync)
 
 > Thuộc: [ROADMAP.md](./ROADMAP.md)  
-> Trạng thái hiện tại: Partial  
+> Trạng thái thực thi: Partial (đã có nền tảng từ P2/P6, chưa hoàn tất mục tiêu phase chart types đầy đủ)  
 > Liên quan thực thi: P2 chart shell + P6 stories
+
+> Lưu ý tránh hiểu nhầm: Done ở bảng snapshot chỉ là done theo hạng mục con đã triển khai, không phải done toàn phase.
 
 ---
 
