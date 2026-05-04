@@ -4,7 +4,7 @@
  * Emits applyDragDelta on pointer move; double-click triggers resetLayout.
  */
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { useRef } from "react";
 
 interface ChartPaneSplitterProps {
@@ -26,14 +26,14 @@ export default function ChartPaneSplitter({
 	const lastYRef = useRef<number | null>(null);
 	const draggingRef = useRef(false);
 
-	const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+	const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
 		e.preventDefault();
 		draggingRef.current = true;
 		lastYRef.current = e.clientY;
-		(e.target as HTMLDivElement).setPointerCapture(e.pointerId);
+		e.currentTarget.setPointerCapture(e.pointerId);
 	};
 
-	const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+	const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
 		if (!draggingRef.current || lastYRef.current === null) return;
 		const deltaY = e.clientY - lastYRef.current;
 		if (deltaY === 0) return;
@@ -41,10 +41,17 @@ export default function ChartPaneSplitter({
 		applyDragDelta(splitterIndex, deltaY, available);
 	};
 
-	const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+	const handlePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
 		draggingRef.current = false;
 		lastYRef.current = null;
-		(e.target as HTMLDivElement).releasePointerCapture(e.pointerId);
+		if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+			e.currentTarget.releasePointerCapture(e.pointerId);
+		}
+	};
+
+	const handlePointerLeave = () => {
+		draggingRef.current = false;
+		lastYRef.current = null;
 	};
 
 	return (
@@ -55,6 +62,7 @@ export default function ChartPaneSplitter({
 			onPointerMove={handlePointerMove}
 			onPointerUp={handlePointerUp}
 			onPointerCancel={handlePointerUp}
+			onPointerLeave={handlePointerLeave}
 			onDoubleClick={onDoubleClick}
 			title="Kéo để thay đổi chiều cao pane • Double-click để reset"
 		>

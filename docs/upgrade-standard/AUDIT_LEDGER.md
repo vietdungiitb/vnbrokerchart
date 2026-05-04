@@ -1125,3 +1125,30 @@ Every completed slice must update this ledger with the exact files changed in th
 - [src/demo/usePaneLayout.ts](../../src/demo/usePaneLayout.ts)
 - [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
 - [module_tree_full.md](../../module_tree_full.md)
+
+## 20. Slice 16 Evidence
+
+### Completed
+
+- Fixed pane-resize behavior to avoid an initially locked splitter state by rebalancing default pane ratios and minimum heights.
+- Hardened splitter pointer handling by using `currentTarget` pointer capture/release and resetting drag state on pointer leave.
+- Fixed volume pane rendering regression by anchoring y-extents at zero and applying computed bar width for continuous-time data.
+- Regenerated module inventory after source updates.
+
+### Validation
+
+- Command run: `npx tsc --noEmit`
+- Command run: `npm run build:docs`
+- Command run: `python scripts/generate_module_tree.py`
+- Browser audit at `http://localhost:8080/`:
+  - Volume bars render as proper bars (no compressed black line artifact).
+  - Splitter drag now changes pane boundaries from reset defaults.
+  - Chart type switch (`Candlestick` ↔ `OHLC Bar`) updates series label and chart rendering.
+
+### Files touched in this slice
+
+- [src/demo/usePaneLayout.ts](../../src/demo/usePaneLayout.ts)
+- [src/demo/ChartPaneSplitter.tsx](../../src/demo/ChartPaneSplitter.tsx)
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)

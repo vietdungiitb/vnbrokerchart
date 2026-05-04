@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-04 09:58:09`
+Generated at: `2026-05-04 10:10:12`
 
 ## Summary
 
@@ -10,7 +10,7 @@ Generated at: `2026-05-04 09:58:09`
 - Python modules: 1
 - JS/TS modules: 595
 - Total classes: 348
-- Total functions: 3442
+- Total functions: 3443
 - Total top-level variables: 7127
 
 ## Python Modules
@@ -2090,7 +2090,7 @@ Generated at: `2026-05-04 09:58:09`
 ### `src/demo/ChartPaneSplitter.tsx`
 
 - Functions:
-  - `handlePointerDown`, `handlePointerMove`, `handlePointerUp`
+  - `handlePointerDown`, `handlePointerLeave`, `handlePointerMove`, `handlePointerUp`
 - Top-level variables:
   - `deltaY`, `draggingRef`, `lastYRef`
 

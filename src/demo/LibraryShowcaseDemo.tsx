@@ -723,12 +723,14 @@ export default function LibraryShowcaseDemo() {
 									id={2}
 									height={volumeH}
 									origin={(_w: number, h: number) => [0, h - volumeH - momentumH]}
-									yExtents={(datum: DemoDatum) => datum.volume}
+									yExtents={(datum: DemoDatum) => [0, datum.volume]}
 								>
 									<YAxis axisAt="right" orient="right" ticks={3} tickFormat={volumeFormat} />
 									<BarSeries
 										yAccessor={(datum: DemoDatum) => datum.volume}
 										fill={(datum: DemoDatum) => (datum.close >= datum.open ? "#089981" : "#f23645")}
+										width={candleWidth}
+										opacity={0.75}
 									/>
 								</Chart>
 
