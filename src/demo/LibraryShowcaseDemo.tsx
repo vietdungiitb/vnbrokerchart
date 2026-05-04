@@ -33,6 +33,8 @@ import RSISeries from "../lib/series/RSISeries";
 import { OHLCTooltip } from "../lib/tooltip";
 import { heikinAshi } from "../lib/calculator";
 import { fetchLiveDemoData, getOfflineDemoData, type DemoDatum } from "./demoData";
+import { usePaneLayout } from "./usePaneLayout";
+import ChartPaneSplitter from "./ChartPaneSplitter";
 import "./demo.css";
 
 const priceFormat = format(".2f");
@@ -439,11 +441,8 @@ export default function LibraryShowcaseDemo() {
 	const ratio = window.devicePixelRatio || 1;
 	const priceIsUp = (lastBar?.close ?? 0) >= (lastBar?.open ?? 0);
 
-	// Dynamic pane heights based on actual container size
-	const MARGIN_V = 36; // top(8) + bottom(28)
-	const volumeH  = Math.max(60,  Math.round(chartHeight * 0.15));
-	const momentumH = Math.max(70, Math.round(chartHeight * 0.20));
-	const priceH   = Math.max(80,  chartHeight - volumeH - momentumH - MARGIN_V);
+	// Dynamic pane heights — splitter-driven via usePaneLayout
+	const { priceH, volumeH, momentumH, applyDragDelta, resetLayout, available } = usePaneLayout(chartHeight);
 
 	const toggleIndicator = (name: string) => {
 		if (!selectedPane) return;
@@ -694,6 +693,25 @@ export default function LibraryShowcaseDemo() {
 							</ChartCanvas>
 						) : (
 							<div className="gc-chart-placeholder">Đang khởi tạo canvas…</div>
+						)}
+						{/* Splitter overlays — positioned absolute on top of canvas */}
+						{chartReady && (
+							<>
+								<ChartPaneSplitter
+									splitterIndex={0}
+									available={available}
+									applyDragDelta={applyDragDelta}
+									onDoubleClick={resetLayout}
+									style={{ top: 8 + priceH }}
+								/>
+								<ChartPaneSplitter
+									splitterIndex={1}
+									available={available}
+									applyDragDelta={applyDragDelta}
+									onDoubleClick={resetLayout}
+									style={{ top: 8 + priceH + volumeH }}
+								/>
+							</>
 						)}
 					</div>
 				</section>

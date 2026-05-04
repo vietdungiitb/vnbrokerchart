@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-04 09:17:53`
+Generated at: `2026-05-04 09:37:53`
 
 ## Summary
 
-- Total modules: 594
+- Total modules: 596
 - Python modules: 1
-- JS/TS modules: 593
+- JS/TS modules: 595
 - Total classes: 348
-- Total functions: 3431
-- Total top-level variables: 7102
+- Total functions: 3441
+- Total top-level variables: 7123
 
 ## Python Modules
 
@@ -2087,6 +2087,13 @@ Generated at: `2026-05-04 09:17:53`
 - Functions:
   - `format`, `timeFormat`
 
+### `src/demo/ChartPaneSplitter.tsx`
+
+- Functions:
+  - `handlePointerDown`, `handlePointerMove`, `handlePointerUp`
+- Top-level variables:
+  - `deltaY`, `draggingRef`, `lastYRef`
+
 ### `src/demo/demoData.ts`
 
 - Functions:
@@ -2111,7 +2118,7 @@ Generated at: `2026-05-04 09:17:53`
 - Functions:
   - `PriceSeries`, `ToolIcon`, `addDrawing`, `addPane`, `chartDomain`, `clearDrawing`, `handler`, `normalizeDate`, `paneTemplate`, `redoDrawing`, `removePane`, `restoreDrawing`, `summarizeIndicator`, `toggleIndicator`, `undoDrawing`, `update`
 - Top-level variables:
-  - `CHART_TYPES`, `DRAWING_TOOLS`, `INDICATOR_OPTIONS`, `MARGIN_V`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `active`, `adapter`, `bestAsk`, `bestBid`, `chartMenuRef`, `chartReady`, `completed`, `data`, `dateFormat`, `disposed`, `dn`, `draft`, `drawingProbe`, `end`, `from`, `haCalc`, `hasIt`, `id`, `indicator`, `indicatorProbe`, `indicators`, `input`, `lastBar`, `lastValue`, `mid`, `momentumH`, `msg`, `node`, `observer`, `paneManager`, `plotData`, `priceFormat`, `priceH`, `priceIsUp`, `ratio`, `rect`, `restored`, `sample`, `selectedPane`, `serialized`, `shellRef`, `spreadBps`, `start`, `startX`, `stopBars`, `stopOrderbook`, `stopTrades`, `timerId`, `to`, `transformed`, `up`, `volumeFormat`, `volumeH`, `xExtents`
+  - `CHART_TYPES`, `DRAWING_TOOLS`, `INDICATOR_OPTIONS`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `active`, `adapter`, `bestAsk`, `bestBid`, `chartMenuRef`, `chartReady`, `completed`, `data`, `dateFormat`, `disposed`, `dn`, `draft`, `drawingProbe`, `end`, `from`, `haCalc`, `hasIt`, `id`, `indicator`, `indicatorProbe`, `indicators`, `input`, `lastBar`, `lastValue`, `mid`, `msg`, `node`, `observer`, `paneManager`, `plotData`, `priceFormat`, `priceIsUp`, `ratio`, `rect`, `restored`, `sample`, `selectedPane`, `serialized`, `shellRef`, `spreadBps`, `start`, `startX`, `stopBars`, `stopOrderbook`, `stopTrades`, `timerId`, `to`, `transformed`, `up`, `volumeFormat`, `xExtents`
 
 ### `src/demo/LiveDemo.tsx`
 
@@ -2126,6 +2133,13 @@ Generated at: `2026-05-04 09:17:53`
   - `OriginalLikeDemo`, `createOrigin`, `handleBrush`, `handleResetView`, `handleResize`, `handleVisibleDomainChange`, `updateWidth`, `xAxisTickFormat`
 - Top-level variables:
   - `BRUSH_TYPE`, `axisTheme`, `calculatedData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `e`, `ema12`, `ema12Stroke`, `ema26`, `ema26Stroke`, `endIdx`, `endIndex`, `fmt`, `initialXExtents`, `isZoomedIn`, `left`, `macdAppearance`, `macdCalculator`, `macdDateFormat`, `macdFormat`, `macdFormat3`, `macdHeight`, `macdOrigin`, `macdYAxisTheme`, `macdYAxisTickFormat`, `macdYAxisTicks`, `margin`, `node`, `observer`, `priceFormat`, `priceFormat3`, `priceHeight`, `priceYAxisTheme`, `priceYAxisTickFormat`, `priceYAxisTicks`, `rawData`, `resolvedChartWidth`, `right`, `s`, `smaVolume10`, `startIdx`, `startIndex`, `themeFontFamily`, `tickDatum`, `tickIndex`, `tooltipDateFormat`, `visibleBars`, `visibleDomainLabel`, `volumeAxisFormat`, `volumeFormat`, `volumeHeight`, `volumeMouseFormat`, `volumeOrigin`, `volumeYAxisTheme`, `xScaleProvider`
+
+### `src/demo/usePaneLayout.ts`
+
+- Functions:
+  - `applyDelta`, `loadRatio`, `pxToRatio`, `ratioToPx`, `sanitize`, `saveRatio`, `usePaneLayout`
+- Top-level variables:
+  - `DEFAULT_RATIO`, `LS_KEY`, `MIN_PX`, `PANE_MARGIN_V`, `applyDragDelta`, `available`, `k`, `momentumH`, `newA`, `newB`, `newMomentumH`, `newPriceH`, `newVolumeH`, `overflow`, `priceH`, `px`, `r`, `resetLayout`, `stored`, `sum`, `total`, `volumeH`
 
 ### `src/index.ts`
 
