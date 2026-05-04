@@ -319,6 +319,29 @@ _(Các evidence chi tiết của S0–S15 được giữ nguyên bên dưới ch
 - `ChartCanvas.tsx`, `GenericComponent.tsx`, `GenericChartComponent.tsx`, `Chart.tsx`, `StockChartContext.tsx`, `types.ts` typed.
 - Files: above 6 files
 
+## 24. Slice 20 Evidence
+
+### Completed
+
+- Fixed splitter drag reliability by switching to Pointer Events with pointer capture in chart overlay splitter.
+- Raised splitter overlay stacking order and interaction settings so drag events are not lost to canvas layers.
+- Reduced pane min-height constraints and bumped layout storage key to clear stale clamped ratios from previous sessions.
+
+### Validation
+
+- Command run: `npx tsc --noEmit`
+- Browser audit at `http://localhost:8080/` confirms realtime splitter movement during drag:
+  - Splitter #1 moved `before=272` → `mid=212` → `after=184` in one drag sequence.
+- Command run: `python scripts/generate_module_tree.py`
+
+### Files touched in this slice
+
+- [src/demo/ChartPaneSplitter.tsx](../../src/demo/ChartPaneSplitter.tsx)
+- [src/demo/demo.css](../../src/demo/demo.css)
+- [src/demo/usePaneLayout.ts](../../src/demo/usePaneLayout.ts)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)
+
 ### S4 Evidence
 - `d3-collection` → native Set. `utils/ChartDataUtil.js`, `utils/index.js`, `package.json`, `package-lock.json`
 

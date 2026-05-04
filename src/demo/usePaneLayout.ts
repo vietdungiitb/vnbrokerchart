@@ -13,8 +13,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export const PANE_MARGIN_V = 36; // ChartCanvas margin: top(8) + bottom(28)
 
 const DEFAULT_RATIO = { price: 0.50, volume: 0.27, momentum: 0.23 };
-const MIN_PX = { price: 120, volume: 50, momentum: 50 };
-const LS_KEY = "gc-pane-layout-v5";
+const MIN_PX = { price: 100, volume: 36, momentum: 36 };
+const LS_KEY = "gc-pane-layout-v6";
 
 type PaneRatio = { price: number; volume: number; momentum: number };
 

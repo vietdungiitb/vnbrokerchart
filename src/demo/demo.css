@@ -378,7 +378,10 @@ button {
   height: 10px;
   margin-top: -5px; /* center the hit area on the pane boundary */
   cursor: row-resize;
-  z-index: 20;
+  z-index: 320;
+  pointer-events: auto;
+  user-select: none;
+  touch-action: none;
   display: flex;
   align-items: center;
   justify-content: center;

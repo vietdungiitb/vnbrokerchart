@@ -4,8 +4,8 @@
  * Emits applyDragDelta on pointer move; double-click triggers resetLayout.
  */
 
-import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
-import { useEffect, useRef } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ChartPaneSplitterProps {
 	splitterIndex: 0 | 1;
@@ -22,8 +22,9 @@ export default function ChartPaneSplitter({
 	onDoubleClick,
 	style,
 }: ChartPaneSplitterProps) {
-	// Track active mouse drag; move/up listeners are bound on window for robust dragging.
-	const dragRef = useRef<{ lastY: number } | null>(null);
+	const [isDragging, setIsDragging] = useState(false);
+	const dragRef = useRef<{ pointerId: number; lastY: number } | null>(null);
+	const rootRef = useRef<HTMLDivElement | null>(null);
 	const applyDragDeltaRef = useRef(applyDragDelta);
 	const availableRef = useRef(available);
 
@@ -36,43 +37,50 @@ export default function ChartPaneSplitter({
 	}, [available]);
 
 	useEffect(() => {
-		const handleWindowMouseMove = (event: MouseEvent) => {
-			const drag = dragRef.current;
-			if (!drag) return;
-			const deltaY = event.clientY - drag.lastY;
-			if (deltaY === 0) return;
-			drag.lastY = event.clientY;
-			applyDragDeltaRef.current(splitterIndex, deltaY, availableRef.current);
-		};
-
-		const handleWindowMouseUp = () => {
+		return () => {
 			dragRef.current = null;
 		};
+	}, []);
 
-		window.addEventListener("mousemove", handleWindowMouseMove);
-		window.addEventListener("mouseup", handleWindowMouseUp);
-
-		return () => {
-			window.removeEventListener("mousemove", handleWindowMouseMove);
-			window.removeEventListener("mouseup", handleWindowMouseUp);
-		};
-	}, [splitterIndex]);
-
-	const handleMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
-		e.preventDefault();
-		dragRef.current = { lastY: e.clientY };
+	const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+		event.preventDefault();
+		const node = rootRef.current;
+		if (node) {
+			node.setPointerCapture(event.pointerId);
+		}
+		dragRef.current = { pointerId: event.pointerId, lastY: event.clientY };
+		setIsDragging(true);
 	};
 
-	const handleMouseUp = () => {
+	const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+		const drag = dragRef.current;
+		if (!drag || drag.pointerId !== event.pointerId) return;
+		const deltaY = event.clientY - drag.lastY;
+		if (deltaY === 0) return;
+		drag.lastY = event.clientY;
+		applyDragDeltaRef.current(splitterIndex, deltaY, availableRef.current);
+	};
+
+	const stopDragging = (event: ReactPointerEvent<HTMLDivElement>) => {
+		const drag = dragRef.current;
+		if (!drag || drag.pointerId !== event.pointerId) return;
+		const node = rootRef.current;
+		if (node?.hasPointerCapture(event.pointerId)) {
+			node.releasePointerCapture(event.pointerId);
+		}
 		dragRef.current = null;
+		setIsDragging(false);
 	};
 
 	return (
 		<div
-			className="gc-pane-splitter"
+			ref={rootRef}
+			className={`gc-pane-splitter${isDragging ? " gc-pane-splitter--dragging" : ""}`}
 			style={style}
-			onMouseDown={handleMouseDown}
-			onMouseUp={handleMouseUp}
+			onPointerDown={handlePointerDown}
+			onPointerMove={handlePointerMove}
+			onPointerUp={stopDragging}
+			onPointerCancel={stopDragging}
 			onDoubleClick={onDoubleClick}
 			title="Kéo để thay đổi chiều cao pane • Double-click để reset"
 		>
