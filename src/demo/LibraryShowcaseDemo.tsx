@@ -1,14 +1,20 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format } from "d3-format";
 import { scaleTime } from "d3-scale";
 import { timeFormat } from "d3-time-format";
 
 import {
 	MockAdapter,
+	DynamicChart,
+	PaneHeader,
+	PaneLabel,
+	SeriesPicker,
+	useDynamicPanes,
+	type PaneDescriptor,
+	type SeriesConfig,
+	type SeriesTypeId,
 	type OHLCVBar,
-	PaneSplitter,
 	ChartSplitter,
-	usePaneSizes,
 	useChartTheme,
 	createDraftFromTool,
 	createDrawingHistory,
@@ -18,7 +24,6 @@ import {
 	historyReducer,
 	listDrawingTools,
 	serializeDrawings,
-	usePaneManager,
 	version,
 } from "../index";
 import ChartCanvas from "../lib/ChartCanvas";
@@ -37,6 +42,7 @@ import { OHLCTooltip } from "../lib/tooltip";
 import { heikinAshi } from "../lib/calculator";
 import { fetchLiveDemoData, getOfflineDemoData, type DemoDatum } from "./demoData";
 import "./demo.css";
+import "../lib/styles/pane-overlays.css";
 
 // ── Pane layout config (module-level = stable reference, no re-creation on render) ──
 const PANE_CONFIG = {
@@ -60,9 +66,19 @@ const CHART_TYPES = [
 	{ id: "heikinashi"  as const, label: "Heikin Ashi" },
 	{ id: "line"        as const, label: "Line" },
 	{ id: "area"        as const, label: "Area" },
-	{ id: "bar"         as const, label: "Bar Chart" },
 ];
-type ChartTypeId = "candlestick" | "hollow" | "ohlc" | "heikinashi" | "line" | "area" | "bar";
+type ChartTypeId = "candlestick" | "hollow" | "ohlc" | "heikinashi" | "line" | "area";
+
+const CHART_TYPE_TO_SERIES: Record<ChartTypeId, SeriesTypeId> = {
+	candlestick: "Candlestick",
+	hollow: "HollowCandle",
+	ohlc: "OHLC",
+	heikinashi: "HeikinAshi",
+	line: "Line",
+	area: "Area",
+};
+
+const MAIN_PRICE_SERIES_TYPES: SeriesTypeId[] = ["Candlestick", "HollowCandle", "OHLC", "HeikinAshi", "Line", "Area", "Bar"];
 
 const INDICATOR_OPTIONS = ["EMA", "SMA", "RSI", "MACD", "BOLLINGER", "VOLUME", "CVD"] as const;
 const DRAWING_TOOLS = ["trendLine", "hLine", "vLine", "fibonacci", "channel", "text"] as const;
@@ -99,13 +115,16 @@ function chartDomain(data: DemoDatum[]) {
 	return [normalizeDate(data[start].date), normalizeDate(data[end].date)] as [Date, Date];
 }
 
-function paneTemplate(label: string, heightPx: number, indicatorNames: readonly string[]) {
-	const indicators: IndicatorConfig[] = indicatorNames.map((name) => ({
-		name,
+function paneTemplate(label: string, heightRatio: number, series: SeriesConfig[] = [{ type: "Line", yAxis: "right" }]): Omit<PaneDescriptor, "id"> {
+	return {
+		label,
+		pinned: false,
 		visible: true,
-		yAxis: "right",
-	}));
-	return { label, heightPx, minHeightPx: 90, indicators };
+		heightRatio,
+		series,
+		splitScale: false,
+		tooltip: "value",
+	};
 }
 
 function formatIndicatorObject(obj: Record<string, unknown>): string {
@@ -243,13 +262,6 @@ function PriceSeries({
 					strokeWidth={1.5}
 				/>
 			);
-		case "bar":
-			return (
-				<BarSeries
-					yAccessor={(d: DemoDatum) => d.close}
-					fill={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
-				/>
-			);
 		case "hollow":
 			return (
 				<CandlestickSeries
@@ -278,9 +290,13 @@ export default function LibraryShowcaseDemo() {
 	const [timeframe, setTimeframe] = useState<Timeframe>("1h");
 	const [chartType, setChartType] = useState<ChartTypeId>("candlestick");
 	const [showChartMenu, setShowChartMenu] = useState(false);
+	const [showPanesMenu, setShowPanesMenu] = useState(false);
+	const panesMenuRef = useRef<HTMLDivElement | null>(null);
 	const [activeTool, setActiveTool] = useState<string>("cursor");
 	const [sidePanelTab, setSidePanelTab] = useState<SidePanelTab>("indicators");
-	const [selectedPaneId, setSelectedPaneId] = useState("");
+	const [selectedPaneId, setSelectedPaneId] = useState("price");
+	const [showSeriesPicker, setShowSeriesPicker] = useState(false);
+	const seriesPickerAnchorRef = useRef<HTMLButtonElement | null>(null);
 
 	// Live Binance data state
 	const [liveData, setLiveData] = useState<DemoDatum[]>([]);
@@ -297,11 +313,7 @@ export default function LibraryShowcaseDemo() {
 	});
 	const [drawingState, setDrawingState] = useState(() => createDrawingHistory([]));
 
-	const paneManager = usePaneManager([
-		paneTemplate("Price", 170, ["EMA", "BOLLINGER"]),
-		paneTemplate("Volume", 110, ["VOLUME"]),
-		paneTemplate("Momentum", 120, ["RSI", "MACD"]),
-	]);
+	const paneState = useDynamicPanes(chartHeight);
 
 	// Fetch live Binance data on mount and on timeframe change
 	useEffect(() => {
@@ -374,15 +386,57 @@ export default function LibraryShowcaseDemo() {
 	const lastBar = plotData[plotData.length - 1];
 
 	const selectedPane = useMemo(
-		() => paneManager.panes.find((pane) => pane.id === selectedPaneId) ?? paneManager.panes[0],
-		[paneManager.panes, selectedPaneId],
+		() => paneState.panes.find((pane) => pane.id === selectedPaneId) ?? paneState.visiblePanes[0] ?? paneState.panes[0],
+		[paneState.panes, paneState.visiblePanes, selectedPaneId],
 	);
 
 	useEffect(() => {
-		if (!selectedPane && paneManager.panes.length > 0) {
-			setSelectedPaneId(paneManager.panes[0].id);
+		if (!selectedPane && paneState.panes.length > 0) {
+			setSelectedPaneId(paneState.visiblePanes[0]?.id ?? paneState.panes[0].id);
 		}
-	}, [paneManager.panes, selectedPane]);
+	}, [paneState.panes, paneState.visiblePanes, selectedPane]);
+
+	// Switch the primary price series and chartType atomically in one callback.
+	// By calling both pane dispatches and setChartType inside the same synchronous
+	// event handler, React 18 batches all updates into a single render, preventing
+	// the intermediate frame where chartType="candlestick" but pane.series still
+	// contains "Bar" (which forced y-domain [0..80k] and made bars fill the pane).
+	const handleChartTypeChange = useCallback((nextType: ChartTypeId) => {
+		const desiredType = CHART_TYPE_TO_SERIES[nextType];
+		const pricePane = paneState.panes.find((pane) => pane.id === "price");
+		if (pricePane) {
+			pricePane.series.forEach((series) => {
+				if (MAIN_PRICE_SERIES_TYPES.includes(series.type) && series.type !== desiredType) {
+					paneState.removeSeries(pricePane.id, series.type);
+				}
+			});
+			if (!pricePane.series.some((series) => series.type === desiredType)) {
+				paneState.addSeries(pricePane.id, { type: desiredType, yAxis: "right" });
+			}
+		}
+		setChartType(nextType);
+	}, [paneState.panes, paneState.addSeries, paneState.removeSeries]);
+
+	// Safety-net: if panes are reset externally (e.g. resetToDefault) while a
+	// non-default chartType is active, re-sync the primary series to match.
+	useEffect(() => {
+		const pricePane = paneState.panes.find((pane) => pane.id === "price");
+		if (!pricePane) return;
+		const desiredType = CHART_TYPE_TO_SERIES[chartType];
+		const primary = pricePane.series.find((s) => MAIN_PRICE_SERIES_TYPES.includes(s.type));
+		// Already in sync — nothing to do
+		if (primary?.type === desiredType && pricePane.series.filter((s) => MAIN_PRICE_SERIES_TYPES.includes(s.type)).length === 1) {
+			return;
+		}
+		pricePane.series.forEach((s) => {
+			if (MAIN_PRICE_SERIES_TYPES.includes(s.type) && s.type !== desiredType) {
+				paneState.removeSeries(pricePane.id, s.type);
+			}
+		});
+		if (!pricePane.series.some((s) => s.type === desiredType)) {
+			paneState.addSeries(pricePane.id, { type: desiredType, yAxis: "right" });
+		}
+	}, [chartType, paneState.panes, paneState.addSeries, paneState.removeSeries]);
 
 	useEffect(() => {
 		const node = shellRef.current;
@@ -488,7 +542,7 @@ export default function LibraryShowcaseDemo() {
 		};
 	}, [drawingState]);
 
-	const chartReady = chartWidth > 0 && chartHeight > 0 && plotData.length > 0;
+	const chartReady = chartWidth > 0 && chartHeight > 0 && plotData.length > 0 && paneState.visiblePanes.length > 0;
 
 	// Close chart type menu when clicking outside
 	useEffect(() => {
@@ -501,15 +555,25 @@ export default function LibraryShowcaseDemo() {
 		document.addEventListener("mousedown", handler);
 		return () => document.removeEventListener("mousedown", handler);
 	}, [showChartMenu]);
+
+	// Close panes menu when clicking outside
+	useEffect(() => {
+		if (!showPanesMenu) return;
+		const handler = (e: MouseEvent) => {
+			if (panesMenuRef.current && !panesMenuRef.current.contains(e.target as Node)) {
+				setShowPanesMenu(false);
+			}
+		};
+		document.addEventListener("mousedown", handler);
+		return () => document.removeEventListener("mousedown", handler);
+	}, [showPanesMenu]);
 	const ratio = window.devicePixelRatio || 1;
 	const priceIsUp = (lastBar?.close ?? 0) >= (lastBar?.open ?? 0);
 
 	// ── Theme ─────────────────────────────────────────────────────────────────
 	const { theme, toggleTheme, isDark } = useChartTheme();
 
-	// ── Dynamic pane heights — generic hook from lib ───────────────────────────
-	const { heights, applyDelta, reset: resetLayout, available } = usePaneSizes(chartHeight, PANE_CONFIG);
-	const [priceH, volumeH, momentumH] = heights;
+	const { visiblePanes, heights: paneHeights, applyDelta, resetToDefault, available } = paneState;
 
 	// Theme-aware canvas element colours (canvas is drawn programmatically,
 	// so it doesn't pick up CSS vars automatically).
@@ -517,23 +581,30 @@ export default function LibraryShowcaseDemo() {
 	const axisTickFill  = isDark ? "#d1d4dc" : "#1e2a3b";
 	const canvasBg      = isDark ? "#1e2130" : "#ffffff";
 
-	const toggleIndicator = (name: string) => {
-		if (!selectedPane) return;
-		const hasIt = selectedPane.indicators.some((indicator) => indicator.name === name);
-		if (hasIt) {
-			paneManager.removeIndicator(selectedPane.id, name);
-		} else {
-			paneManager.addIndicator(selectedPane.id, { name, yAxis: "right", visible: true });
-		}
-	};
-
 	const addPane = () => {
-		const id = paneManager.addPane(paneTemplate(`Pane ${paneManager.panes.length + 1}`, 105, ["EMA"]));
-		setSelectedPaneId(id);
+		paneState.addPane(paneTemplate(`Pane ${paneState.panes.length + 1}`, 0.18));
 	};
 	const removePane = () => {
-		if (!selectedPane || paneManager.panes.length <= 1) return;
-		paneManager.removePane(selectedPane.id);
+		if (!selectedPane || paneState.visiblePanes.length <= 1) return;
+		paneState.removePane(selectedPane.id);
+	};
+	const restorePane = () => {
+		if (!selectedPane) return;
+		paneState.restorePane(selectedPane.id);
+	};
+	const movePaneUp = () => {
+		if (!selectedPane) return;
+		const index = paneState.visiblePanes.findIndex((pane) => pane.id === selectedPane.id);
+		if (index > 0) {
+			paneState.reorderPanes(index, index - 1);
+		}
+	};
+	const movePaneDown = () => {
+		if (!selectedPane) return;
+		const index = paneState.visiblePanes.findIndex((pane) => pane.id === selectedPane.id);
+		if (index >= 0 && index < paneState.visiblePanes.length - 1) {
+			paneState.reorderPanes(index, index + 1);
+		}
 	};
 
 	const addDrawing = (tool: DrawingToolName) => {
@@ -605,7 +676,7 @@ export default function LibraryShowcaseDemo() {
 										type="button"
 										className={`gc-chart-type-item${chartType === id ? " gc-chart-type-item--active" : ""}`}
 										onClick={() => {
-											setChartType(id);
+											handleChartTypeChange(id as ChartTypeId);
 											setShowChartMenu(false);
 										}}
 									>
@@ -623,6 +694,50 @@ export default function LibraryShowcaseDemo() {
 					<button type="button" className="gc-topbar-btn">Compare</button>
 					<button type="button" className="gc-topbar-btn">Study</button>
 					<button type="button" className="gc-topbar-btn">Replay</button>
+
+					{/* Panes visibility menu */}
+					<div className="gc-topbar-sep" />
+					<div className="gc-chart-type-wrap" ref={panesMenuRef}>
+						<button
+							type="button"
+							className={`gc-topbar-btn${showPanesMenu ? " gc-topbar-btn--active" : ""}`}
+							onClick={() => setShowPanesMenu((v) => !v)}
+							title="Quản lý panes"
+						>
+							<svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
+								<rect x="1" y="1" width="14" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+								<rect x="1" y="9" width="14" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+							</svg>
+							Panes
+							<svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 4 }}>
+								<path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+							</svg>
+						</button>
+						{showPanesMenu && (
+							<div className="gc-chart-type-menu">
+								{paneState.panes.map((pane) => (
+									<button
+										key={pane.id}
+										type="button"
+										className={`gc-chart-type-item${pane.visible ? " gc-chart-type-item--active" : ""}`}
+										onClick={() => { if (!pane.pinned) paneState.toggleVisible(pane.id); }}
+										disabled={pane.pinned}
+										title={pane.pinned ? "Pane chính luôn hiển thị" : pane.visible ? "Ẩn pane" : "Hiện pane"}
+									>
+										{pane.visible
+											? (
+												<svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: 6, flexShrink: 0 }}>
+													<path d="M2 6l3 3 5-5" stroke="#2962ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+												</svg>
+											)
+											: <span style={{ display: "inline-block", width: 18, flexShrink: 0 }} />}
+										{pane.label}
+										{pane.pinned && <span style={{ marginLeft: 4, fontSize: 10, opacity: 0.5 }}>🔒</span>}
+									</button>
+								))}
+							</div>
+						)}
+					</div>
 				</div>
 
 				<div className="gc-topbar__right">
@@ -722,13 +837,14 @@ export default function LibraryShowcaseDemo() {
 								<span>Đang tải dữ liệu thật từ Binance…</span>
 							</div>
 						) : chartReady ? (
+							<>
 							<ChartCanvas
-							key={`chart-canvas-${chartType}-${timeframe}-${priceH}-${volumeH}-${momentumH}-${theme}`}
+								key={`chart-canvas-${chartType}-${timeframe}-${paneHeights.join("-")}-${theme}`}
 								height={chartHeight}
 								width={chartWidth}
 								margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
 								type="hybrid"
-								seriesName={`terminal-demo-${chartType}-${priceH}-${volumeH}-${momentumH}`}
+								seriesName={`terminal-demo-${chartType}-${paneHeights.join("-")}`}
 								data={plotData}
 								xScale={scaleTime()}
 								xAccessor={(datum: DemoDatum) => datum.date}
@@ -740,87 +856,75 @@ export default function LibraryShowcaseDemo() {
 								panEvent
 								useCrossHairStyleCursor
 							>
-								<Chart
-									id={1}
-									height={priceH}
-									yExtents={(datum: DemoDatum) => [
-										datum.high, datum.low,
-										datum.ema20, datum.ema50,
-										datum.bollingerBand?.top,
-										datum.bollingerBand?.bottom,
-									]}
-								>
-									<YAxis axisAt="right" orient="right" ticks={6} stroke={axisStroke} tickStroke={axisStroke} tickLabelFill={axisTickFill} />
-									<PriceSeries chartType={chartType} candleWidth={candleWidth} />
-									<LineSeries yAccessor={(datum: DemoDatum) => datum.ema20} stroke="#2d9cdb" strokeWidth={1.5} />
-									<LineSeries yAccessor={(datum: DemoDatum) => datum.ema50} stroke="#f2994a" strokeWidth={1.5} />
-									<OHLCTooltip
-										xDisplayFormat={dateFormat}
-										volumeFormat={volumeFormat}
-									displayTexts={{ d: "Ngày ", o: "Mở ", h: "Cao ", l: "Thấp ", c: "Đóng ", v: "KL ", na: "n/a" }}
-									/>
-									<MouseCoordinateX displayFormat={dateFormat} />
-									<MouseCoordinateY rectWidth={64} displayFormat={priceFormat} />
-								</Chart>
-
-								<Chart
-									id={2}
-									height={volumeH}
-									origin={(_w: number, h: number) => [0, h - volumeH - momentumH]}
-									yExtents={(datum: DemoDatum) => [0, datum.volume]}
-								>
-									<YAxis axisAt="right" orient="right" ticks={3} tickFormat={volumeFormat} stroke={axisStroke} tickStroke={axisStroke} tickLabelFill={axisTickFill} />
-									<BarSeries
-										yAccessor={(datum: DemoDatum) => datum.volume}
-										fill={(datum: DemoDatum) => (datum.close >= datum.open ? "#089981" : "#f23645")}
-										width={candleWidth}
-										opacity={0.75}
-									/>
-								</Chart>
-
-								<Chart
-									id={3}
-									height={momentumH}
-									origin={(_w: number, h: number) => [0, h - momentumH]}
-									yExtents={(datum: DemoDatum) => [datum.macd?.macd, datum.macd?.signal, datum.macd?.divergence, datum.rsi]}
-								>
-									<XAxis
-										axisAt="bottom"
-										orient="bottom"
-										showDomain={false}
-										innerTickSize={0}
-										tickStroke="transparent"
-										tickStrokeOpacity={0}
-										tickStrokeWidth={0}
-										tickLabelFill={axisTickFill}
-									/>
-									<YAxis axisAt="right" orient="right" ticks={3} stroke={axisStroke} tickStroke={axisStroke} tickLabelFill={axisTickFill} />
-									<RSISeries yAccessor={(datum: DemoDatum) => datum.rsi} />
-									<MACDSeries yAccessor={(datum: DemoDatum) => datum.macd} />
-								</Chart>
-
-								<CrossHairCursor />
+								{DynamicChart({
+									panes: visiblePanes,
+									heights: paneHeights,
+									data: plotData as any,
+									axisStroke,
+									axisTickFill,
+									isDark,
+									dateFormat,
+									priceFormat,
+									volumeFormat,
+								})}
 							</ChartCanvas>
+							{visiblePanes.map((pane, index) => {
+								const paneTop = 8 + paneHeights.slice(0, index).reduce((sum, value) => sum + value, 0);
+								const paneH = paneHeights[index] ?? 0;
+								return (
+									<Fragment key={pane.id}>
+										{/* Hover-activated topbar: covers only the top 28px of each pane
+										    so chart pan/zoom still works in the rest of the pane */}
+										<div
+											className="rsc-pane-wrap"
+											style={{
+												position: "absolute",
+												top: paneTop,
+												left: 0,
+												right: 0,
+												height: 28,
+												zIndex: 20,
+											}}
+										>
+											<PaneHeader
+												pane={pane}
+												onToggleVisible={() => paneState.toggleVisible(pane.id)}
+												onRemove={() => paneState.removePane(pane.id)}
+												onAddSeries={() => {
+													setSelectedPaneId(pane.id);
+													setShowSeriesPicker(true);
+												}}
+												addButtonRef={pane.id === selectedPaneId ? seriesPickerAnchorRef : undefined}
+											/>
+										</div>
+										<PaneLabel
+											label={pane.label}
+											top={paneTop}
+											height={paneH}
+										/>
+									</Fragment>
+								);
+							})}
+							</>
 						) : (
 							<div className="gc-chart-placeholder">Đang khởi tạo canvas…</div>
 						)}
 						{/* Splitter overlays — positioned absolute on top of canvas */}
 						{chartReady && (
 							<>
-								<ChartSplitter
-									splitterIndex={0}
-									available={available}
-									onCommitDelta={applyDelta}
-									onDoubleClick={resetLayout}
-									style={{ top: 8 + priceH }}
-								/>
-								<ChartSplitter
-									splitterIndex={1}
-									available={available}
-									onCommitDelta={applyDelta}
-									onDoubleClick={resetLayout}
-									style={{ top: 8 + priceH + volumeH }}
-								/>
+								{visiblePanes.slice(0, -1).map((pane, index) => {
+									const top = 8 + paneHeights.slice(0, index + 1).reduce((sum, value) => sum + value, 0);
+									return (
+										<ChartSplitter
+											key={`${pane.id}-splitter`}
+											splitterIndex={index}
+											available={available}
+											onCommitDelta={applyDelta}
+											onDoubleClick={resetToDefault}
+											style={{ top }}
+										/>
+									);
+								})}
 							</>
 						)}
 					</div>
@@ -854,19 +958,16 @@ export default function LibraryShowcaseDemo() {
 								Pane: <strong>{selectedPane?.label ?? "–"}</strong>
 							</div>
 							<div className="gc-chip-wrap">
-								{INDICATOR_OPTIONS.map((name) => {
-									const active = Boolean(selectedPane?.indicators.some((ind) => ind.name === name));
-									return (
-										<button
-											key={name}
-											type="button"
-											className={`gc-chip${active ? " gc-chip--on" : ""}`}
-											onClick={() => toggleIndicator(name)}
-										>
-											{name}
-										</button>
-									);
-								})}
+								{selectedPane?.series.map((series, index) => (
+									<span key={`${selectedPane.id}-${series.type}-${index}`} className="gc-chip gc-chip--on">{series.type}</span>
+								))}
+							</div>
+							<div className="gc-row gc-gap4">
+								<button type="button" className="gc-btn gc-btn--accent" onClick={() => {
+									setSidePanelTab("panes");
+									setShowSeriesPicker(true);
+								}} disabled={!selectedPane}>Manage series</button>
+								<button type="button" className="gc-btn" onClick={restorePane} disabled={!selectedPane || selectedPane.visible}>Restore pane</button>
 							</div>
 							<div className="gc-sp-divider" />
 							<div className="gc-sp-label">Computed values</div>
@@ -938,38 +1039,56 @@ export default function LibraryShowcaseDemo() {
 							<div className="gc-sp-label">Pane layout</div>
 							<div className="gc-row gc-gap4">
 								<button type="button" className="gc-btn gc-btn--accent" onClick={addPane}>+ Add</button>
-								<button type="button" className="gc-btn" onClick={removePane} disabled={paneManager.panes.length <= 1}>Remove</button>
+								<button type="button" className="gc-btn" onClick={removePane} disabled={paneState.visiblePanes.length <= 1}>Remove</button>
+								<button type="button" className="gc-btn" onClick={restorePane} disabled={!selectedPane || selectedPane.visible}>Restore</button>
 							</div>
 							<div className="gc-sp-divider" />
 							<div className="gc-pane-lab">
-								{paneManager.panes.map((pane, index) => (
-									<Fragment key={pane.id}>
-										<div
-											className={`gc-pane-item${pane.id === selectedPane?.id ? " gc-pane-item--active" : ""}`}
-											style={{ height: pane.heightPx, minHeight: pane.minHeightPx ?? 90 }}
-											onClick={() => setSelectedPaneId(pane.id)}
-										>
-											<div className="gc-pane-item__head">
-												<span className="gc-pane-label">{pane.label ?? pane.id}</span>
-												<span className="gc-pane-px">{pane.heightPx ?? 0}px</span>
-											</div>
-											<div className="gc-tag-wrap">
-												{pane.indicators.map((ind) => (
-													<span key={`${pane.id}-${ind.name}`} className="gc-tag">{ind.name}</span>
-												))}
+								{paneState.panes.map((pane) => {
+									const visibleIndex = paneState.visiblePanes.findIndex((visiblePane) => visiblePane.id === pane.id);
+									const isSelected = pane.id === selectedPane?.id;
+									return (
+										<div key={pane.id} className={`gc-pane-card rsc-pane-wrap${isSelected ? " gc-pane-item--active" : ""}`} onClick={() => setSelectedPaneId(pane.id)}>
+											<PaneHeader
+												pane={pane}
+												onToggleVisible={() => paneState.toggleVisible(pane.id)}
+												onRemove={() => paneState.removePane(pane.id)}
+												onAddSeries={() => {
+													setSelectedPaneId(pane.id);
+													setShowSeriesPicker(true);
+												}}
+												addButtonRef={isSelected ? seriesPickerAnchorRef : undefined}
+												className="gc-pane-header--sidepanel"
+											/>
+											<div className="gc-pane-card__body">
+												<div className="gc-pane-item__head">
+													<span className="gc-pane-label">{pane.label}</span>
+													<span className="gc-pane-px">{Math.round(pane.heightRatio * 100)}%</span>
+												</div>
+												<div className="gc-tag-wrap">
+													{pane.series.map((series, index) => (
+														<span key={`${pane.id}-${series.type}-${index}`} className="gc-tag">{series.type}</span>
+													))}
+												</div>
+												<div className="gc-row gc-gap4 gc-pane-actions">
+													<button type="button" className="gc-btn" onClick={(event) => { event.stopPropagation(); movePaneUp(); }} disabled={visibleIndex <= 0}>↑</button>
+													<button type="button" className="gc-btn" onClick={(event) => { event.stopPropagation(); movePaneDown(); }} disabled={visibleIndex < 0 || visibleIndex >= paneState.visiblePanes.length - 1}>↓</button>
+													<button type="button" className="gc-btn" onClick={(event) => { event.stopPropagation(); paneState.toggleVisible(pane.id); }} disabled={pane.pinned}>{pane.visible ? "Hide" : "Show"}</button>
+												</div>
 											</div>
 										</div>
-										{index < paneManager.panes.length - 1 ? (
-											<PaneSplitter
-												className="gc-splitter"
-												onResize={(heightPx) => paneManager.resizePane(pane.id, heightPx)}
-												minTopHeight={90}
-												minBottomHeight={90}
-											/>
-										) : null}
-									</Fragment>
-								))}
+									);
+								})}
 							</div>
+							{showSeriesPicker && selectedPane ? (
+								<SeriesPicker
+									pane={selectedPane}
+									onAddSeries={(series) => paneState.addSeries(selectedPane.id, series)}
+									onRemoveSeries={(type) => paneState.removeSeries(selectedPane.id, type)}
+									anchorRef={seriesPickerAnchorRef}
+									onClose={() => setShowSeriesPicker(false)}
+								/>
+							) : null}
 						</div>
 					)}
 				</aside>

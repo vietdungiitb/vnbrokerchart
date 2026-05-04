@@ -8,11 +8,12 @@ export { default as BackgroundText } from "./lib/BackgroundText";
 export { default as ZoomButtons } from "./lib/ZoomButtons";
 
 export { ChartTerminal, ChartPane, PaneSplitter, usePaneManager } from "./lib/core";
-export { ChartSplitter, usePaneSizes, useChartTheme } from "./lib/core";
+export { ChartSplitter, usePaneSizes, useChartTheme, DynamicChart, PaneHeader, PaneLabel, PaneTooltip, SeriesPicker, useDynamicPanes, DEFAULT_PANES, PANE_LAYOUT_STORAGE_KEY, PANE_MAX_VISIBLE } from "./lib/core";
 
 export type { ChartSplitterProps } from "./lib/core";
 export type { UsePaneSizesOptions, UsePaneSizesResult } from "./lib/core";
 export type { UseChartThemeResult, ChartTheme } from "./lib/core";
+export type { PaneDescriptor, SeriesConfig, SeriesTypeId, TooltipMode, YAxisSide } from "./lib/core";
 export { getIndicator, registerIndicator } from "./lib/indicators";
 export { BaseAdapter, DjangoVnstockAdapter, MockAdapter, createRestAdapter, createMockBars } from "./lib/adapters";
 export {
