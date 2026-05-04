@@ -1152,3 +1152,26 @@ Every completed slice must update this ledger with the exact files changed in th
 - [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
 - [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
 - [module_tree_full.md](../../module_tree_full.md)
+
+## 21. Slice 17 Evidence
+
+### Completed
+
+- Removed persistent black compressed band artifact by relocating the visible time axis to the bottom pane and suppressing X-axis domain/tick strokes.
+- Kept time labels visible while disabling the line rendering that caused the heavy black strip illusion.
+- Revalidated the chart layout with live data and regenerated module inventory.
+
+### Validation
+
+- Command run: `npx tsc --noEmit`
+- Browser audit at `http://localhost:8080/` confirms:
+  - No black compressed band above volume pane.
+  - No black compressed band below momentum pane.
+  - Time labels still visible at chart bottom.
+- Command run: `python scripts/generate_module_tree.py`
+
+### Files touched in this slice
+
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)

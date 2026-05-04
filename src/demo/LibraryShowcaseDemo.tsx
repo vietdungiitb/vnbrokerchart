@@ -705,7 +705,6 @@ export default function LibraryShowcaseDemo() {
 										datum.bollingerBand?.bottom,
 									]}
 								>
-									<XAxis axisAt="bottom" orient="bottom" />
 									<YAxis axisAt="right" orient="right" ticks={6} />
 									<PriceSeries chartType={chartType} candleWidth={candleWidth} />
 									<LineSeries yAccessor={(datum: DemoDatum) => datum.ema20} stroke="#2d9cdb" strokeWidth={1.5} />
@@ -740,6 +739,16 @@ export default function LibraryShowcaseDemo() {
 									origin={(_w: number, h: number) => [0, h - momentumH]}
 									yExtents={(datum: DemoDatum) => [datum.macd?.macd, datum.macd?.signal, datum.macd?.divergence, datum.rsi]}
 								>
+									<XAxis
+										axisAt="bottom"
+										orient="bottom"
+										showDomain={false}
+										innerTickSize={0}
+										tickStroke="transparent"
+										tickStrokeOpacity={0}
+										tickStrokeWidth={0}
+										tickLabelFill="#1e2a3b"
+									/>
 									<YAxis axisAt="right" orient="right" ticks={3} />
 									<RSISeries yAccessor={(datum: DemoDatum) => datum.rsi} />
 									<MACDSeries yAccessor={(datum: DemoDatum) => datum.macd} />
