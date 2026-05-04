@@ -23,6 +23,10 @@ Tài liệu này là **entry point** cho chương trình chuyển đổi 100% so
 | [AUDIT_LEDGER.md](AUDIT_LEDGER.md) | Ledger trạng thái canonical + file register | v3.0 |
 | [DELIVERY_CLOSEOUT.md](DELIVERY_CLOSEOUT.md) | Báo cáo đóng v2.0 + trạng thái mở cho v3.0 | v3.0 |
 
+### Gói bàn giao bổ sung cho tính năng mới
+
+- [splitter-pane-resize/HANDOFF_MANIFEST.md](splitter-pane-resize/HANDOFF_MANIFEST.md): Entry point cho bộ tài liệu triển khai splitter thay đổi chiều cao pane kỹ thuật (GoCharting-style), bao gồm spec, implementation plan, taskboard và audit protocol.
+
 ---
 
 ## 3. Trạng thái tiền đề (không cần làm lại)

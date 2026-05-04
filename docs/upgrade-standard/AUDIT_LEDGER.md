@@ -51,6 +51,27 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 | S21 Migrate indicator/interactive | ✅ Completed | Indicator/Interaction owners | Indicator + interactive sub-slices complete; type-check + build:docs pass; module tree regenerated; 0 .js in src/lib/interactive |
 | S22 Migrate root files + Gate G3 + Final audit | ✅ Completed | Release owner | Root files migrated; type-check + build:docs pass; browser smoke pass; 0 file .js trong src/ |
 
+### Ad-hoc documentation package — Pane splitter resize handoff
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: Tài liệu bàn giao cho đội code triển khai splitter thay đổi chiều cao pane kỹ thuật theo phong cách GoCharting
+- Files modified:
+  - `docs/upgrade-standard/splitter-pane-resize/HANDOFF_MANIFEST.md`
+  - `docs/upgrade-standard/splitter-pane-resize/TECH_SPEC.md`
+  - `docs/upgrade-standard/splitter-pane-resize/IMPLEMENTATION_PLAN.md`
+  - `docs/upgrade-standard/splitter-pane-resize/TASKBOARD.md`
+  - `docs/upgrade-standard/splitter-pane-resize/AUDIT_PROTOCOL.md`
+  - `docs/upgrade-standard/HANDOFF_MANIFEST.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Spec kỹ thuật chi tiết cho splitter (drag, clamp, minHeight, persist, reset).
+  - Kế hoạch triển khai theo phase + gates.
+  - Taskboard thực thi và checklist exit trước merge.
+  - Audit protocol với functional/regression matrix và evidence bắt buộc.
+- Validation:
+  - Documentation completeness review → PASS
+
 ### Ad-hoc demo task — Chart type switcher (GoCharting-style)
 
 - Người thực hiện: GitHub Copilot
