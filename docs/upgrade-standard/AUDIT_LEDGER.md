@@ -1175,3 +1175,28 @@ Every completed slice must update this ledger with the exact files changed in th
 - [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
 - [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
 - [module_tree_full.md](../../module_tree_full.md)
+
+## 22. Slice 18 Evidence
+
+### Completed
+
+- Fixed splitter drag reliability by rewriting the splitter interaction to global mouse move/up handling instead of fragile element-local pointer flow.
+- Reset pane layout persistence key and widened drag headroom (lower pane minimums) so stored clamped layouts no longer lock splitter movement.
+- Prevented chart-type visual overlap by remounting ChartCanvas on chart type/timeframe switch.
+
+### Validation
+
+- Command run: `npx tsc --noEmit`
+- Browser audit at `http://localhost:8080/` confirms:
+  - Splitter #1 moved from y=272 to y=222 after drag.
+  - Splitter #2 moved from y=373 to y=323 after drag.
+  - Switching `Candlestick` ↔ `OHLC Bar` no longer leaves overlapped stale drawings.
+- Command run: `python scripts/generate_module_tree.py`
+
+### Files touched in this slice
+
+- [src/demo/ChartPaneSplitter.tsx](../../src/demo/ChartPaneSplitter.tsx)
+- [src/demo/usePaneLayout.ts](../../src/demo/usePaneLayout.ts)
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)
