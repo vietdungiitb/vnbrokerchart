@@ -1102,3 +1102,26 @@ Every completed slice must update this ledger with the exact files changed in th
 - [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
 - [docs/upgrade-standard/SLICE_AUDIT.md](../../docs/upgrade-standard/SLICE_AUDIT.md)
 - [module_tree_full.md](../../module_tree_full.md)
+
+## 19. Slice 15 Evidence
+
+### Completed
+
+- Fixed candlestick rendering in demo where candle bodies collapsed into near-vertical lines.
+- Root cause addressed by switching demo candlestick width logic to interval-step pixel width instead of domain-span width.
+- Kept dist deletions out of commit scope; only runtime/source files and module tree inventory are included.
+
+### Validation
+
+- Command run: `npx tsc --noEmit`
+- Command run: `npm run build:docs`
+- Browser check at `http://localhost:8080/` after reload confirms candle body thickness is visible and no longer line-like.
+- Result: type-check/build pass and visual regression fixed for candlestick mode.
+
+### Files touched in this slice
+
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [src/demo/demo.css](../../src/demo/demo.css)
+- [src/demo/usePaneLayout.ts](../../src/demo/usePaneLayout.ts)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)

@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-04 09:37:53`
+Generated at: `2026-05-04 09:58:09`
 
 ## Summary
 
@@ -10,8 +10,8 @@ Generated at: `2026-05-04 09:37:53`
 - Python modules: 1
 - JS/TS modules: 595
 - Total classes: 348
-- Total functions: 3441
-- Total top-level variables: 7123
+- Total functions: 3442
+- Total top-level variables: 7127
 
 ## Python Modules
 
@@ -2116,9 +2116,9 @@ Generated at: `2026-05-04 09:37:53`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `PriceSeries`, `ToolIcon`, `addDrawing`, `addPane`, `chartDomain`, `clearDrawing`, `handler`, `normalizeDate`, `paneTemplate`, `redoDrawing`, `removePane`, `restoreDrawing`, `summarizeIndicator`, `toggleIndicator`, `undoDrawing`, `update`
+  - `PriceSeries`, `ToolIcon`, `addDrawing`, `addPane`, `chartDomain`, `clearDrawing`, `formatIndicatorObject`, `handler`, `normalizeDate`, `paneTemplate`, `redoDrawing`, `removePane`, `restoreDrawing`, `summarizeIndicator`, `toggleIndicator`, `undoDrawing`, `update`
 - Top-level variables:
-  - `CHART_TYPES`, `DRAWING_TOOLS`, `INDICATOR_OPTIONS`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `active`, `adapter`, `bestAsk`, `bestBid`, `chartMenuRef`, `chartReady`, `completed`, `data`, `dateFormat`, `disposed`, `dn`, `draft`, `drawingProbe`, `end`, `from`, `haCalc`, `hasIt`, `id`, `indicator`, `indicatorProbe`, `indicators`, `input`, `lastBar`, `lastValue`, `mid`, `msg`, `node`, `observer`, `paneManager`, `plotData`, `priceFormat`, `priceIsUp`, `ratio`, `rect`, `restored`, `sample`, `selectedPane`, `serialized`, `shellRef`, `spreadBps`, `start`, `startX`, `stopBars`, `stopOrderbook`, `stopTrades`, `timerId`, `to`, `transformed`, `up`, `volumeFormat`, `xExtents`
+  - `CHART_TYPES`, `DRAWING_TOOLS`, `INDICATOR_OPTIONS`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `active`, `adapter`, `bestAsk`, `bestBid`, `candleWidth`, `chartMenuRef`, `chartReady`, `completed`, `data`, `dateFormat`, `disposed`, `dn`, `draft`, `drawingProbe`, `end`, `first`, `from`, `haCalc`, `hasIt`, `id`, `indicator`, `indicatorProbe`, `indicators`, `input`, `last`, `lastBar`, `mid`, `msg`, `node`, `observer`, `paneManager`, `plotData`, `priceFormat`, `priceIsUp`, `ratio`, `rect`, `restored`, `sample`, `second`, `selectedPane`, `serialized`, `shellRef`, `spreadBps`, `start`, `startX`, `stepPx`, `stopBars`, `stopOrderbook`, `stopTrades`, `timerId`, `to`, `transformed`, `up`, `volumeFormat`, `xExtents`
 
 ### `src/demo/LiveDemo.tsx`
 

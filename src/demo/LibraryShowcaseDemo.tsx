@@ -99,15 +99,33 @@ function paneTemplate(label: string, heightPx: number, indicatorNames: readonly 
 	return { label, heightPx, minHeightPx: 90, indicators };
 }
 
-function summarizeIndicator(value: unknown) {
+function formatIndicatorObject(obj: Record<string, unknown>): string {
+	if ("macd" in obj && "signal" in obj) {
+		return `M:${priceFormat(obj.macd as number)} S:${priceFormat(obj.signal as number)}`;
+	}
+	if ("top" in obj && "bottom" in obj) {
+		return `${priceFormat(obj.top as number)} – ${priceFormat(obj.bottom as number)}`;
+	}
+	const first = Object.values(obj).find((v) => typeof v === "number");
+	return first !== undefined ? priceFormat(first as number) : JSON.stringify(obj).slice(0, 40);
+}
+
+function summarizeIndicator(value: unknown): string {
+	if (value === null || value === undefined) return "n/a";
+	if (typeof value === "number") return priceFormat(value);
+	if (typeof value === "object" && !Array.isArray(value)) {
+		return formatIndicatorObject(value as Record<string, unknown>);
+	}
 	if (Array.isArray(value)) {
 		if (value.length === 0) return "empty";
-		const lastValue = value[value.length - 1];
-		if (typeof lastValue === "number") return priceFormat(lastValue);
-		if (lastValue && typeof lastValue === "object") return JSON.stringify(lastValue).slice(0, 36);
-		return String(lastValue);
+		const last = value[value.length - 1];
+		if (typeof last === "number") return priceFormat(last);
+		if (last !== null && typeof last === "object") {
+			return formatIndicatorObject(last as Record<string, unknown>);
+		}
+		return String(last);
 	}
-	return String(value ?? "n/a");
+	return String(value);
 }
 
 // ── SVG Tool Icons ───────────────────────────────────────────────────────────
@@ -185,7 +203,17 @@ function ToolIcon({ id }: { id: string }) {
 }
 
 // Price series switcher — renders the correct series for the chosen chart type
-function PriceSeries({ chartType }: { chartType: ChartTypeId }) {
+function PriceSeries({
+	chartType,
+	candleWidth,
+}: {
+	chartType: ChartTypeId;
+	candleWidth: (props: { widthRatio?: number }, moreProps: {
+		xScale: (value: Date) => number;
+		xAccessor: (datum: DemoDatum) => Date;
+		plotData: DemoDatum[];
+	}) => number;
+}) {
 	const up = "#089981";
 	const dn = "#f23645";
 	switch (chartType) {
@@ -216,6 +244,7 @@ function PriceSeries({ chartType }: { chartType: ChartTypeId }) {
 		case "hollow":
 			return (
 				<CandlestickSeries
+					width={candleWidth}
 					wickStroke={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
 					fill={(d: DemoDatum) => (d.close >= d.open ? "transparent" : dn)}
 					stroke={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
@@ -224,6 +253,7 @@ function PriceSeries({ chartType }: { chartType: ChartTypeId }) {
 		default: // candlestick | heikinashi
 			return (
 				<CandlestickSeries
+					width={candleWidth}
 					wickStroke={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
 					fill={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
 				/>
@@ -306,6 +336,30 @@ export default function LibraryShowcaseDemo() {
 			close: bar.close,
 		}));
 	}, [data, chartType]);
+
+	// scaleTime + default candlestick width can collapse to near-zero body width.
+	// Use distance between adjacent bars in screen space for stable candle bodies.
+	const candleWidth = useMemo(() => {
+		return (
+			props: { widthRatio?: number },
+			moreProps: {
+				xScale: (value: Date) => number;
+				xAccessor: (datum: DemoDatum) => Date;
+				plotData: DemoDatum[];
+			},
+		): number => {
+			const { xScale, xAccessor, plotData } = moreProps;
+			const ratio = props.widthRatio ?? 0.8;
+			if (plotData.length < 2) return 6;
+
+			const first = xAccessor(plotData[0]);
+			const second = xAccessor(plotData[1]);
+			const stepPx = Math.abs(xScale(second) - xScale(first));
+
+			if (!Number.isFinite(stepPx) || stepPx <= 0) return 6;
+			return Math.max(3, stepPx * ratio);
+		};
+	}, []);
 
 	const xExtents = useMemo(() => chartDomain(plotData), [plotData]);
 	const lastBar = plotData[plotData.length - 1];
@@ -487,7 +541,7 @@ export default function LibraryShowcaseDemo() {
 
 					<div className="gc-symbol-block">
 						<span className="gc-symbol-name">BTCUSD</span>
-						<span className="gc-symbol-exchange">BYBIT</span>
+								<span className="gc-symbol-exchange">BINANCE</span>
 					</div>
 
 					<div className="gc-topbar-sep" />
@@ -601,7 +655,7 @@ export default function LibraryShowcaseDemo() {
 				<section className="gc-chart-area">
 					{/* OHLC info strip */}
 					<div className="gc-ohlc-strip">
-						<span className="gc-ohlc-pair">BINANCE:BTCUSDT <span className="gc-ohlc-tf">· {timeframe}</span></span>
+						<span className="gc-ohlc-pair">BTCUSD <span className="gc-ohlc-tf">· {timeframe}</span></span>
 						{dataStatus !== "loading" && lastBar ? (
 							<>
 								<span className="gc-ohlc-item">O <b>{priceFormat(lastBar.open)}</b></span>
@@ -653,13 +707,13 @@ export default function LibraryShowcaseDemo() {
 								>
 									<XAxis axisAt="bottom" orient="bottom" />
 									<YAxis axisAt="right" orient="right" ticks={6} />
-									<PriceSeries chartType={chartType} />
+									<PriceSeries chartType={chartType} candleWidth={candleWidth} />
 									<LineSeries yAccessor={(datum: DemoDatum) => datum.ema20} stroke="#2d9cdb" strokeWidth={1.5} />
 									<LineSeries yAccessor={(datum: DemoDatum) => datum.ema50} stroke="#f2994a" strokeWidth={1.5} />
 									<OHLCTooltip
 										xDisplayFormat={dateFormat}
 										volumeFormat={volumeFormat}
-										displayTexts={{ d: "Ngày", o: "Mở", h: "Cao", l: "Thấp", c: "Đóng", v: "KL", na: "n/a" }}
+									displayTexts={{ d: "Ngày ", o: "Mở ", h: "Cao ", l: "Thấp ", c: "Đóng ", v: "KL ", na: "n/a" }}
 									/>
 									<MouseCoordinateX displayFormat={dateFormat} />
 									<MouseCoordinateY rectWidth={64} displayFormat={priceFormat} />

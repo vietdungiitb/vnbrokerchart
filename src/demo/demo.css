@@ -375,8 +375,8 @@ button {
   position: absolute;
   left: 0;
   right: 0;
-  height: 8px;
-  margin-top: -4px; /* center the hit area on the pane boundary */
+  height: 10px;
+  margin-top: -5px; /* center the hit area on the pane boundary */
   cursor: row-resize;
   z-index: 20;
   display: flex;
@@ -389,25 +389,26 @@ button {
   position: absolute;
   left: 0;
   right: 0;
-  top: 3px;
+  top: 4px;
   height: 2px;
   background: var(--gc-border-mid);
   transition: background 0.15s, opacity 0.15s;
-  opacity: 0.5;
+  opacity: 0.7;
 }
 
 .gc-pane-splitter:hover::after,
 .gc-pane-splitter--dragging::after {
   background: var(--gc-accent);
   opacity: 1;
+  height: 3px;
 }
 
 .gc-pane-splitter__handle {
-  width: 28px;
+  width: 36px;
   height: 3px;
   border-radius: 2px;
-  background: var(--gc-border-mid);
-  opacity: 0;
+  background: var(--gc-text-muted, #555);
+  opacity: 0.3;
   transition: opacity 0.15s, background 0.15s;
   position: relative;
   z-index: 1;
