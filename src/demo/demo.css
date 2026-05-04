@@ -312,6 +312,7 @@ button {
 /* Chart shell */
 .gc-chart-shell {
   min-height: 0;
+  height: 100%;
   overflow: hidden;
   background: var(--gc-surface);
 }

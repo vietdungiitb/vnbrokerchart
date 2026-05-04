@@ -171,6 +171,7 @@ function ToolIcon({ id }: { id: string }) {
 export default function LibraryShowcaseDemo() {
 	const shellRef = useRef<HTMLDivElement | null>(null);
 	const [chartWidth, setChartWidth] = useState(0);
+	const [chartHeight, setChartHeight] = useState(0);
 	const [timeframe, setTimeframe] = useState<Timeframe>("1h");
 	const [activeTool, setActiveTool] = useState<string>("cursor");
 	const [sidePanelTab, setSidePanelTab] = useState<SidePanelTab>("indicators");
@@ -242,7 +243,11 @@ export default function LibraryShowcaseDemo() {
 	useEffect(() => {
 		const node = shellRef.current;
 		if (!node) return;
-		const update = () => setChartWidth(Math.floor(node.getBoundingClientRect().width));
+		const update = () => {
+			const rect = node.getBoundingClientRect();
+			setChartWidth(Math.floor(rect.width));
+			setChartHeight(Math.floor(rect.height));
+		};
 		update();
 		const observer = new ResizeObserver(update);
 		observer.observe(node);
@@ -339,9 +344,15 @@ export default function LibraryShowcaseDemo() {
 		};
 	}, [drawingState]);
 
-	const chartReady = chartWidth > 0 && data.length > 0;
+	const chartReady = chartWidth > 0 && chartHeight > 0 && data.length > 0;
 	const ratio = window.devicePixelRatio || 1;
 	const priceIsUp = (lastBar?.close ?? 0) >= (lastBar?.open ?? 0);
+
+	// Dynamic pane heights based on actual container size
+	const MARGIN_V = 36; // top(8) + bottom(28)
+	const volumeH  = Math.max(60,  Math.round(chartHeight * 0.15));
+	const momentumH = Math.max(70, Math.round(chartHeight * 0.20));
+	const priceH   = Math.max(80,  chartHeight - volumeH - momentumH - MARGIN_V);
 
 	const toggleIndicator = (name: string) => {
 		if (!selectedPane) return;
@@ -485,7 +496,7 @@ export default function LibraryShowcaseDemo() {
 							</div>
 						) : chartReady ? (
 							<ChartCanvas
-								height={620}
+								height={chartHeight}
 								width={chartWidth}
 								margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
 								type="hybrid"
@@ -503,7 +514,7 @@ export default function LibraryShowcaseDemo() {
 							>
 								<Chart
 									id={1}
-									height={380}
+									height={priceH}
 									yExtents={(datum: DemoDatum) => [
 										datum.high, datum.low,
 										datum.ema20, datum.ema50,
@@ -530,8 +541,8 @@ export default function LibraryShowcaseDemo() {
 
 								<Chart
 									id={2}
-									height={110}
-									origin={(_w: number, h: number) => [0, h - 230]}
+									height={volumeH}
+									origin={(_w: number, h: number) => [0, h - volumeH - momentumH]}
 									yExtents={(datum: DemoDatum) => datum.volume}
 								>
 									<YAxis axisAt="right" orient="right" ticks={3} tickFormat={volumeFormat} />
@@ -543,8 +554,8 @@ export default function LibraryShowcaseDemo() {
 
 								<Chart
 									id={3}
-									height={120}
-									origin={(_w: number, h: number) => [0, h - 120]}
+									height={momentumH}
+									origin={(_w: number, h: number) => [0, h - momentumH]}
 									yExtents={(datum: DemoDatum) => [datum.macd?.macd, datum.macd?.signal, datum.macd?.divergence, datum.rsi]}
 								>
 									<YAxis axisAt="right" orient="right" ticks={3} />
