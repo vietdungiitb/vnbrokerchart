@@ -88,29 +88,219 @@ $$RS_i = \frac{Return_{asset}}{Return_{BTC}}$$
 
 ---
 
-## 3. Kiến trúc hệ thống Dynamic Pane
+## 3. Thiết kế Visual của từng Pane (đã chốt)
 
-### 3.1 Data Model
+### 3.0 Layout anatomy một pane
+
+```
+┌─ gc-pane-label (tên pane, xoay dọc, ngoài cùng trái) ──────────────────────────────────┐
+│                                                                                          │
+│  [Tooltip top-left: OHLC / giá trị series tại crosshair]                                │
+│                                                                                          │
+│  Y-left │                                                    │ Y-right                  │
+│  (trục  │         CANVAS AREA (series render ở đây)         │  (trục                   │
+│   trái) │                                                    │   phải)                  │
+│         │_____________________________________________ X (time) ─────────────────────── │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Quy tắc:**
+- **Luôn có 2 trục Y** (trái + phải). Nếu chỉ dùng 1 trục → trục còn lại hidden (width=0, không chiếm không gian).
+- **Trục X (thời gian) đồng bộ** toàn bộ ChartCanvas — react-stockcharts đảm bảo điều này bởi vì tất cả `<Chart>` nằm trong cùng 1 `<ChartCanvas>`.
+- **Tên pane** (label): render dưới dạng `<div>` xoay 90° bằng CSS (`writing-mode: vertical-rl; transform: rotate(180deg)`) nằm ngoài cùng bên trái mỗi pane, bên trái trục Y-left. **Không vẽ lên canvas**, render qua DOM overlay tuyệt đối (giống pattern splitter).
+- **Tooltip top-left**: DOM overlay `position: absolute; top: N; left: 60px` (60px = margin-left của ChartCanvas). Hiển thị giá trị crosshair của tất cả series trong pane. Đã có pattern từ `<OHLCTooltip>` ở Price pane — cần nhân rộng cho các pane khác dưới dạng `<PaneTooltip>` generic.
+
+### 3.1 Dual Y-Axis — Phân bổ series
+
+Mỗi `SeriesConfig` khai báo mình thuộc trục nào:
 
 ```ts
 // SeriesConfig — mô tả một series trong pane
 type SeriesConfig = {
-  type: SeriesTypeId;                  // "Candlestick"|"Volume"|"CVD"|"RSI"|"MACD"|"Strength"|"Whale"|"EMA"|...
-  params?: Record<string, unknown>;   // { period: 20, color: "#2d9cdb", threshold: 50000 }
-  yAxisSide?: "left" | "right";       // dual Y-axis support
+  type: SeriesTypeId;                 // "Candlestick"|"Volume"|"CVD"|"RSI"|"MACD"|"Strength"|"Whale"|"EMA"|...
+  params?: Record<string, unknown>;  // { period: 20, color: "#2d9cdb", threshold: 50000 }
+  yAxis: "left" | "right";           // BẮT BUỘC — series này dùng trục Y nào
   overlay?: boolean;                  // overlay trên series khác trong cùng pane
 };
+```
 
-// PaneDescriptor — mô tả đầy đủ một pane
-type PaneDescriptor = {
-  id: string;                          // "price" | "volume" | "cvd" | uuid...
-  label: string;                       // hiển thị trên header pane
-  pinned?: boolean;                    // true = Price pane, không xóa/reorder
-  heightRatio: number;                 // tỉ lệ chiều cao (tổng = 1)
-  series: SeriesConfig[];
-  yExtentsMode?: "auto" | "fixed";
-  secondaryYAxis?: boolean;            // có trục Y thứ 2 không
+**Cách react-stockcharts handle dual Y-axis:**
+
+react-stockcharts cho phép nhiều `<YAxis>` trong một `<Chart>`, phân biệt bằng `axisAt`:
+
+```tsx
+// Trục phải (primary)
+<YAxis axisAt="right" orient="right" ... />
+
+// Trục trái (secondary) — chỉ render khi có series dùng yAxis="left"
+{hasLeftAxis && <YAxis axisAt="left" orient="left" ... />}
+```
+
+`yExtents` của Chart phải bao phủ tất cả series. Để dual scale độc lập (RSI 0-100 bên trái, Volume tuyệt đối bên phải), cần dùng **2 `<Chart>` riêng cùng origin/height** (react-stockcharts pattern cho dual scale). Đây là hạn chế kỹ thuật — xem mục 3.1a.
+
+### 3.1a Hạn chế kỹ thuật Dual Scale trong react-stockcharts
+
+`<Chart>` trong react-stockcharts dùng **một scale Y duy nhất** cho toàn bộ `yExtents`. Nếu 2 series có domain khác nhau (VD: RSI 0-100 và Volume 0-5000), chúng không thể share cùng scale.
+
+**Giải pháp:**
+- Mỗi "logical pane" trong mô hình của chúng ta = **1 hoặc 2 `<Chart>` thật** trong ChartCanvas:
+  - 1 Chart nếu tất cả series có thể share scale (VD: Candlestick + EMA — cùng price domain)
+  - 2 Chart chồng nhau (cùng `origin`, cùng `height`) nếu cần 2 scale độc lập
+
+```
+PaneDescriptor (logical) 
+  → chartSlots: ChartSlot[]   ← 1 hoặc 2 Chart thật
+  → mỗi ChartSlot có yExtents riêng + list series thuộc slot đó
+```
+
+`PaneDescriptor` sẽ có thêm field `splitScale?: boolean` — khi `true` tự động tách thành 2 Chart slot.
+
+**Ví dụ:** Pane có RSI (0-100, trục trái) + Histogram delta (giá trị tuyệt đối, trục phải) → `splitScale: true`.
+
+### 3.2 Data Model (cập nhật)
+
+```ts
+type SeriesConfig = {
+  type: SeriesTypeId;
+  params?: Record<string, unknown>;
+  yAxis: "left" | "right";           // trục Y của series này
+  overlay?: boolean;
+  color?: string;                    // override màu mặc định từ registry
 };
+
+type PaneDescriptor = {
+  id: string;
+  label: string;                     // hiển thị dọc bên trái pane
+  pinned?: boolean;                  // true = Price pane — không xóa, không reorder
+  visible: boolean;                  // ẩn/hiện pane (khi hidden: height = 0, không render Chart)
+  heightRatio: number;               // tỉ lệ khi visible; giữ nguyên khi hidden để restore
+  series: SeriesConfig[];
+  splitScale?: boolean;              // true = dùng 2 Chart thật cho 2 scale độc lập
+  tooltip?: "ohlc" | "value" | "none"; // loại tooltip top-left
+};
+```
+
+### 3.3 PaneLabel — Tên pane dọc
+
+DOM overlay, không vẽ lên canvas:
+
+```tsx
+// Absolute overlay, positioned left of chartCanvas left margin
+<div
+  className="gc-pane-label"
+  style={{ top: paneTop, height: paneHeight }}
+>
+  {pane.label}
+</div>
+```
+
+```css
+.gc-pane-label {
+  position: absolute;
+  left: 0;
+  width: 18px;                  /* chiều ngang của chữ dọc */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);    /* chữ đọc từ dưới lên */
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--rsc-text-micro);
+  pointer-events: none;
+  user-select: none;
+}
+```
+
+**Lưu ý:** `left margin` của ChartCanvas hiện tại là 60px. PaneLabel chiếm 18px trong 60px đó — không cần thay đổi margin canvas.
+
+### 3.4 PaneTooltip — Tooltip top-left generic
+
+Thay thế `<OHLCTooltip>` hardcode bằng `<PaneTooltip>` linh hoạt:
+
+```tsx
+type PaneTooltipEntry = {
+  label: string;    // "O" | "H" | "L" | "C" | "CVD" | "RSI" | ...
+  value: (datum: EnrichedDatum) => number | string | undefined;
+  color?: string;
+  format?: (v: number) => string;
+};
+
+<PaneTooltip
+  entries={pane.tooltipEntries}    // từ registry của từng series
+  xDisplayFormat={dateFormat}
+/>
+```
+
+Với Price pane, `tooltipEntries` = OHLC + Volume → giống `<OHLCTooltip>` hiện tại.  
+Với CVD pane, `tooltipEntries` = `[{ label: "CVD", value: d => d.cvd }]`.
+
+---
+
+## 4. Kiến trúc hệ thống Dynamic Pane
+
+### 4.1 SeriesRegistry
+
+Map từ `SeriesTypeId` → `{ component, calculator, defaultParams, defaultYAxis, tooltipEntry }`:
+
+```ts
+registry["CVD"] = {
+  component: CVDSeries,
+  calculator: calcCVDFromOHLCV,
+  defaultParams: {},
+  defaultYAxis: "right",
+  tooltipEntry: (params) => ({ label: "CVD", value: d => d.cvd, format: format(".0f") }),
+};
+registry["Whale"] = {
+  component: WhaleSeries,
+  calculator: calcWhaleFromTrades,
+  defaultParams: { threshold: 50_000 },
+  defaultYAxis: "right",
+  tooltipEntry: (params) => ({ label: "Whale", value: d => d.whaleDelta, format: format(".3s") }),
+};
+```
+
+### 4.2 DataEnricher pipeline
+
+```
+OHLCV[] 
+  → calcEMA(20) → calcEMA(50) 
+  → calcRSI(14) 
+  → calcMACD(12,26,9) 
+  → calcBollingerBand(20,2) 
+  → calcCVDApprox()        ← Phase 1
+  → calcStrength()
+  → [Phase 4] mergeWSCVD() ← override CVD với data WS thật
+```
+
+### 4.3 DynamicChart Renderer
+
+```tsx
+{panes.map((pane, i) => {
+  const slots = buildChartSlots(pane);  // 1 hoặc 2 ChartSlot
+  return slots.map((slot, slotIdx) => (
+    <Chart
+      key={`${pane.id}-slot${slotIdx}`}
+      id={chartIdCounter++}
+      height={heights[i]}
+      origin={calcOrigin(i, heights)}
+      yExtents={slot.yExtents}
+    >
+      {slot.showLeftAxis  && <YAxis axisAt="left"  orient="left"  ... />}
+      {slot.showRightAxis && <YAxis axisAt="right" orient="right" ... />}
+      {slot.series.map(s => renderSeries(s, data))}
+      {i === panes.length - 1 && slotIdx === 0 && <XAxis ... />}
+      <PaneTooltip entries={buildTooltipEntries(slot.series)} ... />
+    </Chart>
+  ));
+})}
+
+{/* DOM overlays — ngoài ChartCanvas */}
+{panes.map((pane, i) => (
+  <PaneLabel key={pane.id} label={pane.label} top={calcPaneTop(i)} height={heights[i]} />
+))}
 ```
 
 ### 3.2 Cấu hình mặc định (thay thế 3 pane hardcode)
@@ -193,55 +383,108 @@ Thay vì 3 `<Chart>` hardcode, render từ `panes.map()`:
 
 ## 4. UI Controls
 
-### 4.1 Dropdown (Add/Remove Series — trong pane)
+### 4.0 Ràng buộc số pane (đã chốt)
+
+| Ràng buộc | Giá trị |
+|---|---|
+| **Số pane tối thiểu hiển thị** | 1 (luôn là Price pane — pinned) |
+| **Số pane tối đa** | 3 |
+| **Price pane** | Luôn visible, không ẩn được, không xóa được |
+
+**Hệ quả logic:**
+- Khi đang có 3 pane → nút "Add pane" bị disable
+- Khi đang có 1 pane visible (Price) → nút "Add pane" available (còn slot)
+- Pane có thể ở trạng thái `visible: false` (ẩn) mà không mất cấu hình — slot đó không chiếm không gian trên canvas
+- Khi ẩn pane thứ 2 hoặc 3 → `usePaneSizes` redistribute height cho các pane đang visible
+
+### 4.1 Toggle ẩn/hiện pane (đã chốt)
+
+Pane header có nút **`👁`** (eye icon) để ẩn/hiện:
+
+```
+[ ⠿ ]  RSI + MACD     [ 👁 ]  [ + ]  [ × ]
+```
+
+**Hành vi:**
+- Click 👁 khi `visible: true` → `visible: false`:
+  - Pane không render `<Chart>` (không chiếm canvas height)
+  - `heightRatio` giữ nguyên trong state (để khi show lại, restore đúng tỉ lệ cũ)
+  - `usePaneSizes` chỉ nhận các pane `visible: true` để phân bổ height
+  - PaneLabel vẫn hiển thị ngoài bên trái nhưng collapsed (height nhỏ, chỉ hiện label)
+  - Splitter của pane đó ẩn đi
+- Click 👁 khi `visible: false` → `visible: true`:
+  - Restore `heightRatio` cũ
+  - Nếu tổng ratio > 1 sau restore → normalize lại toàn bộ visible pane
+- Price pane (`pinned: true`) → nút 👁 disabled (không cho ẩn)
+
+**Collapsed pane label strip:**
+
+```
+┌─ PRICE ─ [canvas đầy đủ] ─────────────────── │
+├─────────────────────────────── (splitter) ─── │
+│ RSI+MACD [👁 hidden — chỉ hiển thị label strip 20px] │
+├─────────────────────────────── (splitter ẩn) ─│
+┌─ VOLUME ─ [canvas đầy đủ] ────────────────── │
+```
+
+Collapsed strip height = 20px, chứa: label dọc + nút 👁 để restore.
+
+### 4.2 Dropdown (Add/Remove Series — trong pane)
 
 Mỗi pane header có nút `+`:
 - Click → picker dropdown show danh sách indicator available
 - Click indicator → add `SeriesConfig` vào pane đó
 - Indicator đã có trong pane → show checkmark, click lại để remove
 
-### 4.2 Drag-and-Drop (Reorder pane)
+### 4.3 Drag-and-Drop (Reorder pane)
 
 Mỗi pane header có drag handle `⠿`:
 - Kéo → ghost preview vị trí mới
 - Drop → reorder `PaneDescriptor[]` array
 - Price pane (`pinned: true`) → drag handle disabled, luôn ở slot 0
 - Thư viện dùng: **HTML5 Drag API** (không cần thêm dependency)
+- Chỉ reorder các pane `visible: true` — pane ẩn không tham gia drag
 
-### 4.3 Cả 2 cơ chế song song
+### 4.4 Cả 2 cơ chế song song
 
 - Dropdown (add series vào pane hiện có) **+** drag reorder (đổi vị trí pane)
 - Hai cơ chế độc lập, không xung đột
 
-### 4.4 Pane Header
+### 4.5 Pane Header (full layout)
 
 ```
-[ ⠿ ]  RSI + MACD          [ + ]  [ × ]
+[ ⠿ ]  RSI + MACD               [ 👁 ]  [ + ]  [ × ]
 ```
-- `⠿` = drag handle (ẩn với pinned pane)
-- `+` = add series picker
-- `×` = xóa pane (disabled với pinned pane)
+
+| Control | Pinned pane | Pane thường | Pane hidden |
+|---|---|---|---|
+| `⠿` drag handle | Hidden | Visible | Hidden |
+| `👁` toggle | Disabled | Active | Active (để restore) |
+| `+` add series | Active | Active | Active (edit config khi ẩn) |
+| `×` xóa pane | Hidden | Active (nếu < max) | Active |
 
 ---
 
 ## 5. Lộ trình thực hiện
 
 ### Phase 1 — Nền tảng (Priority: Cao)
-- [ ] Định nghĩa types: `SeriesTypeId`, `SeriesConfig`, `PaneDescriptor`
+- [ ] Định nghĩa types: `SeriesTypeId`, `SeriesConfig`, `PaneDescriptor` (có `visible`)
 - [ ] `SeriesRegistry` — map string → component
 - [ ] `DataEnricher` — OHLCV → EnrichedDatum (CVD xấp xỉ, Strength Bull/Bear Power)
-- [ ] `DynamicChart` renderer — `panes.map()` thay hardcode
-- [ ] `useDynamicPanes` hook — quản lý `PaneDescriptor[]` + integrate `usePaneSizes`
+- [ ] `useDynamicPanes` hook — quản lý `PaneDescriptor[]`, enforce min=1/max=3, toggle visible, integrate `usePaneSizes` chỉ với visible panes
+- [ ] `DynamicChart` renderer — `panes.filter(visible).map()` thay hardcode
 - [ ] Tích hợp vào Terminal Demo, replace 3 pane cố định
 
 ### Phase 2 — Interactivity (Priority: Cao)
-- [ ] Pane header UI (label + nút +/×)
+- [ ] Pane header UI (label dọc + nút 👁/+/×)
+- [ ] Collapsed strip (20px) khi pane hidden
 - [ ] Add/Remove series dropdown picker
-- [ ] Add pane mới (chọn loại pane từ danh sách)
+- [ ] Add pane mới (chọn loại pane từ danh sách, disabled khi đã có 3 pane)
 - [ ] Remove pane (trừ pinned)
+- [ ] Toggle visibility + redistribute height
 
 ### Phase 3 — Drag Reorder (Priority: Trung bình)
-- [ ] Drag handle trên pane header
+- [ ] Drag handle trên pane header (chỉ visible pane)
 - [ ] HTML5 Drag API reorder logic
 - [ ] Visual ghost/placeholder khi drag
 - [ ] Prevent reorder với pinned pane
@@ -261,10 +504,12 @@ Mỗi pane header có drag handle `⠿`:
 |---|---|---|
 | 1 | Ngưỡng Whale mặc định là bao nhiêu USD? | **Chưa chốt** |
 | 2 | Strength dùng Bull/Bear Power (Elder) hay Relative Strength so BTC/index? | **Chưa chốt** |
-| 3 | CVD Phase 1 dùng OHLCV xấp xỉ trước rồi Phase 4 WS override — có đồng ý không? | Đề xuất: Đồng ý |
-| 4 | Số pane tối đa cho phép thêm? | **Chưa chốt** (đề xuất 6) |
-| 5 | Persist layout pane vào localStorage không? (key mới tách biệt với pane height ratios) | **Chưa chốt** |
-| 6 | Dark mode cho pane header UI — cần thiết kế riêng không? | Tự động theo --rsc-* tokens |
+| 3 | CVD Phase 1 dùng OHLCV xấp xỉ trước rồi Phase 4 WS override — đồng ý? | Đề xuất: Đồng ý |
+| 4 | Số pane tối đa | **Đã chốt: 3** |
+| 5 | Số pane tối thiểu | **Đã chốt: 1 (Price)** |
+| 6 | Persist layout pane vào localStorage không? | **Chưa chốt** |
+| 7 | Dark mode cho pane header UI | Tự động theo `--rsc-*` tokens |
+| 8 | Collapsed hidden pane có thể resize chiều cao không? (hay chỉ fixed 20px) | **Chưa chốt** (đề xuất: fixed 20px) |
 
 ---
 
