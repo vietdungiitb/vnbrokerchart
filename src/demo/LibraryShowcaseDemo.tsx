@@ -7,6 +7,9 @@ import {
 	MockAdapter,
 	type OHLCVBar,
 	PaneSplitter,
+	ChartSplitter,
+	usePaneSizes,
+	useChartTheme,
 	createDraftFromTool,
 	createDrawingHistory,
 	createDrawingTool,
@@ -33,9 +36,15 @@ import RSISeries from "../lib/series/RSISeries";
 import { OHLCTooltip } from "../lib/tooltip";
 import { heikinAshi } from "../lib/calculator";
 import { fetchLiveDemoData, getOfflineDemoData, type DemoDatum } from "./demoData";
-import { usePaneLayout } from "./usePaneLayout";
-import ChartPaneSplitter from "./ChartPaneSplitter";
 import "./demo.css";
+
+// ── Pane layout config (module-level = stable reference, no re-creation on render) ──
+const PANE_CONFIG = {
+	initialRatios: [0.50, 0.27, 0.23],
+	minHeights: [100, 36, 36],
+	storageKey: "rsc-demo-panes-v1",
+	marginV: 36,
+};
 
 const priceFormat = format(".2f");
 const volumeFormat = format(".3s");
@@ -495,8 +504,18 @@ export default function LibraryShowcaseDemo() {
 	const ratio = window.devicePixelRatio || 1;
 	const priceIsUp = (lastBar?.close ?? 0) >= (lastBar?.open ?? 0);
 
-	// Dynamic pane heights — splitter-driven via usePaneLayout
-	const { priceH, volumeH, momentumH, applyDragDelta, resetLayout, available } = usePaneLayout(chartHeight);
+	// ── Theme ─────────────────────────────────────────────────────────────────
+	const { theme, toggleTheme, isDark } = useChartTheme();
+
+	// ── Dynamic pane heights — generic hook from lib ───────────────────────────
+	const { heights, applyDelta, reset: resetLayout, available } = usePaneSizes(chartHeight, PANE_CONFIG);
+	const [priceH, volumeH, momentumH] = heights;
+
+	// Theme-aware canvas element colours (canvas is drawn programmatically,
+	// so it doesn't pick up CSS vars automatically).
+	const axisStroke    = isDark ? "#d1d4dc" : "#1e2a3b";
+	const axisTickFill  = isDark ? "#d1d4dc" : "#1e2a3b";
+	const canvasBg      = isDark ? "#1e2130" : "#ffffff";
 
 	const toggleIndicator = (name: string) => {
 		if (!selectedPane) return;
@@ -532,7 +551,7 @@ export default function LibraryShowcaseDemo() {
 	};
 
 	return (
-		<div className="gc-terminal">
+		<div className="gc-terminal" data-chart-theme={theme}>
 
 			{/* ─── TOP BAR ────────────────────────────────────────────────── */}
 			<header className="gc-topbar">
@@ -618,6 +637,31 @@ export default function LibraryShowcaseDemo() {
 					)}
 					<span className="gc-version-text">v{version}</span>
 					<div className="gc-topbar-sep" />
+					<button
+						type="button"
+						className="gc-topbar-btn gc-theme-toggle"
+						onClick={toggleTheme}
+						title={isDark ? "Chửế độ sáng" : "Chửế độ tối"}
+						aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+					>
+						{isDark ? (
+							<svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+								<circle cx="8" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
+								<line x1="8" y1="1" x2="8" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+								<line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+								<line x1="1" y1="8" x2="3" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+								<line x1="13" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+								<line x1="3.05" y1="3.05" x2="4.46" y2="4.46" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+								<line x1="11.54" y1="11.54" x2="12.95" y2="12.95" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+								<line x1="11.54" y1="4.46" x2="12.95" y2="3.05" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+								<line x1="3.05" y1="12.95" x2="4.46" y2="11.54" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+							</svg>
+						) : (
+							<svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+								<path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6 6 0 1 0 8 8z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+							</svg>
+						)}
+					</button>
 					<button type="button" className="gc-upgrade-btn">Upgrade</button>
 				</div>
 			</header>
@@ -671,7 +715,7 @@ export default function LibraryShowcaseDemo() {
 					</div>
 
 					{/* Canvas */}
-					<div className="gc-chart-shell" ref={shellRef}>
+					<div className="gc-chart-shell" ref={shellRef} style={{ background: canvasBg }}>
 						{dataStatus === "loading" ? (
 							<div className="gc-chart-placeholder gc-chart-loading">
 								<div className="gc-spinner" />
@@ -679,7 +723,7 @@ export default function LibraryShowcaseDemo() {
 							</div>
 						) : chartReady ? (
 							<ChartCanvas
-							key={`chart-canvas-${chartType}-${timeframe}-${priceH}-${volumeH}-${momentumH}`}
+							key={`chart-canvas-${chartType}-${timeframe}-${priceH}-${volumeH}-${momentumH}-${theme}`}
 								height={chartHeight}
 								width={chartWidth}
 								margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
@@ -706,7 +750,7 @@ export default function LibraryShowcaseDemo() {
 										datum.bollingerBand?.bottom,
 									]}
 								>
-									<YAxis axisAt="right" orient="right" ticks={6} />
+									<YAxis axisAt="right" orient="right" ticks={6} stroke={axisStroke} tickStroke={axisStroke} tickLabelFill={axisTickFill} />
 									<PriceSeries chartType={chartType} candleWidth={candleWidth} />
 									<LineSeries yAccessor={(datum: DemoDatum) => datum.ema20} stroke="#2d9cdb" strokeWidth={1.5} />
 									<LineSeries yAccessor={(datum: DemoDatum) => datum.ema50} stroke="#f2994a" strokeWidth={1.5} />
@@ -725,7 +769,7 @@ export default function LibraryShowcaseDemo() {
 									origin={(_w: number, h: number) => [0, h - volumeH - momentumH]}
 									yExtents={(datum: DemoDatum) => [0, datum.volume]}
 								>
-									<YAxis axisAt="right" orient="right" ticks={3} tickFormat={volumeFormat} />
+									<YAxis axisAt="right" orient="right" ticks={3} tickFormat={volumeFormat} stroke={axisStroke} tickStroke={axisStroke} tickLabelFill={axisTickFill} />
 									<BarSeries
 										yAccessor={(datum: DemoDatum) => datum.volume}
 										fill={(datum: DemoDatum) => (datum.close >= datum.open ? "#089981" : "#f23645")}
@@ -748,9 +792,9 @@ export default function LibraryShowcaseDemo() {
 										tickStroke="transparent"
 										tickStrokeOpacity={0}
 										tickStrokeWidth={0}
-										tickLabelFill="#1e2a3b"
+										tickLabelFill={axisTickFill}
 									/>
-									<YAxis axisAt="right" orient="right" ticks={3} />
+									<YAxis axisAt="right" orient="right" ticks={3} stroke={axisStroke} tickStroke={axisStroke} tickLabelFill={axisTickFill} />
 									<RSISeries yAccessor={(datum: DemoDatum) => datum.rsi} />
 									<MACDSeries yAccessor={(datum: DemoDatum) => datum.macd} />
 								</Chart>
@@ -763,17 +807,17 @@ export default function LibraryShowcaseDemo() {
 						{/* Splitter overlays — positioned absolute on top of canvas */}
 						{chartReady && (
 							<>
-								<ChartPaneSplitter
+								<ChartSplitter
 									splitterIndex={0}
 									available={available}
-									applyDragDelta={applyDragDelta}
+									onCommitDelta={applyDelta}
 									onDoubleClick={resetLayout}
 									style={{ top: 8 + priceH }}
 								/>
-								<ChartPaneSplitter
+								<ChartSplitter
 									splitterIndex={1}
 									available={available}
-									applyDragDelta={applyDragDelta}
+									onCommitDelta={applyDelta}
 									onDoubleClick={resetLayout}
 									style={{ top: 8 + priceH + volumeH }}
 								/>

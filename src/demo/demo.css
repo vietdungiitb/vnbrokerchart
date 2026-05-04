@@ -1,22 +1,31 @@
+/* Import library theme & splitter CSS so --rsc-* tokens are available */
+@import "../lib/styles/chart-theme.css";
+@import "../lib/styles/chart-splitter.css";
+
 /* ════════════════════════════════════════════════════════════════════
    BT Charts – Terminal Demo CSS
    GoCharting-inspired light terminal skin
 ════════════════════════════════════════════════════════════════════ */
 
-/* ── Design tokens ─────────────────────────────────────────────── */
+/* ── Design tokens (derived from --rsc-* library tokens) ────────── */
+/* All colour values now reference --rsc-* so dark/light theme      */
+/* switching happens automatically when data-chart-theme changes.   */
 :root {
-  --gc-bg:           #f0f3fb;
-  --gc-surface:      #ffffff;
-  --gc-surface-sub:  #f8f9fd;
-  --gc-border:       #dde1ed;
-  --gc-border-mid:   #c8cedf;
-  --gc-text:         #1e2a3b;
-  --gc-text-muted:   #6b7893;
-  --gc-text-micro:   #9ba5bb;
-  --gc-accent:       #2962ff;
-  --gc-accent-bg:    #e8efff;
-  --gc-up:           #089981;
-  --gc-dn:           #f23645;
+  /* Colour tokens — aliased from library theme */
+  --gc-bg:           var(--rsc-bg);
+  --gc-surface:      var(--rsc-surface);
+  --gc-surface-sub:  var(--rsc-surface-sub);
+  --gc-border:       var(--rsc-border);
+  --gc-border-mid:   var(--rsc-border-mid);
+  --gc-text:         var(--rsc-text);
+  --gc-text-muted:   var(--rsc-text-muted);
+  --gc-text-micro:   var(--rsc-text-micro);
+  --gc-accent:       var(--rsc-accent);
+  --gc-accent-bg:    var(--rsc-accent-bg);
+  --gc-up:           var(--rsc-up);
+  --gc-dn:           var(--rsc-dn);
+
+  /* Layout / typography tokens (theme-independent) */
   --gc-topbar-h:     48px;
   --gc-bottombar-h:  34px;
   --gc-toolbar-w:    42px;
@@ -270,6 +279,27 @@ button {
   transition: opacity 120ms;
 }
 .gc-upgrade-btn:hover { opacity: 0.9; }
+
+/* Theme toggle icon button */
+.gc-topbar-btn {
+  appearance: none;
+  border: 1px solid var(--gc-border);
+  background: transparent;
+  color: var(--gc-text-muted);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--gc-radius);
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+  flex-shrink: 0;
+}
+.gc-topbar-btn:hover {
+  background: var(--gc-accent-bg);
+  color: var(--gc-accent);
+}
 
 /* ════════════════════════════════════════════════════════════════
    MAIN WORKSPACE

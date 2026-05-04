@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-04 10:27:53`
+Generated at: `2026-05-04 10:53:13`
 
 ## Summary
 
-- Total modules: 596
+- Total modules: 599
 - Python modules: 1
-- JS/TS modules: 595
+- JS/TS modules: 598
 - Total classes: 348
-- Total functions: 3442
-- Total top-level variables: 7131
+- Total functions: 3456
+- Total top-level variables: 7171
 
 ## Python Modules
 
@@ -2092,7 +2092,7 @@ Generated at: `2026-05-04 10:27:53`
 - Functions:
   - `handlePointerDown`, `handlePointerMove`, `stopDragging`
 - Top-level variables:
-  - `applyDragDeltaRef`, `availableRef`, `deltaY`, `drag`, `dragRef`, `node`, `rootRef`
+  - `applyDragDeltaRef`, `availableRef`, `drag`, `dragRef`, `node`, `rootRef`, `totalDelta`
 
 ### `src/demo/demoData.ts`
 
@@ -2118,7 +2118,7 @@ Generated at: `2026-05-04 10:27:53`
 - Functions:
   - `PriceSeries`, `ToolIcon`, `addDrawing`, `addPane`, `chartDomain`, `clearDrawing`, `formatIndicatorObject`, `handler`, `normalizeDate`, `paneTemplate`, `redoDrawing`, `removePane`, `restoreDrawing`, `summarizeIndicator`, `toggleIndicator`, `undoDrawing`, `update`
 - Top-level variables:
-  - `CHART_TYPES`, `DRAWING_TOOLS`, `INDICATOR_OPTIONS`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `active`, `adapter`, `bestAsk`, `bestBid`, `candleWidth`, `chartMenuRef`, `chartReady`, `completed`, `data`, `dateFormat`, `disposed`, `dn`, `draft`, `drawingProbe`, `end`, `first`, `from`, `haCalc`, `hasIt`, `id`, `indicator`, `indicatorProbe`, `indicators`, `input`, `last`, `lastBar`, `mid`, `msg`, `node`, `observer`, `paneManager`, `plotData`, `priceFormat`, `priceIsUp`, `ratio`, `rect`, `restored`, `sample`, `second`, `selectedPane`, `serialized`, `shellRef`, `spreadBps`, `start`, `startX`, `stepPx`, `stopBars`, `stopOrderbook`, `stopTrades`, `timerId`, `to`, `transformed`, `up`, `volumeFormat`, `xExtents`
+  - `CHART_TYPES`, `DRAWING_TOOLS`, `INDICATOR_OPTIONS`, `PANE_CONFIG`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `active`, `adapter`, `axisStroke`, `axisTickFill`, `bestAsk`, `bestBid`, `candleWidth`, `canvasBg`, `chartMenuRef`, `chartReady`, `completed`, `data`, `dateFormat`, `disposed`, `dn`, `draft`, `drawingProbe`, `end`, `first`, `from`, `haCalc`, `hasIt`, `id`, `indicator`, `indicatorProbe`, `indicators`, `input`, `last`, `lastBar`, `mid`, `msg`, `node`, `observer`, `paneManager`, `plotData`, `priceFormat`, `priceIsUp`, `ratio`, `rect`, `restored`, `sample`, `second`, `selectedPane`, `serialized`, `shellRef`, `spreadBps`, `start`, `startX`, `stepPx`, `stopBars`, `stopOrderbook`, `stopTrades`, `timerId`, `to`, `transformed`, `up`, `volumeFormat`, `xExtents`
 
 ### `src/demo/LiveDemo.tsx`
 
@@ -2584,6 +2584,13 @@ Generated at: `2026-05-04 10:27:53`
 - Top-level variables:
   - `chartScales`, `mainCanvasRef`, `mergedStyle`, `overlayCanvasRef`, `resolvedHeight`, `resolvedWidth`, `syncValue`
 
+### `src/lib/core/ChartSplitter.tsx`
+
+- Functions:
+  - `ChartSplitter`, `handlePointerDown`, `handlePointerMove`, `stopDragging`
+- Top-level variables:
+  - `availableRef`, `cls`, `commitRef`, `drag`, `dragRef`, `node`, `rootRef`, `totalDelta`
+
 ### `src/lib/core/ChartTerminal.tsx`
 
 - Functions:
@@ -2619,6 +2626,13 @@ Generated at: `2026-05-04 10:27:53`
 - Top-level variables:
   - `element`, `observer`, `ref`
 
+### `src/lib/core/hooks/useChartTheme.ts`
+
+- Functions:
+  - `useChartTheme`
+- Top-level variables:
+  - `STORAGE_KEY`, `setTheme`, `stored`, `toggleTheme`
+
 ### `src/lib/core/hooks/usePaneManager.test.ts`
 
 - Top-level variables:
@@ -2630,6 +2644,13 @@ Generated at: `2026-05-04 10:27:53`
   - `clampHeight`, `createPaneId`, `normalizePane`, `paneManagerReducer`, `usePaneManager`
 - Top-level variables:
   - `addIndicator`, `addPane`, `normalizedPane`, `paneIdSeed`, `removeIndicator`, `removePane`, `resizePane`, `updateIndicator`
+
+### `src/lib/core/hooks/usePaneSizes.ts`
+
+- Functions:
+  - `applyDeltaBetween`, `loadRatios`, `normalise`, `pxToRatios`, `ratiosToPx`, `sanitize`, `saveRatios`, `sum`, `usePaneSizes`
+- Top-level variables:
+  - `a`, `applyDelta`, `available`, `b`, `consumed`, `count`, `defaultRatios`, `defaultRatiosRef`, `heights`, `minA`, `minB`, `minH`, `minHRef`, `minTotal`, `n`, `newA`, `newB`, `px`, `reset`, `result`, `stored`, `sum`, `total`, `updated`
 
 ### `src/lib/core/index.ts`
 
