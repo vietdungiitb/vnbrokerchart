@@ -1,7 +1,8 @@
 /**
  * ChartPaneSplitter
  * A thin draggable bar placed between chart panes as an absolute overlay.
- * Emits applyDragDelta on pointer move; double-click triggers resetLayout.
+ * During drag: shows visual preview via CSS translateY.
+ * On release: commits total delta to parent (triggers ChartCanvas remount).
  */
 
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
@@ -23,8 +24,9 @@ export default function ChartPaneSplitter({
 	style,
 }: ChartPaneSplitterProps) {
 	const [isDragging, setIsDragging] = useState(false);
-	const dragRef = useRef<{ pointerId: number; lastY: number } | null>(null);
+	const [visualOffset, setVisualOffset] = useState(0);
 	const rootRef = useRef<HTMLDivElement | null>(null);
+	const dragRef = useRef<{ pointerId: number; startY: number } | null>(null);
 	const applyDragDeltaRef = useRef(applyDragDelta);
 	const availableRef = useRef(available);
 
@@ -36,29 +38,21 @@ export default function ChartPaneSplitter({
 		availableRef.current = available;
 	}, [available]);
 
-	useEffect(() => {
-		return () => {
-			dragRef.current = null;
-		};
-	}, []);
-
 	const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
 		event.preventDefault();
 		const node = rootRef.current;
-		if (node) {
-			node.setPointerCapture(event.pointerId);
-		}
-		dragRef.current = { pointerId: event.pointerId, lastY: event.clientY };
+		if (node) node.setPointerCapture(event.pointerId);
+		dragRef.current = { pointerId: event.pointerId, startY: event.clientY };
 		setIsDragging(true);
+		setVisualOffset(0);
 	};
 
 	const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
 		const drag = dragRef.current;
 		if (!drag || drag.pointerId !== event.pointerId) return;
-		const deltaY = event.clientY - drag.lastY;
-		if (deltaY === 0) return;
-		drag.lastY = event.clientY;
-		applyDragDeltaRef.current(splitterIndex, deltaY, availableRef.current);
+		// Only update CSS visual — do NOT touch React state during drag to avoid
+		// triggering ChartCanvas redraws on every pixel (causes heavy flicker).
+		setVisualOffset(event.clientY - drag.startY);
 	};
 
 	const stopDragging = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -68,15 +62,24 @@ export default function ChartPaneSplitter({
 		if (node?.hasPointerCapture(event.pointerId)) {
 			node.releasePointerCapture(event.pointerId);
 		}
+		const totalDelta = event.clientY - drag.startY;
 		dragRef.current = null;
 		setIsDragging(false);
+		setVisualOffset(0);
+		// Commit the full drag delta once on release → triggers clean ChartCanvas remount.
+		if (totalDelta !== 0) {
+			applyDragDeltaRef.current(splitterIndex, totalDelta, availableRef.current);
+		}
 	};
 
 	return (
 		<div
 			ref={rootRef}
 			className={`gc-pane-splitter${isDragging ? " gc-pane-splitter--dragging" : ""}`}
-			style={style}
+			style={{
+				...style,
+				transform: visualOffset !== 0 ? `translateY(${visualOffset}px)` : undefined,
+			}}
 			onPointerDown={handlePointerDown}
 			onPointerMove={handlePointerMove}
 			onPointerUp={stopDragging}

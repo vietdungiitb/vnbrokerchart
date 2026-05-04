@@ -679,7 +679,7 @@ export default function LibraryShowcaseDemo() {
 							</div>
 						) : chartReady ? (
 							<ChartCanvas
-								key={`chart-canvas-${chartType}-${timeframe}`}
+							key={`chart-canvas-${chartType}-${timeframe}-${priceH}-${volumeH}-${momentumH}`}
 								height={chartHeight}
 								width={chartWidth}
 								margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
