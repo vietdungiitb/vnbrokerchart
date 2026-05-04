@@ -175,6 +175,36 @@ button {
   color: var(--gc-text-micro);
 }
 
+/* Live / offline / loading badges */
+.gc-live-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--gc-up);
+  background: #e6f9f2;
+  border: 1px solid #aee8cf;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.gc-offline-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  padding: 3px 8px;
+  border-radius: 999px;
+  cursor: help;
+  white-space: nowrap;
+}
+
+.gc-loading-badge {
+  font-size: 10.5px;
+  color: var(--gc-text-muted);
+  white-space: nowrap;
+}
+
 .gc-upgrade-btn {
   appearance: none;
   border: none;
@@ -292,6 +322,39 @@ button {
   place-items: center;
   color: var(--gc-text-muted);
   font-size: 13px;
+}
+
+.gc-chart-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Spinner */
+.gc-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--gc-border);
+  border-top-color: var(--gc-accent);
+  border-radius: 50%;
+  animation: gc-spin 0.7s linear infinite;
+}
+
+@keyframes gc-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* OHLC strip extras */
+.gc-ohlc-bars {
+  color: var(--gc-text-micro);
+  font-size: 10.5px;
+}
+.gc-ohlc-loading {
+  font-size: 11px;
+  color: var(--gc-text-muted);
+  font-style: italic;
 }
 
 /* ════════════════════════════════════════════════════════════════

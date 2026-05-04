@@ -29,7 +29,7 @@ import LineSeries from "../lib/series/LineSeries";
 import MACDSeries from "../lib/series/MACDSeries";
 import RSISeries from "../lib/series/RSISeries";
 import { OHLCTooltip } from "../lib/tooltip";
-import { getOfflineDemoData, type DemoDatum } from "./demoData";
+import { fetchLiveDemoData, getOfflineDemoData, type DemoDatum } from "./demoData";
 import "./demo.css";
 
 const priceFormat = format(".2f");
@@ -171,10 +171,16 @@ function ToolIcon({ id }: { id: string }) {
 export default function LibraryShowcaseDemo() {
 	const shellRef = useRef<HTMLDivElement | null>(null);
 	const [chartWidth, setChartWidth] = useState(0);
-	const [timeframe, setTimeframe] = useState<Timeframe>("30m");
+	const [timeframe, setTimeframe] = useState<Timeframe>("1h");
 	const [activeTool, setActiveTool] = useState<string>("cursor");
 	const [sidePanelTab, setSidePanelTab] = useState<SidePanelTab>("indicators");
 	const [selectedPaneId, setSelectedPaneId] = useState("");
+
+	// Live Binance data state
+	const [liveData, setLiveData] = useState<DemoDatum[]>([]);
+	const [dataStatus, setDataStatus] = useState<"loading" | "live" | "offline" | "error">("loading");
+	const [dataError, setDataError] = useState<string>("");
+
 	const [adapterProbe, setAdapterProbe] = useState<AdapterProbe>({
 		barsFetched: 0,
 		barTicks: 0,
@@ -191,7 +197,34 @@ export default function LibraryShowcaseDemo() {
 		paneTemplate("Momentum", 120, ["RSI", "MACD"]),
 	]);
 
-	const data = useMemo(() => getOfflineDemoData().map((datum) => ({ ...datum })), []);
+	// Fetch live Binance data on mount and on timeframe change
+	useEffect(() => {
+		const abortController = new AbortController();
+		setDataStatus("loading");
+		setDataError("");
+
+		fetchLiveDemoData({ interval: timeframe, limit: 300, signal: abortController.signal })
+			.then((bars) => {
+				if (abortController.signal.aborted) return;
+				setLiveData(bars);
+				setDataStatus("live");
+			})
+			.catch((err: unknown) => {
+				if (abortController.signal.aborted) return;
+				const msg = err instanceof Error ? err.message : String(err);
+				setDataError(msg);
+				// Fallback to offline data
+				setLiveData(getOfflineDemoData());
+				setDataStatus("offline");
+			});
+
+		return () => abortController.abort();
+	}, [timeframe]);
+
+	const data = useMemo(
+		() => (liveData.length > 0 ? liveData : getOfflineDemoData()),
+		[liveData],
+	);
 	const xExtents = useMemo(() => chartDomain(data), [data]);
 	const lastBar = data[data.length - 1];
 
@@ -380,6 +413,15 @@ export default function LibraryShowcaseDemo() {
 				</div>
 
 				<div className="gc-topbar__right">
+					{dataStatus === "live" && (
+						<span className="gc-live-badge">● LIVE · Binance</span>
+					)}
+					{dataStatus === "offline" && (
+						<span className="gc-offline-badge" title={dataError}>⚠ Offline fallback</span>
+					)}
+					{dataStatus === "loading" && (
+						<span className="gc-loading-badge">↻ Loading…</span>
+					)}
 					<span className="gc-version-text">v{version}</span>
 					<div className="gc-topbar-sep" />
 					<button type="button" className="gc-upgrade-btn">Upgrade</button>
@@ -419,17 +461,29 @@ export default function LibraryShowcaseDemo() {
 				<section className="gc-chart-area">
 					{/* OHLC info strip */}
 					<div className="gc-ohlc-strip">
-						<span className="gc-ohlc-pair">BYBIT:BTCUSD <span className="gc-ohlc-tf">· {timeframe}</span></span>
-						<span className="gc-ohlc-item">O <b>{priceFormat(lastBar?.open ?? 0)}</b></span>
-						<span className="gc-ohlc-item">H <b className="gc-col-up">{priceFormat(lastBar?.high ?? 0)}</b></span>
-						<span className="gc-ohlc-item">L <b className="gc-col-dn">{priceFormat(lastBar?.low ?? 0)}</b></span>
-						<span className="gc-ohlc-item">C <b className={priceIsUp ? "gc-col-up" : "gc-col-dn"}>{priceFormat(lastBar?.close ?? 0)}</b></span>
-						<span className="gc-ohlc-item gc-ohlc-vol">Vol <b>{volumeFormat(lastBar?.volume ?? 0)}</b></span>
+						<span className="gc-ohlc-pair">BINANCE:BTCUSDT <span className="gc-ohlc-tf">· {timeframe}</span></span>
+						{dataStatus !== "loading" && lastBar ? (
+							<>
+								<span className="gc-ohlc-item">O <b>{priceFormat(lastBar.open)}</b></span>
+								<span className="gc-ohlc-item">H <b className="gc-col-up">{priceFormat(lastBar.high)}</b></span>
+								<span className="gc-ohlc-item">L <b className="gc-col-dn">{priceFormat(lastBar.low)}</b></span>
+								<span className="gc-ohlc-item">C <b className={priceIsUp ? "gc-col-up" : "gc-col-dn"}>{priceFormat(lastBar.close)}</b></span>
+								<span className="gc-ohlc-item gc-ohlc-vol">Vol <b>{volumeFormat(lastBar.volume)}</b></span>
+								<span className="gc-ohlc-item gc-ohlc-bars">{data.length} bars</span>
+							</>
+						) : (
+							<span className="gc-ohlc-loading">Đang tải dữ liệu Binance…</span>
+						)}
 					</div>
 
 					{/* Canvas */}
 					<div className="gc-chart-shell" ref={shellRef}>
-						{chartReady ? (
+						{dataStatus === "loading" ? (
+							<div className="gc-chart-placeholder gc-chart-loading">
+								<div className="gc-spinner" />
+								<span>Đang tải dữ liệu thật từ Binance…</span>
+							</div>
+						) : chartReady ? (
 							<ChartCanvas
 								height={620}
 								width={chartWidth}
@@ -501,7 +555,7 @@ export default function LibraryShowcaseDemo() {
 								<CrossHairCursor />
 							</ChartCanvas>
 						) : (
-							<div className="gc-chart-placeholder">Đang khởi tạo terminal…</div>
+							<div className="gc-chart-placeholder">Đang khởi tạo canvas…</div>
 						)}
 					</div>
 				</section>

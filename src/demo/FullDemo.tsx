@@ -238,7 +238,7 @@ const FullDemo = () => {
 
         setLoadState("loading");
 
-        void fetchLiveDemoData(controller.signal)
+        void fetchLiveDemoData({ signal: controller.signal })
             .then((nextData) => {
                 if (cancelled) return;
                 setRawData(nextData);

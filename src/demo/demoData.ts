@@ -29,8 +29,14 @@ export interface DemoDatum extends OHLCV {
 	bollingerBand?: BollingerBandPoint;
 }
 
-const DEMO_WINDOW = 200;
-const BINANCE_ENDPOINT = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=200";
+const DEMO_WINDOW = 300;
+const BINANCE_BASE = "https://api.binance.com/api/v3/klines";
+
+/** Map demo timeframe labels → Binance interval strings */
+export const BINANCE_INTERVAL_MAP: Record<string, string> = {
+	"1m": "1m", "3m": "3m", "5m": "5m", "15m": "15m", "30m": "30m",
+	"1h": "1h", "4h": "4h", "1D": "1d", "1W": "1w",
+};
 
 function parseDateTime(value: string) {
 	return new Date(value.replace(" ", "T"));
@@ -107,8 +113,18 @@ export function formatBinanceKlines(json: BinanceKline[]): DemoDatum[] {
 	return computeIndicators(parsed);
 }
 
-export async function fetchLiveDemoData(signal?: AbortSignal): Promise<DemoDatum[]> {
-	const response = await fetch(BINANCE_ENDPOINT, { signal });
+export interface FetchLiveOptions {
+	symbol?: string;
+	interval?: string;
+	limit?: number;
+	signal?: AbortSignal;
+}
+
+export async function fetchLiveDemoData(options: FetchLiveOptions = {}): Promise<DemoDatum[]> {
+	const { symbol = "BTCUSDT", interval = "1h", limit = 300, signal } = options;
+	const binanceInterval = BINANCE_INTERVAL_MAP[interval] ?? interval;
+	const url = `${BINANCE_BASE}?symbol=${encodeURIComponent(symbol)}&interval=${binanceInterval}&limit=${limit}`;
+	const response = await fetch(url, { signal });
 
 	if (!response.ok) {
 		throw new Error(`Không tải được dữ liệu Binance: ${response.status}`);
