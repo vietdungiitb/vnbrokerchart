@@ -347,6 +347,7 @@ export function DynamicChart({
 		];
 		const paneHeight = (heights[paneIndex] ?? 0) - gap;
 		const hasBottomAxis = paneIndex === panes.length - 1 && index >= 0;
+		const isLastSlot = index === chartSlots.length - 1;
 		const yExtents = buildYExtents(slot);
 		const yAxisFormat = slot.axisFormat;
 		// Tooltip: first slot of each pane sits just below the gap/splitter (y=4).
@@ -394,7 +395,9 @@ export function DynamicChart({
 						tickLabelFill={axisTickFill}
 					/>
 					) : null}
-					<MouseCoordinateX displayFormat={dateFormat} />
+					{/* MouseCoordinateX only on the last slot (bottom pane) — shows just HH:MM
+					    at the crosshair position. Date context is already in the OHLC tooltip. */}
+					{isLastSlot ? <MouseCoordinateX displayFormat={timeFormat("%H:%M")} /> : null}
 					<MouseCoordinateY rectWidth={64} displayFormat={yAxisFormat as any} />
 				</Chart>
 			),
