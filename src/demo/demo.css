@@ -170,6 +170,58 @@ button {
   color: var(--gc-text);
 }
 
+.gc-topbar-btn--active {
+  background: var(--gc-accent-bg);
+  color: var(--gc-accent);
+}
+
+.gc-chart-type-wrap {
+  position: relative;
+}
+
+.gc-chart-type-btn {
+  display: inline-flex;
+  align-items: center;
+}
+
+.gc-chart-type-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 220;
+  min-width: 170px;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--gc-border-mid);
+  background: var(--gc-surface);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.16);
+}
+
+.gc-chart-type-item {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--gc-text);
+  font-family: var(--gc-font);
+  font-size: 12.5px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.gc-chart-type-item:hover {
+  background: var(--gc-surface-sub);
+}
+
+.gc-chart-type-item--active {
+  color: var(--gc-accent);
+  font-weight: 600;
+}
+
 .gc-version-text {
   font-size: 11px;
   color: var(--gc-text-micro);

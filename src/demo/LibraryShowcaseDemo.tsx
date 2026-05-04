@@ -23,12 +23,15 @@ import Chart from "../lib/Chart";
 import type { IndicatorConfig } from "../lib/types/pane";
 import { XAxis, YAxis } from "../lib/axes";
 import { CrossHairCursor, MouseCoordinateX, MouseCoordinateY } from "../lib/coordinates";
+import AreaSeries from "../lib/series/AreaSeries";
 import BarSeries from "../lib/series/BarSeries";
 import CandlestickSeries from "../lib/series/CandlestickSeries";
 import LineSeries from "../lib/series/LineSeries";
 import MACDSeries from "../lib/series/MACDSeries";
+import OHLCSeries from "../lib/series/OHLCSeries";
 import RSISeries from "../lib/series/RSISeries";
 import { OHLCTooltip } from "../lib/tooltip";
+import { heikinAshi } from "../lib/calculator";
 import { fetchLiveDemoData, getOfflineDemoData, type DemoDatum } from "./demoData";
 import "./demo.css";
 
@@ -38,6 +41,17 @@ const dateFormat = timeFormat("%d/%m/%Y %H:%M");
 
 const TIMEFRAMES = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "1D", "1W"] as const;
 type Timeframe = typeof TIMEFRAMES[number];
+
+const CHART_TYPES = [
+	{ id: "candlestick" as const, label: "Candlestick" },
+	{ id: "hollow"      as const, label: "Hollow Candle" },
+	{ id: "ohlc"        as const, label: "OHLC Bar" },
+	{ id: "heikinashi"  as const, label: "Heikin Ashi" },
+	{ id: "line"        as const, label: "Line" },
+	{ id: "area"        as const, label: "Area" },
+	{ id: "bar"         as const, label: "Bar Chart" },
+];
+type ChartTypeId = "candlestick" | "hollow" | "ohlc" | "heikinashi" | "line" | "area" | "bar";
 
 const INDICATOR_OPTIONS = ["EMA", "SMA", "RSI", "MACD", "BOLLINGER", "VOLUME", "CVD"] as const;
 const DRAWING_TOOLS = ["trendLine", "hLine", "vLine", "fibonacci", "channel", "text"] as const;
@@ -168,11 +182,61 @@ function ToolIcon({ id }: { id: string }) {
 	}
 }
 
+// Price series switcher — renders the correct series for the chosen chart type
+function PriceSeries({ chartType }: { chartType: ChartTypeId }) {
+	const up = "#089981";
+	const dn = "#f23645";
+	switch (chartType) {
+		case "ohlc":
+			return (
+				<OHLCSeries
+					stroke={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
+				/>
+			);
+		case "line":
+			return <LineSeries yAccessor={(d: DemoDatum) => d.close} stroke="#2962ff" strokeWidth={1.5} />;
+		case "area":
+			return (
+				<AreaSeries
+					yAccessor={(d: DemoDatum) => d.close}
+					stroke="#2962ff"
+					fill="#2962ff"
+					strokeWidth={1.5}
+				/>
+			);
+		case "bar":
+			return (
+				<BarSeries
+					yAccessor={(d: DemoDatum) => d.close}
+					fill={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
+				/>
+			);
+		case "hollow":
+			return (
+				<CandlestickSeries
+					wickStroke={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
+					fill={(d: DemoDatum) => (d.close >= d.open ? "transparent" : dn)}
+					stroke={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
+				/>
+			);
+		default: // candlestick | heikinashi
+			return (
+				<CandlestickSeries
+					wickStroke={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
+					fill={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
+				/>
+			);
+	}
+}
+
 export default function LibraryShowcaseDemo() {
 	const shellRef = useRef<HTMLDivElement | null>(null);
+	const chartMenuRef = useRef<HTMLDivElement | null>(null);
 	const [chartWidth, setChartWidth] = useState(0);
 	const [chartHeight, setChartHeight] = useState(0);
 	const [timeframe, setTimeframe] = useState<Timeframe>("1h");
+	const [chartType, setChartType] = useState<ChartTypeId>("candlestick");
+	const [showChartMenu, setShowChartMenu] = useState(false);
 	const [activeTool, setActiveTool] = useState<string>("cursor");
 	const [sidePanelTab, setSidePanelTab] = useState<SidePanelTab>("indicators");
 	const [selectedPaneId, setSelectedPaneId] = useState("");
@@ -226,8 +290,23 @@ export default function LibraryShowcaseDemo() {
 		() => (liveData.length > 0 ? liveData : getOfflineDemoData()),
 		[liveData],
 	);
-	const xExtents = useMemo(() => chartDomain(data), [data]);
-	const lastBar = data[data.length - 1];
+
+	// Heikin Ashi transform — reuse base indicator fields, swap OHLC only
+	const plotData = useMemo<DemoDatum[]>(() => {
+		if (chartType !== "heikinashi" || data.length === 0) return data;
+		const haCalc = heikinAshi();
+		const transformed = haCalc(data as any[]) as any[];
+		return transformed.map((bar: any, i: number) => ({
+			...data[i],
+			open:  bar.open,
+			high:  bar.high,
+			low:   bar.low,
+			close: bar.close,
+		}));
+	}, [data, chartType]);
+
+	const xExtents = useMemo(() => chartDomain(plotData), [plotData]);
+	const lastBar = plotData[plotData.length - 1];
 
 	const selectedPane = useMemo(
 		() => paneManager.panes.find((pane) => pane.id === selectedPaneId) ?? paneManager.panes[0],
@@ -344,7 +423,19 @@ export default function LibraryShowcaseDemo() {
 		};
 	}, [drawingState]);
 
-	const chartReady = chartWidth > 0 && chartHeight > 0 && data.length > 0;
+	const chartReady = chartWidth > 0 && chartHeight > 0 && plotData.length > 0;
+
+	// Close chart type menu when clicking outside
+	useEffect(() => {
+		if (!showChartMenu) return;
+		const handler = (e: MouseEvent) => {
+			if (chartMenuRef.current && !chartMenuRef.current.contains(e.target as Node)) {
+				setShowChartMenu(false);
+			}
+		};
+		document.addEventListener("mousedown", handler);
+		return () => document.removeEventListener("mousedown", handler);
+	}, [showChartMenu]);
 	const ratio = window.devicePixelRatio || 1;
 	const priceIsUp = (lastBar?.close ?? 0) >= (lastBar?.open ?? 0);
 
@@ -417,7 +508,46 @@ export default function LibraryShowcaseDemo() {
 
 					<div className="gc-topbar-sep" />
 
-					<button type="button" className="gc-topbar-btn">Charts</button>
+					<div className="gc-chart-type-wrap" ref={chartMenuRef}>
+						<button
+							type="button"
+							className={`gc-topbar-btn gc-chart-type-btn${showChartMenu ? " gc-topbar-btn--active" : ""}`}
+							onClick={() => setShowChartMenu((v) => !v)}
+						>
+							<svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
+								<rect x="1" y="10" width="3" height="5" fill="currentColor" rx="1" />
+								<rect x="6" y="6" width="3" height="9" fill="currentColor" rx="1" />
+								<rect x="11" y="2" width="3" height="13" fill="currentColor" rx="1" />
+							</svg>
+							{CHART_TYPES.find((ct) => ct.id === chartType)?.label ?? "Candlestick"}
+							<svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 4 }}>
+								<path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+							</svg>
+						</button>
+
+						{showChartMenu && (
+							<div className="gc-chart-type-menu">
+								{CHART_TYPES.map(({ id, label }) => (
+									<button
+										key={id}
+										type="button"
+										className={`gc-chart-type-item${chartType === id ? " gc-chart-type-item--active" : ""}`}
+										onClick={() => {
+											setChartType(id);
+											setShowChartMenu(false);
+										}}
+									>
+										{chartType === id && (
+											<svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: 6 }}>
+												<path d="M2 6l3 3 5-5" stroke="#2962ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+											</svg>
+										)}
+										{label}
+									</button>
+								))}
+							</div>
+						)}
+					</div>
 					<button type="button" className="gc-topbar-btn">Compare</button>
 					<button type="button" className="gc-topbar-btn">Study</button>
 					<button type="button" className="gc-topbar-btn">Replay</button>
@@ -500,8 +630,8 @@ export default function LibraryShowcaseDemo() {
 								width={chartWidth}
 								margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
 								type="hybrid"
-								seriesName="terminal-demo"
-								data={data}
+								seriesName={`terminal-demo-${chartType}`}
+								data={plotData}
 								xScale={scaleTime()}
 								xAccessor={(datum: DemoDatum) => datum.date}
 								displayXAccessor={(datum: DemoDatum) => datum.date}
@@ -524,10 +654,7 @@ export default function LibraryShowcaseDemo() {
 								>
 									<XAxis axisAt="bottom" orient="bottom" />
 									<YAxis axisAt="right" orient="right" ticks={6} />
-									<CandlestickSeries
-										wickStroke={(datum: DemoDatum) => (datum.close >= datum.open ? "#089981" : "#f23645")}
-										fill={(datum: DemoDatum) => (datum.close >= datum.open ? "#089981" : "#f23645")}
-									/>
+									<PriceSeries chartType={chartType} />
 									<LineSeries yAccessor={(datum: DemoDatum) => datum.ema20} stroke="#2d9cdb" strokeWidth={1.5} />
 									<LineSeries yAccessor={(datum: DemoDatum) => datum.ema50} stroke="#f2994a" strokeWidth={1.5} />
 									<OHLCTooltip

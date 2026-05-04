@@ -51,6 +51,25 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 | S21 Migrate indicator/interactive | ✅ Completed | Indicator/Interaction owners | Indicator + interactive sub-slices complete; type-check + build:docs pass; module tree regenerated; 0 .js in src/lib/interactive |
 | S22 Migrate root files + Gate G3 + Final audit | ✅ Completed | Release owner | Root files migrated; type-check + build:docs pass; browser smoke pass; 0 file .js trong src/ |
 
+### Ad-hoc demo task — Chart type switcher (GoCharting-style)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: `src/demo` topbar chart menu + price series switching
+- Files modified:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/demo.css`
+  - `module_tree_full.md`
+- Tính năng bàn giao:
+  - Thêm dropdown chọn loại chart trên topbar: Candlestick, Hollow Candle, OHLC Bar, Heikin Ashi, Line, Area, Bar Chart.
+  - Chuyển series hiển thị động theo lựa chọn thay vì hardcode một loại.
+  - Heikin Ashi dùng transform `heikinAshi()` và giữ lại các trường indicator từ dữ liệu gốc.
+  - Đóng menu khi click ra ngoài, highlight active item, đổi `seriesName` theo chart type để ép re-render đúng.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 594)
+
 ### S21 progress — indicator sub-slice
 
 - Người thực hiện: GitHub Copilot

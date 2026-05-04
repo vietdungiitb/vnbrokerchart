@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-03 23:51:20`
+Generated at: `2026-05-04 09:17:53`
 
 ## Summary
 
@@ -10,8 +10,8 @@ Generated at: `2026-05-03 23:51:20`
 - Python modules: 1
 - JS/TS modules: 593
 - Total classes: 348
-- Total functions: 3428
-- Total top-level variables: 7081
+- Total functions: 3431
+- Total top-level variables: 7102
 
 ## Python Modules
 
@@ -2092,7 +2092,7 @@ Generated at: `2026-05-03 23:51:20`
 - Functions:
   - `computeIndicators`, `fetchLiveDemoData`, `formatBinanceKlines`, `getOfflineDemoData`, `parseCsvRow`, `parseDateTime`
 - Top-level variables:
-  - `BINANCE_ENDPOINT`, `BOLLINGER_BAND_OPTIONS`, `DEMO_WINDOW`, `bollingerBandCalculator`, `ema20`, `ema50`, `enriched`, `json`, `macdCalculator`, `parsed`, `response`, `rsiCalculator`
+  - `BINANCE_BASE`, `BINANCE_INTERVAL_MAP`, `BOLLINGER_BAND_OPTIONS`, `DEMO_WINDOW`, `binanceInterval`, `bollingerBandCalculator`, `ema20`, `ema50`, `enriched`, `json`, `macdCalculator`, `parsed`, `response`, `rsiCalculator`, `url`
 
 ### `src/demo/FullDemo.tsx`
 
@@ -2109,9 +2109,9 @@ Generated at: `2026-05-03 23:51:20`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `addDrawing`, `addPane`, `chartDomain`, `clearDrawing`, `normalizeDate`, `paneTemplate`, `redoDrawing`, `removePane`, `restoreDrawing`, `summarizeIndicator`, `toggleIndicator`, `undoDrawing`, `update`
+  - `PriceSeries`, `ToolIcon`, `addDrawing`, `addPane`, `chartDomain`, `clearDrawing`, `handler`, `normalizeDate`, `paneTemplate`, `redoDrawing`, `removePane`, `restoreDrawing`, `summarizeIndicator`, `toggleIndicator`, `undoDrawing`, `update`
 - Top-level variables:
-  - `DRAWING_TOOLS`, `INDICATOR_OPTIONS`, `active`, `adapter`, `bestAsk`, `bestBid`, `chartReady`, `completed`, `data`, `dateFormat`, `disposed`, `draft`, `drawingProbe`, `end`, `from`, `hasIt`, `id`, `indicator`, `indicatorProbe`, `indicators`, `input`, `lastValue`, `mid`, `node`, `observer`, `paneManager`, `priceFormat`, `ratio`, `restored`, `sample`, `selectedPane`, `serialized`, `shellRef`, `spreadBps`, `start`, `startX`, `stopBars`, `stopOrderbook`, `stopTrades`, `timerId`, `to`, `volumeFormat`, `xExtents`
+  - `CHART_TYPES`, `DRAWING_TOOLS`, `INDICATOR_OPTIONS`, `MARGIN_V`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `active`, `adapter`, `bestAsk`, `bestBid`, `chartMenuRef`, `chartReady`, `completed`, `data`, `dateFormat`, `disposed`, `dn`, `draft`, `drawingProbe`, `end`, `from`, `haCalc`, `hasIt`, `id`, `indicator`, `indicatorProbe`, `indicators`, `input`, `lastBar`, `lastValue`, `mid`, `momentumH`, `msg`, `node`, `observer`, `paneManager`, `plotData`, `priceFormat`, `priceH`, `priceIsUp`, `ratio`, `rect`, `restored`, `sample`, `selectedPane`, `serialized`, `shellRef`, `spreadBps`, `start`, `startX`, `stopBars`, `stopOrderbook`, `stopTrades`, `timerId`, `to`, `transformed`, `up`, `volumeFormat`, `volumeH`, `xExtents`
 
 ### `src/demo/LiveDemo.tsx`
 
