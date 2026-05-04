@@ -73,18 +73,18 @@ Hiển thị: histogram theo thời gian (tương tự Volume pane nhưng chỉ 
 - Cần feed bên thứ ba: Kaiko, Laevitas, Glassnode (on-chain cho crypto)
 - **Không nằm trong phạm vi hiện tại**
 
-### 2.5 Strength
+### 2.5 Strength (2 phương pháp — đã chốt)
 
-Hai cách tính:
-
-**A. Bull/Bear Power (Elder's method):**
+**Phase 1 — Elder Bull/Bear Power** (offline, từ OHLCV + EMA):
 $$BullPower = High - EMA(n)$$
 $$BearPower = Low - EMA(n)$$
+Hai đường riêng biệt trong cùng 1 pane, trục Y phải. Hiển thị dạng histogram: BullPower màu xanh (trên 0), BearPower màu đỏ (dưới 0).
 
-**B. Relative Strength so với index/BTC:**
-$$RS_i = \frac{Return_{asset}}{Return_{BTC}}$$
+**Phase 4 — Relative Strength vs BTC** (realtime, cần WS data BTC song song):
+$$RS_i = \frac{\Delta price_{asset}}{\Delta price_{BTC}}$$
+RS > 1: asset mạnh hơn BTC. RS < 1: yếu hơn. Hiển thị dạng line, baseline = 1.
 
-→ **Chưa chốt phương pháp** — cần thảo luận thêm.
+Cả 2 phương pháp là 2 `SeriesTypeId` khác nhau trong registry (`"StrengthElder"` và `"StrengthRelative"`), user có thể add cả 2 vào cùng pane hoặc pane riêng.
 
 ---
 
@@ -410,26 +410,21 @@ Pane header có nút **`👁`** (eye icon) để ẩn/hiện:
   - Pane không render `<Chart>` (không chiếm canvas height)
   - `heightRatio` giữ nguyên trong state (để khi show lại, restore đúng tỉ lệ cũ)
   - `usePaneSizes` chỉ nhận các pane `visible: true` để phân bổ height
-  - PaneLabel vẫn hiển thị ngoài bên trái nhưng collapsed (height nhỏ, chỉ hiện label)
+  - **Không hiện collapsed strip** — pane ẩn hoàn toàn, restore qua menu "Add pane"
   - Splitter của pane đó ẩn đi
 - Click 👁 khi `visible: false` → `visible: true`:
   - Restore `heightRatio` cũ
-  - Nếu tổng ratio > 1 sau restore → normalize lại toàn bộ visible pane
+  - Nếu tổng ratio visible > 1 sau restore → normalize lại
 - Price pane (`pinned: true`) → nút 👁 disabled (không cho ẩn)
 
-**Collapsed pane label strip:**
+### 4.2 Add pane — menu restore hidden pane
 
-```
-┌─ PRICE ─ [canvas đầy đủ] ─────────────────── │
-├─────────────────────────────── (splitter) ─── │
-│ RSI+MACD [👁 hidden — chỉ hiển thị label strip 20px] │
-├─────────────────────────────── (splitter ẩn) ─│
-┌─ VOLUME ─ [canvas đầy đủ] ────────────────── │
-```
+Nút `+` ở **topbar** (hoặc sidebar) → mở menu:
+- Danh sách loại pane có thể add: Volume, CVD, RSI+MACD, Strength, Whale...
+- Nếu pane loại đó đang hidden → hiện mục "Restore [tên pane]" thay vì "Add mới"
+- Nếu đã có 3 visible pane → các mục add mới bị disabled (chỉ còn option restore hidden pane)
 
-Collapsed strip height = 20px, chứa: label dọc + nút 👁 để restore.
-
-### 4.2 Dropdown (Add/Remove Series — trong pane)
+### 4.3 Dropdown (Add/Remove Series — trong pane)
 
 Mỗi pane header có nút `+`:
 - Click → picker dropdown show danh sách indicator available
@@ -467,21 +462,22 @@ Mỗi pane header có drag handle `⠿`:
 
 ## 5. Lộ trình thực hiện
 
-### Phase 1 — Nền tảng (Priority: Cao)
+### Phase 1 — Nền tảng + Header tối giản (Priority: Cao)
 - [ ] Định nghĩa types: `SeriesTypeId`, `SeriesConfig`, `PaneDescriptor` (có `visible`)
-- [ ] `SeriesRegistry` — map string → component
-- [ ] `DataEnricher` — OHLCV → EnrichedDatum (CVD xấp xỉ, Strength Bull/Bear Power)
-- [ ] `useDynamicPanes` hook — quản lý `PaneDescriptor[]`, enforce min=1/max=3, toggle visible, integrate `usePaneSizes` chỉ với visible panes
-- [ ] `DynamicChart` renderer — `panes.filter(visible).map()` thay hardcode
+- [ ] `SeriesRegistry` — map string → component + calculator
+- [ ] `DataEnricher` — upfront: OHLCV → EnrichedDatum (CVD xấp xỉ, Strength Elder, Whale threshold $50k)
+- [ ] `useDynamicPanes` hook — quản lý `PaneDescriptor[]`, enforce max=3 visible, toggle visible, localStorage persist, nút reset default, integrate `usePaneSizes` chỉ với visible panes
+- [ ] `DynamicChart` renderer — `panes.filter(p => p.visible).map()` thay hardcode
+- [ ] `PaneHeader` tối giản — hover overlay, label + 👁 + ×
+- [ ] `PaneLabel` dọc bên trái (DOM overlay)
+- [ ] `PaneTooltip` generic thay `OHLCTooltip` hardcode
 - [ ] Tích hợp vào Terminal Demo, replace 3 pane cố định
 
-### Phase 2 — Interactivity (Priority: Cao)
-- [ ] Pane header UI (label dọc + nút 👁/+/×)
-- [ ] Collapsed strip (20px) khi pane hidden
-- [ ] Add/Remove series dropdown picker
-- [ ] Add pane mới (chọn loại pane từ danh sách, disabled khi đã có 3 pane)
-- [ ] Remove pane (trừ pinned)
-- [ ] Toggle visibility + redistribute height
+### Phase 2 — Interactivity đầy đủ (Priority: Cao)
+- [ ] Dropdown picker add/remove series trong pane (nút + trên pane header)
+- [ ] Menu add pane / restore hidden pane (topbar hoặc sidebar)
+- [ ] Nút "Reset mặc định" → xóa localStorage, restore DEFAULT_PANES
+- [ ] Strength Phase 1 Elder hiển thị trong pane
 
 ### Phase 3 — Drag Reorder (Priority: Trung bình)
 - [ ] Drag handle trên pane header (chỉ visible pane)
@@ -491,8 +487,9 @@ Mỗi pane header có drag handle `⠿`:
 
 ### Phase 4 — Real-time Data (Priority: Trung bình)
 - [ ] Binance `@trade` WebSocket handler
-- [ ] CVD accumulator (bucket theo timeframe)
-- [ ] Whale filter (threshold configurable)
+- [ ] CVD accumulator thật (bucket theo timeframe), replace CVD xấp xỉ
+- [ ] Whale filter ($50,000 USD threshold, configurable)
+- [ ] Strength Relative vs BTC (WS data BTC song song)
 - [ ] Merge WS data vào `EnrichedDatum[]`
 - [ ] Auto-reconnect + reset khi đổi timeframe/symbol
 
@@ -502,14 +499,17 @@ Mỗi pane header có drag handle `⠿`:
 
 | # | Câu hỏi | Trạng thái |
 |---|---|---|
-| 1 | Ngưỡng Whale mặc định là bao nhiêu USD? | **Chưa chốt** |
-| 2 | Strength dùng Bull/Bear Power (Elder) hay Relative Strength so BTC/index? | **Chưa chốt** |
-| 3 | CVD Phase 1 dùng OHLCV xấp xỉ trước rồi Phase 4 WS override — đồng ý? | Đề xuất: Đồng ý |
-| 4 | Số pane tối đa | **Đã chốt: 3** |
-| 5 | Số pane tối thiểu | **Đã chốt: 1 (Price)** |
-| 6 | Persist layout pane vào localStorage không? | **Chưa chốt** |
-| 7 | Dark mode cho pane header UI | Tự động theo `--rsc-*` tokens |
-| 8 | Collapsed hidden pane có thể resize chiều cao không? (hay chỉ fixed 20px) | **Chưa chốt** (đề xuất: fixed 20px) |
+| 1 | Ngưỡng Whale mặc định | **Đã chốt: $50,000 USD/trade** (linh hoạt hơn quantity) |
+| 2 | Strength dùng phương pháp nào | **Đã chốt: CẢ HAI** — Elder Phase 1 (offline), Relative vs BTC Phase 4 (realtime) |
+| 3 | CVD Phase 1 OHLCV xấp xỉ, Phase 4 WS override | **Đã chốt: Đồng ý** |
+| 4 | Số pane tối đa | **Đã chốt: 3 visible** |
+| 5 | Số pane tối thiểu | **Đã chốt: 1 (Price pinned)** |
+| 6 | Persist layout vào localStorage | **Đã chốt: CÓ** — kèm nút "Reset mặc định" |
+| 7 | Dark mode cho pane header UI | **Đã chốt: Tự động** theo `--rsc-*` tokens |
+| 8 | Collapsed hidden pane strip | **Đã chốt: KHÔNG hiện strip** — restore qua menu "Add pane" |
+| B1 | Pane header nằm ở đâu | **Đã chốt: Hiện khi hover** vào pane (không chiếm chiều cao canvas) |
+| C3 | DataEnricher tính khi nào | **Đã chốt: Upfront** — tính tất cả khi load, lazy nâng cấp sau |
+| E1 | Phase 1 có pane header UI không | **Đã chốt: CÓ** — tối giản (label + 👁 + ×) |
 
 ---
 
