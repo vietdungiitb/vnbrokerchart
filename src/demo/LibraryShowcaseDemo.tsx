@@ -684,7 +684,7 @@ export default function LibraryShowcaseDemo() {
 								width={chartWidth}
 								margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
 								type="hybrid"
-								seriesName={`terminal-demo-${chartType}`}
+								seriesName={`terminal-demo-${chartType}-${priceH}-${volumeH}-${momentumH}`}
 								data={plotData}
 								xScale={scaleTime()}
 								xAccessor={(datum: DemoDatum) => datum.date}

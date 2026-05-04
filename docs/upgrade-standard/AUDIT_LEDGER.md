@@ -1200,3 +1200,23 @@ Every completed slice must update this ledger with the exact files changed in th
 - [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
 - [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
 - [module_tree_full.md](../../module_tree_full.md)
+
+## 23. Slice 19 Evidence
+
+### Completed
+
+- Fixed realtime pane response during splitter drag by binding ChartCanvas reset key (`seriesName`) to current pane heights.
+- This ensures each drag delta (`priceH/volumeH/momentumH`) triggers immediate redraw rather than delayed visual updates.
+
+### Validation
+
+- Command run: `npx tsc --noEmit`
+- Browser audit at `http://localhost:8080/` confirms splitter boundary updates continuously during drag:
+  - Splitter #1 moved `before=222` → `mid=257` → `after=273` in one drag sequence.
+- Command run: `python scripts/generate_module_tree.py`
+
+### Files touched in this slice
+
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)
