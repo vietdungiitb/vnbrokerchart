@@ -395,6 +395,8 @@ export default function LibraryShowcaseDemo() {
 	const [settingsPaneId, setSettingsPaneId] = useState("price");
 	const [maxVisiblePanes, setMaxVisiblePanes] = useState(() => loadDemoSettings().maxVisiblePanes);
 	const [settingsOpen, setSettingsOpen] = useState(false);
+	const [showReplayBar, setShowReplayBar] = useState(false);
+	const [showDrawingList, setShowDrawingList] = useState(false);
 	const drawingInteraction = useDrawingInteraction();
 	const { undo, redo, deleteSelected, cancelDrawing } = drawingInteraction;
 	const importInputRef = useRef<HTMLInputElement | null>(null);
@@ -1004,7 +1006,7 @@ export default function LibraryShowcaseDemo() {
 
 	return (
 		<DemoPageShell className="demo-page--terminal" frameClassName="demo-frame--terminal">
-			<div className="gc-terminal gc-terminal--embedded" data-chart-theme={theme}>
+			<div className={`gc-terminal gc-terminal--embedded${showReplayBar ? " gc-terminal--replay-bar" : ""}`} data-chart-theme={theme}>
 			<header className="gc-topbar">
 				<div className="gc-topbar__left">
 					<div className="gc-logo" aria-label={t("library.topbarAria")}>BT</div>
@@ -1073,44 +1075,18 @@ export default function LibraryShowcaseDemo() {
 					</div>
 
 					<button type="button" className="gc-topbar-btn">{t("library.compare")}</button>
-					<div className="gc-replay-controls" role="group" aria-label={t("replay.controls")}>
-						<button
-							type="button"
-							className={`gc-topbar-btn${replayState.isPlaying ? " gc-topbar-btn--active" : ""}`}
-							onClick={handleReplayToggle}
-							title={replayToggleTitle}
-							aria-pressed={replayState.isPlaying}
-						>
-							{t("library.replay")}
-						</button>
-						<button type="button" className="gc-topbar-btn gc-replay-mini" onClick={handleReplayRewind} title={t("replay.rewind")} aria-label={t("replay.rewind")}>
-							↺
-						</button>
-						<button type="button" className="gc-topbar-btn gc-replay-mini" onClick={handleReplayStepBack} title={t("replay.stepBack")} aria-label={t("replay.stepBack")}>
-							◀
-						</button>
-						<button type="button" className="gc-topbar-btn gc-replay-mini" onClick={handleReplayStepForward} title={t("replay.stepForward")} aria-label={t("replay.stepForward")}>
-							▶
-						</button>
-						<button type="button" className="gc-topbar-btn gc-replay-mini" onClick={handleReplayJumpLatest} title={t("replay.jumpLatest")} aria-label={t("replay.jumpLatest")}>
-							↷
-						</button>
-						<div className="gc-replay-speeds" role="group" aria-label={t("replay.speed")}>
-							{REPLAY_SPEEDS.map((speed) => (
-								<button
-									key={speed}
-									type="button"
-									className={`gc-topbar-btn gc-replay-speed${replayState.speed === speed ? " gc-topbar-btn--active" : ""}`}
-									onClick={() => handleReplaySpeedChange(speed)}
-									aria-pressed={replayState.speed === speed}
-									title={t("replay.speed")}
-								>
-									{speed === "max" ? "MAX" : `${speed}x`}
-								</button>
-							))}
-						</div>
-						<span className="gc-replay-status">{replayProgressLabel}</span>
-					</div>
+					<button
+						type="button"
+						className={`gc-topbar-btn${showReplayBar ? " gc-topbar-btn--active" : ""}`}
+						onClick={() => setShowReplayBar((v) => !v)}
+						title={t("replay.controls")}
+						aria-pressed={showReplayBar}
+					>
+						<svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
+							<polygon points="4,2 14,8 4,14" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" fill={showReplayBar ? "currentColor" : "none"} />
+						</svg>
+						{t("library.replay")}
+					</button>
 
 					<div className="gc-topbar-sep" />
 					<div className="gc-chart-type-wrap" ref={panesMenuRef}>
@@ -1215,6 +1191,79 @@ export default function LibraryShowcaseDemo() {
 				</div>
 			</header>
 
+			{showReplayBar && (
+				<div className="gc-replay-bar" role="group" aria-label={t("replay.controls")}>
+					<button type="button" className="gc-replay-bar__btn" onClick={handleReplayRewind} title={t("replay.rewind")} aria-label={t("replay.rewind")}>
+						<svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+							<path d="M13 2v12M4 8l7-5v10L4 8z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+						</svg>
+					</button>
+					<button type="button" className="gc-replay-bar__btn" onClick={handleReplayStepBack} title={t("replay.stepBack")} aria-label={t("replay.stepBack")}>
+						<svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+							<path d="M11 3L5 8l6 5V3z" fill="currentColor" />
+						</svg>
+					</button>
+					<button
+						type="button"
+						className={`gc-replay-bar__btn${replayState.isPlaying ? " gc-replay-bar__btn--active" : ""}`}
+						onClick={handleReplayToggle}
+						title={replayToggleTitle}
+						aria-pressed={replayState.isPlaying}
+					>
+						{replayState.isPlaying ? (
+							<svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+								<rect x="3" y="3" width="4" height="10" fill="currentColor" rx="1" />
+								<rect x="9" y="3" width="4" height="10" fill="currentColor" rx="1" />
+							</svg>
+						) : (
+							<svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+								<polygon points="3,2 14,8 3,14" fill="currentColor" />
+							</svg>
+						)}
+						<span style={{ fontSize: 11 }}>{replayToggleTitle}</span>
+					</button>
+					<button type="button" className="gc-replay-bar__btn" onClick={handleReplayStepForward} title={t("replay.stepForward")} aria-label={t("replay.stepForward")}>
+						<svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+							<path d="M5 3l6 5-6 5V3z" fill="currentColor" />
+						</svg>
+					</button>
+					<button type="button" className="gc-replay-bar__btn" onClick={handleReplayJumpLatest} title={t("replay.jumpLatest")} aria-label={t("replay.jumpLatest")}>
+						<svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+							<path d="M3 2v12M13 8L6 3v10l7-5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+						</svg>
+					</button>
+					<div className="gc-replay-bar__sep" aria-hidden="true" />
+					<div className="gc-replay-bar__speeds" role="group" aria-label={t("replay.speed")}>
+						{REPLAY_SPEEDS.map((speed) => (
+							<button
+								key={speed}
+								type="button"
+								className={`gc-replay-bar__btn${replayState.speed === speed ? " gc-replay-bar__btn--active" : ""}`}
+								onClick={() => handleReplaySpeedChange(speed)}
+								aria-pressed={replayState.speed === speed}
+								title={t("replay.speed")}
+							>
+								{speed === "max" ? "MAX" : `${speed}x`}
+							</button>
+						))}
+					</div>
+					<div className="gc-replay-bar__sep" aria-hidden="true" />
+					<span className="gc-replay-bar__status">{replayProgressLabel}</span>
+					<div className="gc-replay-bar__spacer" />
+					<button
+						type="button"
+						className="gc-replay-bar__btn gc-replay-bar__close"
+						onClick={() => { replayController?.pause(); setShowReplayBar(false); }}
+						title={t("replay.closeBar")}
+						aria-label={t("replay.closeBar")}
+					>
+						<svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+							<path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+						</svg>
+					</button>
+				</div>
+			)}
+
 			<div className="gc-main">
 				<aside className="gc-tools" aria-label={t("library.drawingTools")}>
 					{TOOL_GROUPS.map((group, groupIndex) => (
@@ -1236,6 +1285,23 @@ export default function LibraryShowcaseDemo() {
 							{groupIndex < TOOL_GROUPS.length - 1 && <span className="rsc-toolbar-divider" aria-hidden="true" />}
 						</Fragment>
 					))}
+					<span className="rsc-toolbar-divider" aria-hidden="true" />
+					<button
+						type="button"
+						title={t("drawing.toggleList")}
+						aria-pressed={showDrawingList}
+						className={`gc-tool-btn${showDrawingList ? " gc-tool-btn--active" : ""}`}
+						onClick={() => setShowDrawingList((v) => !v)}
+					>
+						<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+							<line x1="5" y1="4" x2="14" y2="4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+							<line x1="5" y1="8" x2="14" y2="8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+							<line x1="5" y1="12" x2="14" y2="12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+							<circle cx="2.5" cy="4" r="1.3" fill="currentColor" />
+							<circle cx="2.5" cy="8" r="1.3" fill="currentColor" />
+							<circle cx="2.5" cy="12" r="1.3" fill="currentColor" />
+						</svg>
+					</button>
 				</aside>
 
 				<section className="gc-chart-area">
@@ -1256,12 +1322,14 @@ export default function LibraryShowcaseDemo() {
 					</div>
 
 					<div className="gc-chart-shell" ref={shellRef} style={{ background: canvasBg }}>
-						<div className="rsc-drawing-storage-toolbar" style={{ left: storageToolbarPosition.x, top: storageToolbarPosition.y }}>
-							<button type="button" className="rsc-drawing-storage-toolbar__button" onClick={handleExportDrawings}>{t("drawing.exportJson")}</button>
-							<button type="button" className="rsc-drawing-storage-toolbar__button" onClick={handleImportButtonClick}>{t("drawing.importJson")}</button>
-							<button type="button" className="rsc-drawing-storage-toolbar__button" onClick={handleClearDrawings}>{t("drawing.clearAll")}</button>
-							<input ref={importInputRef} type="file" accept="application/json" hidden onChange={handleImportFileChange} />
-						</div>
+						{showDrawingList && (
+							<div className="rsc-drawing-storage-toolbar" style={{ left: storageToolbarPosition.x, top: storageToolbarPosition.y }}>
+								<button type="button" className="rsc-drawing-storage-toolbar__button" onClick={handleExportDrawings}>{t("drawing.exportJson")}</button>
+								<button type="button" className="rsc-drawing-storage-toolbar__button" onClick={handleImportButtonClick}>{t("drawing.importJson")}</button>
+								<button type="button" className="rsc-drawing-storage-toolbar__button" onClick={handleClearDrawings}>{t("drawing.clearAll")}</button>
+								<input ref={importInputRef} type="file" accept="application/json" hidden onChange={handleImportFileChange} />
+							</div>
+						)}
 
 						{dataStatus === "loading" ? (
 							<div className="gc-chart-placeholder gc-chart-loading">
@@ -1333,15 +1401,17 @@ export default function LibraryShowcaseDemo() {
 										onSendToBack={sendSelectedToBack}
 										onClose={() => setActiveTool("cursor")}
 									/>
-									<DrawingListPanel
-										drawings={sortedDrawings}
-										selectedId={selectedDrawingId ?? null}
-										labels={drawingListPanelLabels}
-										position={drawingListPosition}
-										onSelect={selectDrawingById}
-										onToggleVisible={toggleDrawingVisibleById}
-										onDelete={deleteDrawingById}
-									/>
+										{showDrawingList && (
+										<DrawingListPanel
+											drawings={sortedDrawings}
+											selectedId={selectedDrawingId ?? null}
+											labels={drawingListPanelLabels}
+											position={drawingListPosition}
+											onSelect={selectDrawingById}
+											onToggleVisible={toggleDrawingVisibleById}
+											onDelete={deleteDrawingById}
+										/>
+									)}
 
 								{visiblePanes.map((pane, index) => {
 									const paneTop = 8 + paneHeights.slice(0, index).reduce((sum, value) => sum + value, 0);

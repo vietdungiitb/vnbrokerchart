@@ -74,6 +74,32 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - `npm run build:docs` → PASS
   - Browser smoke: rewind → `1/300 nến`, play toggle → `aria-pressed=true`, jump latest → `300/300 nến`
 
+### Ad-hoc UI audit & redesign — Replay sub-toolbar + Drawing panel visibility + CSS theme alignment
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: Audit toàn bộ UI so với spec GoCharting, sửa 4 vấn đề giao diện: topbar overflow do replay cluster, drawing panels luôn hiển thị che chart, CSS không dùng CSS variables, live/offline badge màu hardcoded
+- Files modified:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/i18n.tsx`
+  - `src/demo/demo.css`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - **Replay sub-toolbar**: Thay thế cụm 6 nút replay trong topbar bằng một nút toggle `▶ Phát lại`. Khi nhấn, hiện `gc-replay-bar` dưới topbar (36px strip) chứa: rewind/step-back/play-pause/step-forward/jump-latest, speed selector, tiến trình, nút close. Grid row tự điều chỉnh qua class `gc-terminal--replay-bar`.
+  - **Drawing panels**: Toolbar export/import/clear và `DrawingListPanel` được ẩn mặc định (không hiển thị trên chart). Thêm nút list-icon vào sidebar trái để toggle `showDrawingList`. Chỉ render khi người dùng bật.
+  - **CSS theme alignment**: Xóa màu hardcoded khỏi `.rsc-drawing-inspector`, `.rsc-drawing-list-panel`, `.rsc-drawing-storage-toolbar`, `.gc-live-badge`, `.gc-offline-badge`, `.gc-replay-menu`, `.gc-replay-menu__action`. Tất cả đổi sang `var(--gc-*)` CSS variables.
+  - **i18n**: Thêm 2 key mới `replay.closeBar` và `drawing.toggleList` (vi + en).
+- Audit findings addressed:
+  1. ✅ Topbar không còn overflow khi replay controls xuất hiện
+  2. ✅ Drawing panels không còn che chart mặc định
+  3. ✅ CSS context menu, inspector, list panel dùng CSS vars - adapt theo dark/light theme
+  4. ✅ Live/offline badge không còn màu hardcoded light-mode
+- Validation:
+  - `npm run type-check` → PASS (0 errors)
+  - `npm test` → PASS (18 files, 85 tests)
+  - `npm run build:docs` → PASS (webpack compiled successfully in 3739ms)
+  - `python scripts/generate_module_tree.py` → PASS (655 modules)
+
 ### Ad-hoc demo task — Bar replay from here
 
 - Người thực hiện: GitHub Copilot
