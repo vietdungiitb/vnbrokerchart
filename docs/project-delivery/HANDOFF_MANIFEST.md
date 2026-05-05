@@ -24,11 +24,18 @@ Bộ tài liệu này là gói chuyển giao chuẩn cho `react-stockcharts-mast
 | `docs/project-delivery/BACKLOG.md` | Backlog ưu tiên sau các slice hiện tại |
 | `docs/project-delivery/AUDIT_PROTOCOL.md` | Quy trình audit, evidence và validation |
 | `docs/project-delivery/HANDOFF_CHECKLIST.md` | Checklist bàn giao trước khi đóng slice |
+| `docs/project-delivery/widget/HANDOFF_MANIFEST.md` | **Entry point Slice F — VNStockChart widget boundary** |
+| `docs/project-delivery/widget/TECH_SPEC.md` | Đặc tả kỹ thuật VNStockChart: props, i18n, adapter lifecycle |
+| `docs/project-delivery/widget/IMPLEMENTATION_PLAN.md` | Tasks F-01→F-09 với dependency chain |
+| `docs/project-delivery/widget/TASKBOARD.md` | Bảng task chi tiết + DoD từng task |
+| `docs/project-delivery/widget/AUDIT_PROTOCOL.md` | Ma trận test W-01→W-18, gate commands, evidence template |
 | `quality/QUALITY.md` | Hiến pháp chất lượng của repo |
 | `quality/RUN_CODE_REVIEW.md` | Quy trình review có guardrail |
 | `quality/RUN_INTEGRATION_TESTS.md` | Quy trình kiểm thử tích hợp và smoke |
 | `quality/RUN_SPEC_AUDIT.md` | Quy trình audit spec kiểu Council of Three |
 | `AGENTS.md` | Bootstrap file cho mọi AI session mới |
+| `docs/upgrade-standard/AUDIT_LEDGER.md` | Ledger chứng cứ thay đổi và validation |
+| `module_tree_full.md` | Snapshot inventory module mới nhất |
 | `docs/upgrade-standard/drawing-tools/HANDOFF_MANIFEST.md` | Entry point cho Drawing Tools Engine package |
 
 ## Quyết định đã chốt
@@ -38,6 +45,7 @@ Bộ tài liệu này là gói chuyển giao chuẩn cho `react-stockcharts-mast
 3. Core library không được phụ thuộc ngược vào `src/demo`.
 4. Indicators phải đi về SSOT; cùng tham số và cùng nguồn phải cho cùng một hình dạng ở mọi pane.
 5. Sau mọi thay đổi mã nguồn phải cập nhật `docs/upgrade-standard/AUDIT_LEDGER.md` và regenerate `module_tree_full.md`.
+6. Nếu bề mặt công bố dữ liệu thị trường thật, ticker label và lịch sử phải khớp nguồn; không dùng sample history ngắn để giả full history.
 
 ## Tiêu chí chấp nhận mỗi slice
 
@@ -51,5 +59,7 @@ Bộ tài liệu này là gói chuyển giao chuẩn cho `react-stockcharts-mast
 
 - Dynamic pane, settings modal, splitter, theme sync: đã có.
 - Demo-local i18n cho `vi` và `en`: đã có trên các bề mặt demo chính.
-- SSOT runtime cho indicator data flow: chưa hoàn tất, là workstream tiếp theo.
-- Widget extraction: chưa bắt đầu, chỉ mới chuẩn bị ranh giới kiến trúc.
+- SSOT runtime cho indicator data flow: đã bàn giao.
+- Quality hardening: đã có functional tests cho i18n, pane orchestration, và chart range.
+- Historical market data fidelity / backfill: đã bàn giao (Slice E DONE).
+- Widget extraction: bộ tài liệu Slice F đã hoàn tất tại `docs/project-delivery/widget/`. Sẵn sàng code F-01.

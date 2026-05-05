@@ -4,9 +4,10 @@
 | --- | --- | --- | --- |
 | PD-01 | DONE | Chuẩn hóa shell demo và settings modal | Runtime shell ổn định, không còn panel cũ hoạt động |
 | PD-02 | DONE | Thêm i18n `vi/en` cho demo surfaces | Provider, dictionary, locale switch, html lang sync |
-| PD-03 | READY | Thực thi SSOT cho indicator runtime | Canonical indicator data flow theo params |
-| PD-04 | TODO | Bổ sung functional spec tests | Test suite gắn với QUALITY scenarios |
-| PD-05 | TODO | Tách widget boundary | Contract rõ cho theme, locale, data, pane state |
+| PD-03 | DONE | Thực thi SSOT cho indicator runtime | Canonical indicator data flow qua `enrichData`, regressions PASS |
+| PD-04 | DONE | Bổ sung functional spec tests | i18n, pane restore, chart range helper, type-check/build PASS |
+| PD-05 | DONE | Khôi phục lịch sử Binance thật | Pagination/backfill, pan-left append, range `1D`/`5D`/`1M`/`3M`/`YTD`/`1Y`/`All` đúng lịch sử |
+| PD-06 | READY | Tách widget boundary — VNStockChart | Bộ tài liệu đầy đủ tại `docs/project-delivery/widget/`. Tasks F-01→F-09 đã định nghĩa. Chờ code. |
 
 ## Cách dùng bảng này
 

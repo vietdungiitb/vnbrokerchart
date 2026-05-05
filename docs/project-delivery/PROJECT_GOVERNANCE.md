@@ -15,6 +15,7 @@ Giữ cho repo phát triển theo hướng: `demo hoàn chỉnh trước`, `ki�
 7. Không đóng slice nếu chưa cập nhật `AUDIT_LEDGER.md` và `module_tree_full.md`.
 8. Không giả định có Docker stack trong repo này; mọi hướng dẫn runtime phải dựa trên công cụ thực tế đang có trong workspace.
 9. Toàn bộ ứng dụng phải dùng chung một bộ template giao diện với web root; mọi surface mới phải bám template gốc thay vì tự tạo layout độc lập nếu không có phê duyệt riêng.
+10. Nếu bề mặt công bố dữ liệu thị trường thật, nguồn dữ liệu, ticker label, timestamp và độ dài lịch sử phải khớp với nguồn gốc; không được trình diễn sample history ngắn như full history.
 
 ## Chu kỳ làm việc chuẩn
 

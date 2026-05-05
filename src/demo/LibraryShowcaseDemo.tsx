@@ -31,7 +31,8 @@ import { enrichData } from "../lib/core/calculators/enrichData";
 import type { EnrichedDatum, RawOHLCV } from "../lib/core/calculators/types";
 import ChartCanvas from "../lib/ChartCanvas";
 import { heikinAshi } from "../lib/calculator";
-import { fetchLiveDemoBars, getOfflineDemoBars } from "./demoData";
+import { fetchHistoricalDemoBars, getOfflineDemoBars, mergeBarsByDate } from "./demoData";
+import { CHART_RANGE_LABEL_KEYS, CHART_RANGES, DEFAULT_CHART_RANGE, resolveChartRangeExtents, resolveChartRangeStart, type ChartRange } from "./chartRange";
 import DemoPageShell from "./DemoPageShell";
 import { useDemoI18n } from "./i18n";
 import { PaneSettingsModal, type SettingsSection } from "./PaneSettingsModal";
@@ -75,7 +76,7 @@ const priceFormat = format(".2f");
 const volumeFormat = format(".3s");
 const dateFormat = timeFormat("%d/%m/%Y %H:%M");
 
-const TIMEFRAMES = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "1D", "1W"] as const;
+const TIMEFRAMES = ["1m", "3m", "5m", "15m", "30m", "1h", "4h"] as const;
 type Timeframe = typeof TIMEFRAMES[number];
 
 const CHART_TYPES = ["candlestick", "hollow", "ohlc", "heikinashi", "line", "area"] as const;
@@ -103,6 +104,7 @@ type ToolId = typeof TOOL_GROUPS[number]["tools"][number];
 const DRAWING_PANEL_WIDTH = 360;
 const REPLAY_SPEEDS: ReplaySpeed[] = [0.5, 1, 2, 5, 10, "max"];
 const PERCENT_FORMAT = format(".1%");
+
 
 interface PaperTradePosition {
 	entryDate: Date | number;
@@ -182,20 +184,6 @@ function formatSignedPrice(value: number) {
 
 function formatBarsHeld(barsHeld: number, unitLabel: string) {
 	return `${barsHeld} ${unitLabel}`;
-}
-
-function chartDomain(data: Array<{ date: Date | number }>) {
-	if (data.length === 0) {
-		return [new Date(0), new Date(0)] as [Date, Date];
-	}
-
-	if (data.length === 1) {
-		return [normalizeDate(data[0].date), normalizeDate(data[0].date)] as [Date, Date];
-	}
-
-	const end = data.length - 1;
-	const start = Math.max(0, end - 140);
-	return [normalizeDate(data[start].date), normalizeDate(data[end].date)] as [Date, Date];
 }
 
 function paneTemplate(label: string, heightRatio: number, series: SeriesConfig[] = [{ type: "Line", yAxis: "right" }]): Omit<PaneDescriptor, "id"> {
@@ -407,6 +395,7 @@ export default function LibraryShowcaseDemo() {
 	const [chartWidth, setChartWidth] = useState(0);
 	const [chartHeight, setChartHeight] = useState(0);
 	const [timeframe, setTimeframe] = useState<Timeframe>("1h");
+	const [chartRange, setChartRange] = useState<ChartRange>(DEFAULT_CHART_RANGE);
 	const [chartType, setChartType] = useState<ChartTypeId>("candlestick");
 	const [showChartMenu, setShowChartMenu] = useState(false);
 	const [showPanesMenu, setShowPanesMenu] = useState(false);
@@ -422,6 +411,7 @@ export default function LibraryShowcaseDemo() {
 	const [showDrawingList, setShowDrawingList] = useState(false);
 	const [paperTradePosition, setPaperTradePosition] = useState<PaperTradePosition | null>(null);
 	const [paperTradeHistory, setPaperTradeHistory] = useState<ClosedPaperTrade[]>([]);
+	const chartRangeRef = useRef(chartRange);
 	const paperTradePositionRef = useRef<PaperTradePosition | null>(null);
 	const lastPaperTradeClickRef = useRef<{ timestamp: number; index: number } | null>(null);
 	const lastPaperTradeSignatureRef = useRef<string | null>(null);
@@ -431,12 +421,31 @@ export default function LibraryShowcaseDemo() {
 	const handleLoadDrawings = useCallback((drawings: DrawingObject[]) => {
 		drawingInteraction.dispatch({ type: "REPLACE", drawings });
 	}, [drawingInteraction.dispatch]);
-	const drawingStorage = useDrawingStorage("BTCUSD", timeframe, drawingInteraction.allDrawings, handleLoadDrawings);
+	const drawingStorage = useDrawingStorage("BTCUSDT", timeframe, drawingInteraction.allDrawings, handleLoadDrawings);
 
 	// Live Binance data state
 	const [liveData, setLiveData] = useState<RawOHLCV[]>([]);
 	const [dataStatus, setDataStatus] = useState<"loading" | "live" | "offline" | "error">("loading");
 	const [dataError, setDataError] = useState<string>("");
+	const [historyStatus, setHistoryStatus] = useState<"idle" | "backfilling">("idle");
+	const [visibleDomain, setVisibleDomain] = useState<[Date, Date] | null>(null);
+	const liveDataRef = useRef<RawOHLCV[]>([]);
+	const backfillInFlightRef = useRef(false);
+	const mountedRef = useRef(true);
+	const BACKFILL_PAGE_LIMIT = 1000;
+	const BACKFILL_MAX_PAGES = 20;
+
+	useEffect(() => {
+		liveDataRef.current = liveData;
+	}, [liveData]);
+
+	useEffect(() => {
+		chartRangeRef.current = chartRange;
+	}, [chartRange]);
+
+	useEffect(() => () => {
+		mountedRef.current = false;
+	}, []);
 
 	const paneState = useDynamicPanes(chartHeight, { maxVisiblePanes });
 
@@ -444,16 +453,123 @@ export default function LibraryShowcaseDemo() {
 		saveDemoSettings(maxVisiblePanes);
 	}, [maxVisiblePanes]);
 
-	// Fetch live Binance data on mount and on timeframe change
+	const normalizeDomain = useCallback((domain: [Date | number, Date | number]) => {
+		return [normalizeDate(domain[0]), normalizeDate(domain[1])] as [Date, Date];
+	}, []);
+
+	const requestOlderHistoryPage = useCallback(async () => {
+		if (backfillInFlightRef.current || liveDataRef.current.length === 0) {
+			return;
+		}
+
+		const earliestBar = liveDataRef.current[0];
+		if (!earliestBar) {
+			return;
+		}
+
+		backfillInFlightRef.current = true;
+		setHistoryStatus("backfilling");
+
+		try {
+			const olderBars = await fetchHistoricalDemoBars({
+				interval: timeframe,
+				limit: BACKFILL_PAGE_LIMIT,
+				pages: 1,
+				endTime: earliestBar.date.valueOf() - 1,
+			});
+
+			if (!mountedRef.current || olderBars.length === 0) {
+				return;
+			}
+
+			setLiveData((current) => mergeBarsByDate(olderBars, current));
+		} catch (err: unknown) {
+			if (!mountedRef.current) {
+				return;
+			}
+			const msg = err instanceof Error ? err.message : String(err);
+			setDataError(msg);
+		} finally {
+			backfillInFlightRef.current = false;
+			if (mountedRef.current) {
+				setHistoryStatus("idle");
+			}
+		}
+	}, [timeframe]);
+
+	const ensureRangeHistory = useCallback(async (range: ChartRange) => {
+		if (backfillInFlightRef.current || liveDataRef.current.length === 0) {
+			return;
+		}
+
+		backfillInFlightRef.current = true;
+		setHistoryStatus("backfilling");
+
+		try {
+			let currentBars = liveDataRef.current;
+			let pagesLoaded = 0;
+			const targetStart = resolveChartRangeStart(currentBars[currentBars.length - 1].date, range);
+
+			while (currentBars[0].date.valueOf() > targetStart.valueOf() && pagesLoaded < BACKFILL_MAX_PAGES) {
+				const olderBars = await fetchHistoricalDemoBars({
+					interval: timeframe,
+					limit: BACKFILL_PAGE_LIMIT,
+					pages: 1,
+					endTime: currentBars[0].date.valueOf() - 1,
+				});
+
+				if (!mountedRef.current || olderBars.length === 0) {
+					break;
+				}
+
+				currentBars = mergeBarsByDate(olderBars, currentBars);
+				pagesLoaded += 1;
+				setLiveData(currentBars);
+			}
+
+			if (mountedRef.current && currentBars.length > 0) {
+				setVisibleDomain(resolveChartRangeExtents(currentBars, range));
+			}
+		} catch (err: unknown) {
+			if (!mountedRef.current) {
+				return;
+			}
+			const msg = err instanceof Error ? err.message : String(err);
+			setDataError(msg);
+		} finally {
+			backfillInFlightRef.current = false;
+			if (mountedRef.current) {
+				setHistoryStatus("idle");
+			}
+		}
+	}, [timeframe]);
+
+	const handleVisibleDomainChange = useCallback((domain: [Date | number, Date | number]) => {
+		setVisibleDomain(normalizeDomain(domain));
+	}, [normalizeDomain]);
+
+	const handleChartRangeChange = useCallback((range: ChartRange) => {
+		setChartRange(range);
+		const currentBars = liveDataRef.current;
+		if (currentBars.length > 0) {
+			setVisibleDomain(resolveChartRangeExtents(currentBars, range));
+		}
+		void ensureRangeHistory(range);
+	}, [ensureRangeHistory]);
+
+	// Fetch Binance history on mount and on timeframe change.
 	useEffect(() => {
 		const abortController = new AbortController();
 		setDataStatus("loading");
 		setDataError("");
+		setHistoryStatus("idle");
+		setVisibleDomain(null);
 
-		fetchLiveDemoBars({ interval: timeframe, limit: 300, signal: abortController.signal })
+		fetchHistoricalDemoBars({ interval: timeframe, limit: BACKFILL_PAGE_LIMIT, pages: 1, signal: abortController.signal })
 			.then((bars) => {
 				if (abortController.signal.aborted) return;
 				setLiveData(bars);
+				setVisibleDomain(resolveChartRangeExtents(bars, chartRangeRef.current));
 				setDataStatus("live");
 			})
 			.catch((err: unknown) => {
@@ -461,7 +577,9 @@ export default function LibraryShowcaseDemo() {
 				const msg = err instanceof Error ? err.message : String(err);
 				setDataError(msg);
 				// Fallback to offline data
-				setLiveData(getOfflineDemoBars());
+				const offlineBars = getOfflineDemoBars();
+				setLiveData(offlineBars);
+				setVisibleDomain(resolveChartRangeExtents(offlineBars, chartRangeRef.current));
 				setDataStatus("offline");
 			});
 
@@ -472,6 +590,51 @@ export default function LibraryShowcaseDemo() {
 		() => (liveData.length > 0 ? liveData : getOfflineDemoBars()),
 		[liveData],
 	);
+
+	useEffect(() => {
+		if (dataStatus !== "live") {
+			return;
+		}
+
+		const timer = window.setInterval(() => {
+			if (backfillInFlightRef.current || !mountedRef.current) {
+				return;
+			}
+
+			void fetchHistoricalDemoBars({ interval: timeframe, limit: BACKFILL_PAGE_LIMIT, pages: 1 })
+				.then((latestBars) => {
+					if (!mountedRef.current || latestBars.length === 0) {
+						return;
+					}
+					setLiveData((current) => mergeBarsByDate(current, latestBars));
+				})
+				.catch((err: unknown) => {
+					if (!mountedRef.current) {
+						return;
+					}
+					const msg = err instanceof Error ? err.message : String(err);
+					setDataError(msg);
+				});
+		}, 30000);
+
+		return () => window.clearInterval(timer);
+	}, [dataStatus, timeframe]);
+
+	useEffect(() => {
+		if (dataStatus !== "live" || historyStatus === "backfilling" || visibleDomain === null || liveData.length === 0) {
+			return;
+		}
+
+		const earliestBar = liveData[0];
+		if (!earliestBar) {
+			return;
+		}
+
+		if (normalizeDate(visibleDomain[0]).valueOf() <= earliestBar.date.valueOf()) {
+			void requestOlderHistoryPage();
+		}
+	}, [dataStatus, historyStatus, liveData, requestOlderHistoryPage, visibleDomain]);
+
 	const replayControllerRef = useRef<BarReplayController<RawOHLCV> | null>(null);
 	if (replayControllerRef.current === null) {
 		replayControllerRef.current = new BarReplayController<RawOHLCV>({
@@ -539,6 +702,8 @@ export default function LibraryShowcaseDemo() {
 		}));
 	}, [chartType, indicatorSeries, replayVisibleData]);
 
+	const chartData = useMemo<EnrichedDatum[]>(() => plotData.filter((bar): bar is EnrichedDatum => Boolean(bar && bar.date)), [plotData]);
+
 	// scaleTime + default candlestick width can collapse to near-zero body width.
 	// Use distance between adjacent bars in screen space for stable candle bodies.
 	const candleWidth = useMemo(() => {
@@ -563,8 +728,8 @@ export default function LibraryShowcaseDemo() {
 		};
 	}, []);
 
-	const xExtents = useMemo(() => chartDomain(plotData), [plotData]);
-	const lastBar = plotData[plotData.length - 1];
+	const xExtents = useMemo(() => visibleDomain ?? resolveChartRangeExtents(chartData, chartRange), [chartRange, chartData, visibleDomain]);
+	const lastBar = chartData[chartData.length - 1];
 	const selectedDrawingId = useMemo(() => getSelectedDrawingId(drawingInteraction.drawingState), [drawingInteraction.drawingState]);
 	const sortedDrawings = useMemo(() => sortDrawings(drawingInteraction.allDrawings), [drawingInteraction.allDrawings]);
 	const selectedDrawing = useMemo(() => sortedDrawings.find((drawing) => drawing.id === selectedDrawingId) ?? null, [selectedDrawingId, sortedDrawings]);
@@ -883,7 +1048,11 @@ export default function LibraryShowcaseDemo() {
 		};
 	}, []);
 
-	const chartReady = chartWidth > 0 && chartHeight > 0 && plotData.length > 0 && paneState.visiblePanes.length > 0;
+	const chartReady = dataStatus !== "loading" && chartWidth > 0 && chartHeight > 0 && chartData.length > 0 && paneState.visiblePanes.length > 0;
+	const [chartCanvasReady, setChartCanvasReady] = useState(false);
+	useEffect(() => {
+		setChartCanvasReady(chartReady && visibleDomain !== null);
+	}, [chartReady, visibleDomain]);
 
 	// Close chart type menu when clicking outside
 	useEffect(() => {
@@ -1167,7 +1336,7 @@ export default function LibraryShowcaseDemo() {
 					<div className="gc-logo" aria-label={t("library.topbarAria")}>BT</div>
 
 					<div className="gc-symbol-block">
-						<span className="gc-symbol-name">BTCUSD</span>
+						<span className="gc-symbol-name">BTCUSDT</span>
 						<span className="gc-symbol-exchange">BINANCE</span>
 					</div>
 
@@ -1294,6 +1463,7 @@ export default function LibraryShowcaseDemo() {
 
 				<div className="gc-topbar__right">
 					{dataStatus === "live" && <span className="gc-live-badge">{t("common.liveBinance")}</span>}
+					{historyStatus === "backfilling" && <span className="gc-loading-badge">{t("library.backfillingHistory")}</span>}
 					{dataStatus === "offline" && <span className="gc-offline-badge" title={dataError}>{t("common.offlineFallback")}</span>}
 					{dataStatus === "loading" && <span className="gc-loading-badge">{t("common.loading")}</span>}
 					<div className="gc-chart-type-wrap" role="group" aria-label={t("language.label")}>
@@ -1461,7 +1631,7 @@ export default function LibraryShowcaseDemo() {
 
 				<section className="gc-chart-area">
 					<div className="gc-ohlc-strip">
-						<span className="gc-ohlc-pair">BTCUSD <span className="gc-ohlc-tf">· {timeframe}</span></span>
+						<span className="gc-ohlc-pair">BTCUSDT <span className="gc-ohlc-tf">· {timeframe}</span></span>
 						{dataStatus !== "loading" && lastBar ? (
 							<>
 								<span className="gc-ohlc-item">O <b>{priceFormat(lastBar.open)}</b></span>
@@ -1491,7 +1661,7 @@ export default function LibraryShowcaseDemo() {
 								<div className="gc-spinner" />
 								<span>{t("library.loadingRealData")}</span>
 							</div>
-						) : chartReady ? (
+						) : chartCanvasReady ? (
 							<>
 								<ChartCanvas
 									key={`chart-canvas-${chartType}-${timeframe}-${theme}`}
@@ -1500,7 +1670,7 @@ export default function LibraryShowcaseDemo() {
 									margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
 									type="hybrid"
 									seriesName={`terminal-demo-${chartType}`}
-									data={plotData}
+									data={chartData}
 									xScale={scaleTime()}
 									xAccessor={(datum: EnrichedDatum) => datum.date}
 									displayXAccessor={(datum: EnrichedDatum) => datum.date}
@@ -1512,11 +1682,12 @@ export default function LibraryShowcaseDemo() {
 									useCrossHairStyleCursor
 									onClick={handlePaperTradeClick}
 									onContextMenu={handleReplayContextMenu}
+									onVisibleDomainChange={handleVisibleDomainChange}
 								>
 									{DynamicChart({
 										panes: visiblePanes,
 										heights: paneHeights,
-										data: plotData as any,
+										data: chartData as any,
 										axisStroke,
 										axisTickFill,
 										isDark,
@@ -1780,13 +1951,15 @@ export default function LibraryShowcaseDemo() {
 			</div>
 
 			<footer className="gc-bottombar">
-				{(["1D", "5D", "1M", "3M", "YTD", "1Y", "All"] as const).map((range, index) => (
+				{CHART_RANGES.map((range) => (
 					<button
 						key={range}
 						type="button"
-						className={`gc-bottom-btn${index === 0 ? " gc-bottom-btn--active" : ""}`}
+						className={`gc-bottom-btn${chartRange === range ? " gc-bottom-btn--active" : ""}`}
+						aria-pressed={chartRange === range}
+						onClick={() => handleChartRangeChange(range)}
 					>
-						{range}
+						{t(CHART_RANGE_LABEL_KEYS[range])}
 					</button>
 				))}
 				<div className="gc-bottombar-sep" />

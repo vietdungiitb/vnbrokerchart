@@ -15,6 +15,8 @@ Ba lượt audit độc lập, không chia sẻ kết quả cho nhau trước kh
 - `docs/project-delivery/TECH_SPEC.md`
 - `docs/project-delivery/PROJECT_GOVERNANCE.md`
 - `docs/planning/INDICATOR_SSOT_POLICY.md`
+- `docs/project-delivery/IMPLEMENTATION_PLAN.md`
+- `docs/project-delivery/TASKBOARD.md`
 
 ## Prompt chuẩn cho từng auditor
 
@@ -24,6 +26,7 @@ Do not invent findings.
 Every finding must include severity, exact file path, exact line, why behavior violates the spec, and the smallest regression test that would catch it.
 If uncertain, mark QUESTION instead of BUG.
 Ignore style-only issues.
+If the change touches market data or historical viewport behavior, verify source fidelity, ticker correctness, and range/backfill completeness.
 ```
 
 ## Triage rules
@@ -37,3 +40,9 @@ Ignore style-only issues.
 1. Chỉ fix theo từng subsystem nhỏ.
 2. Sau edit đầu tiên của mỗi batch phải validation ngay.
 3. Không trộn cùng lúc fix SSOT sâu với fix UX bề mặt nếu chưa cần.
+
+## Audit focus for data fidelity tasks
+
+- Auditor A: xác nhận nguồn lịch sử, pagination/backfill, và cách range math phản chiếu dữ liệu thật.
+- Auditor B: xác nhận UI không giả vờ dữ liệu thật khi vẫn là fallback hoặc sample history.
+- Auditor C: xác nhận roadmap/taskboard/ledger có đủ evidence để đội code tiếp tục mà không cần hỏi lại.

@@ -15,8 +15,39 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 | [AUDIT_LEDGER.md](AUDIT_LEDGER.md) | Ledger này | Updated v3.0 |
 | [HANDOFF_MANIFEST.md](HANDOFF_MANIFEST.md) | Entry point bàn giao | Updated v3.0 |
 | [DELIVERY_CLOSEOUT.md](DELIVERY_CLOSEOUT.md) | Báo cáo đóng delivery | Updated v3.0 |
+| [widget/HANDOFF_MANIFEST.md](../project-delivery/widget/HANDOFF_MANIFEST.md) | Entry point Slice F — VNStockChart widget boundary | Created 2026-05-05 |
+| [widget/TECH_SPEC.md](../project-delivery/widget/TECH_SPEC.md) | Props contract, i18n fallback, adapter lifecycle | Created 2026-05-05 |
+| [widget/IMPLEMENTATION_PLAN.md](../project-delivery/widget/IMPLEMENTATION_PLAN.md) | Tasks F-01→F-09 với dependency chain | Created 2026-05-05 |
+| [widget/TASKBOARD.md](../project-delivery/widget/TASKBOARD.md) | Bảng task chi tiết + DoD | Created 2026-05-05 |
+| [widget/AUDIT_PROTOCOL.md](../project-delivery/widget/AUDIT_PROTOCOL.md) | Test matrix W-01→W-18 + gate commands + evidence template | Created 2026-05-05 |
 
 ## 2. Slice Status
+
+### Tài liệu bàn giao — Slice F: VNStockChart Widget Boundary Extraction
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: Tạo bộ tài liệu đầy đủ cho Slice F theo chuẩn governance, sẵn sàng bàn giao cho đội code thực hiện
+- Files tạo mới:
+  - `docs/project-delivery/widget/HANDOFF_MANIFEST.md`
+  - `docs/project-delivery/widget/TECH_SPEC.md`
+  - `docs/project-delivery/widget/IMPLEMENTATION_PLAN.md`
+  - `docs/project-delivery/widget/TASKBOARD.md`
+  - `docs/project-delivery/widget/AUDIT_PROTOCOL.md`
+  - `src/widget/i18n/types.ts`
+- Files sửa:
+  - `docs/project-delivery/IMPLEMENTATION_PLAN.md` — Slice F section mở rộng với task table + props contract + exit criteria
+  - `docs/project-delivery/TASKBOARD.md` — PD-06 status → READY
+  - `docs/project-delivery/HANDOFF_MANIFEST.md` — thêm widget docs vào manifest table
+  - `docs/upgrade-standard/AUDIT_LEDGER.md` — thêm widget docs vào canonical register
+- Nội dung bàn giao:
+  - **HANDOFF_MANIFEST**: Done definition 4 milestone M1→M4, constraint tuyệt đối, trạng thái as-built
+  - **TECH_SPEC**: `VNStockChartProps` contract đầy đủ, i18n fallback chain, adapter lifecycle pattern (useEffect + AbortController), Error Boundary + Empty State spec, ranh giới import
+  - **IMPLEMENTATION_PLAN**: 9 tasks F-01→F-09 với code skeleton chi tiết, gate từng task
+  - **TASKBOARD**: DoD chi tiết từng task, dependency chain, key coverage audit script
+  - **AUDIT_PROTOCOL**: ma trận test W-01→W-18, architecture guard G-01→G-03, export checks E-01→E-05, smoke checklist 10 bước, evidence template, rejection criteria
+- Validation:
+  - Documentation alignment review → PASS
 
 ### Đã hoàn thành (S0–S16)
 
@@ -163,6 +194,93 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
     - `npm test -- src/lib/core/calculators/__tests__/enrichData.test.ts src/lib/core/__tests__/seriesValueResolver.test.ts` → PASS
     - `npm run build:docs` → PASS
     - Browser smoke: reload main demo shell after rebuild → PASS, no runtime regression
+
+  ### Ad-hoc quality hardening — i18n boundary + pane restore guards
+
+  - Người thực hiện: GitHub Copilot
+  - Ngày: 2026-05-05
+  - Scope: lock down two uncovered runtime-quality gaps in the demo shell and pane reducer tests
+  - Files modified:
+    - `src/lib/core/hooks/__tests__/useDynamicPanes.test.ts`
+    - `src/demo/__tests__/i18n.test.tsx`
+    - `package.json`
+    - `package-lock.json`
+    - `docs/upgrade-standard/AUDIT_LEDGER.md`
+    - `module_tree_full.md`
+  - Nội dung bàn giao:
+    - Added a reducer regression proving `restorePane` re-enables a hidden pane and its nested series visibility, and another regression proving restoration is rejected once the configured visible-pane cap is already reached.
+    - Added a jsdom-backed demo i18n regression that mounts `DemoI18nBoundary`, verifies language fallback from `document.documentElement.lang`, and confirms both DOM `lang` sync and localStorage persistence when switching between vi/en.
+    - Added `jsdom` as a dev dependency so the runtime i18n boundary can be exercised in Vitest without introducing a larger testing stack.
+  - Validation:
+    - `npm test -- src/lib/core/hooks/__tests__/useDynamicPanes.test.ts src/demo/__tests__/i18n.test.tsx` → PASS (19 tests)
+    - `python scripts/generate_module_tree.py` → PASS (656 modules)
+
+  ### Ad-hoc demo task — chart range buttons
+
+  - Người thực hiện: GitHub Copilot
+  - Ngày: 2026-05-05
+  - Scope: make the footer range buttons (1D/5D/1M/3M/YTD/1Y/All) actually control the visible chart window
+  - Files modified:
+    - `src/demo/chartRange.ts`
+    - `src/demo/__tests__/chartRange.test.ts`
+    - `src/demo/LibraryShowcaseDemo.tsx`
+    - `src/demo/i18n.tsx`
+    - `src/lib/core/hooks/__tests__/useDynamicPanes.test.ts`
+    - `docs/upgrade-standard/AUDIT_LEDGER.md`
+    - `module_tree_full.md`
+  - Nội dung bàn giao:
+    - Added a dedicated chart-range helper that converts the footer presets into real `xExtents` windows and clamps them to the available dataset.
+    - Wired the footer buttons to `selectedRange` state, `aria-pressed`, and the active CSS state so clicking a button now changes the viewport instead of acting as a static label.
+    - Added focused regression coverage for the helper's default five-day window, YTD clamping, and full-range behavior.
+    - Kept the range labels on the existing Vietnamese/English i18n surface so the footer remains localized-consistent with the rest of the demo shell.
+  - Validation:
+    - `npm test -- src/demo/__tests__/chartRange.test.ts src/demo/__tests__/i18n.test.tsx` → PASS (4 tests)
+    - `npm run type-check` → PASS
+    - `npm run build:docs` → PASS
+    - Browser smoke: click `1D` in the footer and confirm `aria-pressed=true` / active class moved from `5D` to `1D`
+
+### Ad-hoc documentation package — delivery handoff standard
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: chuẩn hóa bộ tài liệu bàn giao để đội code nhận việc không cần hỏi lại
+- Files modified:
+  - `docs/project-delivery/HANDOFF_MANIFEST.md`
+  - `docs/project-delivery/PROJECT_GOVERNANCE.md`
+  - `docs/project-delivery/TECH_SPEC.md`
+  - `docs/project-delivery/IMPLEMENTATION_PLAN.md`
+  - `docs/project-delivery/TASKBOARD.md`
+  - `docs/project-delivery/BACKLOG.md`
+  - `docs/project-delivery/AUDIT_PROTOCOL.md`
+  - `docs/project-delivery/HANDOFF_CHECKLIST.md`
+  - `quality/QUALITY.md`
+  - `quality/RUN_SPEC_AUDIT.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Roadmap được chốt lại theo trạng thái thật: SSOT runtime và quality hardening đã DONE; historical market data fidelity được đưa lên READY; widget boundary extraction giữ ở TODO.
+  - Taskboard/backlog được sắp lại để ưu tiên dữ liệu lịch sử Binance thật, backfill, và source fidelity thay vì để các mục đã xong còn treo ở READY/TODO.
+  - Tech spec, governance, audit protocol, checklist, và quality docs đều bổ sung ràng buộc cho market data fidelity, range buttons, backfill, và smoke evidence.
+  - Audit package giờ nêu rõ modified file list, validation expectations, và smoke checks mà đội code / QA phải có khi chạm dữ liệu thị trường.
+- Validation:
+  - Documentation alignment review → PASS
+
+### Demo cleanup — remove duplicate topbar timeframe chips
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: gỡ 1D/1W khỏi topbar timeframe chips vì footer range bar đã giữ các preset viewport tương ứng
+- Files modified:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Thu hẹp `TIMEFRAMES` trong topbar để chỉ còn các chip intraday; không đụng vào footer range bar.
+  - Giữ nguyên state `timeframe` và data fetch path, nên thay đổi chỉ là loại bỏ nút trùng trong UI.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke on [build/index.html](../../build/index.html) → PASS; topbar shows `1m/3m/5m/15m/30m/1h/4h`, footer still shows `1D/5D/1M/3M/YTD/1Y/All`
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 658)
 
 ### Ad-hoc demo task — Bar replay from here
 
@@ -2045,3 +2163,29 @@ Every completed slice must update this ledger with the exact files changed in th
   - `npm run type-check` → PASS
   - `npm run build:docs` → PASS
   - Browser smoke on `build/index.html` → PASS; toolbar renders and the page loads without the ChartProvider crash
+
+  ### Ad-hoc demo task — Historical BTCUSDT backfill + ChartCanvas hardening
+
+  - Người thực hiện: GitHub Copilot
+  - Ngày: 2026-05-05
+  - Scope: nối dữ liệu lịch sử Binance pageable vào demo shell, khử crash startup của ChartCanvas, và chốt smoke/bundle evidence cho viewport range chạy trên history thật
+  - Files modified:
+    - `src/demo/demoData.ts`
+    - `src/demo/chartRange.ts`
+    - `src/demo/i18n.tsx`
+    - `src/demo/LibraryShowcaseDemo.tsx`
+    - `src/demo/__tests__/demoData.test.ts`
+    - `src/lib/scale/evaluator.ts`
+    - `docs/upgrade-standard/AUDIT_LEDGER.md`
+    - `module_tree_full.md`
+  - Nội dung bàn giao:
+    - Demo BTCUSDT chuyển sang lịch sử Binance pageable/backfill thay vì chỉ một lần load cửa sổ ngắn, nên range button giờ có dữ liệu để kéo viewport thật.
+    - Topbar timeframe chips được thu gọn để bỏ `1D` / `1W`, tránh trùng với footer range bar.
+    - Chart startup được harden bằng một lớp mount-gate và evaluator fallback để `ChartCanvas` không crash khi vùng lọc ban đầu tạm rỗng.
+    - Thêm regression cho helper backfill/merge để bảo vệ path tải lịch sử thật và chặn tái phát lỗi data-loader.
+  - Validation:
+    - `npm test -- src/demo/__tests__/demoData.test.ts src/demo/__tests__/chartRange.test.ts src/demo/__tests__/i18n.test.tsx` → PASS (6 tests)
+    - `npm run type-check` → PASS
+    - `npm run build:docs` → PASS
+    - Browser smoke on fresh `build/index.html` → PASS; `1M` and `3M` buttons switched to `pressed`/active state and the live BTCUSDT shell kept rendering without ChartCanvas errors
+    - Browser smoke on fresh `build/index.html` → PASS; BTCUSDT / BINANCE labels render, topbar chỉ còn intraday chips, footer range presets hiện đúng, và page load không còn ChartCanvas pageError

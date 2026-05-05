@@ -10,6 +10,9 @@
 - [ ] `npm run type-check` pass
 - [ ] `npm test` pass
 - [ ] `npm run build:docs` pass
+- [ ] Nếu task chạm market data, nguồn / ticker / lịch sử đã khớp upstream thật
+- [ ] Nếu task chạm range buttons, `1D` / `5D` / `1M` / `3M` / `YTD` / `1Y` / `All` đã điều khiển viewport thật
+- [ ] Nếu task chạm scroll/pan lịch sử, đã có backfill smoke hoặc test tương ứng
 
 ## Trước khi bàn giao cho đội QA/Audit
 
@@ -17,6 +20,7 @@
 - [ ] Có note risk còn tồn đọng
 - [ ] Có chỉ dẫn smoke check UI nếu change có ảnh hưởng runtime
 - [ ] Có link đến spec/governance/quality docs liên quan
+- [ ] Có chỉ dẫn smoke cho backfill / range completeness nếu task chạm dữ liệu lịch sử
 
 ## Không được đóng task nếu
 

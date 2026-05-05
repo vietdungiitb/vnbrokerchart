@@ -26,6 +26,10 @@ function extentsWrapper(useWholeData: any, clamp: any, pointsPerPxThreshold: any
 		data: any, inputDomain: any, xAccessor: any, initialXScale: any,
 		{ currentPlotData, currentDomain, fallbackStart, fallbackEnd }: any = {}
 	) {
+		if (data.length === 0) {
+			return { plotData: [], domain: inputDomain };
+		}
+
 		if (useWholeData) {
 			return { plotData: data, domain: inputDomain };
 		}
@@ -35,6 +39,17 @@ function extentsWrapper(useWholeData: any, clamp: any, pointsPerPxThreshold: any
 		let clampedDomain = inputDomain;
 
 		let filteredData = getFilteredResponse(data, left, right, xAccessor);
+
+		if (filteredData.length === 0) {
+			const firstItem = head(data);
+			const lastItem = last(data);
+			if (isNotDefined(firstItem) || isNotDefined(lastItem)) {
+				return { plotData: [], domain: inputDomain };
+			}
+
+			filteredData = data;
+			clampedDomain = [xAccessor(firstItem), xAccessor(lastItem)];
+		}
 
 		if (filteredData.length === 1 && isDefined(fallbackStart)) {
 			left = fallbackStart;

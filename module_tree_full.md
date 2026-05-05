@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-05 13:53:10`
+Generated at: `2026-05-05 20:59:20`
 
 ## Summary
 
-- Total modules: 655
+- Total modules: 659
 - Python modules: 1
-- JS/TS modules: 654
+- JS/TS modules: 658
 - Total classes: 350
-- Total functions: 3654
-- Total top-level variables: 7825
+- Total functions: 3667
+- Total top-level variables: 7887
 
 ## Python Modules
 
@@ -2087,6 +2087,27 @@ Generated at: `2026-05-05 13:53:10`
 - Functions:
   - `format`, `timeFormat`
 
+### `src/demo/__tests__/chartRange.test.ts`
+
+- Functions:
+  - `buildBars`
+- Top-level variables:
+  - `data`
+
+### `src/demo/__tests__/demoData.test.ts`
+
+- Functions:
+  - `makeResponse`
+- Top-level variables:
+  - `bars`, `currentBars`, `fetchMock`, `firstPage`, `merged`, `olderBars`, `secondPage`
+
+### `src/demo/__tests__/i18n.test.tsx`
+
+- Functions:
+  - `DemoI18nProbe`
+- Top-level variables:
+  - `DemoI18nBoundary`, `act`, `container`, `createRoot`, `originalConsoleError`, `probe`, `reactActEnvironment`, `root`, `setLanguageForTest`, `useDemoI18n`
+
 ### `src/demo/ChartPaneSplitter.tsx`
 
 - Functions:
@@ -2094,12 +2115,19 @@ Generated at: `2026-05-05 13:53:10`
 - Top-level variables:
   - `applyDragDeltaRef`, `availableRef`, `drag`, `dragRef`, `node`, `rootRef`, `totalDelta`
 
+### `src/demo/chartRange.ts`
+
+- Functions:
+  - `normalizeDate`, `resolveChartRangeExtents`, `resolveChartRangeStart`, `subtractDays`, `subtractMonths`, `subtractYears`
+- Top-level variables:
+  - `CHART_RANGES`, `CHART_RANGE_LABEL_KEYS`, `DEFAULT_CHART_RANGE`, `dayOfMonth`, `first`, `last`, `lastDayOfMonth`, `next`, `rangeStart`, `single`
+
 ### `src/demo/demoData.ts`
 
 - Functions:
-  - `computeIndicators`, `fetchLiveDemoBars`, `fetchLiveDemoData`, `formatBinanceKlineBars`, `formatBinanceKlines`, `getOfflineDemoBars`, `getOfflineDemoData`, `normalizeBars`, `parseCsvRow`, `parseDateTime`
+  - `computeIndicators`, `fetchBinanceKlinePage`, `fetchHistoricalDemoBars`, `fetchLiveDemoBars`, `fetchLiveDemoData`, `formatBinanceKlineBars`, `formatBinanceKlines`, `getOfflineDemoBars`, `getOfflineDemoData`, `mergeBarsByDate`, `normalizeBars`, `parseCsvRow`, `parseDateTime`, `sortBars`, `toTimeValue`
 - Top-level variables:
-  - `BINANCE_BASE`, `BINANCE_INTERVAL_MAP`, `BOLLINGER_BAND_OPTIONS`, `DEMO_CANONICAL_SERIES`, `DEMO_WINDOW`, `binanceInterval`, `json`, `response`, `url`
+  - `BINANCE_BASE`, `BINANCE_INTERVAL_MAP`, `BINANCE_MAX_LIMIT`, `BOLLINGER_BAND_OPTIONS`, `DEMO_CANONICAL_SERIES`, `DEMO_WINDOW`, `bars`, `binanceInterval`, `deduped`, `endTimeValue`, `json`, `lastBar`, `merged`, `nextEndTime`, `pageBars`, `params`, `response`, `sorted`, `startTimeValue`, `url`
 
 ### `src/demo/DemoPageShell.tsx`
 
@@ -2128,9 +2156,9 @@ Generated at: `2026-05-05 13:53:10`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `ToolIcon`, `addPane`, `chartDomain`, `clonePoint`, `formatBarsHeld`, `formatSignedPrice`, `getSelectedDrawingId`, `handleEscape`, `handleKeyDown`, `handler`, `loadDemoSettings`, `mergeDrawingPatch`, `normalizeDate`, `offsetDrawingByPixels`, `paneTemplate`, `readSize`, `saveDemoSettings`, `sortDrawings`
+  - `ToolIcon`, `addPane`, `clonePoint`, `formatBarsHeld`, `formatSignedPrice`, `getSelectedDrawingId`, `handleEscape`, `handleKeyDown`, `handler`, `loadDemoSettings`, `mergeDrawingPatch`, `normalizeDate`, `offsetDrawingByPixels`, `paneTemplate`, `readSize`, `saveDemoSettings`, `sortDrawings`
 - Top-level variables:
-  - `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `MAIN_PRICE_SERIES_TYPES`, `PERCENT_FORMAT`, `REPLAY_SPEEDS`, `TIMEFRAMES`, `TOOL_GROUPS`, `abortController`, `allPrices`, `averageBarsHeld`, `averagePnl`, `axisStroke`, `axisTickFill`, `bestTrade`, `bringSelectedToFront`, `candleWidth`, `canvasBg`, `chartMenuRef`, `chartReady`, `chartTypeLabel`, `cloneSelectedDrawing`, `closePaperTradePosition`, `closeReplayContextMenu`, `closeSettings`, `closedTrade`, `controller`, `currentItem`, `currentPosition`, `data`, `dateFormat`, `deleteDrawingById`, `deleteSelectedDrawing`, `desiredType`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `end`, `enrichedData`, `file`, `first`, `firstBar`, `h`, `haCalc`, `handleChartTypeChange`, `handleClearDrawings`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handlePaperTradeClick`, `handlePaperTradeReset`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `innerHeight`, `innerWidth`, `lastBar`, `lastClick`, `lastPaperTradeClickRef`, `lastPaperTradeSignatureRef`, `lastVisibleBar`, `leftZ`, `localizePane`, `localizedPane`, `losses`, `maxPrice`, `maxZ`, `minPrice`, `minZ`, `msg`, `nativeEvent`, `nextClone`, `nextDrawings`, `nextLabel`, `nextPosition`, `node`, `now`, `observer`, `openSettings`, `paneH`, `paneHeaderLabels`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `paperTradeJournal`, `paperTradePanelVisible`, `paperTradePositionRef`, `paperTradeRealizedPnl`, `paperTradeReportVisible`, `paperTradeSummary`, `paperTradeUnrealizedPnl`, `parsed`, `plotData`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `ratio`, `raw`, `realizedPnl`, `rect`, `replayController`, `replayControllerRef`, `replayFinished`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `rightZ`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `signature`, `sortedDrawings`, `start`, `stepPx`, `storageToolbarPosition`, `target`, `timeOffset`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `toolLabel`, `top`, `totalTrades`, `transformed`, `updateSelectedDrawing`, `volumeFormat`, `w`, `wins`, `worstTrade`, `x`, `xExtents`, `y`
+  - `BACKFILL_MAX_PAGES`, `BACKFILL_PAGE_LIMIT`, `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `MAIN_PRICE_SERIES_TYPES`, `PERCENT_FORMAT`, `REPLAY_SPEEDS`, `TIMEFRAMES`, `TOOL_GROUPS`, `abortController`, `allPrices`, `averageBarsHeld`, `averagePnl`, `axisStroke`, `axisTickFill`, `backfillInFlightRef`, `bestTrade`, `bringSelectedToFront`, `candleWidth`, `canvasBg`, `chartData`, `chartMenuRef`, `chartRangeRef`, `chartReady`, `chartTypeLabel`, `cloneSelectedDrawing`, `closePaperTradePosition`, `closeReplayContextMenu`, `closeSettings`, `closedTrade`, `controller`, `currentBars`, `currentItem`, `currentPosition`, `data`, `dateFormat`, `deleteDrawingById`, `deleteSelectedDrawing`, `desiredType`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `earliestBar`, `enrichedData`, `ensureRangeHistory`, `file`, `first`, `firstBar`, `h`, `haCalc`, `handleChartRangeChange`, `handleChartTypeChange`, `handleClearDrawings`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handlePaperTradeClick`, `handlePaperTradeReset`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `handleVisibleDomainChange`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `innerHeight`, `innerWidth`, `lastBar`, `lastClick`, `lastPaperTradeClickRef`, `lastPaperTradeSignatureRef`, `lastVisibleBar`, `leftZ`, `liveDataRef`, `localizePane`, `localizedPane`, `losses`, `maxPrice`, `maxZ`, `minPrice`, `minZ`, `mountedRef`, `msg`, `nativeEvent`, `nextClone`, `nextDrawings`, `nextLabel`, `nextPosition`, `node`, `normalizeDomain`, `now`, `observer`, `offlineBars`, `olderBars`, `openSettings`, `pagesLoaded`, `paneH`, `paneHeaderLabels`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `paperTradeJournal`, `paperTradePanelVisible`, `paperTradePositionRef`, `paperTradeRealizedPnl`, `paperTradeReportVisible`, `paperTradeSummary`, `paperTradeUnrealizedPnl`, `parsed`, `plotData`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `ratio`, `raw`, `realizedPnl`, `rect`, `replayController`, `replayControllerRef`, `replayFinished`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `requestOlderHistoryPage`, `rightZ`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `signature`, `sortedDrawings`, `stepPx`, `storageToolbarPosition`, `target`, `targetStart`, `timeOffset`, `timer`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `toolLabel`, `top`, `totalTrades`, `transformed`, `updateSelectedDrawing`, `volumeFormat`, `w`, `wins`, `worstTrade`, `x`, `xExtents`, `y`
 
 ### `src/demo/LiveDemo.tsx`
 
@@ -2699,7 +2727,7 @@ Generated at: `2026-05-05 13:53:10`
 - Functions:
   - `createMockStorage`
 - Top-level variables:
-  - `next`, `panes`, `payload`, `rsi`, `state`, `storage`, `sum`, `value`
+  - `blocked`, `blockedPane`, `hiddenPane`, `next`, `panes`, `payload`, `restoredPane`, `rsi`, `state`, `storage`, `sum`, `value`
 
 ### `src/lib/core/hooks/useCanvasResize.ts`
 
@@ -3580,7 +3608,7 @@ Generated at: `2026-05-05 13:53:10`
 - Functions:
   - `canShowTheseManyPeriods`, `extentsWrapper`, `filterData`, `getFilteredResponse`, `getNewEnd`, `showMax`, `showMaxThreshold`, `showMinThreshold`
 - Top-level variables:
-  - `chartWidth`, `clampedDomain`, `filteredData`, `lastItemXValue`, `left`, `log`, `newEnd`, `newLeftIndex`, `newRightIndex`, `newWidth`, `newXScale`, `plotData`, `realInputDomain`, `right`, `width`, `xScale`
+  - `chartWidth`, `clampedDomain`, `filteredData`, `firstItem`, `lastItem`, `lastItemXValue`, `left`, `log`, `newEnd`, `newLeftIndex`, `newRightIndex`, `newWidth`, `newXScale`, `plotData`, `realInputDomain`, `right`, `width`, `xScale`
 
 ### `src/lib/scale/financeDiscontinuousScale.ts`
 

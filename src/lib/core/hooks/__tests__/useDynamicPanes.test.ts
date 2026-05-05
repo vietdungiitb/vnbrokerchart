@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PANES, PANE_LAYOUT_STORAGE_KEY } from "../../types/pane-descriptor";
+import type { PaneDescriptor } from "../../types/pane-descriptor";
+import { DEFAULT_PANES, PANE_LAYOUT_STORAGE_KEY, PANE_MAX_VISIBLE } from "../../types/pane-descriptor";
 import {
 	createDefaultPaneLayout,
 	dynamicPanesReducer,
@@ -137,6 +138,76 @@ describe("dynamicPanesReducer", () => {
 		});
 		const rsi = state.find((p) => p.id === "momentum")?.series.find((s) => s.type === "RSI");
 		expect(rsi?.visible).toBe(true);
+	});
+
+	it("restorePane re-enables a hidden pane and its series", () => {
+		const hiddenPane: Omit<PaneDescriptor, "id"> = {
+			label: "Research",
+			pinned: false,
+			visible: false,
+			heightRatio: 0.1,
+			series: [
+				{ type: "RSI", yAxis: "right", visible: false, params: { period: 21 } },
+			],
+			splitScale: false,
+			tooltip: "value",
+		};
+
+		let state = dynamicPanesReducer(createDefaultPaneLayout(), {
+			type: "addPane",
+			pane: hiddenPane,
+		});
+
+		state = dynamicPanesReducer(state, {
+			type: "restorePane",
+			id: state[state.length - 1]?.id ?? "",
+			maxVisiblePanes: PANE_MAX_VISIBLE,
+		});
+
+		const restoredPane = state[state.length - 1];
+		expect(restoredPane?.visible).toBe(true);
+		expect(restoredPane?.series.every((series) => series.visible !== false)).toBe(true);
+		expect(state.filter((pane) => pane.visible)).toHaveLength(4);
+	});
+
+	it("restorePane is blocked when the visible pane limit is already reached", () => {
+		const hiddenPane: Omit<PaneDescriptor, "id"> = {
+			label: "Research",
+			pinned: false,
+			visible: false,
+			heightRatio: 0.1,
+			series: [
+				{ type: "RSI", yAxis: "right", visible: false, params: { period: 21 } },
+			],
+			splitScale: false,
+			tooltip: "value",
+		};
+
+		let state = dynamicPanesReducer(createDefaultPaneLayout(), {
+			type: "addPane",
+			pane: hiddenPane,
+		});
+		state = dynamicPanesReducer(state, {
+			type: "toggleVisible",
+			id: "orderflow",
+			maxVisiblePanes: PANE_MAX_VISIBLE,
+		});
+		state = dynamicPanesReducer(state, {
+			type: "toggleVisible",
+			id: "strength",
+			maxVisiblePanes: PANE_MAX_VISIBLE,
+		});
+
+		const blocked = dynamicPanesReducer(state, {
+			type: "restorePane",
+			id: state[state.length - 1]?.id ?? "",
+			maxVisiblePanes: PANE_MAX_VISIBLE,
+		});
+		const blockedPane = blocked[blocked.length - 1];
+
+		expect(blocked.filter((pane) => pane.visible)).toHaveLength(PANE_MAX_VISIBLE);
+		expect(blockedPane?.visible).toBe(false);
+		expect(blockedPane?.series[0]?.visible).toBe(false);
 	});
 
 	it("toggleSeriesVisible auto-hides pane when all series become hidden", () => {

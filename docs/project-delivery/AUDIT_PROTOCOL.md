@@ -15,6 +15,7 @@ Mỗi slice đóng xong phải để lại bằng chứng đủ cho người aud
 - Kết quả validation
 - Risk còn tồn đọng
 - Link cập nhật trong `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nếu task chạm market data, phải ghi rõ nguồn dữ liệu, ticker, phạm vi lịch sử đã tải, và cách backfill / range math hoạt động.
 
 ## 3. Validation chuẩn
 
@@ -26,6 +27,12 @@ npm test
 npm run build:docs
 python scripts/generate_module_tree.py
 ```
+
+Nếu thay đổi liên quan dữ liệu thị trường thật hoặc viewport lịch sử, cần thêm smoke check tối thiểu:
+
+- scroll / pan về trái để kiểm tra backfill
+- click `1D` / `5D` / `1M` / `3M` / `YTD` / `1Y` / `All`
+- xác nhận ticker label khớp nguồn upstream
 
 ## 4. UI smoke checklist
 
@@ -63,3 +70,9 @@ Behavioral change:
 Validation:
 Residual risk:
 ```
+
+## 7. Ghi chú audit cho data fidelity
+
+- Không chấp nhận mô tả “dữ liệu thật” nếu code vẫn chỉ load sample history ngắn.
+- Nếu có fallback offline, phải ghi rõ là fallback và không được dùng làm bằng chứng full-history.
+- Nếu task thay đổi view range, audit phải chỉ rõ range math hay data loading layer là nguồn của thay đổi.

@@ -24,8 +24,16 @@ Repo đang đóng vai trò thư viện chart kèm demo tương tác giàu tính 
 
 - Nguồn local/offline và live Binance đi qua `src/demo/demoData.ts`.
 - `LibraryShowcaseDemo` và các demo phụ render chart từ `DemoDatum[]`.
-- Một phần indicator data hiện còn duplicated giữa `demoData.ts` và `src/lib/core/calculators/enrichData.ts`.
-- Đây là root cause của SSOT gap hiện tại.
+- Indicator data của demo chính hiện đã đi qua `enrichData` để giữ SSOT runtime.
+- Gap còn lại là lịch sử thị trường thật: data path hiện vẫn giới hạn theo cửa sổ load hiện tại, chưa backfill nhiều trang khi pan trái.
+
+## 2.4 Data fidelity contract
+
+- Binance Klines hoặc một upstream được phê duyệt là nguồn lịch sử canonical cho chart BTC.
+- Các giá trị `limit`, `window`, hoặc `range` chỉ là viewport / paging, không phải trần lịch sử.
+- `1D`, `5D`, `1M`, `3M`, `YTD`, `1Y`, `All` phải cắt trên dữ liệu thật đã load; không được mô phỏng lịch sử từ 300 bar.
+- Nếu rơi về offline fallback, UI phải nói rõ đó là fallback, không được ngụy trang thành market truth.
+- Symbol hiển thị phải khớp symbol upstream đang fetch.
 
 ## 3. Kiến trúc i18n hiện tại
 
@@ -60,8 +68,8 @@ Repo đang đóng vai trò thư viện chart kèm demo tương tác giàu tính 
 
 ## 5. Known Gaps
 
-1. SSOT runtime chưa hoàn thành: indicator params thay đổi trong settings chưa canonicalize toàn pipeline.
-2. `demoData.ts` và `enrichData.ts` còn song song tính indicator.
+1. Historical market backfill chưa hoàn tất; scrolling trái chưa nạp thêm dữ liệu cũ.
+2. Widget boundary extraction chưa bắt đầu.
 3. i18n mới phủ bề mặt demo chính; các surface mới trong tương lai vẫn phải đi vào cùng dictionary thay vì hardcode lại.
 
 ## 6. Điều kiện cho widget extraction

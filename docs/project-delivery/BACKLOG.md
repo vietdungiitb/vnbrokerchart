@@ -2,9 +2,10 @@
 
 ## Ưu tiên cao
 
-1. SSOT runtime cho indicators và tooltip/yExtents.
-2. Functional tests cho i18n, pane visibility, chart type switching.
-3. Smoke check tự động cho live fallback path.
+1. Tách widget boundary extraction sang surface embeddable có contract rõ.
+2. Exportable widget shell adapter cho host app truyền locale/theme/data.
+3. Locale-aware date/time formatting cho axes và tooltip.
+4. Bổ sung docs cho embed API mẫu.
 
 ## Ưu tiên trung bình
 
