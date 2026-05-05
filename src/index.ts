@@ -89,4 +89,8 @@ export type {
 	YAxisConfig,
 } from "./lib/types/index";
 
+export { VNStockChart, WidgetErrorBoundary, WidgetEmptyState, WidgetI18nContext, WidgetI18nProvider, useWidgetI18n } from "./widget";
+export { widgetMessagesEn, widgetMessagesVi } from "./widget";
+export type { VNStockChartProps, WidgetLocale, WidgetMessages, WidgetI18nContextValue, WidgetI18nProviderProps } from "./widget";
+
 export const version = "0.7.8";

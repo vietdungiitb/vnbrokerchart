@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-05 20:59:20`
+Generated at: `2026-05-06 00:12:44`
 
 ## Summary
 
-- Total modules: 659
+- Total modules: 669
 - Python modules: 1
-- JS/TS modules: 658
-- Total classes: 350
-- Total functions: 3667
-- Total top-level variables: 7887
+- JS/TS modules: 668
+- Total classes: 351
+- Total functions: 3681
+- Total top-level variables: 7965
 
 ## Python Modules
 
@@ -2156,9 +2156,9 @@ Generated at: `2026-05-05 20:59:20`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `ToolIcon`, `addPane`, `clonePoint`, `formatBarsHeld`, `formatSignedPrice`, `getSelectedDrawingId`, `handleEscape`, `handleKeyDown`, `handler`, `loadDemoSettings`, `mergeDrawingPatch`, `normalizeDate`, `offsetDrawingByPixels`, `paneTemplate`, `readSize`, `saveDemoSettings`, `sortDrawings`
+  - `ToolIcon`, `clonePoint`, `formatBarsHeld`, `formatSignedPrice`, `getSelectedDrawingId`, `handleEscape`, `handler`, `loadDemoSettings`, `mergeDrawingPatch`, `normalizeDate`, `offsetDrawingByPixels`, `paneTemplate`, `readSize`, `saveDemoSettings`, `sortDrawings`
 - Top-level variables:
-  - `BACKFILL_MAX_PAGES`, `BACKFILL_PAGE_LIMIT`, `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `MAIN_PRICE_SERIES_TYPES`, `PERCENT_FORMAT`, `REPLAY_SPEEDS`, `TIMEFRAMES`, `TOOL_GROUPS`, `abortController`, `allPrices`, `averageBarsHeld`, `averagePnl`, `axisStroke`, `axisTickFill`, `backfillInFlightRef`, `bestTrade`, `bringSelectedToFront`, `candleWidth`, `canvasBg`, `chartData`, `chartMenuRef`, `chartRangeRef`, `chartReady`, `chartTypeLabel`, `cloneSelectedDrawing`, `closePaperTradePosition`, `closeReplayContextMenu`, `closeSettings`, `closedTrade`, `controller`, `currentBars`, `currentItem`, `currentPosition`, `data`, `dateFormat`, `deleteDrawingById`, `deleteSelectedDrawing`, `desiredType`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `earliestBar`, `enrichedData`, `ensureRangeHistory`, `file`, `first`, `firstBar`, `h`, `haCalc`, `handleChartRangeChange`, `handleChartTypeChange`, `handleClearDrawings`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handlePaperTradeClick`, `handlePaperTradeReset`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `handleVisibleDomainChange`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `innerHeight`, `innerWidth`, `lastBar`, `lastClick`, `lastPaperTradeClickRef`, `lastPaperTradeSignatureRef`, `lastVisibleBar`, `leftZ`, `liveDataRef`, `localizePane`, `localizedPane`, `losses`, `maxPrice`, `maxZ`, `minPrice`, `minZ`, `mountedRef`, `msg`, `nativeEvent`, `nextClone`, `nextDrawings`, `nextLabel`, `nextPosition`, `node`, `normalizeDomain`, `now`, `observer`, `offlineBars`, `olderBars`, `openSettings`, `pagesLoaded`, `paneH`, `paneHeaderLabels`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `paperTradeJournal`, `paperTradePanelVisible`, `paperTradePositionRef`, `paperTradeRealizedPnl`, `paperTradeReportVisible`, `paperTradeSummary`, `paperTradeUnrealizedPnl`, `parsed`, `plotData`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `ratio`, `raw`, `realizedPnl`, `rect`, `replayController`, `replayControllerRef`, `replayFinished`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `requestOlderHistoryPage`, `rightZ`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `signature`, `sortedDrawings`, `stepPx`, `storageToolbarPosition`, `target`, `targetStart`, `timeOffset`, `timer`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `toolLabel`, `top`, `totalTrades`, `transformed`, `updateSelectedDrawing`, `volumeFormat`, `w`, `wins`, `worstTrade`, `x`, `xExtents`, `y`
+  - `BACKFILL_MAX_PAGES`, `BACKFILL_PAGE_LIMIT`, `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `MAIN_PRICE_SERIES_TYPES`, `PERCENT_FORMAT`, `REPLAY_SPEEDS`, `TIMEFRAMES`, `TOOL_GROUPS`, `abortController`, `addPane`, `allPrices`, `applyDelta`, `available`, `averageBarsHeld`, `averagePnl`, `backfillInFlightRef`, `bestTrade`, `bringSelectedToFront`, `candleWidth`, `canvasBg`, `chartAdapter`, `chartData`, `chartMenuRef`, `chartRangeRef`, `chartReady`, `chartTypeLabel`, `cloneSelectedDrawing`, `closePaperTradePosition`, `closeReplayContextMenu`, `closeSettings`, `closedTrade`, `controller`, `currentBars`, `currentItem`, `currentPosition`, `data`, `dateFormat`, `deleteDrawingById`, `desiredType`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `earliestBar`, `enrichedData`, `ensureRangeHistory`, `file`, `first`, `firstBar`, `h`, `haCalc`, `handleAddPane`, `handleChartRangeChange`, `handleChartTypeChange`, `handleClearDrawings`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handlePaperTradeClick`, `handlePaperTradeReset`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `handleVisibleDomainChange`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `innerHeight`, `innerWidth`, `lastBar`, `lastClick`, `lastPaperTradeClickRef`, `lastPaperTradeSignatureRef`, `lastVisibleBar`, `leftZ`, `liveDataRef`, `localizePane`, `localizedPane`, `losses`, `maxPrice`, `maxZ`, `minPrice`, `minZ`, `mountedRef`, `msg`, `nativeEvent`, `nextClone`, `nextDrawings`, `nextLabel`, `nextPosition`, `node`, `normalizeDomain`, `now`, `observer`, `offlineBars`, `olderBars`, `openSettings`, `pagesLoaded`, `paneH`, `paneHeaderLabels`, `paneHeights`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `paperTradeJournal`, `paperTradePanelVisible`, `paperTradePositionRef`, `paperTradeRealizedPnl`, `paperTradeReportVisible`, `paperTradeSummary`, `paperTradeUnrealizedPnl`, `parsed`, `plotData`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `ratio`, `raw`, `realizedPnl`, `rect`, `replayController`, `replayControllerRef`, `replayFinished`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `requestOlderHistoryPage`, `resetToDefault`, `rightZ`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `signature`, `sortedDrawings`, `stepPx`, `storageToolbarPosition`, `targetStart`, `timeOffset`, `timer`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `toolLabel`, `top`, `totalTrades`, `transformed`, `updateSelectedDrawing`, `visiblePanes`, `volumeFormat`, `w`, `widgetData`, `widgetMessages`, `wins`, `worstTrade`, `x`, `xExtents`, `y`
 
 ### `src/demo/LiveDemo.tsx`
 
@@ -4052,6 +4052,64 @@ Generated at: `2026-05-05 20:59:20`
 ### `src/vendor.d.ts`
 
 - No parseable top-level symbols found
+
+### `src/widget/__tests__/VNStockChart.contract.test.tsx`
+
+- Functions:
+  - `ThrowingChild`, `createAdapter`, `createDeferred`
+- Top-level variables:
+  - `VNStockChart`, `WidgetErrorBoundary`, `WidgetI18nProvider`, `abortSpy`, `act`, `adapter`, `container`, `createRoot`, `fetchDeferred`, `firstAdapter`, `firstFetch`, `originalConsoleError`, `promise`, `reactActEnvironment`, `ref`, `reject`, `resolve`, `root`, `secondAdapter`, `secondFetch`
+
+### `src/widget/context/__tests__/WidgetI18nContext.test.tsx`
+
+- Functions:
+  - `WidgetI18nProbe`
+- Top-level variables:
+  - `WidgetI18nProvider`, `act`, `container`, `createRoot`, `originalConsoleError`, `probe`, `reactActEnvironment`, `root`, `setLocaleForTest`, `useWidgetI18n`
+
+### `src/widget/context/WidgetI18nContext.tsx`
+
+- Functions:
+  - `WidgetI18nProvider`, `interpolate`, `isWidgetLocale`, `resolveInitialLocale`, `useWidgetI18n`
+- Top-level variables:
+  - `WidgetI18nContext`, `defaultValue`, `documentLocale`, `primaryDictionary`, `resolvedLocale`, `secondaryDictionary`, `setLocale`, `t`, `template`, `value`
+
+### `src/widget/i18n/messages.en.ts`
+
+- Top-level variables:
+  - `widgetMessagesEn`
+
+### `src/widget/i18n/messages.vi.ts`
+
+- Top-level variables:
+  - `widgetMessagesVi`
+
+### `src/widget/i18n/types.ts`
+
+- No parseable top-level symbols found
+
+### `src/widget/index.ts`
+
+- No parseable top-level symbols found
+
+### `src/widget/VNStockChart.tsx`
+
+- Functions:
+  - `VNStockChart`, `VNStockChartContent`, `lookbackDays`, `mergeBarsByDate`, `resolveFetchWindow`, `safeXAccessor`
+- Top-level variables:
+  - `activeSymbol`, `activeTimeframe`, `axisStroke`, `axisTickFill`, `candidatePanes`, `chartInnerHeight`, `computedXExtents`, `controller`, `dateFormat`, `disposed`, `enrichedData`, `existingIndex`, `firstBar`, `hasExternalData`, `isDark`, `lastBar`, `nextPanes`, `oneDay`, `paneHeights`, `plotData`, `priceFormat`, `ready`, `resolvedTheme`, `resolvedXExtents`, `themeState`, `to`, `unsubscribe`, `visiblePanes`, `volumeFormat`
+
+### `src/widget/WidgetEmptyState.tsx`
+
+- Functions:
+  - `WidgetEmptyState`
+- Top-level variables:
+  - `copy`
+
+### `src/widget/WidgetErrorBoundary.tsx`
+
+- Classes:
+  - `WidgetErrorBoundary`
 
 ### `stories/CandleStickChartPanToLoadMore.stories.tsx`
 

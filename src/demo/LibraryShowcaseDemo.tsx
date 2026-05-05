@@ -4,7 +4,6 @@ import { scaleTime } from "d3-scale";
 import { timeFormat } from "d3-time-format";
 
 import {
-	DynamicChart,
 	PaneHeader,
 	PaneLabel,
 	IndicatorLegend,
@@ -20,16 +19,20 @@ import {
 	type SeriesConfig,
 	type SeriesTypeId,
 	type ReplaySpeed,
+		type StockDataAdapter,
 	ChartSplitter,
 	useChartTheme,
+	VNStockChart,
+	widgetMessagesEn,
+	widgetMessagesVi,
 	version,
 } from "../index";
+import type { OHLCVBar } from "../lib/types/ohlcv";
 import type { DrawingObject } from "../lib/drawing/types";
 import type { DrawingInspectorLabels } from "../lib/drawing/DrawingInspector";
 import type { DrawingListPanelLabels } from "../lib/drawing/DrawingListPanel";
 import { enrichData } from "../lib/core/calculators/enrichData";
 import type { EnrichedDatum, RawOHLCV } from "../lib/core/calculators/types";
-import ChartCanvas from "../lib/ChartCanvas";
 import { heikinAshi } from "../lib/calculator";
 import { fetchHistoricalDemoBars, getOfflineDemoBars, mergeBarsByDate } from "./demoData";
 import { CHART_RANGE_LABEL_KEYS, CHART_RANGES, DEFAULT_CHART_RANGE, resolveChartRangeExtents, resolveChartRangeStart, type ChartRange } from "./chartRange";
@@ -422,6 +425,8 @@ export default function LibraryShowcaseDemo() {
 		drawingInteraction.dispatch({ type: "REPLACE", drawings });
 	}, [drawingInteraction.dispatch]);
 	const drawingStorage = useDrawingStorage("BTCUSDT", timeframe, drawingInteraction.allDrawings, handleLoadDrawings);
+	const { theme, toggleTheme, isDark } = useChartTheme("light");
+	const canvasBg = "var(--gc-surface)";
 
 	// Live Binance data state
 	const [liveData, setLiveData] = useState<RawOHLCV[]>([]);
@@ -448,6 +453,86 @@ export default function LibraryShowcaseDemo() {
 	}, []);
 
 	const paneState = useDynamicPanes(chartHeight, { maxVisiblePanes });
+	const visiblePanes = paneState.visiblePanes;
+	const paneHeights = paneState.heights;
+	const available = paneState.available;
+	const addPane = paneState.addPane;
+	const applyDelta = paneState.applyDelta;
+	const resetToDefault = paneState.resetToDefault;
+	const handleExportDrawings = useCallback(() => {
+		drawingStorage.exportJSON();
+	}, [drawingStorage]);
+	const handleImportButtonClick = useCallback(() => {
+		importInputRef.current?.click();
+	}, []);
+	const handleClearDrawings = useCallback(() => {
+		drawingStorage.clearAll();
+	}, [drawingStorage]);
+	const handleImportFileChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) {
+			return;
+		}
+		await drawingStorage.importJSON(file);
+		event.target.value = "";
+	}, [drawingStorage]);
+	const drawingInspectorLabels = useMemo(() => ({
+		title: t("drawing.inspectorTitle"),
+		stroke: t("drawing.stroke"),
+		fill: t("drawing.fill"),
+		strokeWidth: t("drawing.strokeWidth"),
+		lineStyle: t("drawing.lineStyle"),
+		opacity: t("drawing.opacity"),
+		solid: t("drawing.solid"),
+		dashed: t("drawing.dashed"),
+		dotted: t("drawing.dotted"),
+		lock: t("drawing.lock"),
+		unlock: t("drawing.unlock"),
+		clone: t("drawing.clone"),
+		hide: t("drawing.hide"),
+		show: t("drawing.show"),
+		bringToFront: t("drawing.bringToFront"),
+		sendToBack: t("drawing.sendToBack"),
+		delete: t("drawing.delete"),
+		close: t("drawing.close"),
+	}), [t]);
+	const drawingListPanelLabels = useMemo(() => ({
+		title: t("drawing.drawingsList"),
+		empty: t("drawing.drawingsListEmpty"),
+		visible: t("drawing.visible"),
+		hidden: t("drawing.hidden"),
+		locked: t("drawing.locked"),
+		selected: t("drawing.selected"),
+		delete: t("drawing.delete"),
+	}), [t]);
+	const handleAddPane = useCallback(() => {
+		addPane({
+			label: t("library.genericPaneLabel", { index: paneState.panes.length + 1 }),
+			pinned: false,
+			visible: true,
+			heightRatio: 0.2,
+			splitScale: false,
+			tooltip: "value",
+			series: [],
+		});
+	}, [addPane, paneState.panes.length, t]);
+	const selectDrawingById = useCallback((id: string) => {
+		drawingInteraction.dispatch({ type: "SELECT_OBJECT", objectId: id });
+		setActiveTool("cursor");
+	}, [drawingInteraction.dispatch]);
+	const toggleDrawingVisibleById = useCallback((id: string) => {
+		const nextDrawings = drawingInteraction.allDrawings.map((drawing) => (
+			drawing.id === id ? { ...drawing, visible: drawing.visible === false ? true : false } : drawing
+		));
+		drawingInteraction.dispatch({ type: "REPLACE", drawings: nextDrawings });
+	}, [drawingInteraction.allDrawings, drawingInteraction.dispatch]);
+	const deleteDrawingById = useCallback((id: string) => {
+		const nextDrawings = drawingInteraction.allDrawings.filter((drawing) => drawing.id !== id);
+		drawingInteraction.dispatch({ type: "REPLACE", drawings: nextDrawings });
+		if (getSelectedDrawingId(drawingInteraction.drawingState) === id) {
+			drawingInteraction.dispatch({ type: "CANCEL" });
+		}
+	}, [drawingInteraction.allDrawings, drawingInteraction.drawingState, drawingInteraction.dispatch]);
 
 	useEffect(() => {
 		saveDemoSettings(maxVisiblePanes);
@@ -703,6 +788,11 @@ export default function LibraryShowcaseDemo() {
 	}, [chartType, indicatorSeries, replayVisibleData]);
 
 	const chartData = useMemo<EnrichedDatum[]>(() => plotData.filter((bar): bar is EnrichedDatum => Boolean(bar && bar.date)), [plotData]);
+	const widgetData = useMemo<OHLCVBar[]>(() => replayVisibleData.map((bar, index) => ({
+		...bar,
+		index,
+		dataIndex: index,
+	})), [replayVisibleData]);
 
 	// scaleTime + default candlestick width can collapse to near-zero body width.
 	// Use distance between adjacent bars in screen space for stable candle bodies.
@@ -728,7 +818,7 @@ export default function LibraryShowcaseDemo() {
 		};
 	}, []);
 
-	const xExtents = useMemo(() => visibleDomain ?? resolveChartRangeExtents(chartData, chartRange), [chartRange, chartData, visibleDomain]);
+	const xExtents = useMemo(() => resolveChartRangeExtents(chartData, chartRange), [chartRange, chartData]);
 	const lastBar = chartData[chartData.length - 1];
 	const selectedDrawingId = useMemo(() => getSelectedDrawingId(drawingInteraction.drawingState), [drawingInteraction.drawingState]);
 	const sortedDrawings = useMemo(() => sortDrawings(drawingInteraction.allDrawings), [drawingInteraction.allDrawings]);
@@ -1049,10 +1139,30 @@ export default function LibraryShowcaseDemo() {
 	}, []);
 
 	const chartReady = dataStatus !== "loading" && chartWidth > 0 && chartHeight > 0 && chartData.length > 0 && paneState.visiblePanes.length > 0;
-	const [chartCanvasReady, setChartCanvasReady] = useState(false);
-	useEffect(() => {
-		setChartCanvasReady(chartReady && visibleDomain !== null);
-	}, [chartReady, visibleDomain]);
+	const chartAdapter = useMemo<StockDataAdapter>(() => ({
+		async fetchBars(_symbol: string, _timeframe: string, _from: Date, _to: Date) {
+			return widgetData.map((bar) => ({ ...bar, date: new Date(bar.date) }));
+		},
+		async fetchMoreBars(_symbol: string, _timeframe: string, before: Date, limit = 300) {
+			return widgetData
+				.filter((bar) => bar.date < before)
+				.slice(-limit)
+				.map((bar) => ({ ...bar, date: new Date(bar.date) }));
+		},
+		subscribeToBar() {
+			return () => undefined;
+		},
+		subscribeToTrades() {
+			return () => undefined;
+		},
+		subscribeToOrderbook() {
+			return () => undefined;
+		},
+		async searchSymbols() {
+			return [{ symbol: "BTCUSDT", name: "Bitcoin / Tether", exchange: "BINANCE" }];
+		},
+	}), [widgetData]);
+	const widgetMessages = language === "vi" ? widgetMessagesVi : widgetMessagesEn;
 
 	// Close chart type menu when clicking outside
 	useEffect(() => {
@@ -1136,156 +1246,11 @@ export default function LibraryShowcaseDemo() {
 		const innerHeight = Math.max(1, chartHeight - 56);
 		const timeOffset = ((new Date(lastVisibleBar.date).getTime() - new Date(firstBar.date).getTime()) / innerWidth) * 20;
 		const priceOffset = -((maxPrice - minPrice) / innerHeight) * 20;
-
 		const nextClone = offsetDrawingByPixels(selectedDrawing, timeOffset, priceOffset);
 		drawingInteraction.dispatch({ type: "REPLACE", drawings: [...drawingInteraction.allDrawings, nextClone] });
 		drawingInteraction.dispatch({ type: "SELECT_OBJECT", objectId: nextClone.id });
 		setActiveTool("cursor");
 	}, [chartHeight, chartWidth, drawingInteraction.allDrawings, drawingInteraction.dispatch, plotData, selectedDrawing]);
-
-	const deleteSelectedDrawing = useCallback(() => {
-		if (!selectedDrawing) {
-			return;
-		}
-		deleteSelected();
-	}, [deleteSelected, selectedDrawing]);
-
-	const selectDrawingById = useCallback((drawingId: string) => {
-		setActiveTool("cursor");
-		drawingInteraction.dispatch({ type: "SELECT_OBJECT", objectId: drawingId });
-	}, [drawingInteraction.dispatch]);
-
-	const toggleDrawingVisibleById = useCallback((drawingId: string) => {
-		const nextDrawings = drawingInteraction.allDrawings.map((drawing) => (
-			drawing.id === drawingId ? mergeDrawingPatch(drawing, { visible: drawing.visible === false }) : drawing
-		));
-		drawingInteraction.dispatch({ type: "REPLACE", drawings: nextDrawings });
-	}, [drawingInteraction.allDrawings, drawingInteraction.dispatch]);
-
-	const deleteDrawingById = useCallback((drawingId: string) => {
-		const target = drawingInteraction.allDrawings.find((drawing) => drawing.id === drawingId);
-		if (!target || target.locked) {
-			return;
-		}
-		drawingInteraction.dispatch({ type: "REPLACE", drawings: drawingInteraction.allDrawings.filter((drawing) => drawing.id !== drawingId) });
-	}, [drawingInteraction.allDrawings, drawingInteraction.dispatch]);
-
-	const drawingInspectorLabels = useMemo<DrawingInspectorLabels>(() => ({
-		title: t("drawing.inspectorTitle"),
-		stroke: t("drawing.stroke"),
-		fill: t("drawing.fill"),
-		strokeWidth: t("drawing.strokeWidth"),
-		lineStyle: t("drawing.lineStyle"),
-		opacity: t("drawing.opacity"),
-		solid: t("drawing.solid"),
-		dashed: t("drawing.dashed"),
-		dotted: t("drawing.dotted"),
-		lock: t("drawing.lock"),
-		unlock: t("drawing.unlock"),
-		clone: t("drawing.clone"),
-		hide: t("drawing.hide"),
-		show: t("drawing.show"),
-		bringToFront: t("drawing.bringToFront"),
-		sendToBack: t("drawing.sendToBack"),
-		delete: t("drawing.delete"),
-		close: t("drawing.close"),
-	}), [t]);
-
-	const drawingListPanelLabels = useMemo<DrawingListPanelLabels>(() => ({
-		title: t("drawing.drawingsList"),
-		empty: t("drawing.drawingsListEmpty"),
-		visible: t("drawing.visible"),
-		hidden: t("drawing.hidden"),
-		locked: t("drawing.locked"),
-		selected: t("drawing.selected"),
-		delete: t("drawing.delete"),
-	}), [t]);
-
-	const handleExportDrawings = useCallback(() => {
-		drawingStorage.exportJSON();
-	}, [drawingStorage]);
-
-	const handleImportButtonClick = useCallback(() => {
-		importInputRef.current?.click();
-	}, []);
-
-	const handleImportFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-		const file = event.target.files?.[0];
-		event.target.value = "";
-		if (!file) {
-			return;
-		}
-		drawingStorage.importJSON(file).catch(() => undefined);
-	}, [drawingStorage]);
-
-	const handleClearDrawings = useCallback(() => {
-		drawingStorage.clearAll();
-	}, [drawingStorage]);
-
-	// ── Theme ─────────────────────────────────────────────────────────────────
-	const { theme, toggleTheme, isDark } = useChartTheme();
-
-	useEffect(() => {
-		document.documentElement.setAttribute("data-chart-theme", theme);
-	}, [theme]);
-
-	useEffect(() => {
-		return () => {
-			document.documentElement.removeAttribute("data-chart-theme");
-		};
-	}, []);
-
-	useEffect(() => {
-		const handleKeyDown = (event: KeyboardEvent) => {
-			const target = event.target as HTMLElement | null;
-			if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
-				return;
-			}
-
-			if (event.key === "Escape") {
-				event.preventDefault();
-				cancelDrawing();
-				setActiveTool("cursor");
-				return;
-			}
-
-			if (event.key === "Delete" || event.key === "Backspace") {
-				event.preventDefault();
-				deleteSelected();
-				return;
-			}
-
-			if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
-				event.preventDefault();
-				if (event.shiftKey) {
-					redo();
-				} else {
-					undo();
-				}
-				return;
-			}
-
-			if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "y") {
-				event.preventDefault();
-				redo();
-			}
-		};
-
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [cancelDrawing, deleteSelected, redo, setActiveTool, undo]);
-
-	const { visiblePanes, heights: paneHeights, applyDelta, resetToDefault, available } = paneState;
-
-	// Theme-aware canvas element colours (canvas is drawn programmatically,
-	// so it doesn't pick up CSS vars automatically).
-	const axisStroke    = isDark ? "#d1d4dc" : "#1e2a3b";
-	const axisTickFill  = isDark ? "#d1d4dc" : "#1e2a3b";
-	const canvasBg      = isDark ? "#1e2130" : "#ffffff";
-
-	const addPane = () => {
-		paneState.addPane(paneTemplate(t("library.genericPaneLabel", { index: paneState.panes.length + 1 }), 0.18));
-	};
 
 	const paneHeaderLabels = useMemo(() => ({
 		dragAriaLabel: (label: string) => t("library.dragPane", { pane: label }),
@@ -1661,211 +1626,189 @@ export default function LibraryShowcaseDemo() {
 								<div className="gc-spinner" />
 								<span>{t("library.loadingRealData")}</span>
 							</div>
-						) : chartCanvasReady ? (
+						) : (
+							<VNStockChart
+								adapter={chartAdapter}
+								data={widgetData}
+								panes={paneState.panes}
+								locale={language}
+								messages={widgetMessages}
+								theme={theme}
+								xExtents={xExtents}
+								onClick={handlePaperTradeClick}
+								onContextMenu={handleReplayContextMenu}
+								onVisibleDomainChange={handleVisibleDomainChange}
+							>
+								<DrawingLayer
+									activeTool={activeTool}
+									interaction={drawingInteraction}
+									onToolUsed={handleDrawingToolUsed}
+								/>
+							</VNStockChart>
+						)}
+
+						{replayContextMenu && (
 							<>
-								<ChartCanvas
-									key={`chart-canvas-${chartType}-${timeframe}-${theme}`}
-									height={chartHeight}
-									width={chartWidth}
-									margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
-									type="hybrid"
-									seriesName={`terminal-demo-${chartType}`}
-									data={chartData}
-									xScale={scaleTime()}
-									xAccessor={(datum: EnrichedDatum) => datum.date}
-									displayXAccessor={(datum: EnrichedDatum) => datum.date}
-									xExtents={xExtents}
-									ratio={ratio}
-									mouseMoveEvent
-									zoomEvent
-									panEvent
-									useCrossHairStyleCursor
-									onClick={handlePaperTradeClick}
-									onContextMenu={handleReplayContextMenu}
-									onVisibleDomainChange={handleVisibleDomainChange}
-								>
-									{DynamicChart({
-										panes: visiblePanes,
-										heights: paneHeights,
-										data: chartData as any,
-										axisStroke,
-										axisTickFill,
-										isDark,
-										dateFormat,
-										priceFormat,
-										volumeFormat,
-										onContextMenu: handleReplayContextMenu,
-									})}
-									<DrawingLayer
-										activeTool={activeTool}
-										interaction={drawingInteraction}
-										onToolUsed={handleDrawingToolUsed}
-									/>
-								</ChartCanvas>
+								<div className="gc-replay-menu-backdrop" aria-hidden="true" onClick={closeReplayContextMenu} />
+								<div className="gc-replay-menu" style={{ left: replayContextMenu.x, top: replayContextMenu.y }}>
+									<div className="gc-replay-menu__meta">{replayContextMenu.label}</div>
+									<button type="button" className="gc-replay-menu__action" onClick={handleReplayFromHere}>
+										{t("replay.fromHere")}
+									</button>
+								</div>
+							</>
+						)}
 
-									{replayContextMenu && (
-										<>
-											<div className="gc-replay-menu-backdrop" aria-hidden="true" onClick={closeReplayContextMenu} />
-											<div className="gc-replay-menu" style={{ left: replayContextMenu.x, top: replayContextMenu.y }}>
-												<div className="gc-replay-menu__meta">{replayContextMenu.label}</div>
-												<button type="button" className="gc-replay-menu__action" onClick={handleReplayFromHere}>
-													{t("replay.fromHere")}
-												</button>
-											</div>
-										</>
-									)}
-
-									<DrawingInspector
-										drawing={selectedDrawing}
-										labels={drawingInspectorLabels}
-										position={drawingInspectorPosition}
-										onUpdate={updateSelectedDrawing}
-										onDelete={deleteSelectedDrawing}
-										onClone={cloneSelectedDrawing}
-										onToggleLock={toggleSelectedLock}
-										onToggleVisible={toggleSelectedVisible}
-										onBringToFront={bringSelectedToFront}
-										onSendToBack={sendSelectedToBack}
-										onClose={() => setActiveTool("cursor")}
-									/>
-										{showDrawingList && (
-										<DrawingListPanel
-											drawings={sortedDrawings}
-											selectedId={selectedDrawingId ?? null}
-											labels={drawingListPanelLabels}
-											position={drawingListPosition}
-											onSelect={selectDrawingById}
-											onToggleVisible={toggleDrawingVisibleById}
-											onDelete={deleteDrawingById}
-										/>
-									)}
-										{paperTradePanelVisible && (
-											<div className="gc-paper-trade-panel">
-												<div className="gc-paper-trade-panel__header">
-													<strong>{t("paperTrading.title")}</strong>
-													<div className="gc-paper-trade-panel__header-actions">
-														{replayFinished && <span className="gc-paper-trade-panel__chip">{t("paperTrading.finalized")}</span>}
-														<button type="button" className="gc-paper-trade-panel__reset" onClick={handlePaperTradeReset}>
-															{t("paperTrading.reset")}
-														</button>
+						<DrawingInspector
+							drawing={selectedDrawing}
+							labels={drawingInspectorLabels}
+							position={drawingInspectorPosition}
+							onUpdate={updateSelectedDrawing}
+							onDelete={deleteSelected}
+							onClone={cloneSelectedDrawing}
+							onToggleLock={toggleSelectedLock}
+							onToggleVisible={toggleSelectedVisible}
+							onBringToFront={bringSelectedToFront}
+							onSendToBack={sendSelectedToBack}
+							onClose={() => setActiveTool("cursor")}
+						/>
+						{showDrawingList && (
+							<DrawingListPanel
+								drawings={sortedDrawings}
+								selectedId={selectedDrawingId ?? null}
+								labels={drawingListPanelLabels}
+								position={drawingListPosition}
+								onSelect={selectDrawingById}
+								onToggleVisible={toggleDrawingVisibleById}
+								onDelete={deleteDrawingById}
+							/>
+						)}
+						{paperTradePanelVisible && (
+							<div className="gc-paper-trade-panel">
+								<div className="gc-paper-trade-panel__header">
+									<strong>{t("paperTrading.title")}</strong>
+									<div className="gc-paper-trade-panel__header-actions">
+										{replayFinished && <span className="gc-paper-trade-panel__chip">{t("paperTrading.finalized")}</span>}
+										<button type="button" className="gc-paper-trade-panel__reset" onClick={handlePaperTradeReset}>
+											{t("paperTrading.reset")}
+										</button>
+									</div>
+								</div>
+								<div className="gc-paper-trade-panel__hint">{t("paperTrading.hint")}</div>
+								<div className="gc-paper-trade-panel__stats">
+									<div className="gc-paper-trade-panel__stat">
+										<span className="gc-paper-trade-panel__label">{t("paperTrading.total")}</span>
+										<strong className="gc-paper-trade-panel__value">{paperTradeHistory.length}</strong>
+									</div>
+									<div className="gc-paper-trade-panel__stat">
+										<span className="gc-paper-trade-panel__label">{t("paperTrading.wins")}</span>
+										<strong className="gc-paper-trade-panel__value gc-col-up">{paperTradeSummary.wins}</strong>
+									</div>
+									<div className="gc-paper-trade-panel__stat">
+										<span className="gc-paper-trade-panel__label">{t("paperTrading.losses")}</span>
+										<strong className="gc-paper-trade-panel__value gc-col-dn">{paperTradeSummary.losses}</strong>
+									</div>
+									<div className="gc-paper-trade-panel__stat">
+										<span className="gc-paper-trade-panel__label">{t("paperTrading.winRate")}</span>
+										<strong className="gc-paper-trade-panel__value">{PERCENT_FORMAT(paperTradeSummary.winRate)}</strong>
+									</div>
+									<div className="gc-paper-trade-panel__stat">
+										<span className="gc-paper-trade-panel__label">{t("paperTrading.realized")}</span>
+										<strong className={`gc-paper-trade-panel__value${paperTradeRealizedPnl >= 0 ? " gc-col-up" : " gc-col-dn"}`}>
+											{formatSignedPrice(paperTradeRealizedPnl)}
+										</strong>
+									</div>
+									<div className="gc-paper-trade-panel__stat">
+										<span className="gc-paper-trade-panel__label">{t("paperTrading.avgPnl")}</span>
+										<strong className={`gc-paper-trade-panel__value${paperTradeSummary.averagePnl >= 0 ? " gc-col-up" : " gc-col-dn"}`}>
+											{formatSignedPrice(paperTradeSummary.averagePnl)}
+										</strong>
+									</div>
+									<div className="gc-paper-trade-panel__stat">
+										<span className="gc-paper-trade-panel__label">{t("paperTrading.unrealized")}</span>
+										<strong className={`gc-paper-trade-panel__value${paperTradeUnrealizedPnl >= 0 ? " gc-col-up" : " gc-col-dn"}`}>
+											{formatSignedPrice(paperTradeUnrealizedPnl)}
+										</strong>
+									</div>
+									<div className="gc-paper-trade-panel__stat">
+										<span className="gc-paper-trade-panel__label">{t("paperTrading.avgBarsHeld")}</span>
+										<strong className="gc-paper-trade-panel__value">
+											{formatBarsHeld(Math.round(paperTradeSummary.averageBarsHeld), t("paperTrading.barsUnit"))}
+										</strong>
+									</div>
+									<div className="gc-paper-trade-panel__stat">
+										<span className="gc-paper-trade-panel__label">{t("paperTrading.bestTrade")}</span>
+										<strong className="gc-paper-trade-panel__value gc-col-up">
+											{paperTradeSummary.bestTrade
+												? `${formatSignedPrice(paperTradeSummary.bestTrade.pnl)} · ${formatBarsHeld(paperTradeSummary.bestTrade.barsHeld, t("paperTrading.barsUnit"))}`
+												: "—"}
+										</strong>
+									</div>
+									<div className="gc-paper-trade-panel__stat">
+										<span className="gc-paper-trade-panel__label">{t("paperTrading.worstTrade")}</span>
+										<strong className="gc-paper-trade-panel__value gc-col-dn">
+											{paperTradeSummary.worstTrade
+												? `${formatSignedPrice(paperTradeSummary.worstTrade.pnl)} · ${formatBarsHeld(paperTradeSummary.worstTrade.barsHeld, t("paperTrading.barsUnit"))}`
+												: "—"}
+										</strong>
+									</div>
+								</div>
+								{paperTradeReportVisible && (
+									<div className="gc-paper-trade-panel__report">
+										<div className="gc-paper-trade-panel__section-title">{t("paperTrading.report")}</div>
+										<div className="gc-paper-trade-panel__journal-list">
+											{paperTradeJournal.length > 0 ? paperTradeJournal.map((trade, index) => (
+												<div
+													key={`${trade.entryIndex}-${trade.exitIndex}-${index}`}
+													className={`gc-paper-trade-panel__journal-item${trade.pnl >= 0 ? " gc-paper-trade-panel__journal-item--positive" : " gc-paper-trade-panel__journal-item--negative"}`}
+												>
+													<div className="gc-paper-trade-panel__journal-top">
+														<strong>#{paperTradeJournal.length - index}</strong>
+														<span className={trade.pnl >= 0 ? "gc-col-up" : "gc-col-dn"}>{formatSignedPrice(trade.pnl)}</span>
+													</div>
+													<div className="gc-paper-trade-panel__journal-meta">
+														<span>{dateFormat(normalizeDate(trade.entryDate))}</span>
+														<span>→</span>
+														<span>{dateFormat(normalizeDate(trade.exitDate))}</span>
+													</div>
+													<div className="gc-paper-trade-panel__journal-meta">
+														<span>{priceFormat(trade.entryPrice)} → {priceFormat(trade.exitPrice)}</span>
+														<span>{formatBarsHeld(trade.barsHeld, t("paperTrading.barsUnit"))}</span>
 													</div>
 												</div>
-												<div className="gc-paper-trade-panel__hint">{t("paperTrading.hint")}</div>
-												<div className="gc-paper-trade-panel__stats">
-													<div className="gc-paper-trade-panel__stat">
-														<span className="gc-paper-trade-panel__label">{t("paperTrading.total")}</span>
-														<strong className="gc-paper-trade-panel__value">{paperTradeHistory.length}</strong>
-													</div>
-													<div className="gc-paper-trade-panel__stat">
-														<span className="gc-paper-trade-panel__label">{t("paperTrading.wins")}</span>
-														<strong className="gc-paper-trade-panel__value gc-col-up">{paperTradeSummary.wins}</strong>
-													</div>
-													<div className="gc-paper-trade-panel__stat">
-														<span className="gc-paper-trade-panel__label">{t("paperTrading.losses")}</span>
-														<strong className="gc-paper-trade-panel__value gc-col-dn">{paperTradeSummary.losses}</strong>
-													</div>
-													<div className="gc-paper-trade-panel__stat">
-														<span className="gc-paper-trade-panel__label">{t("paperTrading.winRate")}</span>
-														<strong className="gc-paper-trade-panel__value">{PERCENT_FORMAT(paperTradeSummary.winRate)}</strong>
-													</div>
-													<div className="gc-paper-trade-panel__stat">
-														<span className="gc-paper-trade-panel__label">{t("paperTrading.realized")}</span>
-														<strong className={`gc-paper-trade-panel__value${paperTradeRealizedPnl >= 0 ? " gc-col-up" : " gc-col-dn"}`}>
-															{formatSignedPrice(paperTradeRealizedPnl)}
-														</strong>
-													</div>
-													<div className="gc-paper-trade-panel__stat">
-														<span className="gc-paper-trade-panel__label">{t("paperTrading.avgPnl")}</span>
-														<strong className={`gc-paper-trade-panel__value${paperTradeSummary.averagePnl >= 0 ? " gc-col-up" : " gc-col-dn"}`}>
-															{formatSignedPrice(paperTradeSummary.averagePnl)}
-														</strong>
-													</div>
-													<div className="gc-paper-trade-panel__stat">
-														<span className="gc-paper-trade-panel__label">{t("paperTrading.unrealized")}</span>
-														<strong className={`gc-paper-trade-panel__value${paperTradeUnrealizedPnl >= 0 ? " gc-col-up" : " gc-col-dn"}`}>
-															{formatSignedPrice(paperTradeUnrealizedPnl)}
-														</strong>
-													</div>
-													<div className="gc-paper-trade-panel__stat">
-														<span className="gc-paper-trade-panel__label">{t("paperTrading.avgBarsHeld")}</span>
-														<strong className="gc-paper-trade-panel__value">
-															{formatBarsHeld(Math.round(paperTradeSummary.averageBarsHeld), t("paperTrading.barsUnit"))}
-														</strong>
-													</div>
-													<div className="gc-paper-trade-panel__stat">
-														<span className="gc-paper-trade-panel__label">{t("paperTrading.bestTrade")}</span>
-														<strong className="gc-paper-trade-panel__value gc-col-up">
-															{paperTradeSummary.bestTrade
-																? `${formatSignedPrice(paperTradeSummary.bestTrade.pnl)} · ${formatBarsHeld(paperTradeSummary.bestTrade.barsHeld, t("paperTrading.barsUnit"))}`
-																: "—"}
-														</strong>
-													</div>
-													<div className="gc-paper-trade-panel__stat">
-														<span className="gc-paper-trade-panel__label">{t("paperTrading.worstTrade")}</span>
-														<strong className="gc-paper-trade-panel__value gc-col-dn">
-															{paperTradeSummary.worstTrade
-																? `${formatSignedPrice(paperTradeSummary.worstTrade.pnl)} · ${formatBarsHeld(paperTradeSummary.worstTrade.barsHeld, t("paperTrading.barsUnit"))}`
-																: "—"}
-														</strong>
-													</div>
-												</div>
-												{paperTradeReportVisible && (
-													<div className="gc-paper-trade-panel__report">
-														<div className="gc-paper-trade-panel__section-title">{t("paperTrading.report")}</div>
-														<div className="gc-paper-trade-panel__journal-list">
-															{paperTradeJournal.length > 0 ? paperTradeJournal.map((trade, index) => (
-																<div
-																	key={`${trade.entryIndex}-${trade.exitIndex}-${index}`}
-																	className={`gc-paper-trade-panel__journal-item${trade.pnl >= 0 ? " gc-paper-trade-panel__journal-item--positive" : " gc-paper-trade-panel__journal-item--negative"}`}
-																>
-																	<div className="gc-paper-trade-panel__journal-top">
-																		<strong>#{paperTradeJournal.length - index}</strong>
-																		<span className={trade.pnl >= 0 ? "gc-col-up" : "gc-col-dn"}>{formatSignedPrice(trade.pnl)}</span>
-																	</div>
-																	<div className="gc-paper-trade-panel__journal-meta">
-																		<span>{dateFormat(normalizeDate(trade.entryDate))}</span>
-																		<span>→</span>
-																		<span>{dateFormat(normalizeDate(trade.exitDate))}</span>
-																	</div>
-																	<div className="gc-paper-trade-panel__journal-meta">
-																		<span>{priceFormat(trade.entryPrice)} → {priceFormat(trade.exitPrice)}</span>
-																		<span>{formatBarsHeld(trade.barsHeld, t("paperTrading.barsUnit"))}</span>
-																	</div>
-																</div>
-															)) : (
-																<div className="gc-paper-trade-panel__journal-empty">{t("paperTrading.empty")}</div>
-															)}
-														</div>
-													</div>
-												)}
-												{paperTradePosition ? (
-													<div className="gc-paper-trade-panel__position">
-														<span className="gc-paper-trade-panel__position-label">{t("paperTrading.position")}</span>
-														<strong>{t("paperTrading.open")}</strong>
-														<div className="gc-paper-trade-panel__position-meta">
-															<span>{t("paperTrading.entry")}</span>
-															<span>{dateFormat(normalizeDate(paperTradePosition.entryDate))}</span>
-															<span>{priceFormat(paperTradePosition.entryPrice)}</span>
-														</div>
-													</div>
-												) : paperTradeHistory.length > 0 ? (
-													<div className="gc-paper-trade-panel__position gc-paper-trade-panel__position--idle">
-														{t("paperTrading.closed")}
-													</div>
-												) : (
-													<div className="gc-paper-trade-panel__position gc-paper-trade-panel__position--idle">
-														{t("paperTrading.empty")}
-													</div>
-												)}
-											</div>
-										)}
-
+											)) : (
+												<div className="gc-paper-trade-panel__journal-empty">{t("paperTrading.empty")}</div>
+											)}
+										</div>
+									</div>
+								)}
+								{paperTradePosition ? (
+									<div className="gc-paper-trade-panel__position">
+										<span className="gc-paper-trade-panel__position-label">{t("paperTrading.position")}</span>
+										<strong>{t("paperTrading.open")}</strong>
+										<div className="gc-paper-trade-panel__position-meta">
+											<span>{t("paperTrading.entry")}</span>
+											<span>{dateFormat(normalizeDate(paperTradePosition.entryDate))}</span>
+											<span>{priceFormat(paperTradePosition.entryPrice)}</span>
+										</div>
+									</div>
+								) : paperTradeHistory.length > 0 ? (
+									<div className="gc-paper-trade-panel__position gc-paper-trade-panel__position--idle">
+										{t("paperTrading.closed")}
+									</div>
+								) : (
+									<div className="gc-paper-trade-panel__position gc-paper-trade-panel__position--idle">
+										{t("paperTrading.empty")}
+									</div>
+								)}
+							</div>
+						)}
 								{visiblePanes.map((pane, index) => {
 									const paneTop = 8 + paneHeights.slice(0, index).reduce((sum, value) => sum + value, 0);
 									const paneH = paneHeights[index] ?? 0;
 									return (
-										<Fragment key={pane.id}>
-											<div
+											<Fragment key={pane.id}>
+												<div
 												className="rsc-pane-wrap"
 												style={{
 													position: "absolute",
@@ -1900,15 +1843,11 @@ export default function LibraryShowcaseDemo() {
 														</>
 													);
 												})()}
-											</div>
-											<PaneLabel label={paneLabel(pane)} top={paneTop} height={paneH} />
+												</div>
+												<PaneLabel label={paneLabel(pane)} top={paneTop} height={paneH} />
 										</Fragment>
 									);
 								})}
-							</>
-						) : (
-							<div className="gc-chart-placeholder">{t("common.canvasInitializing")}</div>
-						)}
 
 						{chartReady && (
 							<>
@@ -1941,7 +1880,7 @@ export default function LibraryShowcaseDemo() {
 						paneState={paneState}
 						maxVisiblePanes={maxVisiblePanes}
 						onMaxVisiblePanesChange={setMaxVisiblePanes}
-						onAddPane={addPane}
+						onAddPane={handleAddPane}
 						onReset={handleResetSettings}
 						isDark={isDark}
 						toggleTheme={toggleTheme}

@@ -81,23 +81,30 @@ Phạm vi: `src/widget/`, `src/lib/core/ChartTerminal.tsx`, `src/index.ts`, `src
 | Demo i18n | `src/demo/i18n.tsx` | ✅ 677 dòng — vi + en, cần được tham chiếu khi tạo widget messages |
 | Demo data loader | `src/demo/demoData.ts` | ✅ Stable — Binance pageable, không cần đụng |
 
-### Chưa có (cần tạo)
+### Đã có — widget core checkpoint
 
 | Component | File mục tiêu | Trạng thái |
 | :--- | :--- | :--- |
-| Widget folder | `src/widget/` | ❌ Chưa có |
-| Widget messages VI | `src/widget/i18n/messages.vi.ts` | ❌ Chưa có |
-| Widget messages EN | `src/widget/i18n/messages.en.ts` | ❌ Chưa có |
-| Widget i18n types | `src/widget/i18n/types.ts` | ⚠ Tạo được 1 file trước khi bị dừng |
-| Widget i18n context | `src/widget/context/WidgetI18nContext.tsx` | ❌ Chưa có |
-| VNStockChart component | `src/widget/VNStockChart.tsx` | ❌ Chưa có |
-| Widget index | `src/widget/index.ts` | ❌ Chưa có |
-| Widget error boundary | `src/widget/WidgetErrorBoundary.tsx` | ❌ Chưa có |
-| Widget empty state | `src/widget/WidgetEmptyState.tsx` | ❌ Chưa có |
+| Widget folder | `src/widget/` | ✅ Created |
+| Widget messages VI | `src/widget/i18n/messages.vi.ts` | ✅ Created |
+| Widget messages EN | `src/widget/i18n/messages.en.ts` | ✅ Created |
+| Widget i18n types | `src/widget/i18n/types.ts` | ✅ Created |
+| Widget i18n context | `src/widget/context/WidgetI18nContext.tsx` | ✅ Created |
+| VNStockChart component | `src/widget/VNStockChart.tsx` | ✅ Created |
+| Widget index | `src/widget/index.ts` | ✅ Created |
+| Widget error boundary | `src/widget/WidgetErrorBoundary.tsx` | ✅ Created |
+| Widget empty state | `src/widget/WidgetEmptyState.tsx` | ✅ Created |
+
+### Slice F closure status
+
+- F-07 hoàn tất: `LibraryShowcaseDemo` đã chuyển sang dùng `VNStockChart` như host wrapper, vẫn giữ drawing, replay, paper-trading, và settings overlays.
+- F-08 hoàn tất: regression tests cho widget và demo đều pass qua `npm test`.
+- F-09 hoàn tất: validation cuối cùng pass qua `npm run type-check`, `npm run build:docs`, và `python scripts/generate_module_tree.py`.
+- Ghi chú còn lại: widget message bundle hiện vẫn là bộ tối thiểu theo runtime hiện tại; nếu cần mirror full demo i18n keyset thì phải tách một scope riêng.
 
 ## 7. File cần xóa sau khi hoàn tất
 
-Không có file nào cần xóa. `src/demo/i18n.tsx` vẫn giữ nguyên vì demo vẫn cần provider riêng. Widget messages chỉ **sao chép** key, không di chuyển.
+Không có file nào cần xóa ở checkpoint hiện tại. `src/demo/i18n.tsx` vẫn giữ nguyên vì demo vẫn cần provider riêng. Widget messages hiện là bộ tối thiểu cho widget shell và có thể được mở rộng khi demo migration bắt đầu.
 
 ## 8. Rủi ro và giảm thiểu
 

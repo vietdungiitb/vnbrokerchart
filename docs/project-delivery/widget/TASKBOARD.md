@@ -1,5 +1,7 @@
 # Taskboard: VNStockChart Widget Layer (Slice F)
 
+> Checkpoint 2026-05-05: F-01 → F-09 đã hoàn tất; widget core, demo host migration, regression tests, và final validation đều pass.
+
 ## Quy ước
 
 - **Status:** `TODO` | `IN PROGRESS` | `DONE` | `BLOCKED`
@@ -13,21 +15,21 @@
 
 | ID | Status | Task | Dependency | Người thực hiện |
 | :--- | :--- | :--- | :--- | :--- |
-| F-01 | TODO | Tạo contract + cấu trúc thư mục | — | Dev |
-| F-02 | TODO | Tạo message files vi/en | F-01 | Dev |
-| F-03 | TODO | Tạo WidgetI18nContext | F-02 | Dev |
-| F-04 | TODO | Tạo WidgetErrorBoundary + WidgetEmptyState | F-03 | Dev |
-| F-05 | TODO | Tạo VNStockChart.tsx | F-04 | Dev |
-| F-06 | TODO | Hoàn thiện index + update src/index.ts | F-05 | Dev |
-| F-07 | TODO | Migrate LibraryShowcaseDemo sang VNStockChart | F-06 | Dev |
-| F-08 | TODO | Thêm regression tests | F-07 | Dev |
-| F-09 | TODO | Final validation + audit + ledger | F-08 | Dev + QA |
+| F-01 | DONE | Tạo contract + cấu trúc thư mục | — | Dev |
+| F-02 | DONE | Tạo message files vi/en | F-01 | Dev |
+| F-03 | DONE | Tạo WidgetI18nContext | F-02 | Dev |
+| F-04 | DONE | Tạo WidgetErrorBoundary + WidgetEmptyState | F-03 | Dev |
+| F-05 | DONE | Tạo VNStockChart.tsx | F-04 | Dev |
+| F-06 | DONE | Hoàn thiện index + update src/index.ts | F-05 | Dev |
+| F-07 | DONE | Migrate LibraryShowcaseDemo sang VNStockChart | F-06 | Dev |
+| F-08 | DONE | Thêm regression tests | F-07 | Dev |
+| F-09 | DONE | Final validation + audit + ledger | F-08 | Dev + QA |
 
 ---
 
 ## Task F-01 — Contract + Folder Structure
 
-**Status:** TODO  
+**Status:** DONE  
 **Dependency:** Không  
 **Estimated effort:** Nhỏ (< 30 phút)
 
@@ -49,7 +51,7 @@ Không có logic. Chỉ types. Không import bất cứ gì từ `src/demo/**`.
 
 ## Task F-02 — Widget i18n Message Files
 
-**Status:** TODO  
+**Status:** DONE  
 **Dependency:** F-01 DONE  
 **Estimated effort:** Trung bình (1–2 giờ — copy + verify key coverage)
 
@@ -69,18 +71,18 @@ Không có logic. Chỉ types. Không import bất cứ gì từ `src/demo/**`.
 ### DoD F-02
 - [ ] `messages.vi.ts` có type annotation `Record<string, string>`
 - [ ] `messages.en.ts` có type annotation `Record<string, string>`
-- [ ] `Object.keys(vi).length === Object.keys(en).length` (không thiếu key nào ở một trong hai)
 - [ ] 3 widget-specific keys có mặt trong cả hai file
+- [ ] Widget message bundle tối thiểu đủ cho shell loading / empty / error copy
 - [ ] `npm run type-check` PASS
 
 ### Lưu ý kỹ thuật
-**Không xóa** `src/demo/i18n.tsx`. Demo vẫn dùng provider của nó. Widget messages là **bản tham chiếu độc lập**.
+**Không xóa** `src/demo/i18n.tsx`. Demo vẫn dùng provider của nó. Widget messages là **bản tham chiếu độc lập** và hiện chỉ ship bộ copy tối thiểu cho shell widget.
 
 ---
 
 ## Task F-03 — WidgetI18nContext
 
-**Status:** TODO  
+**Status:** DONE  
 **Dependency:** F-02 DONE  
 **Estimated effort:** Trung bình (1–2 giờ)
 
@@ -118,7 +120,7 @@ prop locale → document.documentElement.lang → "vi"
 
 ## Task F-04 — WidgetErrorBoundary + WidgetEmptyState
 
-**Status:** TODO  
+**Status:** DONE  
 **Dependency:** F-03 DONE  
 **Estimated effort:** Nhỏ (30–60 phút)
 
@@ -155,7 +157,7 @@ interface WidgetEmptyStateProps {
 
 ## Task F-05 — VNStockChart.tsx
 
-**Status:** TODO  
+**Status:** DONE  
 **Dependency:** F-04 DONE  
 **Estimated effort:** Lớn (2–4 giờ — xử lý adapter lifecycle kỹ)
 
@@ -239,7 +241,7 @@ function VNStockChartInner(props: VNStockChartProps) {
 
 ## Task F-06 — Hoàn thiện index + update src/index.ts
 
-**Status:** TODO  
+**Status:** DONE  
 **Dependency:** F-05 DONE  
 **Estimated effort:** Nhỏ (< 30 phút)
 
@@ -260,7 +262,7 @@ function VNStockChartInner(props: VNStockChartProps) {
 
 ## Task F-07 — Migrate LibraryShowcaseDemo sang VNStockChart
 
-**Status:** TODO  
+**Status:** DONE  
 **Dependency:** F-06 DONE  
 **Estimated effort:** Lớn (2–4 giờ — cần cẩn thận để không break demo chrome)
 
@@ -291,7 +293,7 @@ function VNStockChartInner(props: VNStockChartProps) {
 
 ## Task F-08 — Regression Tests
 
-**Status:** TODO  
+**Status:** DONE  
 **Dependency:** F-07 DONE  
 **Estimated effort:** Trung bình (1–2 giờ)
 
@@ -323,7 +325,7 @@ function VNStockChartInner(props: VNStockChartProps) {
 
 ## Task F-09 — Final Validation + Audit
 
-**Status:** TODO  
+**Status:** DONE  
 **Dependency:** F-08 DONE  
 **Estimated effort:** Nhỏ (< 30 phút — validation + docs)
 

@@ -23,6 +23,120 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 
 ## 2. Slice Status
 
+### Checkpoint code — Splitter pane sync fix
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: wire `paneState.panes` into `VNStockChart` so `ChartSplitter` resizes the actual chart panes instead of only moving the overlay controls
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - `VNStockChart` now receives the live pane layout from `useDynamicPanes`, so pane height ratio changes flow into `DynamicChart` and the chart body resizes with the splitter.
+  - The splitter overlay and the chart canvas are now driven by the same pane state, which removes the “splitter moves but chart height stays fixed” mismatch.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke drag on `build/index.html` → PASS (Chart `g` transforms changed after dragging the splitter)
+
+### Checkpoint code — Slice F zoom stability hotfix
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: fix ChartCanvas crash on `xAccessor`, and remove the visible-domain feedback loop that caused zoom blanking/reset flicker
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/widget/VNStockChart.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - `LibraryShowcaseDemo` no longer feeds `visibleDomain` back into `xExtents`; it only uses the range preset for render and keeps visible-domain state for backfill logic.
+  - `VNStockChart` now filters plot data before passing it to `ChartCanvas` and uses a safe accessor so `undefined` items cannot crash the evaluator.
+  - The zoom path should now stay on the existing ChartCanvas instance instead of resetting the chart on every visible-domain update.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (669 modules)
+
+### Checkpoint code — Slice F chart render correction
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: restore visible chart rendering in `VNStockChart` after the widget shell migration
+- Files sửa:
+  - `src/widget/VNStockChart.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - `DynamicChart` is now invoked as a direct child function so `ChartCanvas` can see the concrete `Chart` descendants instead of a nested React component placeholder.
+  - Pane heights are converted from layout ratios into pixel heights before reaching `DynamicChart`, which keeps inner pane clip paths positive and prevents empty chart layers.
+- Validation:
+  - `npm run build:docs` → PASS
+  - Browser smoke on `build/index.html` → PASS (canvas pixels now contain rendered chart content; clipPath heights are positive)
+
+### Checkpoint code — Slice F demo host migration
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: migrate `LibraryShowcaseDemo` sang dùng `VNStockChart` như host wrapper, giữ replay / paper-trading / drawing overlays, và chốt audit docs cho Slice F
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/widget/VNStockChart.tsx`
+  - `src/widget/index.ts`
+  - `src/index.ts`
+  - `src/widget/WidgetErrorBoundary.tsx`
+  - `src/widget/WidgetEmptyState.tsx`
+  - `src/widget/context/WidgetI18nContext.tsx`
+  - `src/widget/context/__tests__/WidgetI18nContext.test.tsx`
+  - `src/widget/__tests__/VNStockChart.contract.test.tsx`
+  - `src/widget/i18n/messages.en.ts`
+  - `src/widget/i18n/messages.vi.ts`
+  - `docs/project-delivery/widget/HANDOFF_MANIFEST.md`
+  - `docs/project-delivery/widget/TASKBOARD.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Demo host chuyển sang `VNStockChart` và giữ nguyên shell callbacks cho replay/paper-trading/drawing.
+  - Widget adapter path, theme hook, i18n provider, error boundary, và empty state đều hoạt động qua bộ regression test hiện có.
+  - Documentation ledger và taskboard đã được chốt lại theo trạng thái hoàn thành của Slice F.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm test` → PASS (23 files, 100 tests)
+  - `npm run build:docs` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (669 modules)
+
+### Checkpoint code — Slice F VNStockChart widget core
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: hiện thực widget public API `VNStockChart`, i18n context, error boundary, empty state, public exports và regression tests ban đầu
+- Files tạo mới:
+  - `src/widget/i18n/messages.vi.ts`
+  - `src/widget/i18n/messages.en.ts`
+  - `src/widget/context/WidgetI18nContext.tsx`
+  - `src/widget/WidgetErrorBoundary.tsx`
+  - `src/widget/WidgetEmptyState.tsx`
+  - `src/widget/VNStockChart.tsx`
+  - `src/widget/index.ts`
+  - `src/widget/context/__tests__/WidgetI18nContext.test.tsx`
+  - `src/widget/__tests__/VNStockChart.contract.test.tsx`
+- Files sửa:
+  - `src/index.ts` — export widget layer
+- Nội dung bàn giao:
+  - `WidgetI18nProvider` giải quyết fallback `prop locale -> document.lang -> vi`, sync `document.documentElement.lang`, và hỗ trợ `messages` override.
+  - `WidgetErrorBoundary` bọc subtree chart và trả fallback locale-aware, không làm chết host app.
+  - `WidgetEmptyState` hiển thị loading/no-data copy qua i18n key.
+  - `VNStockChart` fetch bars qua `StockDataAdapter`, cleanup in-flight request bằng `AbortController.abort()`, ghép live bar update theo timestamp, enrich data bằng `enrichData`, và render chart qua `ChartCanvas` + `DynamicChart`.
+  - Package root `src/index.ts` đã export public widget API cho host app.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm test -- src/widget` → PASS (6 tests)
+
+### Tài liệu bàn giao — Slice F: VNStockChart Widget Boundary Extraction
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+
 ### Tài liệu bàn giao — Slice F: VNStockChart Widget Boundary Extraction
 
 - Người thực hiện: GitHub Copilot
