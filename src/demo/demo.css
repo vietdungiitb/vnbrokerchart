@@ -378,6 +378,28 @@ html[data-chart-theme="light"] body::before {
 	min-width: 0;
 }
 
+.gc-paper-trade-panel__header-actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+
+.gc-paper-trade-panel__chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 5px 8px;
+	border-radius: 999px;
+	border: 1px solid var(--gc-border-mid);
+	background: var(--gc-accent-bg);
+	color: var(--gc-accent);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
 .gc-paper-trade-panel__header strong {
 	font-size: 13px;
 	font-weight: 800;
@@ -407,6 +429,21 @@ html[data-chart-theme="light"] body::before {
 .gc-paper-trade-panel__hint {
 	font-size: 11px;
 	line-height: 1.45;
+	color: var(--gc-text-muted);
+}
+
+.gc-paper-trade-panel__report {
+	display: grid;
+	gap: 10px;
+	padding-top: 4px;
+	border-top: 1px solid var(--gc-border);
+}
+
+.gc-paper-trade-panel__section-title {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
 	color: var(--gc-text-muted);
 }
 
@@ -478,6 +515,58 @@ html[data-chart-theme="light"] body::before {
 	color: var(--gc-text-muted);
 	font-size: 11px;
 	font-weight: 600;
+}
+
+.gc-paper-trade-panel__journal-list {
+	display: grid;
+	gap: 8px;
+}
+
+.gc-paper-trade-panel__journal-item {
+	display: grid;
+	gap: 5px;
+	padding: 10px 11px;
+	border-radius: 12px;
+	border: 1px solid var(--gc-border);
+	background: var(--gc-surface-sub);
+}
+
+.gc-paper-trade-panel__journal-item--positive {
+	border-color: rgba(16, 185, 129, 0.3);
+	box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.08) inset;
+}
+
+.gc-paper-trade-panel__journal-item--negative {
+	border-color: rgba(239, 68, 68, 0.3);
+	box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.08) inset;
+}
+
+.gc-paper-trade-panel__journal-top,
+.gc-paper-trade-panel__journal-meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	color: var(--gc-text-muted);
+	flex-wrap: wrap;
+}
+
+.gc-paper-trade-panel__journal-top strong {
+	font-size: 12px;
+	font-weight: 800;
+	color: var(--gc-text);
+}
+
+.gc-paper-trade-panel__journal-empty {
+	padding: 12px 10px;
+	border-radius: 12px;
+	border: 1px dashed var(--gc-border-mid);
+	background: rgba(15, 23, 42, 0.35);
+	color: var(--gc-text-muted);
+	font-size: 11px;
+	line-height: 1.5;
 }
 
 .gc-theme-toggle {

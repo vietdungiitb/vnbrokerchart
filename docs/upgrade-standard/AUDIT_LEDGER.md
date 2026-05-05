@@ -123,6 +123,24 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - `npm test` → PASS (18 files, 85 tests)
   - Browser smoke: replay start → click chart mở vị thế `1/300`, click lần hai đóng vị thế và panel cập nhật `Lệnh 1`, `PnL đã chốt -12.39`, `Đã đóng`
 
+  ### Ad-hoc demo task — Paper trading report hardening
+
+  - Người thực hiện: GitHub Copilot
+  - Ngày: 2026-05-05
+  - Scope: chặn race duplicate-close/journal khi replay gần kết thúc hoặc khi close path và replay-finished effect cùng chạy
+  - Files modified:
+    - `src/demo/LibraryShowcaseDemo.tsx`
+    - `docs/upgrade-standard/AUDIT_LEDGER.md`
+    - `module_tree_full.md`
+  - Nội dung bàn giao:
+    - Thay `paperTradePosition` state updater side-effect bằng ref-based close flow để close chỉ được ghi nhận một lần.
+    - Thêm idempotency guard cho closed-trade fingerprint và giữ ref vị thế hiện tại đồng bộ với state.
+    - Giữ replay paper-trade journal ổn định khi người dùng click close ở gần cuối replay và khi auto-close on replay finish chạy cùng frame.
+  - Validation:
+    - `npm run type-check` → PASS
+    - `npm run build:docs` → PASS
+    - Browser smoke: replay play → click mở vị thế → chờ replay tiến gần cuối → click đóng vị thế → `Tổng lệnh 1`, `Đã chốt`, `Báo cáo replay#1` và không còn duplicate journal
+
 ### Ad-hoc demo task — Bar replay from here
 
 - Người thực hiện: GitHub Copilot

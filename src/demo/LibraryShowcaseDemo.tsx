@@ -102,16 +102,20 @@ type ToolId = typeof TOOL_GROUPS[number]["tools"][number];
 
 const DRAWING_PANEL_WIDTH = 360;
 const REPLAY_SPEEDS: ReplaySpeed[] = [0.5, 1, 2, 5, 10, "max"];
+const PERCENT_FORMAT = format(".1%");
 
 interface PaperTradePosition {
 	entryDate: Date | number;
 	entryPrice: number;
+	entryIndex: number;
 }
 
 interface ClosedPaperTrade extends PaperTradePosition {
 	exitDate: Date | number;
 	exitPrice: number;
+	exitIndex: number;
 	pnl: number;
+	barsHeld: number;
 }
 
 function getSelectedDrawingId(drawingState: { type: string; objectId?: string; object?: DrawingObject }) {
@@ -174,6 +178,10 @@ function normalizeDate(value: Date | number) {
 
 function formatSignedPrice(value: number) {
 	return `${value >= 0 ? "+" : ""}${priceFormat(value)}`;
+}
+
+function formatBarsHeld(barsHeld: number, unitLabel: string) {
+	return `${barsHeld} ${unitLabel}`;
 }
 
 function chartDomain(data: Array<{ date: Date | number }>) {
@@ -414,6 +422,9 @@ export default function LibraryShowcaseDemo() {
 	const [showDrawingList, setShowDrawingList] = useState(false);
 	const [paperTradePosition, setPaperTradePosition] = useState<PaperTradePosition | null>(null);
 	const [paperTradeHistory, setPaperTradeHistory] = useState<ClosedPaperTrade[]>([]);
+	const paperTradePositionRef = useRef<PaperTradePosition | null>(null);
+	const lastPaperTradeClickRef = useRef<{ timestamp: number; index: number } | null>(null);
+	const lastPaperTradeSignatureRef = useRef<string | null>(null);
 	const drawingInteraction = useDrawingInteraction();
 	const { undo, redo, deleteSelected, cancelDrawing } = drawingInteraction;
 	const importInputRef = useRef<HTMLInputElement | null>(null);
@@ -492,6 +503,8 @@ export default function LibraryShowcaseDemo() {
 	useEffect(() => {
 		setPaperTradePosition(null);
 		setPaperTradeHistory([]);
+		paperTradePositionRef.current = null;
+		lastPaperTradeSignatureRef.current = null;
 	}, [timeframe]);
 
 	const indicatorSeries = useMemo(
@@ -559,7 +572,9 @@ export default function LibraryShowcaseDemo() {
 	const drawingInspectorPosition = useMemo(() => ({ x: drawingPanelX, y: 16 }), [drawingPanelX]);
 	const drawingListPosition = useMemo(() => ({ x: drawingPanelX, y: 286 }), [drawingPanelX]);
 	const storageToolbarPosition = useMemo(() => ({ x: 16, y: 16 }), []);
+	const replayFinished = replayState.allData.length > 0 && replayState.currentIndex >= replayState.allData.length && !replayState.isPlaying;
 	const paperTradePanelVisible = showReplayBar || paperTradePosition !== null || paperTradeHistory.length > 0;
+	const paperTradeReportVisible = replayFinished || paperTradeHistory.length > 0;
 	const paperTradeRealizedPnl = useMemo(
 		() => paperTradeHistory.reduce((sum, trade) => sum + trade.pnl, 0),
 		[paperTradeHistory],
@@ -568,6 +583,35 @@ export default function LibraryShowcaseDemo() {
 		() => (paperTradePosition && lastBar ? lastBar.close - paperTradePosition.entryPrice : 0),
 		[lastBar, paperTradePosition],
 	);
+	const paperTradeSummary = useMemo(() => {
+		const totalTrades = paperTradeHistory.length;
+		const wins = paperTradeHistory.filter((trade) => trade.pnl > 0).length;
+		const losses = paperTradeHistory.filter((trade) => trade.pnl < 0).length;
+		const realizedPnl = paperTradeRealizedPnl;
+		const averagePnl = totalTrades > 0 ? realizedPnl / totalTrades : 0;
+		const averageBarsHeld = totalTrades > 0
+			? paperTradeHistory.reduce((sum, trade) => sum + trade.barsHeld, 0) / totalTrades
+			: 0;
+		const bestTrade = totalTrades > 0
+			? paperTradeHistory.reduce((best, trade) => (trade.pnl > best.pnl ? trade : best), paperTradeHistory[0])
+			: null;
+		const worstTrade = totalTrades > 0
+			? paperTradeHistory.reduce((worst, trade) => (trade.pnl < worst.pnl ? trade : worst), paperTradeHistory[0])
+			: null;
+
+		return {
+			totalTrades,
+			wins,
+			losses,
+			winRate: totalTrades > 0 ? wins / totalTrades : 0,
+			realizedPnl,
+			averagePnl,
+			averageBarsHeld,
+			bestTrade,
+			worstTrade,
+		};
+	}, [paperTradeHistory, paperTradeRealizedPnl]);
+	const paperTradeJournal = useMemo(() => [...paperTradeHistory].reverse(), [paperTradeHistory]);
 	const replayProgressLabel = t("replay.progress", {
 		current: replayState.currentIndex,
 		total: replayState.allData.length,
@@ -616,6 +660,36 @@ export default function LibraryShowcaseDemo() {
 		setReplayContextMenu(null);
 	}, []);
 
+	const closePaperTradePosition = useCallback((exitBar: { date: Date | number; close: number }, exitIndex: number) => {
+		const currentPosition = paperTradePositionRef.current;
+		if (!currentPosition) {
+			return;
+		}
+
+		const closedTrade: ClosedPaperTrade = {
+			...currentPosition,
+			exitDate: exitBar.date,
+			exitPrice: exitBar.close,
+			exitIndex,
+			pnl: exitBar.close - currentPosition.entryPrice,
+			barsHeld: Math.max(0, exitIndex - currentPosition.entryIndex),
+		};
+		const signature = [
+			normalizeDate(closedTrade.entryDate).getTime(),
+			normalizeDate(closedTrade.exitDate).getTime(),
+			closedTrade.entryPrice.toFixed(2),
+			closedTrade.exitPrice.toFixed(2),
+			closedTrade.barsHeld,
+		].join(":");
+		if (lastPaperTradeSignatureRef.current === signature) {
+			return;
+		}
+		lastPaperTradeSignatureRef.current = signature;
+		paperTradePositionRef.current = null;
+		setPaperTradePosition(null);
+		setPaperTradeHistory((history) => [...history, closedTrade]);
+	}, []);
+
 	const handleReplayFromHere = useCallback(() => {
 		if (!replayController || !replayContextMenu) {
 			return;
@@ -653,6 +727,8 @@ export default function LibraryShowcaseDemo() {
 	const handlePaperTradeReset = useCallback(() => {
 		setPaperTradePosition(null);
 		setPaperTradeHistory([]);
+		paperTradePositionRef.current = null;
+		lastPaperTradeSignatureRef.current = null;
 	}, []);
 
 	const handlePaperTradeClick = useCallback((moreProps: { currentItem?: EnrichedDatum }) => {
@@ -665,23 +741,38 @@ export default function LibraryShowcaseDemo() {
 			return;
 		}
 
-		if (paperTradePosition) {
-			const exitTrade: ClosedPaperTrade = {
-				...paperTradePosition,
-				exitDate: currentItem.date,
-				exitPrice: currentItem.close,
-				pnl: currentItem.close - paperTradePosition.entryPrice,
-			};
-			setPaperTradeHistory((history) => [...history, exitTrade]);
-			setPaperTradePosition(null);
+		const now = Date.now();
+		const lastClick = lastPaperTradeClickRef.current;
+		if (lastClick && lastClick.index === replayState.currentIndex && now - lastClick.timestamp < 100) {
+			return;
+		}
+		lastPaperTradeClickRef.current = {
+			timestamp: now,
+			index: replayState.currentIndex,
+		};
+
+		if (paperTradePositionRef.current) {
+			closePaperTradePosition(currentItem, replayState.currentIndex);
 			return;
 		}
 
-		setPaperTradePosition({
+		const nextPosition = {
 			entryDate: currentItem.date,
 			entryPrice: currentItem.close,
-		});
-	}, [paperTradePosition, replayState.currentBar, replayState.isPlaying]);
+			entryIndex: replayState.currentIndex,
+		};
+		paperTradePositionRef.current = nextPosition;
+		setPaperTradePosition(nextPosition);
+		lastPaperTradeSignatureRef.current = null;
+	}, [closePaperTradePosition, replayState.currentBar, replayState.currentIndex, replayState.isPlaying]);
+
+	useEffect(() => {
+		if (!replayFinished || !paperTradePositionRef.current || !lastBar) {
+			return;
+		}
+
+		closePaperTradePosition(lastBar, replayState.currentIndex);
+	}, [closePaperTradePosition, lastBar, replayFinished, replayState.currentIndex]);
 
 	useEffect(() => {
 		if (!replayContextMenu) {
@@ -1481,15 +1572,30 @@ export default function LibraryShowcaseDemo() {
 											<div className="gc-paper-trade-panel">
 												<div className="gc-paper-trade-panel__header">
 													<strong>{t("paperTrading.title")}</strong>
-													<button type="button" className="gc-paper-trade-panel__reset" onClick={handlePaperTradeReset}>
-														{t("paperTrading.reset")}
-													</button>
+													<div className="gc-paper-trade-panel__header-actions">
+														{replayFinished && <span className="gc-paper-trade-panel__chip">{t("paperTrading.finalized")}</span>}
+														<button type="button" className="gc-paper-trade-panel__reset" onClick={handlePaperTradeReset}>
+															{t("paperTrading.reset")}
+														</button>
+													</div>
 												</div>
 												<div className="gc-paper-trade-panel__hint">{t("paperTrading.hint")}</div>
 												<div className="gc-paper-trade-panel__stats">
 													<div className="gc-paper-trade-panel__stat">
-														<span className="gc-paper-trade-panel__label">{t("paperTrading.trades")}</span>
+														<span className="gc-paper-trade-panel__label">{t("paperTrading.total")}</span>
 														<strong className="gc-paper-trade-panel__value">{paperTradeHistory.length}</strong>
+													</div>
+													<div className="gc-paper-trade-panel__stat">
+														<span className="gc-paper-trade-panel__label">{t("paperTrading.wins")}</span>
+														<strong className="gc-paper-trade-panel__value gc-col-up">{paperTradeSummary.wins}</strong>
+													</div>
+													<div className="gc-paper-trade-panel__stat">
+														<span className="gc-paper-trade-panel__label">{t("paperTrading.losses")}</span>
+														<strong className="gc-paper-trade-panel__value gc-col-dn">{paperTradeSummary.losses}</strong>
+													</div>
+													<div className="gc-paper-trade-panel__stat">
+														<span className="gc-paper-trade-panel__label">{t("paperTrading.winRate")}</span>
+														<strong className="gc-paper-trade-panel__value">{PERCENT_FORMAT(paperTradeSummary.winRate)}</strong>
 													</div>
 													<div className="gc-paper-trade-panel__stat">
 														<span className="gc-paper-trade-panel__label">{t("paperTrading.realized")}</span>
@@ -1498,12 +1604,69 @@ export default function LibraryShowcaseDemo() {
 														</strong>
 													</div>
 													<div className="gc-paper-trade-panel__stat">
+														<span className="gc-paper-trade-panel__label">{t("paperTrading.avgPnl")}</span>
+														<strong className={`gc-paper-trade-panel__value${paperTradeSummary.averagePnl >= 0 ? " gc-col-up" : " gc-col-dn"}`}>
+															{formatSignedPrice(paperTradeSummary.averagePnl)}
+														</strong>
+													</div>
+													<div className="gc-paper-trade-panel__stat">
 														<span className="gc-paper-trade-panel__label">{t("paperTrading.unrealized")}</span>
 														<strong className={`gc-paper-trade-panel__value${paperTradeUnrealizedPnl >= 0 ? " gc-col-up" : " gc-col-dn"}`}>
 															{formatSignedPrice(paperTradeUnrealizedPnl)}
 														</strong>
 													</div>
+													<div className="gc-paper-trade-panel__stat">
+														<span className="gc-paper-trade-panel__label">{t("paperTrading.avgBarsHeld")}</span>
+														<strong className="gc-paper-trade-panel__value">
+															{formatBarsHeld(Math.round(paperTradeSummary.averageBarsHeld), t("paperTrading.barsUnit"))}
+														</strong>
+													</div>
+													<div className="gc-paper-trade-panel__stat">
+														<span className="gc-paper-trade-panel__label">{t("paperTrading.bestTrade")}</span>
+														<strong className="gc-paper-trade-panel__value gc-col-up">
+															{paperTradeSummary.bestTrade
+																? `${formatSignedPrice(paperTradeSummary.bestTrade.pnl)} · ${formatBarsHeld(paperTradeSummary.bestTrade.barsHeld, t("paperTrading.barsUnit"))}`
+																: "—"}
+														</strong>
+													</div>
+													<div className="gc-paper-trade-panel__stat">
+														<span className="gc-paper-trade-panel__label">{t("paperTrading.worstTrade")}</span>
+														<strong className="gc-paper-trade-panel__value gc-col-dn">
+															{paperTradeSummary.worstTrade
+																? `${formatSignedPrice(paperTradeSummary.worstTrade.pnl)} · ${formatBarsHeld(paperTradeSummary.worstTrade.barsHeld, t("paperTrading.barsUnit"))}`
+																: "—"}
+														</strong>
+													</div>
 												</div>
+												{paperTradeReportVisible && (
+													<div className="gc-paper-trade-panel__report">
+														<div className="gc-paper-trade-panel__section-title">{t("paperTrading.report")}</div>
+														<div className="gc-paper-trade-panel__journal-list">
+															{paperTradeJournal.length > 0 ? paperTradeJournal.map((trade, index) => (
+																<div
+																	key={`${trade.entryIndex}-${trade.exitIndex}-${index}`}
+																	className={`gc-paper-trade-panel__journal-item${trade.pnl >= 0 ? " gc-paper-trade-panel__journal-item--positive" : " gc-paper-trade-panel__journal-item--negative"}`}
+																>
+																	<div className="gc-paper-trade-panel__journal-top">
+																		<strong>#{paperTradeJournal.length - index}</strong>
+																		<span className={trade.pnl >= 0 ? "gc-col-up" : "gc-col-dn"}>{formatSignedPrice(trade.pnl)}</span>
+																	</div>
+																	<div className="gc-paper-trade-panel__journal-meta">
+																		<span>{dateFormat(normalizeDate(trade.entryDate))}</span>
+																		<span>→</span>
+																		<span>{dateFormat(normalizeDate(trade.exitDate))}</span>
+																	</div>
+																	<div className="gc-paper-trade-panel__journal-meta">
+																		<span>{priceFormat(trade.entryPrice)} → {priceFormat(trade.exitPrice)}</span>
+																		<span>{formatBarsHeld(trade.barsHeld, t("paperTrading.barsUnit"))}</span>
+																	</div>
+																</div>
+															)) : (
+																<div className="gc-paper-trade-panel__journal-empty">{t("paperTrading.empty")}</div>
+															)}
+														</div>
+													</div>
+												)}
 												{paperTradePosition ? (
 													<div className="gc-paper-trade-panel__position">
 														<span className="gc-paper-trade-panel__position-label">{t("paperTrading.position")}</span>
