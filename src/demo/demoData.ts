@@ -1,19 +1,11 @@
-import { bollingerBand, ema, macd, rsi } from "../lib/indicator";
-import type { OHLCV } from "../lib/types";
-import type { RawOHLCV } from "../lib/core/calculators/types";
+import { enrichData } from "../lib/core/calculators/enrichData";
+import type { EnrichedDatum, IndicatorBandValue, IndicatorMacdValue, RawOHLCV } from "../lib/core/calculators/types";
+import type { SeriesConfig } from "../lib/core/types/pane-descriptor";
 import bitstampCsv from "../../docs/data/bitfinex_xbtusd_1m.csv";
 
-export interface BollingerBandPoint {
-	top: number;
-	middle: number;
-	bottom: number;
-}
-
-export interface MACDPoint {
-	macd?: number;
-	signal?: number;
-	divergence?: number;
-}
+export type BollingerBandPoint = IndicatorBandValue;
+export type MACDPoint = IndicatorMacdValue;
+export type DemoDatum = EnrichedDatum;
 
 export const BOLLINGER_BAND_OPTIONS = {
 	windowSize: 20,
@@ -22,16 +14,15 @@ export const BOLLINGER_BAND_OPTIONS = {
 	movingAverageType: "sma",
 } as const;
 
-export interface DemoDatum extends OHLCV {
-	ema20?: number;
-	ema50?: number;
-	rsi?: number;
-	macd?: MACDPoint;
-	bollingerBand?: BollingerBandPoint;
-}
-
 const DEMO_WINDOW = 300;
 const BINANCE_BASE = "https://api.binance.com/api/v3/klines";
+const DEMO_CANONICAL_SERIES: readonly SeriesConfig[] = [
+	{ type: "EMA", yAxis: "right", params: { period: 20 } },
+	{ type: "EMA", yAxis: "right", params: { period: 50 } },
+	{ type: "RSI", yAxis: "left", params: { period: 14 } },
+	{ type: "MACD", yAxis: "right", params: { fast: 12, slow: 26, signal: 9 } },
+	{ type: "BollingerBand", yAxis: "right", params: { period: 20, stdDev: 2 } },
+];
 
 /** Map demo timeframe labels → Binance interval strings */
 export const BINANCE_INTERVAL_MAP: Record<string, string> = {
@@ -64,42 +55,7 @@ function normalizeBars(data: readonly RawOHLCV[]): RawOHLCV[] {
 }
 
 function computeIndicators(data: readonly RawOHLCV[]) {
-	const enriched = normalizeBars(data).map((bar) => ({ ...bar })) as DemoDatum[];
-	type IndicatorBuilder = any;
-
-	const ema20 = (ema() as IndicatorBuilder)
-		.id(0)
-		.options({ windowSize: 20 })
-		.merge((datum: DemoDatum, value: number | undefined) => { datum.ema20 = value; })
-		.accessor((datum: DemoDatum) => datum.ema20);
-
-	const ema50 = (ema() as IndicatorBuilder)
-		.id(1)
-		.options({ windowSize: 50 })
-		.merge((datum: DemoDatum, value: number | undefined) => { datum.ema50 = value; })
-		.accessor((datum: DemoDatum) => datum.ema50);
-
-	const rsiCalculator = (rsi() as IndicatorBuilder)
-		.options({ windowSize: 14 })
-		.merge((datum: DemoDatum, value: number | undefined) => { datum.rsi = value; })
-		.accessor((datum: DemoDatum) => datum.rsi);
-
-	const macdCalculator = (macd() as IndicatorBuilder)
-		.options({ fast: 12, slow: 26, signal: 9 })
-		.merge((datum: DemoDatum, value: MACDPoint | undefined) => { datum.macd = value; })
-		.accessor((datum: DemoDatum) => datum.macd);
-
-	const bollingerBandCalculator = (bollingerBand() as IndicatorBuilder)
-		.options(BOLLINGER_BAND_OPTIONS)
-		.merge((datum: DemoDatum, value: BollingerBandPoint | undefined) => { datum.bollingerBand = value; })
-		.accessor((datum: DemoDatum) => datum.bollingerBand);
-
-	ema20(enriched);
-	ema50(enriched);
-	rsiCalculator(enriched);
-	macdCalculator(enriched);
-	bollingerBandCalculator(enriched);
-	return enriched;
+	return enrichData(normalizeBars(data), { series: DEMO_CANONICAL_SERIES });
 }
 
 export function getOfflineDemoBars(): RawOHLCV[] {

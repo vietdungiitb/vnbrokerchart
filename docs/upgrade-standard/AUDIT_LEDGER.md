@@ -141,6 +141,29 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
     - `npm run build:docs` → PASS
     - Browser smoke: replay play → click mở vị thế → chờ replay tiến gần cuối → click đóng vị thế → `Tổng lệnh 1`, `Đã chốt`, `Báo cáo replay#1` và không còn duplicate journal
 
+  ### Ad-hoc demo task — Indicator SSOT runtime
+
+  - Người thực hiện: GitHub Copilot
+  - Ngày: 2026-05-05
+  - Scope: route demo data generation through canonical `enrichData` and remove the duplicate local indicator calculators from the legacy demo surface
+  - Files modified:
+    - `src/demo/demoData.ts`
+    - `src/demo/OriginalLikeDemo.tsx`
+    - `src/demo/FullDemo.tsx`
+    - `src/lib/core/calculators/__tests__/enrichData.test.ts`
+    - `docs/upgrade-standard/AUDIT_LEDGER.md`
+    - `module_tree_full.md`
+  - Nội dung bàn giao:
+    - `getOfflineDemoData()` / `formatBinanceKlines()` / `fetchLiveDemoData()` now flow through the canonical `enrichData` pipeline with explicit default indicator keys.
+    - `OriginalLikeDemo` reads EMA/MACD values from the canonical enriched payload instead of recomputing them with local indicator calculators; only the unrelated SMA volume overlay remains local.
+    - `FullDemo` stays compatible with the enriched demo datum shape while preserving the existing visual behavior.
+    - Added a core regression asserting the default demo indicator keys (`EMA`, `RSI`, `MACD`, `BollingerBand`) are materialized in the canonical indicator store.
+  - Validation:
+    - `npm run type-check` → PASS
+    - `npm test -- src/lib/core/calculators/__tests__/enrichData.test.ts src/lib/core/__tests__/seriesValueResolver.test.ts` → PASS
+    - `npm run build:docs` → PASS
+    - Browser smoke: reload main demo shell after rebuild → PASS, no runtime regression
+
 ### Ad-hoc demo task — Bar replay from here
 
 - Người thực hiện: GitHub Copilot

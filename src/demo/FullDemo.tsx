@@ -458,7 +458,7 @@ const FullDemoContent = () => {
                                             <YAxis axisAt="right" orient="right" ticks={6} {...priceYAxisTheme} tickFormat={priceFormat} />
                                             <BollingerSeries yAccessor={(datum: DemoDatum) => datum.bollingerBand} stroke={bollingerAppearance.stroke} fill={bollingerAppearance.fill} />
                                             <CandlestickSeries
-                                                    fill={(datum: DemoDatum) => (datum.close >= datum.open ? bullishColor : bearishColor)}
+                                                    fill={(datum) => (datum.close >= datum.open ? bullishColor : bearishColor)}
                                                     stroke="rgba(15, 23, 42, 0.9)"
                                                     wickStroke="rgba(226, 232, 240, 0.78)"
                                                 />

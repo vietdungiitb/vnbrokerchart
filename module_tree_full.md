@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-05 13:36:37`
+Generated at: `2026-05-05 13:53:10`
 
 ## Summary
 
@@ -10,8 +10,8 @@ Generated at: `2026-05-05 13:36:37`
 - Python modules: 1
 - JS/TS modules: 654
 - Total classes: 350
-- Total functions: 3651
-- Total top-level variables: 7830
+- Total functions: 3654
+- Total top-level variables: 7825
 
 ## Python Modules
 
@@ -2099,7 +2099,7 @@ Generated at: `2026-05-05 13:36:37`
 - Functions:
   - `computeIndicators`, `fetchLiveDemoBars`, `fetchLiveDemoData`, `formatBinanceKlineBars`, `formatBinanceKlines`, `getOfflineDemoBars`, `getOfflineDemoData`, `normalizeBars`, `parseCsvRow`, `parseDateTime`
 - Top-level variables:
-  - `BINANCE_BASE`, `BINANCE_INTERVAL_MAP`, `BOLLINGER_BAND_OPTIONS`, `DEMO_WINDOW`, `binanceInterval`, `bollingerBandCalculator`, `ema20`, `ema50`, `enriched`, `json`, `macdCalculator`, `response`, `rsiCalculator`, `url`
+  - `BINANCE_BASE`, `BINANCE_INTERVAL_MAP`, `BOLLINGER_BAND_OPTIONS`, `DEMO_CANONICAL_SERIES`, `DEMO_WINDOW`, `binanceInterval`, `json`, `response`, `url`
 
 ### `src/demo/DemoPageShell.tsx`
 
@@ -2142,9 +2142,9 @@ Generated at: `2026-05-05 13:36:37`
 ### `src/demo/OriginalLikeDemo.tsx`
 
 - Functions:
-  - `OriginalLikeDemoContent`, `createOrigin`, `handleBrush`, `handleResetView`, `handleResize`, `handleVisibleDomainChange`, `updateWidth`, `xAxisTickFormat`
+  - `OriginalLikeDemoContent`, `createOrigin`, `ema12Accessor`, `ema26Accessor`, `handleBrush`, `handleResetView`, `handleResize`, `handleVisibleDomainChange`, `macdAccessor`, `updateWidth`, `xAxisTickFormat`
 - Top-level variables:
-  - `BRUSH_TYPE`, `axisTheme`, `bearishColor`, `bullishColor`, `calculatedData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `ema12`, `ema12Stroke`, `ema26`, `ema26Stroke`, `endIndex`, `initialXExtents`, `isZoomedIn`, `left`, `macdAppearance`, `macdCalculator`, `macdDateFormat`, `macdFormat`, `macdFormat3`, `macdHeight`, `macdOrigin`, `macdYAxisTheme`, `macdYAxisTickFormat`, `macdYAxisTicks`, `margin`, `node`, `observer`, `priceFormat`, `priceFormat1`, `priceFormat3`, `priceHeight`, `priceYAxisTheme`, `priceYAxisTickFormat`, `priceYAxisTicks`, `rawData`, `resolvedChartWidth`, `right`, `smaVolume10`, `startIndex`, `themeFontFamily`, `tickDatum`, `tickIndex`, `tooltipDateFormat`, `tooltipDisplayTexts`, `visibleBars`, `visibleDomainLabel`, `volumeAxisFormat`, `volumeFormat`, `volumeHeight`, `volumeMouseFormat`, `volumeOrigin`, `volumeYAxisTheme`, `xScaleProvider`
+  - `BRUSH_TYPE`, `EMA12_SERIES`, `EMA26_SERIES`, `MACD_SERIES`, `axisTheme`, `bearishColor`, `bullishColor`, `calculatedData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `ema12Stroke`, `ema26Stroke`, `endIndex`, `initialXExtents`, `isZoomedIn`, `left`, `macdAppearance`, `macdDateFormat`, `macdFormat`, `macdFormat3`, `macdHeight`, `macdOrigin`, `macdYAxisTheme`, `macdYAxisTickFormat`, `macdYAxisTicks`, `margin`, `node`, `observer`, `priceFormat`, `priceFormat1`, `priceFormat3`, `priceHeight`, `priceYAxisTheme`, `priceYAxisTickFormat`, `priceYAxisTicks`, `rawData`, `resolvedChartWidth`, `right`, `smaVolume10`, `startIndex`, `themeFontFamily`, `tickDatum`, `tickIndex`, `tooltipDateFormat`, `tooltipDisplayTexts`, `visibleBars`, `visibleDomainLabel`, `volumeAxisFormat`, `volumeFormat`, `volumeHeight`, `volumeMouseFormat`, `volumeOrigin`, `volumeYAxisTheme`, `xScaleProvider`
 
 ### `src/demo/PaneSettingsModal.tsx`
 

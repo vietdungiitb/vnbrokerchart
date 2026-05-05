@@ -103,4 +103,15 @@ describe("enrichData", () => {
 		expect(bar?.indicatorValues?.["EMA:period=21"]).toBeDefined();
 		expect(bar?.indicatorValues?.["RSI:period=21"]).toBeDefined();
 	});
+
+	it("materializes the default canonical demo indicator keys", () => {
+		const enriched = enrichData(mockOHLCV300);
+		const bar = enriched[80];
+
+		expect(bar?.indicatorValues?.["EMA:period=20"]).toBeDefined();
+		expect(bar?.indicatorValues?.["EMA:period=50"]).toBeDefined();
+		expect(bar?.indicatorValues?.["RSI:period=14"]).toBeDefined();
+		expect(bar?.indicatorValues?.["MACD:fast=12:slow=26:signal=9"]).toBeDefined();
+		expect(bar?.indicatorValues?.["BollingerBand:period=20:stdDev=2"]).toBeDefined();
+	});
 });

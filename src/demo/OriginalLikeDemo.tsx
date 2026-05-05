@@ -21,9 +21,12 @@ import {
 } from "../lib/coordinates";
 import { OHLCTooltip, MovingAverageTooltip, MACDTooltip } from "../lib/tooltip";
 import { discontinuousTimeScaleProvider } from "../lib/scale";
-import { ema, sma, macd } from "../lib/indicator";
+import { sma } from "../lib/indicator";
+import { enrichData } from "../lib/core/calculators/enrichData";
+import { resolveSeriesStructuredValue, resolveSeriesValue } from "../lib/core/seriesValueResolver";
+import type { SeriesConfig } from "../lib/core/types/pane-descriptor";
 import { last } from "../lib/utils";
-import { getOfflineDemoData, type DemoDatum, type MACDPoint } from "./demoData";
+import { getOfflineDemoBars, type DemoDatum, type MACDPoint } from "./demoData";
 import DemoPageShell from "./DemoPageShell";
 import { DemoI18nBoundary, useDemoI18n } from "./i18n";
 import "./demo.css";
@@ -82,37 +85,6 @@ const bearishColor = "#ef4444";
 const ema12Stroke = "#22d3ee";
 const ema26Stroke = "#f59e0b";
 
-const ema26 = (ema() as any)
-    .id(0)
-    .options({
-        windowSize: 26,
-    })
-    .merge((datum: OriginalLikeDatum, value: number | undefined) => {
-        datum.ema26 = value;
-    })
-    .accessor((datum: OriginalLikeDatum) => datum.ema26);
-
-const ema12 = (ema() as any)
-    .id(1)
-    .options({
-        windowSize: 12,
-    })
-    .merge((datum: OriginalLikeDatum, value: number | undefined) => {
-        datum.ema12 = value;
-    })
-    .accessor((datum: OriginalLikeDatum) => datum.ema12);
-
-const macdCalculator = (macd() as any)
-    .options({
-        fast: 12,
-        slow: 26,
-        signal: 9,
-    })
-    .merge((datum: OriginalLikeDatum, value: MACDPoint | undefined) => {
-        datum.macd = value;
-    })
-    .accessor((datum: OriginalLikeDatum) => datum.macd);
-
 const smaVolume10 = (sma() as any)
     .id(3)
     .options({
@@ -136,6 +108,14 @@ const macdAppearance = {
 
 const BRUSH_TYPE = "2D";
 
+const EMA12_SERIES: SeriesConfig = { type: "EMA", yAxis: "right", params: { period: 12 } };
+const EMA26_SERIES: SeriesConfig = { type: "EMA", yAxis: "right", params: { period: 26 } };
+const MACD_SERIES: SeriesConfig = { type: "MACD", yAxis: "right", params: { fast: 12, slow: 26, signal: 9 } };
+
+const ema26Accessor = (datum: OriginalLikeDatum) => datum.ema26;
+const ema12Accessor = (datum: OriginalLikeDatum) => datum.ema12;
+const macdAccessor = (datum: OriginalLikeDatum) => datum.macd;
+
 function createOrigin(offsetFromBottom: number) {
     return (_width: number, height: number) => [0, height - offsetFromBottom] as [number, number];
 }
@@ -156,11 +136,17 @@ const OriginalLikeDemoContent = () => {
     const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight);
 
     const rawData = useMemo(() => {
-        return getOfflineDemoData().map((datum) => ({ ...datum })) as OriginalLikeDatum[];
+        return enrichData(getOfflineDemoBars(), { series: [EMA12_SERIES, EMA26_SERIES, MACD_SERIES] })
+            .map((datum) => ({
+                ...datum,
+                ema12: resolveSeriesValue(datum, EMA12_SERIES),
+                ema26: resolveSeriesValue(datum, EMA26_SERIES),
+                macd: resolveSeriesStructuredValue(datum, MACD_SERIES) as MACDPoint | undefined,
+            })) as OriginalLikeDatum[];
     }, []);
 
     const calculatedData = useMemo(() => {
-        return macdCalculator(smaVolume10(ema12(ema26(rawData)))) as OriginalLikeDatum[];
+        return smaVolume10(rawData) as OriginalLikeDatum[];
     }, [rawData]);
 
     const xScaleProvider = useMemo(() => {
@@ -340,7 +326,7 @@ const OriginalLikeDemoContent = () => {
                                     <Chart
                                         id={1}
                                         height={priceHeight}
-                                        yExtents={[(datum: OriginalLikeDatum) => [datum.high, datum.low], ema26.accessor(), ema12.accessor()]}
+                                        yExtents={[(datum: OriginalLikeDatum) => [datum.high, datum.low], ema26Accessor, ema12Accessor]}
                                         padding={{ top: 10, bottom: 20 }}
                                     >
                                         <XAxis
@@ -354,10 +340,10 @@ const OriginalLikeDemoContent = () => {
                                         <YAxis axisAt="right" orient="right" ticks={priceYAxisTicks} {...priceYAxisTheme} />
                                         <MouseCoordinateY {...coordinateTheme} at="right" orient="right" displayFormat={priceYAxisTickFormat} />
                                         <CandlestickSeries />
-                                        <LineSeries yAccessor={ema26.accessor()} stroke={ema26Stroke} />
-                                        <LineSeries yAccessor={ema12.accessor()} stroke={ema12Stroke} />
-                                        <CurrentCoordinate yAccessor={ema26.accessor()} fill={ema26Stroke} />
-                                        <CurrentCoordinate yAccessor={ema12.accessor()} fill={ema12Stroke} />
+                                        <LineSeries yAccessor={ema26Accessor} stroke={ema26Stroke} />
+                                        <LineSeries yAccessor={ema12Accessor} stroke={ema12Stroke} />
+                                        <CurrentCoordinate yAccessor={ema26Accessor} fill={ema26Stroke} />
+                                        <CurrentCoordinate yAccessor={ema12Accessor} fill={ema12Stroke} />
                                         <EdgeIndicator
                                             itemType="last"
                                             orient="right"
@@ -371,16 +357,16 @@ const OriginalLikeDemoContent = () => {
                                             displayFormat={priceFormat}
                                             options={[
                                                 {
-                                                    yAccessor: ema26.accessor(),
-                                                    type: ema26.type(),
-                                                    stroke: ema26.stroke(),
-                                                    windowSize: ema26.options().windowSize,
+                                                    yAccessor: ema26Accessor,
+                                                    type: "EMA",
+                                                    stroke: ema26Stroke,
+                                                    windowSize: 26,
                                                 },
                                                 {
-                                                    yAccessor: ema12.accessor(),
-                                                    type: ema12.type(),
-                                                    stroke: ema12.stroke(),
-                                                    windowSize: ema12.options().windowSize,
+                                                    yAccessor: ema12Accessor,
+                                                    type: "EMA",
+                                                    stroke: ema12Stroke,
+                                                    windowSize: 12,
                                                 },
                                             ]}
                                         />
@@ -418,7 +404,7 @@ const OriginalLikeDemoContent = () => {
                                         id={3}
                                         height={macdHeight}
                                         origin={macdOrigin}
-                                        yExtents={macdCalculator.accessor()}
+                                        yExtents={macdAccessor}
                                         padding={{ top: 10, bottom: 10 }}
                                     >
                                         <XAxis
@@ -442,11 +428,11 @@ const OriginalLikeDemoContent = () => {
                                             onStart={() => {}}
                                             onBrush={handleBrush}
                                         />
-                                        <MACDSeries yAccessor={macdCalculator.accessor()} stroke={macdAppearance.stroke} fill={macdAppearance.fill} />
+                                        <MACDSeries yAccessor={macdAccessor} stroke={macdAppearance.stroke} fill={macdAppearance.fill} />
                                         <MACDTooltip
                                             origin={[-38, 15]}
-                                            yAccessor={macdCalculator.accessor()}
-                                            options={macdCalculator.options()}
+                                            yAccessor={macdAccessor}
+                                            options={{ fast: 12, slow: 26, signal: 9 }}
                                             appearance={macdAppearance}
                                         />
                                     </Chart>
