@@ -221,6 +221,39 @@ html[data-chart-theme="light"] body::before {
 	color: var(--gc-accent);
 }
 
+.gc-replay-controls {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-wrap: wrap;
+	min-width: 0;
+}
+
+.gc-replay-mini {
+	min-width: 28px;
+	justify-content: center;
+	padding: 5px 7px;
+}
+
+.gc-replay-speeds {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	min-width: 0;
+}
+
+.gc-replay-speed {
+	font-size: 11px;
+	padding: 4px 7px;
+}
+
+.gc-replay-status {
+	font-size: 11px;
+	color: var(--gc-text-muted);
+	white-space: nowrap;
+	padding-left: 2px;
+}
+
 .gc-theme-toggle {
 	width: 28px;
 	height: 28px;

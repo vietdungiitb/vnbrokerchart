@@ -14,9 +14,12 @@ import {
 	DrawingListPanel,
 	useDrawingInteraction,
 	useDrawingStorage,
+	BarReplayController,
 	type PaneDescriptor,
+	type BarReplayState,
 	type SeriesConfig,
 	type SeriesTypeId,
+	type ReplaySpeed,
 	ChartSplitter,
 	useChartTheme,
 	version,
@@ -98,6 +101,7 @@ const TOOL_GROUPS = [
 type ToolId = typeof TOOL_GROUPS[number]["tools"][number];
 
 const DRAWING_PANEL_WIDTH = 360;
+const REPLAY_SPEEDS: ReplaySpeed[] = [0.5, 1, 2, 5, 10, "max"];
 
 function getSelectedDrawingId(drawingState: { type: string; objectId?: string; object?: DrawingObject }) {
 	switch (drawingState.type) {
@@ -158,6 +162,14 @@ function normalizeDate(value: Date | number) {
 }
 
 function chartDomain(data: Array<{ date: Date | number }>) {
+	if (data.length === 0) {
+		return [new Date(0), new Date(0)] as [Date, Date];
+	}
+
+	if (data.length === 1) {
+		return [normalizeDate(data[0].date), normalizeDate(data[0].date)] as [Date, Date];
+	}
+
 	const end = data.length - 1;
 	const start = Math.max(0, end - 140);
 	return [normalizeDate(data[start].date), normalizeDate(data[end].date)] as [Date, Date];
@@ -430,15 +442,48 @@ export default function LibraryShowcaseDemo() {
 		() => (liveData.length > 0 ? liveData : getOfflineDemoBars()),
 		[liveData],
 	);
+	const replayControllerRef = useRef<BarReplayController<RawOHLCV> | null>(null);
+	if (replayControllerRef.current === null) {
+		replayControllerRef.current = new BarReplayController<RawOHLCV>({
+			allData: data,
+			startIndex: data.length,
+		});
+	}
+	const [replayState, setReplayState] = useState<BarReplayState<RawOHLCV>>(() => replayControllerRef.current!.getState());
+
+	useEffect(() => {
+		const controller = replayControllerRef.current;
+		if (!controller) {
+			return;
+		}
+
+		return controller.subscribe(setReplayState);
+	}, []);
+
+	useEffect(() => {
+		replayControllerRef.current?.setData(data, data.length);
+	}, [data]);
 
 	const indicatorSeries = useMemo(
 		() => paneState.panes.flatMap((pane) => pane.series),
 		[paneState.panes],
 	);
 
+	const replayVisibleData = useMemo(() => {
+		if (replayState.visibleData.length > 1) {
+			return replayState.visibleData;
+		}
+
+		if (replayState.currentIndex <= 0 || data.length <= 1) {
+			return data;
+		}
+
+		return data.slice(0, Math.min(2, data.length));
+	}, [data, replayState.currentIndex, replayState.visibleData]);
+
 	// Heikin Ashi transform — reuse base indicator fields, swap OHLC only
 	const plotData = useMemo<EnrichedDatum[]>(() => {
-		const enrichedData = enrichData(data, { series: indicatorSeries });
+		const enrichedData = enrichData(replayVisibleData, { series: indicatorSeries });
 		if (chartType !== "heikinashi" || enrichedData.length === 0) return enrichedData;
 		const haCalc = heikinAshi();
 		const transformed = haCalc(enrichedData as any[]) as any[];
@@ -449,7 +494,7 @@ export default function LibraryShowcaseDemo() {
 			low:   bar.low,
 			close: bar.close,
 		}));
-	}, [data, chartType, indicatorSeries]);
+	}, [chartType, indicatorSeries, replayVisibleData]);
 
 	// scaleTime + default candlestick width can collapse to near-zero body width.
 	// Use distance between adjacent bars in screen space for stable candle bodies.
@@ -484,6 +529,49 @@ export default function LibraryShowcaseDemo() {
 	const drawingInspectorPosition = useMemo(() => ({ x: drawingPanelX, y: 16 }), [drawingPanelX]);
 	const drawingListPosition = useMemo(() => ({ x: drawingPanelX, y: 286 }), [drawingPanelX]);
 	const storageToolbarPosition = useMemo(() => ({ x: 16, y: 16 }), []);
+	const replayProgressLabel = t("replay.progress", {
+		current: replayState.currentIndex,
+		total: replayState.allData.length,
+	});
+	const replayToggleTitle = replayState.isPlaying ? t("replay.pause") : t("replay.play");
+	const replayController = replayControllerRef.current;
+
+	const handleReplayToggle = useCallback(() => {
+		if (!replayController) {
+			return;
+		}
+
+		if (replayController.isPlayingNow()) {
+			replayController.pause();
+			return;
+		}
+
+		if (replayController.getCurrentIndex() >= replayController.getState().allData.length) {
+			replayController.rewind();
+		}
+
+		replayController.play();
+	}, [replayController]);
+
+	const handleReplayRewind = useCallback(() => {
+		replayController?.rewind();
+	}, [replayController]);
+
+	const handleReplayStepBack = useCallback(() => {
+		replayController?.stepBack();
+	}, [replayController]);
+
+	const handleReplayStepForward = useCallback(() => {
+		replayController?.stepForward();
+	}, [replayController]);
+
+	const handleReplayJumpLatest = useCallback(() => {
+		replayController?.jumpToLatest();
+	}, [replayController]);
+
+	const handleReplaySpeedChange = useCallback((speed: ReplaySpeed) => {
+		replayController?.setSpeed(speed);
+	}, [replayController]);
 
 	const selectedPane = useMemo(
 		() => paneState.panes.find((pane) => pane.id === selectedPaneId) ?? paneState.visiblePanes[0] ?? paneState.panes[0],
@@ -926,7 +1014,44 @@ export default function LibraryShowcaseDemo() {
 					</div>
 
 					<button type="button" className="gc-topbar-btn">{t("library.compare")}</button>
-					<button type="button" className="gc-topbar-btn">{t("library.replay")}</button>
+					<div className="gc-replay-controls" role="group" aria-label={t("replay.controls")}>
+						<button
+							type="button"
+							className={`gc-topbar-btn${replayState.isPlaying ? " gc-topbar-btn--active" : ""}`}
+							onClick={handleReplayToggle}
+							title={replayToggleTitle}
+							aria-pressed={replayState.isPlaying}
+						>
+							{t("library.replay")}
+						</button>
+						<button type="button" className="gc-topbar-btn gc-replay-mini" onClick={handleReplayRewind} title={t("replay.rewind")} aria-label={t("replay.rewind")}>
+							↺
+						</button>
+						<button type="button" className="gc-topbar-btn gc-replay-mini" onClick={handleReplayStepBack} title={t("replay.stepBack")} aria-label={t("replay.stepBack")}>
+							◀
+						</button>
+						<button type="button" className="gc-topbar-btn gc-replay-mini" onClick={handleReplayStepForward} title={t("replay.stepForward")} aria-label={t("replay.stepForward")}>
+							▶
+						</button>
+						<button type="button" className="gc-topbar-btn gc-replay-mini" onClick={handleReplayJumpLatest} title={t("replay.jumpLatest")} aria-label={t("replay.jumpLatest")}>
+							↷
+						</button>
+						<div className="gc-replay-speeds" role="group" aria-label={t("replay.speed")}>
+							{REPLAY_SPEEDS.map((speed) => (
+								<button
+									key={speed}
+									type="button"
+									className={`gc-topbar-btn gc-replay-speed${replayState.speed === speed ? " gc-topbar-btn--active" : ""}`}
+									onClick={() => handleReplaySpeedChange(speed)}
+									aria-pressed={replayState.speed === speed}
+									title={t("replay.speed")}
+								>
+									{speed === "max" ? "MAX" : `${speed}x`}
+								</button>
+							))}
+						</div>
+						<span className="gc-replay-status">{replayProgressLabel}</span>
+					</div>
 
 					<div className="gc-topbar-sep" />
 					<div className="gc-chart-type-wrap" ref={panesMenuRef}>

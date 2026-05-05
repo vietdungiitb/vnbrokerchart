@@ -73,7 +73,7 @@ export class BarReplayController<T extends ReplayBarLike> {
 			visibleData: this.getVisibleData(),
 			currentBar: this.getCurrentBar(),
 			progress: this.allData.length === 0 ? 0 : this.currentIndex / this.allData.length,
-			canStepBack: this.currentIndex > 0,
+			canStepBack: this.currentIndex > 1,
 			canStepForward: this.currentIndex < this.allData.length,
 		};
 	}
@@ -100,7 +100,8 @@ export class BarReplayController<T extends ReplayBarLike> {
 
 	setData(allData: readonly T[], startIndex = this.currentIndex) {
 		this.allData = [...allData];
-		this.currentIndex = clampIndex(startIndex, this.allData.length);
+		const nextStartIndex = this.allData.length > 0 && startIndex <= 0 ? 1 : startIndex;
+		this.currentIndex = clampIndex(nextStartIndex, this.allData.length);
 		if (this.currentIndex >= this.allData.length) {
 			this.clearTimer();
 			this.isPlaying = false;
@@ -120,7 +121,16 @@ export class BarReplayController<T extends ReplayBarLike> {
 	}
 
 	play() {
-		if (this.isPlaying || this.allData.length === 0 || this.currentIndex >= this.allData.length) {
+		if (this.isPlaying || this.allData.length === 0) {
+			return;
+		}
+
+		if (this.currentIndex === 0) {
+			this.currentIndex = 1;
+		}
+
+		if (this.currentIndex >= this.allData.length) {
+			this.emit();
 			return;
 		}
 
@@ -160,7 +170,7 @@ export class BarReplayController<T extends ReplayBarLike> {
 
 	stepBack() {
 		this.pause();
-		if (this.currentIndex <= 0) {
+		if (this.currentIndex <= 1) {
 			return;
 		}
 
@@ -173,6 +183,11 @@ export class BarReplayController<T extends ReplayBarLike> {
 		this.emit();
 	}
 
+	jumpToLatest() {
+		this.currentIndex = this.allData.length;
+		this.emit();
+	}
+
 	jumpToDate(date: Date | number) {
 		const targetTime = toTimeValue(date);
 		const foundIndex = this.allData.findIndex((bar) => toTimeValue(bar.date) >= targetTime);
@@ -182,7 +197,7 @@ export class BarReplayController<T extends ReplayBarLike> {
 
 	rewind() {
 		this.pause();
-		this.currentIndex = 0;
+		this.currentIndex = this.allData.length > 0 ? 1 : 0;
 		this.emit();
 	}
 

@@ -51,6 +51,29 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 | S21 Migrate indicator/interactive | ✅ Completed | Indicator/Interaction owners | Indicator + interactive sub-slices complete; type-check + build:docs pass; module tree regenerated; 0 .js in src/lib/interactive |
 | S22 Migrate root files + Gate G3 + Final audit | ✅ Completed | Release owner | Root files migrated; type-check + build:docs pass; browser smoke pass; 0 file .js trong src/ |
 
+### Ad-hoc demo task — Bar replay integration
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: nối `BarReplayController` vào demo shell, thêm replay controls, và harden chart path cho replay ngắn
+- Files modified:
+  - `src/lib/core/replay/BarReplayController.ts`
+  - `src/lib/core/replay/BarReplayController.test.ts`
+  - `src/index.ts`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/i18n.tsx`
+  - `src/demo/demo.css`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Replay topbar controls cho rewind, step back/forward, jump latest, speed, và toggle play/pause.
+  - Chart data source chuyển sang subset replay thay vì luôn dùng toàn bộ series.
+  - Guard dữ liệu ngắn để replay ở đầu stream không làm crash `ChartCanvas`.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm test -- src/lib/core/replay/BarReplayController.test.ts` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke: rewind → `1/300 nến`, play toggle → `aria-pressed=true`, jump latest → `300/300 nến`
+
 ### Ad-hoc documentation package — GoCharting-style settings dialog rewrite
 
 - Người thực hiện: GitHub Copilot

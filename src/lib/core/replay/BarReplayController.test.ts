@@ -54,6 +54,27 @@ describe("BarReplayController", () => {
 		expect(controller.getState().canStepBack).toBe(true);
 	});
 
+	it("rewinds to the first visible bar and jumps back to the latest bar", () => {
+		const controller = new BarReplayController({
+			allData: [
+				createBar("2026-01-01T00:00:00Z", 1),
+				createBar("2026-01-01T01:00:00Z", 2),
+				createBar("2026-01-01T02:00:00Z", 3),
+			],
+			startIndex: 3,
+		});
+
+		controller.rewind();
+		expect(controller.getCurrentIndex()).toBe(1);
+		expect(controller.getVisibleData()).toHaveLength(1);
+		expect(controller.getState().canStepBack).toBe(false);
+
+		controller.jumpToLatest();
+		expect(controller.getCurrentIndex()).toBe(3);
+		expect(controller.getVisibleData()).toHaveLength(3);
+		expect(controller.getState().canStepBack).toBe(true);
+	});
+
 	it("plays with the configured speed and stops at the end", () => {
 		vi.useFakeTimers();
 		try {
