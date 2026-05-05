@@ -689,6 +689,24 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - Browser smoke → PASS (10 tools, Ctrl+Z/Y/ESC/Del functional)
   - lib→demo reverse-import scan → PASS (0 violations)
 
+### Ad-hoc runtime fix — Drawing default style normalization
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: normalize default stroke dasharray and isolate style objects in drawing helper
+
+**Files modified:**
+  - `src/lib/drawing/shared.ts`
+  - `src/lib/drawing/drawing.test.ts`
+
+**Nội dung bàn giao:**
+  - `defaultDrawingStyle.strokeDasharray` đổi từ `Solid` sang `solid` để SVG dasharray được chuẩn hóa đúng.
+  - `createDrawingObject` luôn clone style mặc định cho từng drawing, tránh shared mutable style object.
+  - Thêm regression test để khóa hành vi normalize style và style isolation.
+
+**Validation:**
+  - `npx vitest run src/lib/drawing/coordinateUtils.test.ts src/lib/drawing/renderSvg.test.ts src/lib/drawing/drawing.test.ts` → PASS (14 tests)
+
 ### Ad-hoc — Drawing Tools Documentation Package M2-M4
 
 - Người thực hiện: GitHub Copilot

@@ -21,7 +21,7 @@
 | GenericChartComponent soft fallback | `src/lib/GenericChartComponent.tsx` | ✅ Done |
 | 67 unit tests passing | `src/lib/drawing/*.test.ts` | ✅ Done |
 
-## 2. Nguyên tắc bắt buộc cho cả 3 milestone
+## 2. Nguyên tắc bắt buộc cho cả 4 milestone
 
 1. **Không thay thế** data model đã kiểm chứng — chỉ extend optional fields.
 2. **Không import** `src/demo/**` từ bất kỳ file nào trong `src/lib/**`.
@@ -83,50 +83,82 @@ Floating panel — hiện khi có `selectedDrawing`.
 ```typescript
 export interface DrawingInspectorProps {
   drawing: DrawingObject | null;
-  onUpdate: (updated: DrawingObject) => void;
+  onUpdate: (patch: Partial<DrawingObject>) => void;
   onDelete: () => void;
+  onClone: () => void;
   onToggleLock: () => void;
+  onToggleVisible: () => void;
+  onBringToFront: () => void;
+  onSendToBack: () => void;
   onClose: () => void;
 }
 ```
 
 **Controls:**
 - Color swatch (stroke) — `<input type="color">`
+- Fill color swatch — `<input type="color">`
 - Stroke width — `<input type="range" min="1" max="5">`
 - Line style — dropdown: Solid / Dashed / Dotted
+- Opacity — slider 0.1–1.0
 - Lock/Unlock toggle button
+- Clone button
+- Hide / Show toggle button
+- Bring to Front / Send to Back actions
 - Delete button
 
-### Bước 4: `src/lib/drawing/types.ts` (SỬA)
+### Bước 4: `src/lib/drawing/DrawingListPanel.tsx` (TẠO MỚI)
+
+Sidebar list cho toàn bộ drawings trong chart hiện tại.
+
+```typescript
+export interface DrawingListPanelProps {
+  drawings: DrawingObject[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onToggleVisible: (id: string) => void;
+  onDelete: (id: string) => void;
+}
+```
+
+Mỗi item hiển thị type, timestamp tạo, và icon eye/delete. Click item phải select drawing đó.
+
+### Bước 5: `src/lib/drawing/types.ts` (SỬA)
 
 Thêm optional vào `DrawingObject`:
 ```typescript
 symbol?: string;
 timeframe?: string;
+zIndex?: number;
+clonedFrom?: string;
 ```
 
 Sửa `DrawingStyle.strokeDasharray`:
 ```typescript
 strokeDasharray?: "solid" | "dashed" | "dotted";
+fillOpacity?: number;
 ```
 
-### Bước 5: `src/lib/drawing/index.ts` (SỬA)
+### Bước 6: `src/lib/drawing/index.ts` (SỬA)
 
-Export: `DrawingInspector`, `DrawingStorage`, `useDrawingStorage`, `createLocalStorageDrawingStorage`.
+Export: `DrawingInspector`, `DrawingListPanel`, `DrawingStorage`, `useDrawingStorage`, `createLocalStorageDrawingStorage`.
 
-### Bước 6: `src/demo/LibraryShowcaseDemo.tsx` (SỬA)
+### Bước 7: `src/demo/LibraryShowcaseDemo.tsx` (SỬA)
 
 - Thêm `useDrawingStorage("BTCUSD", timeframe, allDrawings, onLoad)`.
 - Mount `DrawingInspector` khi `drawingState.type === "selected"`.
+- Mount `DrawingListPanel` cho sidebar drawings.
 - Export/Import button trong toolbar drawing area.
 
-### Bước 7: `src/demo/i18n.tsx` + `src/demo/demo.css` (SỬA)
+### Bước 8: `src/demo/i18n.tsx` + `src/demo/demo.css` (SỬA)
 
 i18n keys:
 ```
 "drawing.color", "drawing.strokeWidth", "drawing.lineStyle",
 "drawing.solid", "drawing.dashed", "drawing.dotted",
-"drawing.lock", "drawing.unlock", "drawing.exportJson", "drawing.importJson"
+"drawing.lock", "drawing.unlock", "drawing.exportJson", "drawing.importJson",
+"drawing.clone", "drawing.hide", "drawing.show",
+"drawing.bringToFront", "drawing.sendToBack", "drawing.drawingsList",
+"drawing.fill", "drawing.opacity"
 ```
 
 CSS: inspector panel, color swatch, slider, lock icon.
@@ -138,7 +170,11 @@ CSS: inspector panel, color swatch, slider, lock icon.
 ✅ Browser smoke:
    - Click drawing → inspector panel hiện
    - Đổi màu → đường đổi màu ngay
+  - Clone → bản copy xuất hiện offset 20px
    - Lock → drag không di chuyển được
+  - Hide/Show → drawing ẩn/hiện đúng
+  - Bring to Front / Send to Back → z-order thay đổi đúng
+  - Drawings list panel → click item select đúng drawing
    - Reload page → drawings vẫn còn
    - Export JSON → file tải về
    - Import JSON file → drawings restore

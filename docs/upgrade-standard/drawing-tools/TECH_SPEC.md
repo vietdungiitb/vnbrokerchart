@@ -44,10 +44,7 @@ Spec này bao gồm toàn bộ M1→M4. Phần M1 là reference; M2→M4 là spe
 
 ## 3. Data Model
 
-### DrawingObject (hiện tại — giữ nguyên, chỉ extend)
-
-```typescript
-### DrawingObject — as-built M1 (đây là contract hiện tại, không thay đổi)
+### DrawingObject — as-built M1 (reference contract)
 
 ```typescript
 // src/lib/drawing/types.ts — AS-BUILT M1
@@ -86,26 +83,18 @@ export interface DrawingObject {
 ### Extension M2 — thêm vào types.ts
 
 ```typescript
-// Bổ sung vào DrawingToolType union — KHÔNG xóa items cũ
-export type DrawingToolType =
-  | "trendLine" | "hLine" | "vLine"
-  | "fibonacci" | "channel" | "text"
-  | "rectangle" | "arrow"
-  // M2: không thêm tool type mới — chỉ extend DrawingObject fields
-
-// Bổ sung optional fields vào DrawingObject interface:
+// Bổ sung optional fields vào DrawingObject:
 //   symbol?: string;         // e.g. "BTCUSD" — cho localStorage key
 //   timeframe?: string;      // e.g. "1h"
 //   zIndex?: number;         // z-order trong drawing list, default 0
 //   clonedFrom?: string;     // id của drawing gốc nếu là bản clone
 
-// Sửa DrawingStyle.strokeDasharray thành union type rõ ràng:
 export interface DrawingStyle {
   stroke: string;
   strokeWidth: number;
-  strokeDasharray?: "solid" | "4,4" | "2,2";  // solid | dashed | dotted
+  strokeDasharray?: "solid" | "dashed" | "dotted";
   fill?: string;
-  fillOpacity?: number;      // NEW M2 — tách riêng fill opacity khỏi stroke opacity
+  fillOpacity?: number;
   opacity?: number;
   fontSize?: number;
   fontFamily?: string;
@@ -115,18 +104,13 @@ export interface DrawingStyle {
 ### Extension M3 — thêm vào types.ts
 
 ```typescript
-// Bổ sung vào DrawingToolType union:
 export type DrawingToolType =
   | "trendLine" | "hLine" | "vLine"
   | "fibonacci" | "channel" | "text"
   | "rectangle" | "arrow"
-  | "ray"              // NEW M3 — extends 1 direction
-  | "extendedLine"     // NEW M3 — extends both directions (X-Line)
-  | "polyline"         // NEW M3 — multi-segment, N points
-  | "dateAndPriceRange" // NEW M3 — box + badge Δ%
-  | "longPosition"     // NEW M3 — entry/TP/SL box green/red
-  | "shortPosition"    // NEW M3 — inverted longPosition
-  | "fibExtension";    // NEW M3 — extension levels beyond range
+  | "ray" | "extendedLine" | "polyline"
+  | "dateAndPriceRange" | "longPosition" | "shortPosition"
+  | "fibExtension";
 
 // Bổ sung optional fields vào DrawingObject:
 //   riskReward?: {
@@ -141,13 +125,15 @@ export type DrawingToolType =
 ### Extension M4 — thêm vào types.ts
 
 ```typescript
-// Bổ sung vào DrawingToolType union:
-  | "parallelChannel"    // NEW M4 — 3 points, 2 parallel lines + midline
-  | "pitchfork"          // NEW M4 — Andrew's Pitchfork, 3 points A/B/C
-  | "abcdPattern"        // NEW M4 — 4 points A/B/C/D
-  | "fibArc"             // NEW M4 — 2 points → 3 arcs at 0.382/0.5/0.618
-  | "fibTimeZone"        // NEW M4 — vertical columns at Fib intervals
-  | "regressionChannel"; // NEW M4 — best-fit line + std-dev bands
+export type DrawingToolType =
+  | "trendLine" | "hLine" | "vLine"
+  | "fibonacci" | "channel" | "text"
+  | "rectangle" | "arrow"
+  | "ray" | "extendedLine" | "polyline"
+  | "dateAndPriceRange" | "longPosition" | "shortPosition"
+  | "fibExtension"
+  | "parallelChannel" | "pitchfork" | "abcdPattern"
+  | "fibArc" | "fibTimeZone" | "regressionChannel";
 ```
 
 ## 4. Coordinate Bridge — AS-BUILT

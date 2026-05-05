@@ -2,7 +2,7 @@
 
 ## 1. Mục tiêu
 
-Bàn giao bộ tài liệu thực thi hệ thống Drawing Tools đạt chuẩn quốc tế, cho phép người dùng vẽ và phân tích kỹ thuật trực tiếp trên chart với chất lượng ngang TradingView/GoCharting. Công việc được chia thành 3 milestone độc lập, mỗi milestone có gate riêng.
+Bàn giao bộ tài liệu thực thi hệ thống Drawing Tools đạt chuẩn quốc tế, cho phép người dùng vẽ và phân tích kỹ thuật trực tiếp trên chart với chất lượng ngang TradingView/GoCharting. Công việc được chia thành 4 milestone độc lập (M1→M4), mỗi milestone có gate riêng.
 
 Phạm vi: `src/lib/drawing/`, `src/lib/core/DynamicChart.tsx`, `src/demo/LibraryShowcaseDemo.tsx`, `src/demo/i18n.tsx`, `src/demo/demo.css`.
 
@@ -135,17 +135,6 @@ Phạm vi: `src/lib/drawing/`, `src/lib/core/DynamicChart.tsx`, `src/demo/Librar
 | Fibonacci Arc | M4 | `src/lib/drawing/builtin/fibArc.ts` |
 | Fibonacci Time Zone | M4 | `src/lib/drawing/builtin/fibTimeZone.ts` |
 | Regression Channel | M4 | `src/lib/drawing/builtin/regressionChannel.ts` |
-| DrawingLayer SVG overlay component | M1 |
-| Wire toolbar → drawing interaction | M1 |
-| Keyboard shortcuts | M1 |
-| DrawingInspector (property panel) | M2 |
-| DrawingStorage (localStorage adapter) | M2 |
-| useDrawingStorage hook | M2 |
-| Rectangle built-in tool | M1 |
-| Arrow built-in tool | M1 |
-| PriceRange tool | M3 |
-| PositionBox tool | M3 |
-| FibExtension tool | M3 |
 
 ## 7. Handoff owner
 

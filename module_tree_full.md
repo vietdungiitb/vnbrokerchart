@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-05 08:07:05`
+Generated at: `2026-05-05 09:10:47`
 
 ## Summary
 
@@ -11,7 +11,7 @@ Generated at: `2026-05-05 08:07:05`
 - JS/TS modules: 631
 - Total classes: 348
 - Total functions: 3583
-- Total top-level variables: 7530
+- Total top-level variables: 7532
 
 ## Python Modules
 
@@ -2880,7 +2880,7 @@ Generated at: `2026-05-05 08:07:05`
 - Functions:
   - `createTextObject`, `createTrendLineObject`
 - Top-level variables:
-  - `arrow`, `completeState`, `draft`, `drawing`, `drawingState`, `editingState`, `history`, `initialHistory`, `movingState`, `nextPoint`, `pushedHistory`, `rectangle`, `redoneHistory`, `resizingState`, `selectedState`, `serializedDrawing`, `serializedDrawings`, `serializedHistory`, `startPoint`, `text`, `tool`, `toolNames`, `trendLine`, `undoneHistory`, `updatedDraft`, `updatedState`
+  - `arrow`, `completeState`, `draft`, `drawing`, `drawingState`, `editingState`, `first`, `history`, `initialHistory`, `movingState`, `nextPoint`, `pushedHistory`, `rectangle`, `redoneHistory`, `resizingState`, `second`, `selectedState`, `serializedDrawing`, `serializedDrawings`, `serializedHistory`, `startPoint`, `text`, `tool`, `toolNames`, `trendLine`, `undoneHistory`, `updatedDraft`, `updatedState`
 
 ### `src/lib/drawing/DrawingLayer.tsx`
 

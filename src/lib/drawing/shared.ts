@@ -10,7 +10,7 @@ export function createDrawingId() {
 export const defaultDrawingStyle: DrawingStyle = {
 	stroke: "#111827",
 	strokeWidth: 1,
-	strokeDasharray: "Solid",
+	strokeDasharray: "solid",
 	fill: "transparent",
 	opacity: 1,
 };
@@ -21,7 +21,7 @@ export function createDrawingObject(type: DrawingToolType, points: Point[], patc
 		id: patch.id ?? createDrawingId(),
 		type,
 		points,
-		style: patch.style ? { ...defaultDrawingStyle, ...patch.style } : defaultDrawingStyle,
+		style: { ...defaultDrawingStyle, ...patch.style },
 		text: patch.text,
 		extendLeft: patch.extendLeft,
 		extendRight: patch.extendRight,

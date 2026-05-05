@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createDrawingObject } from "./shared";
 import type { DrawingObject, Point } from "./types";
 import {
 	createDrawingHistory,
@@ -155,6 +156,16 @@ describe("drawing serialization", () => {
 			type: "trendLine",
 			points: drawing.points,
 		});
+	});
+});
+
+describe("drawing shared helpers", () => {
+	it("normalizes the default style and keeps style objects isolated", () => {
+		const first = createDrawingObject("trendLine", [startPoint, nextPoint]);
+		const second = createDrawingObject("trendLine", [startPoint, nextPoint]);
+
+		expect(first.style.strokeDasharray).toBe("solid");
+		expect(first.style).not.toBe(second.style);
 	});
 });
 
