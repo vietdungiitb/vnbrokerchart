@@ -372,8 +372,8 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		// Pre-sync moreProps BEFORE React re-renders so componentDidUpdate draws
 		// with the correct zoom scale instead of stale pan scale.
 		this.syncStateToSubscriptions({ xScale, plotData, chartConfig });
-		this.clearThreeCanvas();
 		this.setState({ xScale, plotData, chartConfig }, () => {
+			this.clearThreeCanvas();
 			this.draw({ force: true });
 			this.notifyVisibleDomainChange(xScale);
 		});
@@ -382,15 +382,14 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 	xAxisZoom(newDomain: any[]) {
 		const { xScale, plotData, chartConfig } = this.calculateStateForDomain(newDomain);
 		this.syncStateToSubscriptions({ xScale, plotData, chartConfig });
-		this.clearThreeCanvas();
 		this.setState({ xScale, plotData, chartConfig }, () => {
+			this.clearThreeCanvas();
 			this.draw({ force: true });
 			this.notifyVisibleDomainChange(xScale);
 		});
 	}
 
 	yAxisZoom(chartId: string | number, newDomain: any[]) {
-		this.clearThreeCanvas();
 		const { chartConfig: initialChartConfig } = this.state;
 		const chartConfig = initialChartConfig.map(each => {
 			if (each.id === chartId) {
@@ -398,7 +397,10 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 			}
 			return each;
 		});
-		this.setState({ chartConfig });
+		this.setState({ chartConfig }, () => {
+			this.clearThreeCanvas();
+			this.draw({ force: true });
+		});
 	}
 
 	panHelper(mouseXY: MouseXY, initialXScale: any, { dx, dy }: { dx: number; dy: number }, chartsToPan: any) {
@@ -433,8 +435,9 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		this.panInProgress = false;
 		// Pre-sync moreProps with final pan state so componentDidUpdate draws correctly.
 		this.syncStateToSubscriptions({ xScale: state.xScale, plotData: state.plotData, chartConfig: state.chartConfig });
-		this.clearThreeCanvas();
 		this.setState(state, () => {
+			this.clearThreeCanvas();
+			this.draw({ force: true });
 			this.notifyVisibleDomainChange(state.xScale);
 		});
 	}
