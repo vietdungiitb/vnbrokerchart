@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import { getXValue } from "../utils/ChartDataUtil";
 import GenericComponent from "../GenericComponent";
 import { createDraftFromTool, createTool, isDrawingToolName } from "./registry";
-import { appendPoint, replacePoint } from "./shared";
+import { appendPoint, replaceNextPoint } from "./shared";
 import type { DrawingObject, DrawingToolType } from "./types";
 import { renderDrawingToSvg, type RenderSvgOptions } from "./renderSvg";
 import type { UseDrawingInteractionReturn } from "./useDrawingInteraction";
@@ -77,6 +77,19 @@ function currentDrawing(drawings: readonly DrawingObject[], drawingState: UseDra
 	return drawings.find((drawing) => drawing.id === getSelectedDrawingId(drawingState));
 }
 
+function isMultiStepTool(toolName: DrawingToolType) {
+	return toolName === "channel" || toolName === "parallelChannel" || toolName === "pitchfork" || toolName === "abcdPattern";
+}
+
+function hasRemainingPlaceholder(drawing: DrawingObject) {
+	const startPoint = drawing.points[0];
+	if (!startPoint) {
+		return false;
+	}
+
+	return drawing.points.slice(1).some((point) => point.x === startPoint.x && point.y === startPoint.y);
+}
+
 export default function DrawingLayer({ activeTool, interaction, onToolUsed }: DrawingLayerProps) {
 	const selectedObjectIds = useMemo(() => getSelectedObjectIds(interaction.drawingState), [interaction.drawingState]);
 	const selectedObjectIdSet = useMemo(() => new Set(selectedObjectIds), [selectedObjectIds]);
@@ -113,6 +126,7 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed }: Dr
 		return drawings.flatMap((drawing) => renderDrawingToSvg(drawing, renderScales, {
 			chartWidth: chartConfig.width,
 			chartHeight: chartConfig.height,
+			plotData: renderScales.plotData,
 			isSelected: selectedObjectIdSet.has(drawing.id),
 			onSelect: activeTool === "cursor"
 				? handleSelect
@@ -125,7 +139,7 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed }: Dr
 			return;
 		}
 
-		if (activeTool === "polyline" && interaction.drawingState.type === "drawing" && interaction.drawingState.toolName === "polyline") {
+		if (interaction.drawingState.type === "drawing") {
 			return;
 		}
 
@@ -170,26 +184,23 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed }: Dr
 		const toolName = interaction.drawingState.toolName;
 		const draft = interaction.drawingState.object;
 
-		if (toolName === "channel") {
-			const startPoint = draft.points[0];
-			const midPoint = draft.points[1];
-			if (startPoint && midPoint && midPoint.x === startPoint.x && midPoint.y === startPoint.y) {
-				const updated = replacePoint(draft, 1, point);
+		if (toolName === "polyline") {
+			const updated = appendPoint(draft, point);
+			interaction.dispatch({ type: "UPDATE_DRAWING", object: updated });
+			return;
+		}
+
+		if (isMultiStepTool(toolName)) {
+			const updated = replaceNextPoint(draft, point);
+			if (hasRemainingPlaceholder(updated)) {
 				interaction.dispatch({ type: "UPDATE_DRAWING", object: updated });
 				return;
 			}
 
-			const completed = replacePoint(draft, 2, point);
-			interaction.dispatch({ type: "COMPLETE_DRAWING", object: completed });
-			interaction.dispatch({ type: "PUSH", drawing: completed });
-			interaction.dispatch({ type: "SELECT_OBJECT", objectId: completed.id });
+			interaction.dispatch({ type: "COMPLETE_DRAWING", object: updated });
+			interaction.dispatch({ type: "PUSH", drawing: updated });
+			interaction.dispatch({ type: "SELECT_OBJECT", objectId: updated.id });
 			onToolUsed?.();
-			return;
-		}
-
-		if (toolName === "polyline") {
-			const updated = appendPoint(draft, point);
-			interaction.dispatch({ type: "UPDATE_DRAWING", object: updated });
 			return;
 		}
 

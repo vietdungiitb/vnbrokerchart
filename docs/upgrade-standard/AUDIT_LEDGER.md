@@ -260,6 +260,43 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - Browser smoke on [build/index.html](../../build/index.html) → PASS; drawing toolbar renders with localized labels and demo bundle loads cleanly
   - `python scripts/generate_module_tree.py` → PASS (Modules: 637)
 
+### Ad-hoc drawing task — M4 pattern tools + pro
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: M4 pattern tools, shared render pipeline, toolbar/i18n, and audit refresh
+- Files modified:
+  - `src/lib/drawing/types.ts`
+  - `src/lib/drawing/shared.ts`
+  - `src/lib/drawing/builtin/channel.ts`
+  - `src/lib/drawing/builtin/parallelChannel.ts`
+  - `src/lib/drawing/builtin/pitchfork.ts`
+  - `src/lib/drawing/builtin/abcdPattern.ts`
+  - `src/lib/drawing/builtin/fibArc.ts`
+  - `src/lib/drawing/builtin/fibTimeZone.ts`
+  - `src/lib/drawing/builtin/regressionChannel.ts`
+  - `src/lib/drawing/renderSvg.ts`
+  - `src/lib/drawing/DrawingLayer.tsx`
+  - `src/lib/drawing/index.ts`
+  - `src/index.ts`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/i18n.tsx`
+  - `src/lib/drawing/m4.test.ts`
+  - `docs/upgrade-standard/drawing-tools/TASKBOARD.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Thêm 6 pattern tools vào shared registry và SVG renderer.
+  - Multi-click completion giờ hỗ trợ channel-style tools cùng pitchfork và ABCD.
+  - Regression channel dùng least-squares dựa trên plotData với badge R².
+  - Toolbar và i18n hiển thị đủ tool M4 trong demo shell.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm test -- src/lib/drawing/m4.test.ts` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke on [build/index.html](../../build/index.html) → PASS; Parallel Channel, Pitchfork, and Regression Channel buttons activate
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 653)
+
 ### Ad-hoc governance update — Shared UI template rule
 
 - Người thực hiện: GitHub Copilot

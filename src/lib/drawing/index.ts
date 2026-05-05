@@ -29,6 +29,12 @@ import DateAndPriceRange from "./builtin/dateAndPriceRange";
 import LongPosition from "./builtin/longPosition";
 import ShortPosition from "./builtin/shortPosition";
 import FibExtension from "./builtin/fibExtension";
+import ParallelChannel from "./builtin/parallelChannel";
+import Pitchfork from "./builtin/pitchfork";
+import AbcdPattern from "./builtin/abcdPattern";
+import FibArc from "./builtin/fibArc";
+import FibTimeZone from "./builtin/fibTimeZone";
+import RegressionChannel from "./builtin/regressionChannel";
 import DrawingInspector from "./DrawingInspector";
 import DrawingListPanel from "./DrawingListPanel";
 import type { DrawingInteractionAction, DrawingInteractionState, UseDrawingInteractionReturn } from "./useDrawingInteraction";
@@ -52,6 +58,12 @@ registerDrawingTool(DateAndPriceRange);
 registerDrawingTool(LongPosition);
 registerDrawingTool(ShortPosition);
 registerDrawingTool(FibExtension);
+registerDrawingTool(ParallelChannel);
+registerDrawingTool(Pitchfork);
+registerDrawingTool(AbcdPattern);
+registerDrawingTool(FibArc);
+registerDrawingTool(FibTimeZone);
+registerDrawingTool(RegressionChannel);
 
 export {
 	createDraftFromTool,
@@ -125,4 +137,10 @@ export {
 	LongPosition,
 	ShortPosition,
 	FibExtension,
+	ParallelChannel,
+	Pitchfork,
+	AbcdPattern,
+	FibArc,
+	FibTimeZone,
+	RegressionChannel,
 };

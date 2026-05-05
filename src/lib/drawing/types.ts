@@ -18,7 +18,13 @@ export type DrawingToolType =
 	| "dateAndPriceRange"
 	| "longPosition"
 	| "shortPosition"
-	| "fibExtension";
+	| "fibExtension"
+	| "parallelChannel"
+	| "pitchfork"
+	| "abcdPattern"
+	| "fibArc"
+	| "fibTimeZone"
+	| "regressionChannel";
 
 export interface DrawingStyle {
 	stroke: string;

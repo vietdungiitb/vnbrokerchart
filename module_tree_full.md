@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-05 10:04:16`
+Generated at: `2026-05-05 10:24:12`
 
 ## Summary
 
-- Total modules: 646
+- Total modules: 653
 - Python modules: 1
-- JS/TS modules: 645
+- JS/TS modules: 652
 - Total classes: 349
-- Total functions: 3625
-- Total top-level variables: 7676
+- Total functions: 3644
+- Total top-level variables: 7774
 
 ## Python Modules
 
@@ -2828,6 +2828,13 @@ Generated at: `2026-05-05 10:04:16`
 - Top-level variables:
   - `DEFAULT_PANES`, `PANE_LAYOUT_STORAGE_KEY`, `PANE_MAX_VISIBLE`
 
+### `src/lib/drawing/builtin/abcdPattern.ts`
+
+- Functions:
+  - `calculateAbcdPatternMetrics`
+- Top-level variables:
+  - `AbcdPattern`, `ab`, `bc`, `cd`, `points`
+
 ### `src/lib/drawing/builtin/arrow.ts`
 
 - Top-level variables:
@@ -2848,6 +2855,13 @@ Generated at: `2026-05-05 10:04:16`
 - Top-level variables:
   - `ExtendedLine`
 
+### `src/lib/drawing/builtin/fibArc.ts`
+
+- Functions:
+  - `calculateFibArcGeometry`
+- Top-level variables:
+  - `DEFAULT_FIB_ARC_LEVELS`, `FibArc`, `baseRadius`, `center`, `levels`, `reference`
+
 ### `src/lib/drawing/builtin/fibExtension.ts`
 
 - Top-level variables:
@@ -2857,6 +2871,13 @@ Generated at: `2026-05-05 10:04:16`
 
 - Top-level variables:
   - `Fibonacci`
+
+### `src/lib/drawing/builtin/fibTimeZone.ts`
+
+- Functions:
+  - `calculateFibTimeZoneGeometry`
+- Top-level variables:
+  - `DEFAULT_FIB_TIME_ZONE_LEVELS`, `FibTimeZone`, `end`, `levels`, `start`, `stepX`
 
 ### `src/lib/drawing/builtin/hLine.ts`
 
@@ -2869,6 +2890,20 @@ Generated at: `2026-05-05 10:04:16`
   - `calculateRiskReward`
 - Top-level variables:
   - `LongPosition`, `updated`
+
+### `src/lib/drawing/builtin/parallelChannel.ts`
+
+- Functions:
+  - `calculateParallelChannelGeometry`
+- Top-level variables:
+  - `ParallelChannel`, `dx`, `dy`, `end`, `length`, `normal`, `offsetAnchor`, `offsetDistance`, `start`
+
+### `src/lib/drawing/builtin/pitchfork.ts`
+
+- Functions:
+  - `calculatePitchforkGeometry`
+- Top-level variables:
+  - `Pitchfork`, `leftSwing`, `midpoint`, `pivot`, `rightSwing`
 
 ### `src/lib/drawing/builtin/polyline.ts`
 
@@ -2884,6 +2919,13 @@ Generated at: `2026-05-05 10:04:16`
 
 - Top-level variables:
   - `Rectangle`
+
+### `src/lib/drawing/builtin/regressionChannel.ts`
+
+- Functions:
+  - `calculateRegressionChannelMetrics`, `toTimeValue`
+- Top-level variables:
+  - `RegressionChannel`, `barTime`, `bars`, `closes`, `denominator`, `end`, `endPrice`, `endTime`, `endX`, `intercept`, `leftBar`, `meanY`, `n`, `rSquared`, `residuals`, `rightBar`, `slope`, `ssRes`, `ssTot`, `start`, `startPrice`, `startTime`, `startX`, `stdDev`, `sumX`, `sumXX`, `sumXY`, `sumY`, `xs`
 
 ### `src/lib/drawing/builtin/shortPosition.ts`
 
@@ -2936,9 +2978,9 @@ Generated at: `2026-05-05 10:04:16`
 ### `src/lib/drawing/DrawingLayer.tsx`
 
 - Functions:
-  - `buildRenderScales`, `currentDrawing`, `getSelectedDrawingId`, `handleSelect`, `resolveChartConfig`, `toChartPoint`
+  - `buildRenderScales`, `currentDrawing`, `getSelectedDrawingId`, `handleSelect`, `hasRemainingPlaceholder`, `isMultiStepTool`, `resolveChartConfig`, `toChartPoint`
 - Top-level variables:
-  - `chartConfig`, `chartConfigList`, `chartCursorClass`, `completed`, `dateValue`, `draft`, `drawings`, `handleClick`, `handleDoubleClick`, `handleMouseDown`, `handleMouseMove`, `midPoint`, `nextSelectedIds`, `point`, `renderSVG`, `renderScales`, `selectedObjectIdSet`, `selectedObjectIds`, `startPoint`, `tool`, `toolName`, `updated`, `xValue`, `yValue`
+  - `chartConfig`, `chartConfigList`, `chartCursorClass`, `completed`, `dateValue`, `draft`, `drawings`, `handleClick`, `handleDoubleClick`, `handleMouseDown`, `handleMouseMove`, `nextSelectedIds`, `point`, `renderSVG`, `renderScales`, `selectedObjectIdSet`, `selectedObjectIds`, `startPoint`, `tool`, `toolName`, `updated`, `xValue`, `yValue`
 
 ### `src/lib/drawing/DrawingListPanel.tsx`
 
@@ -2981,6 +3023,13 @@ Generated at: `2026-05-05 10:04:16`
 - Top-level variables:
   - `completed`, `dateAndPriceRange`, `deleted`, `draft`, `endPoint`, `extendedLine`, `extendedLineElements`, `fibExtension`, `first`, `flatPoint`, `initial`, `longPosition`, `names`, `options`, `polyline`, `preview`, `ray`, `scales`, `second`, `selected`, `shortPosition`, `startPoint`
 
+### `src/lib/drawing/m4.test.ts`
+
+- Functions:
+  - `createSimpleDrawing`
+- Top-level variables:
+  - `abcd`, `drawing`, `endPoint`, `fibArc`, `fibTimeZone`, `metrics`, `midPoint`, `names`, `options`, `parallel`, `pitchfork`, `plotData`, `regression`, `regressionElements`, `scales`, `startPoint`
+
 ### `src/lib/drawing/registry.ts`
 
 - Functions:
@@ -2998,9 +3047,9 @@ Generated at: `2026-05-05 10:04:16`
 ### `src/lib/drawing/renderSvg.ts`
 
 - Functions:
-  - `circleElement`, `clipSegmentToBox`, `interactiveProps`, `lineElement`, `numberFormatter`, `polygonElement`, `polylineElement`, `rectElement`, `renderArrow`, `renderChannel`, `renderDateAndPriceRange`, `renderDrawingToSvg`, `renderExtendedLine`, `renderFibExtension`, `renderFibonacci`, `renderHLine`, `renderLineWithHandles`, `renderLongPosition`, `renderPolyline`, `renderPositionZones`, `renderRay`, `renderRectangle`, `renderShortPosition`, `renderText`, `renderTrendLine`, `renderVLine`, `selectionHandles`, `strokeDasharrayForStyle`, `textElement`, `toPixel`
+  - `circleElement`, `clipSegmentToBox`, `extendLineThroughBox`, `interactiveProps`, `lineElement`, `numberFormatter`, `pathElement`, `polygonElement`, `polylineElement`, `rectElement`, `renderAbcdPattern`, `renderArrow`, `renderChannel`, `renderDateAndPriceRange`, `renderDrawingToSvg`, `renderExtendedLine`, `renderFibArc`, `renderFibExtension`, `renderFibTimeZone`, `renderFibonacci`, `renderHLine`, `renderLineWithHandles`, `renderLongPosition`, `renderParallelChannel`, `renderPitchfork`, `renderPolyline`, `renderPositionZones`, `renderRay`, `renderRectangle`, `renderRegressionChannel`, `renderShortPosition`, `renderText`, `renderTrendLine`, `renderVLine`, `selectionHandles`, `strokeDasharrayForStyle`, `textElement`, `toPixel`
 - Top-level variables:
-  - `DEFAULT_FIB_EXTENSION_LEVELS`, `DEFAULT_FIB_LEVELS`, `badge`, `badgeText`, `bars`, `base`, `bottom`, `clipped`, `distance`, `dx`, `dy`, `edges`, `element`, `elements`, `end`, `entryLine`, `entryY`, `extensionPrice`, `headLength`, `headWidth`, `height`, `left`, `length`, `levels`, `line`, `lineProps`, `normal`, `offsetAnchor`, `offsetEnd`, `offsetStart`, `offsetVector`, `percent`, `pixel`, `pixelDelta`, `pixels`, `point`, `price`, `priceDelta`, `px`, `py`, `r`, `ratio`, `rect`, `reward`, `right`, `risk`, `riskReward`, `slZone`, `slZoneClass`, `start`, `stopLine`, `stopY`, `t0`, `t1`, `targetLine`, `targetY`, `text`, `top`, `tpZone`, `tpZoneClass`, `ux`, `uy`, `vector`, `width`, `x`, `y`
+  - `DEFAULT_FIB_EXTENSION_LEVELS`, `DEFAULT_FIB_LEVELS`, `arcs`, `badge`, `badgeProps`, `badgeText`, `bars`, `base`, `bottom`, `clipped`, `dashedStroke`, `distance`, `dx`, `dy`, `edges`, `element`, `elements`, `end`, `entryLine`, `entryY`, `extensionPrice`, `fill`, `geometry`, `headLength`, `headWidth`, `height`, `labels`, `left`, `leftFork`, `leftX`, `length`, `levels`, `line`, `lineProps`, `median`, `metrics`, `middle`, `negativeBoundary`, `normal`, `offsetAnchor`, `offsetEnd`, `offsetStart`, `offsetVector`, `path`, `percent`, `pixel`, `pixelDelta`, `pixels`, `point`, `polygon`, `positiveBoundary`, `price`, `priceDelta`, `px`, `py`, `r`, `ratio`, `ratioAB`, `ratioBC`, `rect`, `reward`, `right`, `rightFork`, `rightX`, `risk`, `riskReward`, `slZone`, `slZoneClass`, `start`, `stopLine`, `stopY`, `stroke`, `t0`, `t1`, `targetLine`, `targetY`, `text`, `top`, `tpZone`, `tpZoneClass`, `ux`, `uy`, `vector`, `width`, `x`, `y`
 
 ### `src/lib/drawing/serialization.ts`
 
@@ -3010,9 +3059,9 @@ Generated at: `2026-05-05 10:04:16`
 ### `src/lib/drawing/shared.ts`
 
 - Functions:
-  - `appendPoint`, `clonePoint`, `createDrawingId`, `createDrawingObject`, `replacePoint`
+  - `appendPoint`, `clonePoint`, `createDrawingId`, `createDrawingObject`, `replaceNextPoint`, `replacePoint`
 - Top-level variables:
-  - `defaultDrawingStyle`, `drawingIdSeed`, `now`
+  - `defaultDrawingStyle`, `drawingIdSeed`, `now`, `placeholderIndex`, `startPoint`, `targetIndex`
 
 ### `src/lib/drawing/stateMachine.ts`
 

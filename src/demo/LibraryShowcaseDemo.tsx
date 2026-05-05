@@ -93,7 +93,7 @@ const TOOL_GROUPS = [
 	{ id: "lines", tools: ["cursor", "crosshair", "trendLine", "ray", "extendedLine", "hLine", "vLine"] as const },
 	{ id: "fibonacci", tools: ["fibonacci", "fibExtension"] as const },
 	{ id: "shapes", tools: ["rectangle", "arrow", "polyline"] as const },
-	{ id: "analysis", tools: ["channel", "text", "dateAndPriceRange", "longPosition", "shortPosition"] as const },
+	{ id: "analysis", tools: ["channel", "text", "dateAndPriceRange", "longPosition", "shortPosition", "parallelChannel", "pitchfork", "abcdPattern", "fibArc", "fibTimeZone", "regressionChannel"] as const },
 ] as const;
 type ToolId = typeof TOOL_GROUPS[number]["tools"][number];
 
@@ -246,6 +246,54 @@ function ToolIcon({ id }: { id: string }) {
 					<line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.3" />
 					<line x1="1" y1="11" x2="15" y2="11" stroke="currentColor" strokeWidth="1" />
 					<line x1="11" y1="3" x2="11" y2="13" stroke="currentColor" strokeWidth="1.2" strokeDasharray="2 1" />
+				</svg>
+			);
+		case "parallelChannel":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<line x1="2" y1="11" x2="13" y2="4" stroke="currentColor" strokeWidth="1.4" />
+					<line x1="3" y1="13" x2="14" y2="6" stroke="currentColor" strokeWidth="1.1" strokeDasharray="3 2" />
+					<line x1="1" y1="9" x2="12" y2="2" stroke="currentColor" strokeWidth="1.1" strokeDasharray="3 2" />
+				</svg>
+			);
+		case "pitchfork":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<line x1="8" y1="13" x2="8" y2="5" stroke="currentColor" strokeWidth="1.4" />
+					<line x1="8" y1="9" x2="3" y2="3" stroke="currentColor" strokeWidth="1.1" strokeDasharray="3 2" />
+					<line x1="8" y1="9" x2="13" y2="3" stroke="currentColor" strokeWidth="1.1" strokeDasharray="3 2" />
+				</svg>
+			);
+		case "abcdPattern":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<polyline points="2,12 5,6 9,10 13,4" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+					<circle cx="2" cy="12" r="1" fill="currentColor" />
+					<circle cx="13" cy="4" r="1" fill="currentColor" />
+				</svg>
+			);
+		case "fibArc":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<path d="M3 11A5 5 0 0 1 13 11" stroke="currentColor" strokeWidth="1.3" />
+					<path d="M4.2 11A3.8 3.8 0 0 1 11.8 11" stroke="currentColor" strokeWidth="1" strokeDasharray="3 2" />
+				</svg>
+			);
+		case "fibTimeZone":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<line x1="3" y1="2" x2="3" y2="14" stroke="currentColor" strokeWidth="1.2" />
+					<line x1="6" y1="2" x2="6" y2="14" stroke="currentColor" strokeWidth="1" strokeDasharray="3 2" />
+					<line x1="10" y1="2" x2="10" y2="14" stroke="currentColor" strokeWidth="1" strokeDasharray="3 2" />
+					<line x1="13" y1="2" x2="13" y2="14" stroke="currentColor" strokeWidth="1.2" />
+				</svg>
+			);
+		case "regressionChannel":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<path d="M2 11l11-7" stroke="currentColor" strokeWidth="1.4" />
+					<path d="M1.5 13l11-7" stroke="currentColor" strokeWidth="1" strokeDasharray="3 2" />
+					<path d="M2.5 9l11-7" stroke="currentColor" strokeWidth="1" strokeDasharray="3 2" />
 				</svg>
 			);
 		case "channel":

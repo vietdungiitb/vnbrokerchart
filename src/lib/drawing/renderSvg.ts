@@ -1,12 +1,19 @@
 import { createElement } from "react";
 import type { ReactElement } from "react";
-import { chartPointToPixel, type ChartScales } from "./coordinateUtils";
+import { chartPointToPixel, type ChartScales, type PlotDatum } from "./coordinateUtils";
 import type { DrawingObject, DrawingStyle } from "./types";
+import { calculateParallelChannelGeometry } from "./builtin/parallelChannel";
+import { calculatePitchforkGeometry } from "./builtin/pitchfork";
+import { calculateAbcdPatternMetrics } from "./builtin/abcdPattern";
+import { calculateFibArcGeometry } from "./builtin/fibArc";
+import { calculateFibTimeZoneGeometry } from "./builtin/fibTimeZone";
+import { calculateRegressionChannelMetrics } from "./builtin/regressionChannel";
 
 export interface RenderSvgOptions {
 	chartWidth: number;
 	chartHeight: number;
 	isSelected: boolean;
+	plotData?: PlotDatum[];
 	onSelect?: (drawing: DrawingObject, event?: { shiftKey?: boolean }) => void;
 }
 
@@ -56,6 +63,10 @@ function rectElement(key: string, props: Record<string, unknown>) {
 
 function polygonElement(key: string, props: Record<string, unknown>) {
 	return createElement("polygon", { key, ...props });
+}
+
+function pathElement(key: string, props: Record<string, unknown>) {
+	return createElement("path", { key, ...props });
 }
 
 function toPixel(point: DrawingObject["points"][number], scales: ChartScales) {
@@ -157,6 +168,15 @@ function renderLineWithHandles(
 	});
 
 	return options.isSelected ? [line, ...selectionHandles([start, end], drawing, options)] : [line];
+}
+
+function extendLineThroughBox(point: { x: number; y: number }, direction: { x: number; y: number }, chartWidth: number, chartHeight: number) {
+	return clipSegmentToBox(
+		{ x: point.x - direction.x * 10_000, y: point.y - direction.y * 10_000 },
+		{ x: point.x + direction.x * 10_000, y: point.y + direction.y * 10_000 },
+		chartWidth,
+		chartHeight,
+	);
 }
 
 function renderTrendLine(drawing: DrawingObject, scales: ChartScales, options: RenderSvgOptions): ReactElement[] {
@@ -321,6 +341,294 @@ function renderChannel(drawing: DrawingObject, scales: ChartScales, options: Ren
 			lineElement(`${drawing.id}-channel-primary`, { x1: start.x, y1: start.y, x2: end.x, y2: end.y, ...lineProps }),
 			lineElement(`${drawing.id}-channel-secondary`, { x1: offsetStart.x, y1: offsetStart.y, x2: offsetEnd.x, y2: offsetEnd.y, ...lineProps }),
 		];
+}
+
+function renderParallelChannel(drawing: DrawingObject, scales: ChartScales, options: RenderSvgOptions): ReactElement[] {
+	const geometry = calculateParallelChannelGeometry(drawing, scales);
+	if (!geometry) {
+		return [];
+	}
+
+	const positiveBoundary = clipSegmentToBox(
+		{ x: geometry.start.x + geometry.offsetVector.x, y: geometry.start.y + geometry.offsetVector.y },
+		{ x: geometry.end.x + geometry.offsetVector.x, y: geometry.end.y + geometry.offsetVector.y },
+		options.chartWidth,
+		options.chartHeight,
+	);
+	const negativeBoundary = clipSegmentToBox(
+		{ x: geometry.start.x - geometry.offsetVector.x, y: geometry.start.y - geometry.offsetVector.y },
+		{ x: geometry.end.x - geometry.offsetVector.x, y: geometry.end.y - geometry.offsetVector.y },
+		options.chartWidth,
+		options.chartHeight,
+	);
+	const middle = clipSegmentToBox(geometry.start, geometry.end, options.chartWidth, options.chartHeight);
+	if (!positiveBoundary || !negativeBoundary || !middle) {
+		return [];
+	}
+
+	const lineProps = {
+		stroke: drawing.style.stroke,
+		strokeWidth: drawing.style.strokeWidth,
+		strokeDasharray: strokeDasharrayForStyle(drawing.style),
+		fill: "none",
+		className: options.isSelected ? "rsc-drawing-selected" : undefined,
+		vectorEffect: "non-scaling-stroke",
+		...interactiveProps(drawing, options),
+	};
+	const elements = [
+		lineElement(`${drawing.id}-parallel-channel-upper`, { x1: positiveBoundary[0].x, y1: positiveBoundary[0].y, x2: positiveBoundary[1].x, y2: positiveBoundary[1].y, ...lineProps }),
+		lineElement(`${drawing.id}-parallel-channel-middle`, { x1: middle[0].x, y1: middle[0].y, x2: middle[1].x, y2: middle[1].y, ...lineProps }),
+		lineElement(`${drawing.id}-parallel-channel-lower`, { x1: negativeBoundary[0].x, y1: negativeBoundary[0].y, x2: negativeBoundary[1].x, y2: negativeBoundary[1].y, ...lineProps }),
+	];
+
+	return options.isSelected ? [...elements, ...selectionHandles([geometry.start, geometry.end, geometry.offsetAnchor], drawing, options)] : elements;
+}
+
+function renderPitchfork(drawing: DrawingObject, scales: ChartScales, options: RenderSvgOptions): ReactElement[] {
+	const geometry = calculatePitchforkGeometry(drawing, scales);
+	if (!geometry) {
+		return [];
+	}
+
+	if (geometry.direction.x === 0 && geometry.direction.y === 0) {
+		return [];
+	}
+
+	const median = extendLineThroughBox(geometry.pivot, geometry.direction, options.chartWidth, options.chartHeight);
+	const leftFork = extendLineThroughBox(geometry.leftSwing, geometry.direction, options.chartWidth, options.chartHeight);
+	const rightFork = extendLineThroughBox(geometry.rightSwing, geometry.direction, options.chartWidth, options.chartHeight);
+	if (!median || !leftFork || !rightFork) {
+		return [];
+	}
+
+	const lineProps = {
+		stroke: drawing.style.stroke,
+		strokeWidth: drawing.style.strokeWidth,
+		strokeDasharray: strokeDasharrayForStyle(drawing.style),
+		fill: "none",
+		className: options.isSelected ? "rsc-drawing-selected" : undefined,
+		vectorEffect: "non-scaling-stroke",
+		...interactiveProps(drawing, options),
+	};
+	const labels = [
+		textElement(`${drawing.id}-pitchfork-label-a`, {
+			x: geometry.pivot.x + 6,
+			y: geometry.pivot.y - 6,
+			fill: drawing.style.stroke,
+			fontSize: drawing.style.fontSize ?? 11,
+			fontFamily: drawing.style.fontFamily ?? "sans-serif",
+			fontWeight: 700,
+			textAnchor: "start",
+			className: options.isSelected ? "rsc-drawing-selected" : undefined,
+			...interactiveProps(drawing, options),
+		}, "A"),
+		textElement(`${drawing.id}-pitchfork-label-b`, {
+			x: geometry.leftSwing.x + 6,
+			y: geometry.leftSwing.y - 6,
+			fill: drawing.style.stroke,
+			fontSize: drawing.style.fontSize ?? 11,
+			fontFamily: drawing.style.fontFamily ?? "sans-serif",
+			fontWeight: 700,
+			textAnchor: "start",
+			className: options.isSelected ? "rsc-drawing-selected" : undefined,
+			...interactiveProps(drawing, options),
+		}, "B"),
+		textElement(`${drawing.id}-pitchfork-label-c`, {
+			x: geometry.rightSwing.x + 6,
+			y: geometry.rightSwing.y - 6,
+			fill: drawing.style.stroke,
+			fontSize: drawing.style.fontSize ?? 11,
+			fontFamily: drawing.style.fontFamily ?? "sans-serif",
+			fontWeight: 700,
+			textAnchor: "start",
+			className: options.isSelected ? "rsc-drawing-selected" : undefined,
+			...interactiveProps(drawing, options),
+		}, "C"),
+	];
+
+	const elements = [
+		lineElement(`${drawing.id}-pitchfork-median`, { x1: median[0].x, y1: median[0].y, x2: median[1].x, y2: median[1].y, ...lineProps }),
+		lineElement(`${drawing.id}-pitchfork-left`, { x1: leftFork[0].x, y1: leftFork[0].y, x2: leftFork[1].x, y2: leftFork[1].y, ...lineProps }),
+		lineElement(`${drawing.id}-pitchfork-right`, { x1: rightFork[0].x, y1: rightFork[0].y, x2: rightFork[1].x, y2: rightFork[1].y, ...lineProps }),
+		...labels,
+	];
+
+	return options.isSelected ? [...elements, ...selectionHandles([geometry.pivot, geometry.leftSwing, geometry.rightSwing], drawing, options)] : elements;
+}
+
+function renderAbcdPattern(drawing: DrawingObject, scales: ChartScales, options: RenderSvgOptions): ReactElement[] {
+	const metrics = calculateAbcdPatternMetrics(drawing, scales);
+	if (!metrics) {
+		return [];
+	}
+
+	const [a, b, c, d] = metrics.points;
+	const lineProps = {
+		stroke: drawing.style.stroke,
+		strokeWidth: drawing.style.strokeWidth,
+		strokeDasharray: strokeDasharrayForStyle(drawing.style),
+		fill: "none",
+		className: options.isSelected ? "rsc-drawing-selected" : undefined,
+		vectorEffect: "non-scaling-stroke",
+		...interactiveProps(drawing, options),
+	};
+	const badgeProps = {
+		fill: drawing.style.stroke,
+		fontSize: drawing.style.fontSize ?? 11,
+		fontFamily: drawing.style.fontFamily ?? "sans-serif",
+		fontWeight: 700,
+		textAnchor: "middle" as const,
+		alignmentBaseline: "middle" as const,
+		className: options.isSelected ? "rsc-drawing-selected" : undefined,
+		...interactiveProps(drawing, options),
+	};
+
+	const ratioAB = metrics.bcToAb == null ? "BC/AB n/a" : `BC/AB ${metrics.bcToAb.toFixed(2)}`;
+	const ratioBC = metrics.cdToBc == null ? "CD/BC n/a" : `CD/BC ${metrics.cdToBc.toFixed(2)}`;
+
+	const elements = [
+		lineElement(`${drawing.id}-abcd-ab`, { x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...lineProps }),
+		lineElement(`${drawing.id}-abcd-bc`, { x1: b.x, y1: b.y, x2: c.x, y2: c.y, ...lineProps }),
+		lineElement(`${drawing.id}-abcd-cd`, { x1: c.x, y1: c.y, x2: d.x, y2: d.y, ...lineProps }),
+		textElement(`${drawing.id}-abcd-a`, { x: a.x + 6, y: a.y - 6, ...badgeProps }, "A"),
+		textElement(`${drawing.id}-abcd-b`, { x: b.x + 6, y: b.y - 6, ...badgeProps }, "B"),
+		textElement(`${drawing.id}-abcd-c`, { x: c.x + 6, y: c.y - 6, ...badgeProps }, "C"),
+		textElement(`${drawing.id}-abcd-d`, { x: d.x + 6, y: d.y - 6, ...badgeProps }, "D"),
+		textElement(`${drawing.id}-abcd-ratio-ab`, { x: metrics.segmentMidpoints[1].x, y: metrics.segmentMidpoints[1].y - 10, ...badgeProps }, ratioAB),
+		textElement(`${drawing.id}-abcd-ratio-bc`, { x: metrics.segmentMidpoints[2].x, y: metrics.segmentMidpoints[2].y - 10, ...badgeProps }, ratioBC),
+	];
+
+	return options.isSelected ? [...elements, ...selectionHandles(metrics.points, drawing, options)] : elements;
+}
+
+function renderFibArc(drawing: DrawingObject, scales: ChartScales, options: RenderSvgOptions): ReactElement[] {
+	const geometry = calculateFibArcGeometry(drawing, scales);
+	if (!geometry) {
+		return [];
+	}
+
+	const stroke = drawing.style.stroke;
+	const lineProps = {
+		stroke,
+		strokeWidth: drawing.style.strokeWidth,
+		strokeDasharray: strokeDasharrayForStyle(drawing.style),
+		fill: "none",
+		className: options.isSelected ? "rsc-drawing-selected" : undefined,
+		vectorEffect: "non-scaling-stroke",
+		...interactiveProps(drawing, options),
+	};
+	const arcs = geometry.radii.map((radius, index) => {
+		const leftX = geometry.center.x - radius;
+		const rightX = geometry.center.x + radius;
+		const path = `M ${leftX} ${geometry.center.y} A ${radius} ${radius} 0 0 1 ${rightX} ${geometry.center.y}`;
+		return pathElement(`${drawing.id}-fib-arc-${index}`, { d: path, ...lineProps });
+	});
+	const labels = geometry.radii.map((radius, index) => textElement(`${drawing.id}-fib-arc-label-${index}`, {
+		x: geometry.center.x + radius + 4,
+		y: geometry.center.y - radius - 4,
+		fill: stroke,
+		fontSize: drawing.style.fontSize ?? 11,
+		fontFamily: drawing.style.fontFamily ?? "sans-serif",
+		textAnchor: "start",
+		className: options.isSelected ? "rsc-drawing-selected" : undefined,
+		...interactiveProps(drawing, options),
+	}, `${(geometry.levels[index] * 100).toFixed(1)}%`));
+
+	const elements = [...arcs, ...labels];
+	return options.isSelected ? [...elements, ...selectionHandles([geometry.center, geometry.reference], drawing, options)] : elements;
+}
+
+function renderFibTimeZone(drawing: DrawingObject, scales: ChartScales, options: RenderSvgOptions): ReactElement[] {
+	const geometry = calculateFibTimeZoneGeometry(drawing, scales);
+	if (!geometry) {
+		return [];
+	}
+
+	const lineProps = {
+		stroke: drawing.style.stroke,
+		strokeWidth: drawing.style.strokeWidth,
+		strokeDasharray: strokeDasharrayForStyle(drawing.style),
+		fill: "none",
+		className: options.isSelected ? "rsc-drawing-selected" : undefined,
+		vectorEffect: "non-scaling-stroke",
+		...interactiveProps(drawing, options),
+	};
+	const elements = geometry.positions.flatMap((x, index) => [
+		lineElement(`${drawing.id}-fib-time-zone-line-${index}`, {
+			x1: x,
+			y1: 0,
+			x2: x,
+			y2: options.chartHeight,
+			...lineProps,
+		}),
+		textElement(`${drawing.id}-fib-time-zone-label-${index}`, {
+			x: x + 4,
+			y: 12,
+			fill: drawing.style.stroke,
+			fontSize: drawing.style.fontSize ?? 11,
+			fontFamily: drawing.style.fontFamily ?? "sans-serif",
+			textAnchor: "start",
+			className: options.isSelected ? "rsc-drawing-selected" : undefined,
+			...interactiveProps(drawing, options),
+		}, `${geometry.levels[index]}`),
+	]);
+
+	return options.isSelected ? [...elements, ...selectionHandles([geometry.start, geometry.end], drawing, options)] : elements;
+}
+
+function renderRegressionChannel(drawing: DrawingObject, scales: ChartScales, options: RenderSvgOptions): ReactElement[] {
+	const metrics = calculateRegressionChannelMetrics(drawing, scales, options.plotData ?? []);
+	if (!metrics) {
+		return [];
+	}
+
+	const lineProps = {
+		stroke: drawing.style.stroke,
+		strokeWidth: drawing.style.strokeWidth,
+		strokeDasharray: strokeDasharrayForStyle(drawing.style),
+		fill: "none",
+		className: options.isSelected ? "rsc-drawing-selected" : undefined,
+		vectorEffect: "non-scaling-stroke",
+		...interactiveProps(drawing, options),
+	};
+	const fill = drawing.style.fill && drawing.style.fill !== "transparent" ? drawing.style.fill : "rgba(100,149,237,0.08)";
+	const polygon = polygonElement(`${drawing.id}-regression-fill`, {
+		points: [
+			`${metrics.startX},${metrics.upperStartY}`,
+			`${metrics.endX},${metrics.upperEndY}`,
+			`${metrics.endX},${metrics.lowerEndY}`,
+			`${metrics.startX},${metrics.lowerStartY}`,
+		].join(" "),
+		fill,
+		fillOpacity: drawing.style.fillOpacity ?? 1,
+		stroke: "none",
+		opacity: drawing.style.opacity ?? 1,
+		className: options.isSelected ? "rsc-drawing-selected" : undefined,
+		vectorEffect: "non-scaling-stroke",
+		...interactiveProps(drawing, options),
+	});
+	const dashedStroke = strokeDasharrayForStyle({ ...drawing.style, strokeDasharray: "dashed" });
+	const badge = textElement(`${drawing.id}-regression-badge`, {
+		x: metrics.endX - 4,
+		y: Math.min(metrics.upperEndY, metrics.lowerEndY, metrics.endY) - 6,
+		fill: drawing.style.stroke,
+		fontSize: drawing.style.fontSize ?? 11,
+		fontFamily: drawing.style.fontFamily ?? "sans-serif",
+		fontWeight: 700,
+		textAnchor: "end",
+		className: options.isSelected ? "rsc-drawing-selected" : undefined,
+		...interactiveProps(drawing, options),
+	}, `R² ${metrics.rSquared.toFixed(2)}`);
+
+	const elements = [
+		polygon,
+		lineElement(`${drawing.id}-regression-upper`, { x1: metrics.startX, y1: metrics.upperStartY, x2: metrics.endX, y2: metrics.upperEndY, ...lineProps, strokeDasharray: dashedStroke }),
+		lineElement(`${drawing.id}-regression-lower`, { x1: metrics.startX, y1: metrics.lowerStartY, x2: metrics.endX, y2: metrics.lowerEndY, ...lineProps, strokeDasharray: dashedStroke }),
+		lineElement(`${drawing.id}-regression-center`, { x1: metrics.startX, y1: metrics.startY, x2: metrics.endX, y2: metrics.endY, ...lineProps }),
+		badge,
+	];
+
+	return options.isSelected ? [...elements, ...selectionHandles([drawing.points[0], drawing.points[1]].filter(Boolean) as Array<{ x: number; y: number }>, drawing, options)] : elements;
 }
 
 function renderText(drawing: DrawingObject, scales: ChartScales, options: RenderSvgOptions): ReactElement[] {
@@ -742,6 +1050,18 @@ export function renderDrawingToSvg(
 			return renderFibonacci(drawing, scales, options);
 		case "channel":
 				return renderChannel(drawing, scales, options);
+		case "parallelChannel":
+			return renderParallelChannel(drawing, scales, options);
+		case "pitchfork":
+			return renderPitchfork(drawing, scales, options);
+		case "abcdPattern":
+			return renderAbcdPattern(drawing, scales, options);
+		case "fibArc":
+			return renderFibArc(drawing, scales, options);
+		case "fibTimeZone":
+			return renderFibTimeZone(drawing, scales, options);
+		case "regressionChannel":
+			return renderRegressionChannel(drawing, scales, options);
 		case "text":
 				return renderText(drawing, scales, options);
 		case "rectangle":

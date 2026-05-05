@@ -53,6 +53,12 @@ export {
 	LongPosition,
 	ShortPosition,
 	FibExtension,
+	ParallelChannel,
+	Pitchfork,
+	AbcdPattern,
+	FibArc,
+	FibTimeZone,
+	RegressionChannel,
 } from "./lib/drawing";
 
 export type {

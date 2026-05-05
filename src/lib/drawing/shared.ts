@@ -58,3 +58,15 @@ export function replacePoint(object: DrawingObject, index: number, nextPoint: Po
 		updatedAt: Date.now(),
 	};
 }
+
+export function replaceNextPoint(object: DrawingObject, nextPoint: Point) {
+	const startPoint = object.points[0];
+	if (!startPoint) {
+		return replacePoint(object, Math.max(0, object.points.length - 1), nextPoint);
+	}
+
+	const placeholderIndex = object.points.findIndex((point, index) => index > 0 && point.x === startPoint.x && point.y === startPoint.y);
+	const targetIndex = placeholderIndex === -1 ? object.points.length - 1 : placeholderIndex;
+
+	return replacePoint(object, targetIndex, nextPoint);
+}

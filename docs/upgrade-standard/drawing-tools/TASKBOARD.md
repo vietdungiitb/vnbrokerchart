@@ -128,10 +128,12 @@
 
 ### Gate M4 checklist
 
-- [ ] DT-33 → DT-44 all Done
-- [ ] `npm run type-check` → PASS
-- [ ] `npm test` → PASS (tests cho pitchfork geometry, regression channel LSQ, fibArc radius)
-- [ ] Browser smoke: all 6 pattern tools functional; R² badge visible; pitchfork 3-click
+- [x] DT-33 → DT-44 all Done
+- [x] `npm run type-check` → PASS
+- [x] `npm test` → PASS (tests cho pitchfork geometry, regression channel LSQ, fibArc radius)
+- [x] Browser smoke: all 6 pattern tools functional; R² badge visible; pitchfork 3-click
+- [x] `docs/upgrade-standard/AUDIT_LEDGER.md` updated
+- [x] `module_tree_full.md` regenerated
 
 ---
 
