@@ -2,58 +2,78 @@
 
 ## 1. Bối cảnh
 
-Repo hiện có data model và state machine cho drawing tools (`src/lib/drawing/`), nhưng:
-1. Tất cả built-in tool có `render: () => undefined` — không có rendering thực.
-2. Không có coordinate bridge để map pixel chuột ↔ giá trị giá/thời gian.
-3. Toolbar `activeTool` state chưa wire vào bất kỳ interaction logic nào.
+M1 đã hoàn thành (commit `b1bf284`, 2026-05-05). Hệ thống có đầy đủ: coordinate bridge, SVG render engine, 8 built-in tools, DrawingLayer overlay, useDrawingInteraction hook, keyboard shortcuts, i18n, Vitest unit tests.
 
-Feature này xây lớp thực thi trên nền sẵn có, không thay thế data model đã được kiểm chứng.
+Spec này bao gồm toàn bộ M1→M4. Phần M1 là reference; M2→M4 là specification cho đội code implement.
 
 ## 2. Scope
 
-### In scope — M1
+### ✅ Done — M1 (2026-05-05)
 
-- Coordinate bridge: pixel chuột → chart-space point (price + bar index).
-- SVG render layer mount trên chart area.
-- Interactive drawing creation: click-and-drag từ toolbar selection.
-- Preview real-time khi move chuột trong drawing mode.
-- Selection, delete, undo/redo bằng keyboard.
-- 8 tool types: Trend Line, H-Line, V-Line, Fibonacci, Channel, Text, Rectangle, Arrow.
+- Coordinate bridge: `pixelToChartPoint` / `chartPointToPixel`.
+- SVG render layer (`DrawingLayer.tsx`) mount qua `GenericComponent`.
+- 8 tool types: trendLine, hLine, vLine, fibonacci, channel, text, rectangle, arrow.
+- Selection, delete, undo/redo (Ctrl+Z/Y/Shift+Z, Del, ESC).
+- 67 unit tests pass; type-check clean; build clean.
 
 ### In scope — M2
 
-- DrawingInspector: floating property panel khi có selected drawing.
-- Persistence: localStorage per symbol + timeframe.
-- Export/Import JSON.
+- DrawingInspector: floating property panel (màu, stroke width, line style, lock, clone, hide, z-order).
+- DrawingListPanel: danh sách drawings sidebar.
+- Persistence: localStorage per symbol+timeframe, auto-save.
+- Export JSON / Import JSON.
 
 ### In scope — M3
 
-- Price Range (measure tool).
-- Position Box (risk-reward box).
-- Fibonacci Extension.
-- Multi-select.
-- Toolbar nhóm với divider.
+- 7 công cụ mới: Ray, Extended Line (X-Line), Polyline, Date & Price Range, Long Position, Short Position, Fibonacci Extension.
+- Multi-select (Shift+click, drag-box select, group delete/move).
+- Toolbar groups với visual divider: Lines | Fibonacci | Shapes | Analysis.
 
-### Out of scope
+### In scope — M4
 
-- Backend persistence (Django/REST).
-- Drawing templates/sharing.
+- 6 công cụ pro: Parallel Channel (3-point), Andrew's Pitchfork, ABCD Harmonic, Fibonacci Arc, Fibonacci Time Zone, Regression Channel.
+- Drawings list sort/filter.
+- Snap to OHLC high/low (optional, nếu time permits).
+
+### Out of scope (tất cả milestone)
+
+- Backend persistence (Django/REST/cloud).
+- Drawing templates/sharing/publish.
 - Alert triggers từ drawing levels.
-- Drawing trên indicator panes (chỉ price pane M1/M2).
-- Snap vào OHLC high/low (có thể thêm M3+).
+- Drawing trên indicator panes (chỉ price pane).
 
 ## 3. Data Model
 
 ### DrawingObject (hiện tại — giữ nguyên, chỉ extend)
 
 ```typescript
-// src/lib/drawing/types.ts — hiện tại
+### DrawingObject — as-built M1 (đây là contract hiện tại, không thay đổi)
+
+```typescript
+// src/lib/drawing/types.ts — AS-BUILT M1
+export type DrawingToolType =
+  | "trendLine" | "hLine" | "vLine"
+  | "fibonacci" | "channel" | "text"
+  | "rectangle" | "arrow";
+
+export interface DrawingStyle {
+  stroke: string;
+  strokeWidth: number;
+  strokeDasharray?: string;  // chuỗi SVG dasharray, e.g. "5,3"
+  fill?: string;
+  opacity?: number;
+  fontSize?: number;
+  fontFamily?: string;
+}
+
 export interface DrawingObject {
   id: string;
   type: DrawingToolType;
-  points: Point[];        // chart coordinates — KHÔNG phải pixel
+  points: Point[];        // LUÔN chart coordinates — timestamp (ms) + price. KHÔNG BAO GIỜ pixel.
   style: DrawingStyle;
   text?: string;
+  fibLevels?: number[];   // custom fib levels nếu khác default
+  label?: string;
   extendLeft?: boolean;
   extendRight?: boolean;
   locked?: boolean;
@@ -63,71 +83,74 @@ export interface DrawingObject {
 }
 ```
 
-### Extension cần thêm (M1)
+### Extension M2 — thêm vào types.ts
 
 ```typescript
-// Bổ sung 2 tool type mới vào union
+// Bổ sung vào DrawingToolType union — KHÔNG xóa items cũ
 export type DrawingToolType =
   | "trendLine" | "hLine" | "vLine"
   | "fibonacci" | "channel" | "text"
-  | "rectangle"   // NEW M1
-  | "arrow";      // NEW M1
+  | "rectangle" | "arrow"
+  // M2: không thêm tool type mới — chỉ extend DrawingObject fields
 
-// Bổ sung field cho label fibonacci
-// (không break existing — optional)
-// interface DrawingObject:
-//   fibLevels?: number[];   // custom levels, default [0,0.236,0.382,0.5,0.618,0.786,1.0,1.618,2.618]
-//   label?: string;         // user label for any drawing
-```
+// Bổ sung optional fields vào DrawingObject interface:
+//   symbol?: string;         // e.g. "BTCUSD" — cho localStorage key
+//   timeframe?: string;      // e.g. "1h"
+//   zIndex?: number;         // z-order trong drawing list, default 0
+//   clonedFrom?: string;     // id của drawing gốc nếu là bản clone
 
-### Extension cần thêm (M2)
-
-```typescript
-// Bổ sung context cho persistence
-// interface DrawingObject:
-//   symbol?: string;      // e.g. "BTCUSD"
-//   timeframe?: string;   // e.g. "1h"
-
-// DrawingStyle stroke typing
+// Sửa DrawingStyle.strokeDasharray thành union type rõ ràng:
 export interface DrawingStyle {
   stroke: string;
   strokeWidth: number;
-  strokeDasharray?: "solid" | "dashed" | "dotted";  // M2: type đúng hơn
+  strokeDasharray?: "solid" | "4,4" | "2,2";  // solid | dashed | dotted
   fill?: string;
+  fillOpacity?: number;      // NEW M2 — tách riêng fill opacity khỏi stroke opacity
   opacity?: number;
   fontSize?: number;
   fontFamily?: string;
 }
 ```
 
-### Extension cần thêm (M3)
+### Extension M3 — thêm vào types.ts
 
 ```typescript
-// Bổ sung 3 tool type mới
+// Bổ sung vào DrawingToolType union:
 export type DrawingToolType =
-  // ... existing ...
-  | "priceRange"    // NEW M3
-  | "positionBox"   // NEW M3
-  | "fibExtension"; // NEW M3
+  | "trendLine" | "hLine" | "vLine"
+  | "fibonacci" | "channel" | "text"
+  | "rectangle" | "arrow"
+  | "ray"              // NEW M3 — extends 1 direction
+  | "extendedLine"     // NEW M3 — extends both directions (X-Line)
+  | "polyline"         // NEW M3 — multi-segment, N points
+  | "dateAndPriceRange" // NEW M3 — box + badge Δ%
+  | "longPosition"     // NEW M3 — entry/TP/SL box green/red
+  | "shortPosition"    // NEW M3 — inverted longPosition
+  | "fibExtension";    // NEW M3 — extension levels beyond range
 
-// interface DrawingObject:
-//   riskReward?: { entry: number; stop: number; target: number };
+// Bổ sung optional fields vào DrawingObject:
+//   riskReward?: {
+//     entry: number;       // price
+//     stop: number;        // price
+//     target: number;      // price
+//     quantity?: number;   // số lượng (cho P&L calc)
+//   };
+//   multiSelectGroup?: string;  // group id khi multi-select
 ```
 
-## 4. Coordinate Bridge
-
-### Vấn đề cốt lõi
-
-Chart dùng D3 `scaleTime` cho trục X (time → pixel) và `scaleLinear` cho trục Y (price → pixel). DrawingObject lưu chart coordinates, không phải pixel. Cần bridge bidirectional.
-
-### Spec
+### Extension M4 — thêm vào types.ts
 
 ```typescript
-// src/lib/drawing/coordinateUtils.ts
+// Bổ sung vào DrawingToolType union:
+  | "parallelChannel"    // NEW M4 — 3 points, 2 parallel lines + midline
+  | "pitchfork"          // NEW M4 — Andrew's Pitchfork, 3 points A/B/C
+  | "abcdPattern"        // NEW M4 — 4 points A/B/C/D
+  | "fibArc"             // NEW M4 — 2 points → 3 arcs at 0.382/0.5/0.618
+  | "fibTimeZone"        // NEW M4 — vertical columns at Fib intervals
+  | "regressionChannel"; // NEW M4 — best-fit line + std-dev bands
+```
 
-export interface ChartScales {
-  xScale: (date: Date) => number;          // time → pixel x
-  xScaleInvert: (px: number) => Date;      // pixel x → time
+## 4. Coordinate Bridge — AS-BUILT
   yScale: (price: number) => number;       // price → pixel y
   yScaleInvert: (px: number) => number;    // pixel y → price
   xAccessor: (datum: PlotDatum) => Date;   // datum → Date
@@ -320,32 +343,330 @@ Hoặc cách thực thi đơn giản hơn (ưu tiên M1): `LibraryShowcaseDemo` 
 
 ## 11. Danh sách file cần tạo/sửa tổng hợp
 
-### Tạo mới
+### Tạo mới (M1 = DONE ✅)
 
-| File | Milestone |
-| :--- | :--- |
-| `src/lib/drawing/coordinateUtils.ts` | M1 |
-| `src/lib/drawing/renderSvg.ts` | M1 |
-| `src/lib/drawing/useDrawingInteraction.ts` | M1 |
-| `src/lib/drawing/DrawingLayer.tsx` | M1 |
-| `src/lib/drawing/builtin/rectangle.ts` | M1 |
-| `src/lib/drawing/builtin/arrow.ts` | M1 |
-| `src/lib/drawing/DrawingInspector.tsx` | M2 |
-| `src/lib/drawing/DrawingStorage.ts` | M2 |
-| `src/lib/drawing/useDrawingStorage.ts` | M2 |
-| `src/lib/drawing/builtin/priceRange.ts` | M3 |
-| `src/lib/drawing/builtin/positionBox.ts` | M3 |
-| `src/lib/drawing/builtin/fibExtension.ts` | M3 |
+| File | Milestone | Trạng thái |
+| :--- | :--- | :--- |
+| `src/lib/drawing/coordinateUtils.ts` | M1 | ✅ Done |
+| `src/lib/drawing/renderSvg.ts` | M1 | ✅ Done |
+| `src/lib/drawing/useDrawingInteraction.ts` | M1 | ✅ Done |
+| `src/lib/drawing/DrawingLayer.tsx` | M1 | ✅ Done |
+| `src/lib/drawing/builtin/rectangle.ts` | M1 | ✅ Done |
+| `src/lib/drawing/builtin/arrow.ts` | M1 | ✅ Done |
+| `src/lib/drawing/DrawingInspector.tsx` | M2 | TODO |
+| `src/lib/drawing/DrawingStorage.ts` | M2 | TODO |
+| `src/lib/drawing/useDrawingStorage.ts` | M2 | TODO |
+| `src/lib/drawing/DrawingListPanel.tsx` | M2 | TODO |
+| `src/lib/drawing/builtin/ray.ts` | M3 | TODO |
+| `src/lib/drawing/builtin/extendedLine.ts` | M3 | TODO |
+| `src/lib/drawing/builtin/polyline.ts` | M3 | TODO |
+| `src/lib/drawing/builtin/dateAndPriceRange.ts` | M3 | TODO |
+| `src/lib/drawing/builtin/longPosition.ts` | M3 | TODO |
+| `src/lib/drawing/builtin/shortPosition.ts` | M3 | TODO |
+| `src/lib/drawing/builtin/fibExtension.ts` | M3 | TODO |
+| `src/lib/drawing/builtin/parallelChannel.ts` | M4 | TODO |
+| `src/lib/drawing/builtin/pitchfork.ts` | M4 | TODO |
+| `src/lib/drawing/builtin/abcdPattern.ts` | M4 | TODO |
+| `src/lib/drawing/builtin/fibArc.ts` | M4 | TODO |
+| `src/lib/drawing/builtin/fibTimeZone.ts` | M4 | TODO |
+| `src/lib/drawing/builtin/regressionChannel.ts` | M4 | TODO |
 
 ### Sửa
 
-| File | Thay đổi | Milestone |
-| :--- | :--- | :--- |
-| `src/lib/drawing/types.ts` | Thêm "rectangle"\|"arrow" vào DrawingToolType; fibLevels, label optional | M1 |
-| `src/lib/drawing/index.ts` | Export mới: DrawingLayer, useDrawingInteraction, coordinateUtils, Rectangle, Arrow | M1 |
-| `src/lib/drawing/types.ts` | Thêm "priceRange"\|"positionBox"\|"fibExtension"; symbol, timeframe optional | M2/M3 |
-| `src/demo/LibraryShowcaseDemo.tsx` | Mount DrawingLayer, wire activeTool, keyboard handler | M1 |
-| `src/demo/LibraryShowcaseDemo.tsx` | Mount DrawingInspector, useDrawingStorage | M2 |
-| `src/demo/LibraryShowcaseDemo.tsx` | Thêm 3 tool M3 + toolbar group divider | M3 |
-| `src/demo/i18n.tsx` | Thêm i18n keys mới theo mỗi milestone | M1/M2/M3 |
-| `src/demo/demo.css` | Cursor rules, drawing handles, inspector panel styles | M1/M2/M3 |
+| File | Thay đổi | Milestone | Trạng thái |
+| :--- | :--- | :--- | :--- |
+| `src/lib/drawing/types.ts` | +rectangle, arrow, fibLevels, label | M1 | ✅ Done |
+| `src/lib/drawing/index.ts` | Export M1 symbols | M1 | ✅ Done |
+| `src/lib/drawing/types.ts` | +symbol, timeframe, zIndex, clonedFrom, fillOpacity, dasharray union | M2 | TODO |
+| `src/lib/drawing/index.ts` | Export M2: DrawingInspector, DrawingStorage, useDrawingStorage, DrawingListPanel | M2 | TODO |
+| `src/lib/drawing/types.ts` | +ray, extendedLine, polyline, dateAndPriceRange, longPosition, shortPosition, fibExtension, riskReward | M3 | TODO |
+| `src/lib/drawing/stateMachine.ts` | +multi-select state | M3 | TODO |
+| `src/lib/drawing/renderSvg.ts` | +render cho 7 M3 tools | M3 | TODO |
+| `src/lib/drawing/DrawingLayer.tsx` | +Shift+click multi-select, polyline N-click | M3 | TODO |
+| `src/lib/drawing/index.ts` | Export M3 tools | M3 | TODO |
+| `src/lib/drawing/types.ts` | +parallelChannel, pitchfork, abcdPattern, fibArc, fibTimeZone, regressionChannel | M4 | TODO |
+| `src/lib/drawing/renderSvg.ts` | +render cho 6 M4 tools | M4 | TODO |
+| `src/lib/drawing/DrawingLayer.tsx` | +N-click accumulation cho pitchfork, ABCD | M4 | TODO |
+| `src/lib/drawing/index.ts` | Export M4 tools | M4 | TODO |
+| `src/demo/LibraryShowcaseDemo.tsx` | M1: DrawingLayer mount, keyboard ✅; M2: Inspector + storage; M3: +7 tools + groups; M4: +6 tools | M1-M4 | M1 ✅ |
+| `src/demo/i18n.tsx` | i18n keys mới theo mỗi milestone | M1-M4 | M1 ✅ |
+| `src/demo/demo.css` | Cursor rules, inspector panel, position box colors, group badges | M1-M4 | M1 partial |
+
+## 12. Spec chi tiết M2 — DrawingInspector + DrawingStorage
+
+### DrawingStorage
+
+```typescript
+// src/lib/drawing/DrawingStorage.ts
+
+export interface DrawingStorageAdapter {
+  save(symbol: string, timeframe: string, drawings: DrawingObject[]): void;
+  load(symbol: string, timeframe: string): DrawingObject[];
+  clear(symbol: string, timeframe: string): void;
+  exportJSON(drawings: DrawingObject[]): string;          // returns JSON string
+  importJSON(json: string): DrawingObject[];              // throws DrawingImportError if invalid
+}
+
+export class DrawingImportError extends Error {
+  constructor(message: string) { super(message); }
+}
+
+export function createLocalStorageAdapter(): DrawingStorageAdapter;
+
+// Storage key format:
+// `rsc-drawings-v1-${symbol.toUpperCase()}-${timeframe}`
+// e.g. "rsc-drawings-v1-BTCUSD-1h"
+
+// Validation schema (importJSON):
+// - Must be array
+// - Each item must have: id (string), type (DrawingToolType), points (Point[]), style (DrawingStyle), createdAt (number)
+// - If validation fails: throw DrawingImportError with field path
+```
+
+### useDrawingStorage hook
+
+```typescript
+// src/lib/drawing/useDrawingStorage.ts
+
+export interface UseDrawingStorageReturn {
+  exportJSON: () => void;         // triggers browser file download "drawings.json"
+  importJSON: (file: File) => Promise<void>;  // reads file, validates, dispatches LOAD action
+  clearAll: () => void;
+}
+
+export function useDrawingStorage(
+  symbol: string,
+  timeframe: string,
+  drawings: DrawingObject[],       // current drawings list (from useDrawingInteraction)
+  onLoad: (drawings: DrawingObject[]) => void,  // callback to inject loaded drawings
+  adapter?: DrawingStorageAdapter   // default: createLocalStorageAdapter()
+): UseDrawingStorageReturn;
+
+// Behavior:
+// - On mount: load() → if result non-empty → onLoad(result)
+// - On drawings change (useEffect): save() — debounce 300ms
+// - exportJSON(): JSON.stringify(drawings) → download blob
+// - importJSON(file): FileReader → validate → onLoad(imported)
+```
+
+### DrawingInspector component
+
+```typescript
+// src/lib/drawing/DrawingInspector.tsx
+
+export interface DrawingInspectorProps {
+  drawing: DrawingObject | null;       // null = inspector hidden
+  position?: { x: number; y: number }; // screen position, default auto-near drawing
+  onUpdate: (patch: Partial<DrawingObject>) => void;  // partial patch applied to drawing
+  onDelete: () => void;
+  onClone: () => void;                 // create duplicate offset by +20px
+  onToggleLock: () => void;
+  onToggleVisible: () => void;
+  onBringToFront: () => void;          // zIndex = max + 1
+  onSendToBack: () => void;            // zIndex = min - 1
+  onClose: () => void;
+}
+
+// UI Controls:
+// ┌─ Color swatch ─ stroke color picker (<input type="color" />) ─────────┐
+// │ Fill color picker (<input type="color" />) [only for rect/posBox/etc] │
+// │ Stroke width slider (1–5px)                                            │
+// │ Line style dropdown: Solid / Dashed / Dotted                           │
+// │ Opacity slider (0.1–1.0)                                               │
+// ├─ Lock toggle ─ Clone button ─ Hide button ─────────────────────────── │
+// │ Bring to Front | Send to Back                                           │
+// │ [Delete button — red]                                                   │
+// └────────────────────────────────────────────────────────────────────────┘
+//
+// Panel là position:fixed, anchor near bounding box của drawing selected
+// Đóng khi: click ngoài panel, ESC, activeTool thay đổi
+```
+
+### DrawingListPanel component
+
+```typescript
+// src/lib/drawing/DrawingListPanel.tsx
+
+export interface DrawingListPanelProps {
+  drawings: DrawingObject[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onToggleVisible: (id: string) => void;
+  onDelete: (id: string) => void;
+}
+
+// Hiển thị dạng vertical list ở bên phải toolbar hoặc dưới drawing toolbar
+// Mỗi item: [icon type] [label: type + createdAt time] [eye icon] [delete icon]
+// Click item → onSelect → chart scroll to drawing nếu ngoài viewport
+// Eye icon click → toggle visible
+```
+
+## 13. Spec chi tiết M3 — New Tool Behaviors
+
+### Ray
+
+```
+- 2 điểm: P1 (anchor) + P2 (direction point)
+- Render: đường từ P1 → extend theo hướng P1→P2 đến edge của chart
+- Không extend về phía ngược lại
+- Interaction: 1-click P1, 1-click P2 → complete
+- Handles khi selected: handle ở P1 (grab = reanchor), handle ở P2 (grab = change direction)
+```
+
+### Extended Line (X-Line)
+
+```
+- 2 điểm: P1, P2
+- Render: đường extend vô tận cả 2 chiều, clip tại chart boundary
+- Interaction: 1-click P1, 1-click P2 → complete
+- Cùng pattern với trendLine nhưng extend = true cả 2 hướng
+```
+
+### Polyline
+
+```
+- N điểm (N ≥ 2)
+- Interaction: click để add điểm; double-click hoặc ESC để hoàn tất; Enter cũng commit
+- Preview: đường từ last committed point đến cursor
+- Render: SVG <polyline> hoặc <path> qua tất cả points
+- Handles khi selected: circle ở mỗi điểm; kéo để reposition
+- updateDraft: append điểm khi click; replace last point khi mouse move (preview)
+- Cần thêm action APPEND_POINT vào stateMachine nếu chưa có
+```
+
+### Date & Price Range
+
+```
+- 2 điểm: P1 (corner 1) + P2 (corner 2)
+- Render:
+  - SVG <rect> fill bán trong suốt (rgba(100,149,237,0.15))
+  - Badge SVG <text> ở góc trên phải: "Δ+3.2% · 28 bars"
+  - Đường dọc tại P1.x và P2.x; đường ngang tại P1.y và P2.y
+- Badge calculation:
+  - Δ% = (P2.y - P1.y) / P1.y × 100 → round 2 decimal
+  - bars = count of visible candles between P1.x and P2.x timestamps
+- Interaction: drag P1→P2 (same as rectangle)
+```
+
+### Long Position Box
+
+```
+- 3 giá: entry (click 1), target/TP (drag up), stop/SL (drag down)
+- Interaction:
+  1. Click xác định entry price (horizontal line)
+  2. Drag up → xác định TP price
+  3. Auto-calculate SL mirrored hoặc separate click
+  Cách đơn giản hơn: drag P1→P2 (entry = P1.y, TP = max(P1.y, P2.y), SL = min(P1.y, P2.y))
+  → Sau khi commit: user có thể drag từng line riêng qua Inspector
+- Render:
+  - Box xanh lá (entry → TP): fill rgba(0,200,83,0.15), stroke green
+  - Box đỏ (entry → SL): fill rgba(239,83,80,0.15), stroke red
+  - 3 horizontal lines: entry (white/dashed), TP (green), SL (red)
+  - Badge ở góc phải:
+    - "R/R 1:2.0" (ratio = |TP-entry| / |entry-SL|)
+    - "+ 3.2%" (gain to TP)
+    - "- 1.6%" (loss to SL)
+    - "P&L +$640" (nếu có quantity trong riskReward.quantity)
+- points[0] = entry, points[1] = TP corner, points[2] = SL corner
+  (x = timestamp range cho box width; y = respective price)
+```
+
+### Short Position Box
+
+```
+- Tương tự Long Position Box nhưng:
+  - Box đỏ (entry → TP/cover): fill rgba(239,83,80,0.15)
+  - Box xanh (entry → SL): fill rgba(0,200,83,0.15)
+  - Entry ở trên, TP ở dưới, SL ở trên entry
+  - Badge hiện "Short" label
+```
+
+### Fibonacci Extension
+
+```
+- 2 điểm: P1 (swing low/high), P2 (swing high/low đối diện)
+- Extension levels: [1.272, 1.414, 1.618, 2.0, 2.618]
+- Render:
+  - Mỗi level = 1 horizontal line full-width + label bên phải: "161.8% — 94,250.00"
+  - Màu giảm dần opacity theo distance (161.8% đậm nhất)
+  - Range P1-P2 cũng hiển thị (levels 0% và 100%)
+- Direction:
+  - Nếu P2 > P1 (upswing): extension levels = P2 + (P2-P1) × level_ratio
+  - Nếu P2 < P1 (downswing): extension levels = P2 - (P1-P2) × level_ratio
+```
+
+## 14. Spec chi tiết M4 — Pattern Tool Behaviors
+
+### Parallel Channel (3-point)
+
+```
+- 3 điểm: P1, P2 (định nghĩa line chính), P3 (xác định offset)
+- Render: line P1→P2, parallel line offset theo P3, midline (trung điểm)
+- Interaction: click P1, click P2, click P3 → complete
+- Tất cả 3 lines extend đến chart boundary
+- Handles khi selected: P1, P2, P3 + handle di chuyển toàn bộ channel
+```
+
+### Andrew's Pitchfork
+
+```
+- 3 điểm: A (pivot), B (swing 1), C (swing 2)
+- Render:
+  - Median Line: A → midpoint(B, C), extend
+  - Upper fork: B → parallel to median line, extend
+  - Lower fork: C → parallel to median line, extend
+- Labels: "A", "B", "C" tại mỗi điểm
+- Interaction: click A, click B, click C → complete
+```
+
+### ABCD Harmonic Pattern
+
+```
+- 4 điểm: A, B, C, D
+- Render:
+  - Lines: A→B, B→C, C→D
+  - Labels tại mỗi điểm: A, B, C, D
+  - Ratio badges:
+    - AB: label khoảng cách giá
+    - BC/AB: tỷ lệ (ideal: 0.382–0.886)
+    - CD/BC: tỷ lệ (ideal: 1.272–1.618)
+- Interaction: click A, B, C, D lần lượt → complete
+- Highlight màu nếu ratios nằm trong vùng harmonic ideal
+```
+
+### Fibonacci Arc
+
+```
+- 2 điểm: P1 (center), P2 (radius point)
+- Radius = distance(P1, P2) (in price pixels)
+- Render: 3 bán nguyệt SVG <path> arc tại bán kính × [0.382, 0.5, 0.618]
+- Arc chỉ render phía dưới (half-circle) hướng forward theo thời gian
+- Labels tại điểm giao với edge: "38.2%", "50%", "61.8%"
+```
+
+### Fibonacci Time Zone
+
+```
+- 2 điểm: P1 (bar 0), P2 (bar 1) — xác định độ rộng 1 bar unit
+- Render: vertical lines tại Fibonacci intervals: 1, 2, 3, 5, 8, 13, 21, 34, 55, 89 bars
+  (tính từ P1)
+- Mỗi line là full-height dashed vertical line + label nhỏ ở đỉnh: "8"
+- Fill alternating bands bán trong suốt (optional)
+```
+
+### Regression Channel
+
+```
+- 2 điểm: P1 (start timestamp), P2 (end timestamp)
+- Algorithm:
+  1. Lọc plotData trong khoảng [P1.x, P2.x]
+  2. Linear regression: y = ax + b (least squares, x = bar index, y = close price)
+  3. Std deviation của residuals σ
+- Render:
+  - Median line (regression line): extend đến P2 hoặc toàn chart
+  - Upper band: median + σ (dashed)
+  - Lower band: median - σ (dashed)
+  - Fill vùng giữa 2 bands (rgba, opacity 0.1)
+  - R² badge ở góc phải: "R² 0.94"
+- Interaction: drag P1→P2 (same as dateAndPriceRange)
+```

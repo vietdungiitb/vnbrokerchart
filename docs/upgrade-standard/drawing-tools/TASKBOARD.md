@@ -11,61 +11,52 @@
 
 ---
 
-## 2. Milestone M1 — Core Drawing Engine
+## 2. Milestone M1 — ✅ DONE (2026-05-05, commit b1bf284)
 
 ### Phase M1-P0: Coordinate foundation
 
-| ID | Task | Owner role | Depends on | Acceptance criteria | DoD |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| DT-01 | Tạo `coordinateUtils.ts` | Drawing core | — | `pixelToChartPoint` + `chartPointToPixel` roundtrip test pass | Unit test pass; no type errors |
-| DT-02 | Tạo `renderSvg.ts` | Drawing render | DT-01 | `renderDrawingToSvg` trả ReactElement[] cho tất cả 8 tool types | `npm run type-check` PASS trên file |
-| DT-03 | Tạo `useDrawingInteraction.ts` | Drawing core | — (chỉ dùng existing reducers) | Hook expose đủ state, undo/redo, deleteSelected, cancelDrawing | Unit test pass |
-| DT-04 | Tạo `DrawingLayer.tsx` | Drawing UI | DT-01, DT-02, DT-03 | Component mount SVG overlay; pointer events → dispatch đúng action | Browser smoke: click → line appears |
+| ID | Task | Owner role | Trạng thái |
+| :--- | :--- | :--- | :--- |
+| DT-01 | Tạo `coordinateUtils.ts` | Drawing core | ✅ Done |
+| DT-02 | Tạo `renderSvg.ts` | Drawing render | ✅ Done |
+| DT-03 | Tạo `useDrawingInteraction.ts` | Drawing core | ✅ Done |
+| DT-04 | Tạo `DrawingLayer.tsx` | Drawing UI | ✅ Done |
 
 ### Phase M1-P1: New built-in tools
 
-| ID | Task | Owner role | Depends on | Acceptance criteria | DoD |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| DT-05 | Tạo `builtin/rectangle.ts` | Drawing core | — | `createDraft` + `updateDraft` test pass | Test pass; type-check clean |
-| DT-06 | Tạo `builtin/arrow.ts` | Drawing core | — | `createDraft` + `updateDraft` test pass | Test pass; type-check clean |
+| ID | Task | Owner role | Trạng thái |
+| :--- | :--- | :--- | :--- |
+| DT-05 | Tạo `builtin/rectangle.ts` | Drawing core | ✅ Done |
+| DT-06 | Tạo `builtin/arrow.ts` | Drawing core | ✅ Done |
 
 ### Phase M1-P2: Type extension
 
-| ID | Task | Owner role | Depends on | Acceptance criteria | DoD |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| DT-07 | Sửa `types.ts` — thêm rectangle, arrow, fibLevels, label | Drawing core | DT-05, DT-06 | `DrawingToolType` union đúng; type-check clean | PASS |
+| ID | Task | Owner role | Trạng thái |
+| :--- | :--- | :--- | :--- |
+| DT-07 | Sửa `types.ts` — thêm rectangle, arrow, fibLevels, label | Drawing core | ✅ Done |
 
 ### Phase M1-P3: Export + registry
 
-| ID | Task | Owner role | Depends on | Acceptance criteria | DoD |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| DT-08 | Sửa `drawing/index.ts` — export + register mới | Drawing core | DT-04, DT-05, DT-06, DT-07 | `listDrawingTools()` trả 8 tools; export đầy đủ | type-check PASS; smoke pass |
+| ID | Task | Owner role | Trạng thái |
+| :--- | :--- | :--- | :--- |
+| DT-08 | Sửa `drawing/index.ts` — export + register mới | Drawing core | ✅ Done |
 
 ### Phase M1-P4: Demo wiring
 
-| ID | Task | Owner role | Depends on | Acceptance criteria | DoD |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| DT-09 | Sửa `LibraryShowcaseDemo.tsx` — mount DrawingLayer + keyboard | Demo | DT-04, DT-08 | Click tool → vẽ được; Ctrl+Z/Y/ESC/Del hoạt động | Browser smoke pass |
-| DT-10 | Sửa `i18n.tsx` — thêm "tool.rectangle", "tool.arrow" | Demo i18n | DT-09 | Cả vi + en có key | Không còn missing i18n key |
-| DT-11 | Sửa `demo.css` — cursor modes, handles, selected state | Demo CSS | DT-09 | CSS classes đúng per tool mode | Visual check pass |
+| ID | Task | Owner role | Trạng thái |
+| :--- | :--- | :--- | :--- |
+| DT-09 | Sửa `LibraryShowcaseDemo.tsx` — mount DrawingLayer + keyboard | Demo | ✅ Done |
+| DT-10 | Sửa `i18n.tsx` — thêm "tool.rectangle", "tool.arrow" | Demo i18n | ✅ Done |
+| DT-11 | Sửa `demo.css` — cursor modes, handles, selected state | Demo CSS | ✅ Done |
 
-### Gate M1 checklist
+### Gate M1 checklist ✅ ALL PASSED (2026-05-05)
 
-- [ ] DT-01 Done
-- [ ] DT-02 Done
-- [ ] DT-03 Done
-- [ ] DT-04 Done
-- [ ] DT-05 Done
-- [ ] DT-06 Done
-- [ ] DT-07 Done
-- [ ] DT-08 Done
-- [ ] DT-09 Done
-- [ ] DT-10 Done
-- [ ] DT-11 Done
-- [ ] `npm run type-check` → PASS
-- [ ] `npm run test` → PASS
-- [ ] `python scripts/generate_module_tree.py` → chạy OK
-- [ ] Browser smoke M1 pass (xem AUDIT_PROTOCOL.md phần F01–F12)
+- [x] DT-01 → DT-11 all Done
+- [x] `npm run type-check` → PASS (0 errors)
+- [x] `npm run test` → PASS (67 tests)
+- [x] `python scripts/generate_module_tree.py` → OK
+- [x] Browser smoke M1: all 10 tools work, Ctrl+Z/Y/ESC/Del functional
+- [x] Commit: `b1bf284` on branch `dev`
 
 ---
 
@@ -73,75 +64,97 @@
 
 | ID | Task | Owner role | Depends on | Acceptance criteria | DoD |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| DT-12 | Tạo `DrawingStorage.ts` | Drawing data | Gate M1 | localStorage save/load/clear/export/import đúng schema | Unit test pass |
-| DT-13 | Tạo `useDrawingStorage.ts` | Drawing data | DT-12 | Auto-save + load on mount hoạt động | Test pass; smoke: reload giữ drawings |
-| DT-14 | Tạo `DrawingInspector.tsx` | Drawing UI | Gate M1 | Color/stroke/linestyle/lock controls render; onChange callback | Browser: đổi màu → drawing cập nhật |
-| DT-15 | Sửa `types.ts` — thêm symbol, timeframe; sửa strokeDasharray type | Drawing core | DT-12 | Type-check clean | PASS |
-| DT-16 | Sửa `drawing/index.ts` — export mới M2 | Drawing core | DT-12, DT-13, DT-14, DT-15 | Export đầy đủ | PASS |
-| DT-17 | Sửa `LibraryShowcaseDemo.tsx` — wire storage, inspector, export/import | Demo | DT-13, DT-14, DT-16 | Reload = persist; inspector hiện khi selected | Browser smoke pass |
-| DT-18 | Sửa `i18n.tsx` — thêm drawing.* keys | Demo i18n | DT-17 | Cả vi + en có key | PASS |
-| DT-19 | Sửa `demo.css` — inspector panel, color swatch, slider | Demo CSS | DT-17 | Panel đẹp, không overlap chart | Visual check pass |
+| DT-12 | Tạo `DrawingStorage.ts` | Drawing data | Gate M1 | localStorage save/load/clear/export/import đúng schema; validate on import | Unit test pass |
+| DT-13 | Tạo `useDrawingStorage.ts` | Drawing data | DT-12 | Auto-save debounce 300ms + load on mount hoạt động | Smoke: reload giữ drawings |
+| DT-14 | Tạo `DrawingInspector.tsx` | Drawing UI | Gate M1 | Color/stroke/linestyle/lock/clone/hide/z-order controls render | Smoke: đổi màu → drawing cập nhật |
+| DT-15 | Tạo `DrawingListPanel.tsx` | Drawing UI | Gate M1 | List hiện tất cả drawings; click to select; eye icon toggle visible | Smoke: click item → selected |
+| DT-16 | Sửa `types.ts` — symbol, timeframe, zIndex, clonedFrom, fillOpacity, dasharray union | Drawing core | DT-12 | Type-check clean | PASS |
+| DT-17 | Sửa `drawing/index.ts` — export M2 symbols | Drawing core | DT-12→DT-16 | Export đầy đủ | PASS |
+| DT-18 | Sửa `LibraryShowcaseDemo.tsx` — wire storage, inspector, list panel, export/import | Demo | DT-13, DT-14, DT-15, DT-17 | Reload = persist; inspector hiện khi selected; Export/Import buttons work | Smoke pass |
+| DT-19 | Sửa `i18n.tsx` + `demo.css` — M2 additions | Demo | DT-18 | drawing.* keys đủ cả vi + en; inspector panel styled | Visual check pass |
 
 ### Gate M2 checklist
 
-- [ ] DT-12 Done
-- [ ] DT-13 Done
-- [ ] DT-14 Done
-- [ ] DT-15 Done
-- [ ] DT-16 Done
-- [ ] DT-17 Done
-- [ ] DT-18 Done
-- [ ] DT-19 Done
+- [ ] DT-12 → DT-19 all Done
 - [ ] `npm run type-check` → PASS
-- [ ] Browser smoke M2 pass (xem AUDIT_PROTOCOL.md phần F13–F20)
+- [ ] `npm test` → PASS (DrawingStorage unit tests)
+- [ ] Browser smoke: inspector, localStorage persist, export/import
 
 ---
 
-## 4. Milestone M3 — Advanced Tools + Alert Markers
+## 4. Milestone M3 — Lines Nâng Cao + Position Tools
 
 | ID | Task | Owner role | Depends on | Acceptance criteria | DoD |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| DT-20 | Sửa `types.ts` — thêm priceRange, positionBox, fibExtension; riskReward | Drawing core | Gate M2 | Type-check clean | PASS |
-| DT-21 | Tạo `builtin/priceRange.ts` | Drawing core | DT-20 | draft, update, badge text đúng | Test: badge = "Δ X% · N bars" |
-| DT-22 | Tạo `builtin/positionBox.ts` | Drawing core | DT-20 | 3 điểm → box fill + R/R | Test: R/R ratio đúng |
-| DT-23 | Tạo `builtin/fibExtension.ts` | Drawing core | DT-20 | Extension levels đúng | Test: levels [1.272, 1.414, 1.618, 2.0, 2.618] |
-| DT-24 | Sửa `renderSvg.ts` — thêm render cho 3 tools | Drawing render | DT-21, DT-22, DT-23 | Render đúng trên browser | Browser smoke pass |
-| DT-25 | Sửa `DrawingLayer.tsx` — thêm Shift+click multi-select | Drawing UI | Gate M2 | Shift+click highlights 2+ drawings | Browser smoke pass |
-| DT-26 | Sửa `drawing/index.ts` — export + register 3 tools mới | Drawing core | DT-21, DT-22, DT-23 | 11 tools registered | PASS |
-| DT-27 | Sửa `LibraryShowcaseDemo.tsx` — thêm 3 tools + toolbar divider | Demo | DT-24, DT-25, DT-26 | Toolbar có divider Lines/Fib/Shapes/Analysis | Browser visual pass |
-| DT-28 | Sửa `i18n.tsx` + `demo.css` — M3 additions | Demo | DT-27 | Keys đủ; CSS positionBox + priceRange | Visual check pass |
+| DT-20 | Sửa `types.ts` — thêm 7 types M3 + riskReward field | Drawing core | Gate M2 | Type-check clean | PASS |
+| DT-21 | Tạo `builtin/ray.ts` | Drawing core | DT-20 | createDraft + updateDraft correct; ray extends forward | Test pass |
+| DT-22 | Tạo `builtin/extendedLine.ts` | Drawing core | DT-20 | Both extendLeft=true, extendRight=true | Test pass |
+| DT-23 | Tạo `builtin/polyline.ts` | Drawing core | DT-20 | N-point accumulation; double-click completes | Test: 3 clicks + dblclick → complete |
+| DT-24 | Tạo `builtin/dateAndPriceRange.ts` | Drawing core | DT-20 | Badge text = "Δ+X.XX% · N bars" | Test: badge math correct |
+| DT-25 | Tạo `builtin/longPosition.ts` | Drawing core | DT-20 | entry/TP/SL from drag; riskReward calc | Test: R/R ratio correct (|TP-E|/|E-SL|) |
+| DT-26 | Tạo `builtin/shortPosition.ts` | Drawing core | DT-20 | Inverted of longPosition | Test pass |
+| DT-27 | Tạo `builtin/fibExtension.ts` | Drawing core | DT-20 | Extension levels [1.272, 1.414, 1.618, 2.0, 2.618] correct | Test: level prices correct |
+| DT-28 | Sửa `renderSvg.ts` — thêm render cho 7 tools M3 | Drawing render | DT-21→DT-27 | Mỗi tool render đúng SVG; longPosition: xanh/đỏ box + badge | Smoke pass |
+| DT-29 | Sửa `DrawingLayer.tsx` — Shift+click multi-select; polyline N-click | Drawing UI | Gate M2 | Shift+click 2 drawings → both highlighted; polyline: click→click→dblclick=complete | Smoke pass |
+| DT-30 | Sửa `drawing/index.ts` — export + register 7 tools | Drawing core | DT-21→DT-27 | 15 tools total registered | PASS |
+| DT-31 | Sửa `LibraryShowcaseDemo.tsx` — 7 tools + toolbar groups + dividers | Demo | DT-28, DT-29, DT-30 | 4 toolbar groups: Lines/Fibonacci/Shapes/Analysis với visual divider | Smoke pass |
+| DT-32 | Sửa `i18n.tsx` + `demo.css` — M3 additions | Demo | DT-31 | tool.ray, tool.extendedLine, ..., longPosition/shortPosition CSS colors | Visual pass |
 
 ### Gate M3 checklist
 
-- [ ] DT-20 Done
-- [ ] DT-21 Done
-- [ ] DT-22 Done
-- [ ] DT-23 Done
-- [ ] DT-24 Done
-- [ ] DT-25 Done
-- [ ] DT-26 Done
-- [ ] DT-27 Done
-- [ ] DT-28 Done
+- [ ] DT-20 → DT-32 all Done
 - [ ] `npm run type-check` → PASS
-- [ ] Browser smoke M3 pass (xem AUDIT_PROTOCOL.md phần F21–F28)
+- [ ] `npm test` → PASS (tests cho ray extend, longPosition R/R, fibExtension levels, polyline N-click)
+- [ ] Browser smoke: all 7 new tools functional; multi-select; toolbar groups
 
 ---
 
-## 5. Thứ tự thực hiện khuyến nghị
+## 5. Milestone M4 — Pattern Tools + Pro
+
+| ID | Task | Owner role | Depends on | Acceptance criteria | DoD |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| DT-33 | Sửa `types.ts` — thêm 6 types M4 | Drawing core | Gate M3 | Type-check clean | PASS |
+| DT-34 | Tạo `builtin/parallelChannel.ts` | Drawing core | DT-33 | 3-point: P1/P2 main line, P3 offset; createDraft 3-click | Test: offset calc correct |
+| DT-35 | Tạo `builtin/pitchfork.ts` | Drawing core | DT-33 | A/B/C → median + 2 side forks; midpoint calc correct | Test: median = A→mid(B,C) |
+| DT-36 | Tạo `builtin/abcdPattern.ts` | Drawing core | DT-33 | 4-click ABCD; ratio badges BC/AB, CD/BC | Test: ratio math correct |
+| DT-37 | Tạo `builtin/fibArc.ts` | Drawing core | DT-33 | 2-point; radius = dist(P1,P2); 3 arcs at 0.382/0.5/0.618 radius | Test: arc radii correct |
+| DT-38 | Tạo `builtin/fibTimeZone.ts` | Drawing core | DT-33 | 2-point bar width; vertical lines at Fib seq [1,2,3,5,8,13,21,34] | Test: x positions correct |
+| DT-39 | Tạo `builtin/regressionChannel.ts` | Drawing core | DT-33 | Least-squares regression; ±σ bands; R² badge | Test: regression math (slope, intercept, σ) |
+| DT-40 | Sửa `renderSvg.ts` — thêm render cho 6 tools M4 | Drawing render | DT-34→DT-39 | Mỗi tool render đúng SVG | Smoke pass |
+| DT-41 | Sửa `DrawingLayer.tsx` — N-click cho pitchfork (3) + abcd (4) | Drawing UI | Gate M3 | 3/4 clicks → auto-complete; APPEND_POINT action dispatched correctly | Smoke pass |
+| DT-42 | Sửa `drawing/index.ts` — export + register 6 tools M4 | Drawing core | DT-34→DT-39 | 21 tools total | PASS |
+| DT-43 | Sửa `LibraryShowcaseDemo.tsx` — 6 tools M4 trong toolbar Analysis | Demo | DT-40, DT-41, DT-42 | 6 tools accessible from Analysis group | Smoke pass |
+| DT-44 | Sửa `i18n.tsx` + `demo.css` — M4 additions | Demo | DT-43 | tool.parallelChannel, ..., fibArc, etc. keys + CSS | Visual pass |
+
+### Gate M4 checklist
+
+- [ ] DT-33 → DT-44 all Done
+- [ ] `npm run type-check` → PASS
+- [ ] `npm test` → PASS (tests cho pitchfork geometry, regression channel LSQ, fibArc radius)
+- [ ] Browser smoke: all 6 pattern tools functional; R² badge visible; pitchfork 3-click
+
+---
+
+## 6. Thứ tự thực hiện khuyến nghị
 
 ```
-M1: DT-01 → DT-02 → DT-03 (song song với DT-01/02)
-    → DT-05 + DT-06 (song song)
-    → DT-04 → DT-07 → DT-08
-    → DT-09 → DT-10 → DT-11
-    → Gate M1 validation
+M1: ✅ DONE
 
-M2: DT-12 → DT-13 → DT-14 → DT-15 → DT-16
-    → DT-17 → DT-18 → DT-19
+M2: DT-12 → DT-13 (song song)
+    DT-14 → DT-15 (song song với DT-12/13)
+    DT-16 → DT-17
+    DT-18 → DT-19
     → Gate M2 validation
 
-M3: DT-20 → DT-21 + DT-22 + DT-23 (song song)
-    → DT-24 + DT-25 (song song)
-    → DT-26 → DT-27 → DT-28
+M3: DT-20
+    → DT-21 + DT-22 + DT-23 + DT-24 + DT-25 + DT-26 + DT-27 (song song)
+    → DT-28 + DT-29 (song song)
+    → DT-30 → DT-31 → DT-32
     → Gate M3 validation
+
+M4: DT-33
+    → DT-34 + DT-35 + DT-36 + DT-37 + DT-38 + DT-39 (song song)
+    → DT-40 + DT-41 (song song)
+    → DT-42 → DT-43 → DT-44
+    → Gate M4 validation
 ```

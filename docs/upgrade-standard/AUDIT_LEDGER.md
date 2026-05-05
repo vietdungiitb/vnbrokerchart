@@ -645,7 +645,73 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - Browser smoke on `build/index.html` → PASS; toolbar hiển thị `Cursor`, `Trend Line`, `Horizontal Line`, `Vertical Line`, `Channel`, `Text Note`, và chart-type label active giữ English.
   - `python scripts/generate_module_tree.py` → PASS (Modules: 623)
 
-## 3. Modified-file rule
+### Ad-hoc — Drawing Tools M1 Core Drawing Engine + Compatibility Bridge
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Commit: `b1bf284` (branch `dev`)
+- Scope: Drawing engine core, 8 builtin tools, demo wiring, GenericChartComponent compat bridge
+
+**Files created:**
+  - `src/lib/drawing/types.ts`
+  - `src/lib/drawing/stateMachine.ts`
+  - `src/lib/drawing/history.ts`
+  - `src/lib/drawing/serialization.ts`
+  - `src/lib/drawing/registry.ts`
+  - `src/lib/drawing/shared.ts`
+  - `src/lib/drawing/coordinateUtils.ts`
+  - `src/lib/drawing/renderSvg.ts`
+  - `src/lib/drawing/useDrawingInteraction.ts`
+  - `src/lib/drawing/DrawingLayer.tsx`
+  - `src/lib/drawing/index.ts`
+  - `src/lib/drawing/builtin/trendLine.ts`
+  - `src/lib/drawing/builtin/hLine.ts`
+  - `src/lib/drawing/builtin/vLine.ts`
+  - `src/lib/drawing/builtin/fibonacci.ts`
+  - `src/lib/drawing/builtin/channel.ts`
+  - `src/lib/drawing/builtin/text.ts`
+  - `src/lib/drawing/builtin/rectangle.ts`
+  - `src/lib/drawing/builtin/arrow.ts`
+
+**Files modified:**
+  - `src/lib/GenericChartComponent.tsx` (soft ChartContext fallback)
+  - `src/index.ts` (export drawing package)
+  - `src/demo/LibraryShowcaseDemo.tsx` (toolbar + keyboard + DrawingLayer mount)
+  - `src/demo/i18n.tsx` (tool.rectangle, tool.arrow, tool.crosshair keys)
+  - `src/demo/demo.css` (drawing cursors, handles, selected state)
+  - `module_tree_full.md` (regenerated, 632 modules)
+
+**Validation:**
+  - `npm run type-check` → PASS (0 errors)
+  - `npm test` → PASS (67 tests)
+  - `npm run build:docs` → PASS (8.31 MiB)
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 632)
+  - Browser smoke → PASS (10 tools, Ctrl+Z/Y/ESC/Del functional)
+  - lib→demo reverse-import scan → PASS (0 violations)
+
+### Ad-hoc — Drawing Tools Documentation Package M2-M4
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: Cập nhật toàn bộ bộ tài liệu bàn giao Drawing Tools để phản ánh M1 Done + spec đầy đủ M2/M3/M4
+
+**Files modified:**
+  - `docs/upgrade-standard/drawing-tools/HANDOFF_MANIFEST.md`
+  - `docs/upgrade-standard/drawing-tools/TECH_SPEC.md`
+  - `docs/upgrade-standard/drawing-tools/IMPLEMENTATION_PLAN.md`
+  - `docs/upgrade-standard/drawing-tools/TASKBOARD.md`
+  - `docs/upgrade-standard/drawing-tools/AUDIT_PROTOCOL.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md` (entry này)
+
+**Nội dung bàn giao:**
+  - HANDOFF_MANIFEST: M1 marked ✅ DONE với commit evidence; M2/M3/M4 Done definitions đầy đủ; as-built table cập nhật.
+  - TECH_SPEC: thêm Section 12 (M2 DrawingStorage/Inspector spec), Section 13 (M3 tool behaviors), Section 14 (M4 pattern tools); file impact matrix M1→M4.
+  - IMPLEMENTATION_PLAN: M1 marked Done; M2 thêm DrawingListPanel; M3 expand thành 14 bước (7 tools mới); M4 thêm mới 12 bước (6 pattern tools); file impact matrix M1→M4.
+  - TASKBOARD: M1 tasks DT-01→DT-11 marked ✅ Done; Gate M1 all checked; M2 thêm DT-15 (DrawingListPanel); M3 expand DT-20→DT-32 (7 tools); M4 thêm DT-33→DT-44 (6 tools).
+  - AUDIT_PROTOCOL: M1 sign-off ✅ COMPLETED; M2 mở rộng F50-F56 (clone/hide/z-order/list); M3 thêm F57-F70 (7 tools); M4 thêm F80-F90 (6 tools); unit test specs cho M3/M4.
+
+**Validation:**
+  - Documentation completeness review → PASS
 
 Mọi slice đã hoàn thành phải liệt kê chính xác tên file đã sửa. File không có trong ledger không được đóng audit.
 

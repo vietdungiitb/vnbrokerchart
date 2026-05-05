@@ -171,32 +171,153 @@ Select-String -Path "src\lib\**\*.ts","src\lib\**\*.tsx" -Pattern "from.*src/dem
 
 ## 7. Sign-off rules
 
-### M1 sign-off checklist
+### M1 sign-off checklist ✅ COMPLETED (2026-05-05)
 
-- [ ] Tất cả F01–F27 PASS
-- [ ] Tất cả R01–R08 PASS
-- [ ] Unit tests F01 group (coordinateUtils, renderSvg, useDrawingInteraction) PASS
-- [ ] `npm run type-check` → 0 errors
-- [ ] `npm test` → 0 failures
-- [ ] `python scripts/generate_module_tree.py` → OK
-- [ ] AUDIT_LEDGER.md updated với entry M1
-- [ ] `module_tree_full.md` regenerated
+- [x] Tất cả F01–F27 PASS
+- [x] Tất cả R01–R08 PASS
+- [x] Unit tests (coordinateUtils, renderSvg, useDrawingInteraction) PASS
+- [x] `npm run type-check` → 0 errors
+- [x] `npm test` → 67 tests, 0 failures
+- [x] `python scripts/generate_module_tree.py` → OK
+- [x] AUDIT_LEDGER.md updated với entry M1
+- [x] `module_tree_full.md` regenerated (632 modules)
+- [x] Commit: `b1bf284` on branch `dev`
 
 ### M2 sign-off checklist
 
-- [ ] M1 sign-off đã hoàn tất
+- [ ] M1 sign-off đã hoàn tất ✅
 - [ ] F30–F39 PASS
+- [ ] F50–F56 PASS (M2 additions: clone, hide, z-order, drawings list)
 - [ ] DrawingStorage unit tests PASS
 - [ ] `npm run type-check` → 0 errors
+- [ ] `npm test` → all pass
 - [ ] AUDIT_LEDGER.md updated với entry M2
+- [ ] `module_tree_full.md` regenerated
 
 ### M3 sign-off checklist
 
 - [ ] M2 sign-off đã hoàn tất
-- [ ] F40–F47 PASS
+- [ ] F40–F47 PASS (original M3 tests)
+- [ ] F57–F70 PASS (expanded M3 tools)
 - [ ] `npm run type-check` → 0 errors
+- [ ] `npm test` → all pass (longPosition R/R test, ray extend test, polyline N-click test)
 - [ ] AUDIT_LEDGER.md updated với entry M3
 - [ ] `module_tree_full.md` regenerated
+
+### M4 sign-off checklist
+
+- [ ] M3 sign-off đã hoàn tất
+- [ ] F80–F90 PASS (M4 matrix)
+- [ ] `npm run type-check` → 0 errors
+- [ ] `npm test` → all pass (pitchfork geometry test, regression LSQ test, fibArc radius test)
+- [ ] AUDIT_LEDGER.md updated với entry M4
+- [ ] `module_tree_full.md` regenerated
+
+---
+
+## 8. Matrix kiểm thử chức năng — M2 mở rộng (F50–F56)
+
+| ID | Scenario | Expected | PASS / FAIL |
+| :--- | :--- | :--- | :--- |
+| F50 | Clone drawing | Bản copy xuất hiện offset +20px | |
+| F51 | Hide drawing via inspector | Drawing ẩn khỏi chart; item vẫn trong drawings list (eye icon crossed) | |
+| F52 | Show drawing via eye icon | Drawing reappears | |
+| F53 | Bring to Front | Drawing render trên tất cả others | |
+| F54 | Send to Back | Drawing render dưới tất cả others | |
+| F55 | Drawings list panel hiện | Panel liệt kê đủ tất cả drawings | |
+| F56 | Click item trong Drawings list | Drawing được selected; chart scroll nếu cần | |
+
+---
+
+## 9. Matrix kiểm thử chức năng — M3 mở rộng (F57–F70)
+
+| ID | Scenario | Expected | PASS / FAIL |
+| :--- | :--- | :--- | :--- |
+| F57 | Ray: vẽ 2 điểm | Đường extend về phía phải đến edge chart; không extend phía trái | |
+| F58 | Extended Line: vẽ 2 điểm | Đường extend cả 2 phía đến edges | |
+| F59 | Polyline: 3 clicks + double-click | Multi-segment path xuất hiện; complete sau dblclick | |
+| F60 | Polyline: handles khi selected | Handle circle tại mỗi điểm; drag reposition | |
+| F61 | Date & Price Range: drag | Box + badge "Δ+X.XX% · N bars" hiện; số đúng | |
+| F62 | Date & Price Range badge: P2 thấp hơn P1 | Badge "Δ−X.XX%" (negative) | |
+| F63 | Long Position: drag entry→TP khi TP > entry | Vùng xanh phía trên entry; vùng đỏ phía dưới | |
+| F64 | Long Position badge | "R/R 1:X.X" đúng; "P&L +X.XX%" đúng | |
+| F65 | Short Position: drag | Vùng đỏ phía trên entry; vùng xanh phía dưới | |
+| F66 | Fib Extension: P2 > P1 | Levels 127.2–261.8% render above P2 | |
+| F67 | Fib Extension: P2 < P1 | Levels render below P2 (inverted) | |
+| F68 | Multi-select: Shift+click 3 drawings | 3 items highlighted | |
+| F69 | Multi-select + Delete | Tất cả selected drawings xóa | |
+| F70 | Toolbar groups: divider thấy rõ | 4 nhóm Lines/Fibonacci/Shapes/Analysis phân tách rõ | |
+
+---
+
+## 10. Matrix kiểm thử chức năng — M4 (F80–F90)
+
+| ID | Scenario | Expected | PASS / FAIL |
+| :--- | :--- | :--- | :--- |
+| F80 | Parallel Channel: 3 clicks P1/P2/P3 | 2 parallel lines + midline render | |
+| F81 | Parallel Channel: extend | Lines extend đến chart boundaries | |
+| F82 | Andrew's Pitchfork: 3 clicks A/B/C | Median line + 2 side forks + labels A/B/C | |
+| F83 | Pitchfork median math | Median = A → midpoint(B,C) verify visually | |
+| F84 | ABCD: 4 clicks A/B/C/D | 3 lines + labels + ratio badges BC/AB, CD/BC | |
+| F85 | Fib Arc: 2 điểm | 3 bán nguyệt tại 38.2%, 50%, 61.8% của khoảng cách P1-P2 | |
+| F86 | Fib Time Zone: 2 điểm | Vertical lines tại Fib seq bars [1,2,3,5,8,13,21,34] | |
+| F87 | Regression Channel: drag | Best-fit line + 2 dashed bands + R² badge | |
+| F88 | Regression Channel: high R² (>0.9) | Bands tight; visually narrow channel | |
+| F89 | Regression Channel: low R² (<0.3) | Bands wide; label "R² 0.XX" in badge | |
+| F90 | Tất cả M4 tools: undo/redo | Undo → pattern disappears; Redo → reappears | |
+
+---
+
+## 11. Unit tests bắt buộc — M3/M4
+
+### Test file: `tests/drawing/ray.test.ts` (M3)
+
+```
+✅ ray createDraft: points = [P1, P1]
+✅ ray render: given slope, extend x2 to chartWidth
+✅ ray render: vertical ray (P2.x === P1.x) handled (render as full-height vLine)
+```
+
+### Test file: `tests/drawing/positionRisk.test.ts` (M3)
+
+```
+✅ longPosition R/R: entry=100, TP=120, SL=90 → R/R = |120-100|/|100-90| = 2.0
+✅ shortPosition R/R: entry=100, TP=80, SL=110 → R/R = |100-80|/|110-100| = 2.0
+✅ P&L percent: (|TP-entry|/entry) × 100 for long = +20%
+```
+
+### Test file: `tests/drawing/fibExtension.test.ts` (M3)
+
+```
+✅ upswing (P2>P1): level 1.618 = P2 + (P2-P1) × 0.618
+✅ downswing (P2<P1): level 1.618 = P2 - (P1-P2) × 0.618
+✅ all 5 levels computed correctly for known values
+```
+
+### Test file: `tests/drawing/pitchfork.test.ts` (M4)
+
+```
+✅ median start = A
+✅ median end = midpoint(B, C) = { x: (B.x+C.x)/2, y: (B.y+C.y)/2 }
+✅ upper fork: starts at B, direction parallel to median vector
+✅ lower fork: starts at C, direction parallel to median vector
+```
+
+### Test file: `tests/drawing/regressionChannel.test.ts` (M4)
+
+```
+✅ perfect linear data (y = 2x): slope ≈ 2, intercept ≈ 0, R² ≈ 1.0, σ ≈ 0
+✅ random scatter: R² < 0.5
+✅ σ bands ≥ 0
+```
+
+### Test file: `tests/drawing/fibArc.test.ts` (M4)
+
+```
+✅ radius = sqrt((P2.x-P1.x)^2 + (P2.y-P1.y)^2) pixel distance
+✅ arc radii = [radius*0.382, radius*0.5, radius*0.618]
+✅ arcs are SVG arc path strings with correct A command params
+```
 
 ---
 

@@ -1,16 +1,25 @@
 # Implementation Plan: Drawing Tools Engine
 
-## 1. Tiền đề đã hoàn thành (không cần làm lại)
+## 1. Tiền đề đã hoàn thành — M1 DONE ✅ (2026-05-05, commit b1bf284)
 
 | Hạng mục | File | Trạng thái |
 | :--- | :--- | :--- |
-| DrawingObject data model | `src/lib/drawing/types.ts` | ✅ Done |
-| State machine (idle/drawing/complete/selected/moving/resizing/editing) | `src/lib/drawing/stateMachine.ts` | ✅ Done |
+| DrawingObject data model (8 tool types) | `src/lib/drawing/types.ts` | ✅ Done |
+| State machine (7 states) | `src/lib/drawing/stateMachine.ts` | ✅ Done |
 | History reducer (push/undo/redo/clear) | `src/lib/drawing/history.ts` | ✅ Done |
 | JSON serialization/deserialization | `src/lib/drawing/serialization.ts` | ✅ Done |
 | Tool registry | `src/lib/drawing/registry.ts` | ✅ Done |
-| 6 built-in tools (data model, render stub) | `src/lib/drawing/builtin/` | ✅ Done |
-| Toolbar UI (8 buttons, activeTool state) | `src/demo/LibraryShowcaseDemo.tsx` | ✅ Done |
+| 8 built-in tools (trendLine, hLine, vLine, fibonacci, channel, text, rectangle, arrow) | `src/lib/drawing/builtin/` | ✅ Done |
+| Coordinate bridge | `src/lib/drawing/coordinateUtils.ts` | ✅ Done |
+| SVG render engine (8 tools, selection handles) | `src/lib/drawing/renderSvg.ts` | ✅ Done |
+| Drawing interaction hook | `src/lib/drawing/useDrawingInteraction.ts` | ✅ Done |
+| DrawingLayer SVG overlay | `src/lib/drawing/DrawingLayer.tsx` | ✅ Done |
+| Package API surface | `src/lib/drawing/index.ts` | ✅ Done |
+| Demo toolbar (10 tools, keyboard shortcuts) | `src/demo/LibraryShowcaseDemo.tsx` | ✅ Done |
+| i18n keys M1 (vi + en) | `src/demo/i18n.tsx` | ✅ Done |
+| Drawing CSS (cursors, handles) | `src/demo/demo.css` | ✅ Done (partial — inspector CSS pending M2) |
+| GenericChartComponent soft fallback | `src/lib/GenericChartComponent.tsx` | ✅ Done |
+| 67 unit tests passing | `src/lib/drawing/*.test.ts` | ✅ Done |
 
 ## 2. Nguyên tắc bắt buộc cho cả 3 milestone
 
@@ -21,253 +30,15 @@
 5. **type-check PASS** trước khi đóng mỗi milestone.
 6. **module_tree_full.md** phải được regenerate sau khi thêm file mới.
 
-## 3. Milestone M1 — Core Drawing Engine
+## 3. Milestone M1 — ✅ DONE (2026-05-05)
 
-**Mục tiêu:** Người dùng có thể chọn tool, vẽ đường lên chart, undo/redo, xóa.
+Xem Section 1 cho danh sách đầy đủ. Tất cả bước M1 đã hoàn thành và commit vào branch `dev`.
 
-### Phase M1-P0: Coordinate foundation
-
-**Thứ tự file bắt buộc** (dependency chain — không được đảo):
-
-#### Bước 1: `src/lib/drawing/coordinateUtils.ts` (TẠO MỚI)
-
-**Phụ thuộc:** Không có — pure functions.
-
-**Spec:**
-```typescript
-export interface PlotDatum {
-  date: Date | number;
-  open: number; high: number; low: number; close: number;
-  volume: number;
-  [key: string]: unknown;
-}
-
-export interface ChartScales {
-  xScale: (date: Date) => number;
-  xScaleInvert: (px: number) => Date;
-  yScale: (price: number) => number;
-  yScaleInvert: (px: number) => number;
-}
-
-export function pixelToChartPoint(
-  clientX: number, clientY: number,
-  containerRect: DOMRect,
-  scales: ChartScales
-): Point;
-
-export function chartPointToPixel(
-  point: Point,
-  scales: ChartScales
-): { x: number; y: number };
-```
-
-**Test:** Unit test — roundtrip pixel → chartPoint → pixel phải giữ nguyên trong sai số 1px.
-
----
-
-#### Bước 2: `src/lib/drawing/renderSvg.ts` (TẠO MỚI)
-
-**Phụ thuộc:** `coordinateUtils.ts` (bước 1).
-
-**Spec:**
-```typescript
-// Render functions thuần — không side effects
-export function renderDrawingToSvg(
-  drawing: DrawingObject,
-  scales: ChartScales,
-  options: { chartWidth: number; chartHeight: number; isSelected: boolean }
-): ReactElement[];
-
-// Internal helpers (không export):
-// renderTrendLine, renderHLine, renderVLine,
-// renderFibonacci, renderChannel, renderText,
-// renderRectangle, renderArrow
-```
-
-**Fibonacci levels:** `[0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.618, 2.618]`
-
-Mỗi level = 1 SVG `<line>` + 1 SVG `<text>` label bên phải: `"61.8% — 94,250.00"`
-
-**Channel:** 2 lines song song. P1→P2 là line chính; P3 xác định offset. Line thứ 2 = P1 + offset → P2 + offset.
-
-**Arrow:** Render `<line>` thân + `<polygon>` đầu mũi tên theo hướng P1→P2.
-
-**Rectangle:** Render `<rect>` với fill bán trong suốt.
-
-**Text:** Render `<foreignObject>` chứa `<input>` khi editing, hoặc `<text>` SVG khi committed.
-
----
-
-#### Bước 3: `src/lib/drawing/useDrawingInteraction.ts` (TẠO MỚI)
-
-**Phụ thuộc:** `stateMachine.ts`, `history.ts` (đã có).
-
-```typescript
-export interface UseDrawingInteractionReturn {
-  drawingState: DrawingState;
-  history: DrawingHistory;
-  dispatch: Dispatch<DrawingAction | DrawingHistoryAction>;
-  undo: () => void;
-  redo: () => void;
-  deleteSelected: () => void;
-  cancelDrawing: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
-  allDrawings: DrawingObject[];  // history.present
-}
-```
-
----
-
-#### Bước 4: `src/lib/drawing/DrawingLayer.tsx` (TẠO MỚI)
-
-**Phụ thuộc:** bước 1 + 2 + 3.
-
-```typescript
-export interface DrawingLayerProps {
-  width: number;
-  height: number;
-  scales: ChartScales;
-  activeTool: string;
-  interaction: UseDrawingInteractionReturn;  // từ hook ở demo
-}
-```
-
-**SVG overlay:** `position: absolute; top: 0; left: 0; pointer-events: all; z-index: 10`
-
-**Event map:**
-- `onPointerDown` → pixelToChartPoint → dispatch `START_DRAWING` (khi tool != "cursor")
-- `onPointerMove` → dispatch `UPDATE_DRAWING` (khi state.type === "drawing")
-- `onPointerUp` → dispatch `COMPLETE_DRAWING` → historyReducer `PUSH`
-- click trên drawing element → dispatch `SELECT_OBJECT`
-- drag selected drawing handle → dispatch `START_MOVING` → `COMPLETE_DRAWING`
-
----
-
-### Phase M1-P1: New built-in tools
-
-#### Bước 5: `src/lib/drawing/builtin/rectangle.ts` (TẠO MỚI)
-
-```typescript
-const Rectangle: DrawingToolDefinition = {
-  name: "rectangle",
-  createDraft: (startPoint) => createDrawingObject("rectangle", [startPoint, startPoint]),
-  updateDraft: (draft, nextPoint) => replacePoint(draft, 1, nextPoint),
-  render: () => undefined,  // render xử lý trong renderSvg.ts
-};
-```
-
-#### Bước 6: `src/lib/drawing/builtin/arrow.ts` (TẠO MỚI)
-
-```typescript
-const Arrow: DrawingToolDefinition = {
-  name: "arrow",
-  createDraft: (startPoint) => createDrawingObject("arrow", [startPoint, startPoint]),
-  updateDraft: (draft, nextPoint) => replacePoint(draft, 1, nextPoint),
-  render: () => undefined,
-};
-```
-
----
-
-### Phase M1-P2: Type extension
-
-#### Bước 7: `src/lib/drawing/types.ts` (SỬA)
-
-Thêm vào `DrawingToolType` union:
-```typescript
-| "rectangle"
-| "arrow"
-```
-
-Thêm optional fields vào `DrawingObject`:
-```typescript
-fibLevels?: number[];   // custom fib levels — undefined = dùng default
-label?: string;         // user label
-```
-
----
-
-### Phase M1-P3: Export + registry
-
-#### Bước 8: `src/lib/drawing/index.ts` (SỬA)
-
-Thêm exports:
-- `DrawingLayer`, `useDrawingInteraction`, từ `coordinateUtils`
-- `Rectangle`, `Arrow`
-- Gọi `registerDrawingTool(Rectangle)`, `registerDrawingTool(Arrow)`
-
----
-
-### Phase M1-P4: Demo wiring
-
-#### Bước 9: `src/demo/LibraryShowcaseDemo.tsx` (SỬA)
-
-**Thêm:**
-1. `useDrawingInteraction()` hook call.
-2. `useEffect` cho keyboard: `keydown` → Ctrl+Z undo, Ctrl+Y redo, ESC cancelDrawing, Delete/Backspace deleteSelected.
-3. Mount `DrawingLayer` trong `position: relative` wrapper bao quanh chart area.
-4. Thêm `"rectangle"` và `"arrow"` vào `TOOL_DEFS`.
-5. `ToolIcon` — thêm case `"rectangle"` và `"arrow"`.
-
-**Không thêm:**
-- Không sửa routing hay layout shell.
-- Không thêm state mới ngoài `useDrawingInteraction`.
-
----
-
-#### Bước 10: `src/demo/i18n.tsx` (SỬA)
-
-Thêm vào cả `vi` và `en`:
-```
-"tool.rectangle" → "Rectangle"
-"tool.arrow" → "Arrow"
-```
-
----
-
-#### Bước 11: `src/demo/demo.css` (SỬA)
-
-Thêm:
-```css
-/* Drawing cursor modes */
-.gc-chart-area--drawing-trend { cursor: crosshair; }
-.gc-chart-area--drawing-hline { cursor: ns-resize; }
-.gc-chart-area--drawing-vline { cursor: ew-resize; }
-.gc-chart-area--drawing-text  { cursor: text; }
-
-/* Drawing object handles */
-.rsc-drawing-handle { cursor: grab; }
-.rsc-drawing-handle:active { cursor: grabbing; }
-
-/* Selected drawing highlight */
-.rsc-drawing-selected { outline: 1.5px solid #2d9cdb; }
-```
-
----
-
-### Gate M1
-
-```
-✅ npm run type-check → PASS, zero error
-✅ npm run test        → PASS (unit tests coordinateUtils + renderSvg roundtrip)
-✅ python scripts/generate_module_tree.py → chạy thành công
-✅ Browser smoke:
-   - Chọn Trend Line → vẽ đường trên chart → đường xuất hiện đúng mức giá
-   - Chọn H-Line → đường ngang full width
-   - Chọn V-Line → đường dọc tại bar đó
-   - Chọn Fibonacci → 9 level labels
-   - Ctrl+Z undo → đường biến mất
-   - Ctrl+Y redo → đường quay lại
-   - ESC → hủy đang vẽ
-   - Delete → xóa selected drawing
-```
+**Evidence:** `git log --oneline dev | head -1` → `b1bf284 feat(drawing): M1 Core Drawing Engine`
 
 ---
 
 ## 4. Milestone M2 — Inspector + Persistence
-
-**Mục tiêu:** Drawing có thuộc tính chỉnh được; lưu per symbol+timeframe; export/import.
 
 **Thứ tự bắt buộc:**
 
@@ -375,80 +146,342 @@ CSS: inspector panel, color swatch, slider, lock icon.
 
 ---
 
-## 5. Milestone M3 — Advanced Tools + Alert Markers
+## 5. Milestone M3 — Lines Nâng Cao + Position Tools
 
-**Mục tiêu:** Công cụ phân tích chuyên nghiệp: measure, R/R box, fib extension, multi-select.
+**Mục tiêu:** 7 công cụ mới: Ray, Extended Line, Polyline, Date & Price Range, Long/Short Position, Fib Extension; multi-select; toolbar groups.
 
 ### Thứ tự bắt buộc:
 
-**Bước 1:** `src/lib/drawing/types.ts` — thêm `"priceRange" | "positionBox" | "fibExtension"` vào `DrawingToolType`; thêm `riskReward?: { entry: number; stop: number; target: number }`.
+**Bước 1:** `src/lib/drawing/types.ts` — SỬA
 
-**Bước 2:** `src/lib/drawing/builtin/priceRange.ts` — TẠO MỚI
-
+Thêm vào `DrawingToolType`:
 ```typescript
-// 2 điểm corner → badge hiển thị Δ% và số bars
-// badge text = `Δ ${percent}% · ${bars} bars`
+| "ray" | "extendedLine" | "polyline"
+| "dateAndPriceRange" | "longPosition" | "shortPosition"
+| "fibExtension"
+```
+Thêm field:
+```typescript
+riskReward?: { entry: number; stop: number; target: number; quantity?: number };
 ```
 
-**Bước 3:** `src/lib/drawing/builtin/positionBox.ts` — TẠO MỚI
+---
+
+**Bước 2:** `src/lib/drawing/builtin/ray.ts` — TẠO MỚI
 
 ```typescript
-// 3 điểm: entry price, stop price, target price
-// Rectangle fill: xanh lá (target side), đỏ (stop side)
-// R/R badge = `R/R 1:${ratio.toFixed(1)}`
+// createDraft(P1): 2 points [P1, P1]
+// updateDraft(draft, nextPoint): replacePoint(draft, 1, nextPoint)
+// render: xử lý trong renderSvg — extends 1 direction (forward)
 ```
 
-**Bước 4:** `src/lib/drawing/builtin/fibExtension.ts` — TẠO MỚI
+**Bước 3:** `src/lib/drawing/builtin/extendedLine.ts` — TẠO MỚI
+
+```typescript
+// Same as trendLine nhưng extendLeft = true, extendRight = true
+// createDraft(P1): 2 points, flags extendLeft/extendRight = true
+// updateDraft: replacePoint(draft, 1, nextPoint)
+```
+
+**Bước 4:** `src/lib/drawing/builtin/polyline.ts` — TẠO MỚI
+
+```typescript
+// N-point tool — double-click to complete
+// createDraft(P1): [P1, P1] — first segment preview
+// updateDraft(draft, cursor): replacePoint(draft, last, cursor) — live preview
+// appendPoint(draft, P): [...points, P] — on single click
+// Cần action APPEND_POINT trong stateMachine hoặc handle trong DrawingLayer
+```
+
+**Bước 5:** `src/lib/drawing/builtin/dateAndPriceRange.ts` — TẠO MỚI
+
+```typescript
+// 2 điểm corner → badge Δ% + bars
+// Same interaction as rectangle
+// badge text = `Δ ${percent > 0 ? '+' : ''}${percent.toFixed(2)}% · ${bars} bars`
+```
+
+**Bước 6:** `src/lib/drawing/builtin/longPosition.ts` — TẠO MỚI
+
+```typescript
+// Interaction: drag P1→P2 where
+//   entry = P1.y (horizontal line)
+//   top-of-box = max(P1.y, P2.y) = TP
+//   bottom-of-box = min(P1.y, P2.y) = SL
+// points = [P1, P2] — xác định entry + range
+// riskReward = { entry: P1.y, stop: bottomY, target: topY }
+```
+
+**Bước 7:** `src/lib/drawing/builtin/shortPosition.ts` — TẠO MỚI
+
+```typescript
+// Tương tự longPosition nhưng:
+//   SL = max(P1.y, P2.y), TP = min(P1.y, P2.y)
+//   Màu: zone trên entry = red (SL), zone dưới entry = green (TP)
+```
+
+**Bước 8:** `src/lib/drawing/builtin/fibExtension.ts` — TẠO MỚI
 
 ```typescript
 // Extension levels: [1.272, 1.414, 1.618, 2.0, 2.618]
-// Render trên cùng chart nhưng extend ra ngoài range P1-P2
+// Nếu P2 > P1: level price = P2 + (P2-P1) × ratio
+// Nếu P2 < P1: level price = P2 - (P1-P2) × ratio
 ```
 
-**Bước 5:** `src/lib/drawing/renderSvg.ts` — SỬA, thêm render functions cho 3 tools mới.
+---
 
-**Bước 6:** `src/lib/drawing/DrawingLayer.tsx` — SỬA, thêm Shift+click multi-select.
+**Bước 9:** `src/lib/drawing/renderSvg.ts` — SỬA
 
-**Bước 7:** `src/lib/drawing/index.ts` — SỬA, export và register 3 tools mới.
+Thêm render cases cho: `ray`, `extendedLine`, `polyline`, `dateAndPriceRange`, `longPosition`, `shortPosition`, `fibExtension`.
 
-**Bước 8:** `src/demo/LibraryShowcaseDemo.tsx` — SỬA:
-- Thêm 3 tool vào `TOOL_DEFS` và `ToolIcon`.
-- Thêm toolbar group divider: `Lines | Fib | Shapes | Analysis`.
+- **ray**: slope = (P2.y-P1.y)/(P2.x-P1.x); extend line từ P1 theo hướng P1→P2 đến chart right edge x2=chartWidth.
+- **extendedLine**: clip cả 2 hướng tại x=0 và x=chartWidth.
+- **polyline**: SVG `<polyline>` với points = all pixels.
+- **dateAndPriceRange**: `<rect>` bán trong suốt + badge `<text>`.
+- **longPosition**: 2 `<rect>` (xanh + đỏ) + 3 `<line>` (entry/TP/SL) + badge `<text>` R/R.
+- **shortPosition**: tương tự longPosition, đảo màu.
+- **fibExtension**: horizontal lines tại mỗi extension level + label bên phải.
 
-**Bước 9:** `src/demo/i18n.tsx` + `src/demo/demo.css` — SỬA.
+---
+
+**Bước 10:** `src/lib/drawing/DrawingLayer.tsx` — SỬA
+
+Thêm:
+- Shift+click drawing → toggle multi-select (set `selectedIds: Set<string>`).
+- Drag trên empty area (shift held) → không bắt đầu drawing mới, thu thập box select.
+- Khi polyline đang active: single-click = append point; double-click = complete.
+
+---
+
+**Bước 11:** `src/lib/drawing/index.ts` — SỬA
+
+Export và register: ray, extendedLine, polyline, dateAndPriceRange, longPosition, shortPosition, fibExtension.
+
+---
+
+**Bước 12:** `src/demo/LibraryShowcaseDemo.tsx` — SỬA
+
+- Thêm 7 tool vào `TOOL_DEFS` và `ToolIcon`.
+- Thêm visual divider giữa toolbar groups: **Lines** (cursor, trendLine, ray, extendedLine, hLine, vLine) | **Fibonacci** (fibonacci, fibExtension) | **Shapes** (rectangle, arrow, polyline) | **Analysis** (channel, text, dateAndPriceRange, longPosition, shortPosition).
+
+---
+
+**Bước 13:** `src/demo/i18n.tsx` — SỬA
+
+Thêm vào vi + en:
+```
+"tool.ray", "tool.extendedLine", "tool.polyline",
+"tool.dateAndPriceRange", "tool.longPosition", "tool.shortPosition", "tool.fibExtension"
+```
+
+---
+
+**Bước 14:** `src/demo/demo.css` — SỬA
+
+Thêm:
+```css
+/* Position box fills */
+.rsc-long-tp-zone  { fill: rgba(0, 200, 83, 0.15); }
+.rsc-long-sl-zone  { fill: rgba(239, 83, 80, 0.15); }
+.rsc-short-tp-zone { fill: rgba(239, 83, 80, 0.15); }
+.rsc-short-sl-zone { fill: rgba(0, 200, 83, 0.15); }
+/* R/R badge */
+.rsc-rr-badge { font-size: 11px; fill: #e0e0e0; font-family: monospace; }
+/* Drawing toolbar group divider */
+.rsc-toolbar-divider { width: 1px; background: rgba(255,255,255,0.2); margin: 4px 6px; }
+```
+
+---
 
 ### Gate M3
 
 ```
 ✅ npm run type-check → PASS
+✅ npm test → PASS (thêm tests mới cho: ray extend logic, longPosition riskReward calc, fibExtension level values)
 ✅ Browser smoke:
-   - priceRange: kéo 2 điểm → badge "Δ 3.2% · 28 bars"
-   - positionBox: 3 dòng giá → box fill + R/R badge
-   - fibExtension: levels xuất hiện bên ngoài P1-P2
-   - Shift+click 2 drawings → cả 2 highlight; Delete → xóa cả 2
-   - Toolbar có divider nhóm rõ
+   - Ray: vẽ → đường extend đến phải màn hình
+   - Extended Line: vẽ → đường extend 2 phía
+   - Polyline: click 3 điểm → double-click → path xuất hiện
+   - Date & Price Range: kéo → badge "Δ+3.2% · 28 bars"
+   - Long Position: kéo → vùng xanh phía trên, đỏ phía dưới + badge "R/R 1:2.0"
+   - Short Position: kéo → vùng đỏ phía trên + badge "Short"
+   - Fib Extension: 2 điểm → levels [127.2%→261.8%] bên ngoài range
+   - Shift+click 2 drawings → cả 2 highlight xanh; Delete → xóa cả 2
+   - Toolbar groups hiện divider rõ
 ```
 
 ---
 
-## 6. File impact matrix tổng hợp
+## 6. Milestone M4 — Pattern Tools + Pro
 
-| File | M1 | M2 | M3 | Tạo mới hay sửa |
-| :--- | :---: | :---: | :---: | :--- |
-| `src/lib/drawing/coordinateUtils.ts` | ✎ | — | — | TẠO MỚI |
-| `src/lib/drawing/renderSvg.ts` | ✎ | — | ✎ | TẠO MỚI (M1), SỬA (M3) |
-| `src/lib/drawing/useDrawingInteraction.ts` | ✎ | — | — | TẠO MỚI |
-| `src/lib/drawing/DrawingLayer.tsx` | ✎ | — | ✎ | TẠO MỚI (M1), SỬA (M3) |
-| `src/lib/drawing/builtin/rectangle.ts` | ✎ | — | — | TẠO MỚI |
-| `src/lib/drawing/builtin/arrow.ts` | ✎ | — | — | TẠO MỚI |
-| `src/lib/drawing/DrawingStorage.ts` | — | ✎ | — | TẠO MỚI |
-| `src/lib/drawing/useDrawingStorage.ts` | — | ✎ | — | TẠO MỚI |
-| `src/lib/drawing/DrawingInspector.tsx` | — | ✎ | — | TẠO MỚI |
-| `src/lib/drawing/builtin/priceRange.ts` | — | — | ✎ | TẠO MỚI |
-| `src/lib/drawing/builtin/positionBox.ts` | — | — | ✎ | TẠO MỚI |
-| `src/lib/drawing/builtin/fibExtension.ts` | — | — | ✎ | TẠO MỚI |
-| `src/lib/drawing/types.ts` | ✎ | ✎ | ✎ | SỬA |
-| `src/lib/drawing/index.ts` | ✎ | ✎ | ✎ | SỬA |
-| `src/demo/LibraryShowcaseDemo.tsx` | ✎ | ✎ | ✎ | SỬA |
-| `src/demo/i18n.tsx` | ✎ | ✎ | ✎ | SỬA |
-| `src/demo/demo.css` | ✎ | ✎ | ✎ | SỬA |
+**Mục tiêu:** 6 công cụ pattern nâng cao cho trader chuyên nghiệp.
+
+### Thứ tự bắt buộc:
+
+**Bước 1:** `src/lib/drawing/types.ts` — SỬA
+
+Thêm vào `DrawingToolType`:
+```typescript
+| "parallelChannel" | "pitchfork" | "abcdPattern"
+| "fibArc" | "fibTimeZone" | "regressionChannel"
+```
+
+---
+
+**Bước 2:** `src/lib/drawing/builtin/parallelChannel.ts` — TẠO MỚI
+
+```typescript
+// 3 điểm: P1 (start main line), P2 (end main line), P3 (offset point)
+// createDraft(P1): [P1, P1, P1]
+// updateDraft(draft, cursor):
+//   if points.length === 2: replacePoint(1, cursor)  — preview main line
+//   if points.length === 3: replacePoint(2, cursor)  — preview offset
+// complete: sau click P3
+```
+
+**Bước 3:** `src/lib/drawing/builtin/pitchfork.ts` — TẠO MỚI
+
+```typescript
+// 3 điểm: A (pivot), B (swing 1), C (swing 2)
+// Median = A → midpoint(B,C), extend
+// Side forks: B → parallel to median, extend; C → parallel to median, extend
+// Labels A, B, C tại mỗi điểm
+```
+
+**Bước 4:** `src/lib/drawing/builtin/abcdPattern.ts` — TẠO MỚI
+
+```typescript
+// 4 điểm: A, B, C, D
+// Lines: A→B, B→C, C→D
+// Labels: A, B, C, D
+// Ratio badges:
+//   BC/AB = |B.y-C.y| / |A.y-B.y|
+//   CD/BC = |C.y-D.y| / |B.y-C.y|
+// 4 clicks để complete
+```
+
+**Bước 5:** `src/lib/drawing/builtin/fibArc.ts` — TẠO MỚI
+
+```typescript
+// 2 điểm: P1 (center), P2 (edge)
+// radius_px = sqrt((P2x-P1x)^2 + (P2y-P1y)^2)
+// 3 arcs ở radii: radius_px × [0.382, 0.5, 0.618]
+// SVG arc: <path d="M x1 y1 A rx ry 0 0 1 x2 y2" />
+// Chỉ render bán cung phía dưới (sweep từ trái sang phải)
+```
+
+**Bước 6:** `src/lib/drawing/builtin/fibTimeZone.ts` — TẠO MỚI
+
+```typescript
+// 2 điểm: P1, P2 — xác định khoảng cách 1 bar
+// barWidth_px = P2.x_pixel - P1.x_pixel
+// Fibonacci sequence: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
+// Vertical lines tại: P1.x_pixel + n × barWidth_px
+// Mỗi line: full chart height, label nhỏ ở trên cùng
+```
+
+**Bước 7:** `src/lib/drawing/builtin/regressionChannel.ts` — TẠO MỚI
+
+```typescript
+// 2 điểm: start timestamp, end timestamp
+// Cần access plotData → pass qua DrawingLayer → DrawingToolDefinition.createDraft nhận context
+// Algorithm:
+//   bars = plotData.filter(d => d.date >= P1.x && d.date <= P2.x)
+//   xs = [0, 1, 2, ..., n-1], ys = bars.map(b => b.close)
+//   least squares: a = (Σ(xi*yi) - n*mean(x)*mean(y)) / (Σxi² - n*mean(x)²)
+//                  b = mean(y) - a * mean(x)
+//   residuals = ys.map((y, i) => y - (a*i+b))
+//   σ = sqrt(Σ(residuals²) / n)
+// Render:
+//   median line, upper = +σ (dashed), lower = -σ (dashed)
+//   fill rgba(100,149,237,0.08)
+//   badge: "R² 0.94"
+```
+
+---
+
+**Bước 8:** `src/lib/drawing/renderSvg.ts` — SỬA
+
+Thêm render cho 6 M4 tools. Tham khảo TECH_SPEC.md Section 14.
+
+---
+
+**Bước 9:** `src/lib/drawing/DrawingLayer.tsx` — SỴA
+
+Thêm xử lý N-click accumulation cho pitchfork (3 clicks) và abcdPattern (4 clicks):
+- Mỗi click khi tool đang `drawing` state → `APPEND_POINT` action.
+- Sau khi đủ N điểm → auto `COMPLETE_DRAWING`.
+
+---
+
+**Bước 10:** `src/lib/drawing/index.ts` — SỬA
+
+Export và register 6 tools M4.
+
+---
+
+**Bước 11:** `src/demo/LibraryShowcaseDemo.tsx` — SỬA
+
+Thêm 6 tool M4 vào `TOOL_DEFS`, `ToolIcon`, và nhóm **Analysis** trong toolbar.
+
+---
+
+**Bước 12:** `src/demo/i18n.tsx` — SỬA
+
+Thêm vào vi + en:
+```
+"tool.parallelChannel", "tool.pitchfork", "tool.abcdPattern",
+"tool.fibArc", "tool.fibTimeZone", "tool.regressionChannel"
+```
+
+---
+
+### Gate M4
+
+```
+✅ npm run type-check → PASS
+✅ npm test → PASS (thêm tests cho pitchfork median math, regression channel least-squares, fibArc radius calc)
+✅ Browser smoke:
+   - Parallel Channel: 3 clicks → 2 parallel lines + midline
+   - Pitchfork: A/B/C → median + 2 forks, labels đúng
+   - ABCD: 4 clicks A/B/C/D → lines + ratio badges
+   - Fib Arc: 2 điểm → 3 bán nguyệt đúng bán kính
+   - Fib Time Zone: 2 điểm → vertical lines tại Fib intervals
+   - Regression Channel: drag → best-fit line + 2 std-dev bands + R² badge
+```
+
+---
+
+## 7. File impact matrix tổng hợp
+
+| File | M1 | M2 | M3 | M4 | Trạng thái |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| `src/lib/drawing/coordinateUtils.ts` | ✅ | — | — | — | Done |
+| `src/lib/drawing/renderSvg.ts` | ✅ | — | SỬA | SỬA | Done (M1) |
+| `src/lib/drawing/useDrawingInteraction.ts` | ✅ | — | — | — | Done |
+| `src/lib/drawing/DrawingLayer.tsx` | ✅ | — | SỬA | SỬA | Done (M1) |
+| `src/lib/drawing/stateMachine.ts` | ✅ | — | SỬA | SỬA | Done (M1) |
+| `src/lib/drawing/builtin/rectangle.ts` | ✅ | — | — | — | Done |
+| `src/lib/drawing/builtin/arrow.ts` | ✅ | — | — | — | Done |
+| `src/lib/drawing/DrawingStorage.ts` | — | TẠO | — | — | TODO |
+| `src/lib/drawing/useDrawingStorage.ts` | — | TẠO | — | — | TODO |
+| `src/lib/drawing/DrawingInspector.tsx` | — | TẠO | — | — | TODO |
+| `src/lib/drawing/DrawingListPanel.tsx` | — | TẠO | — | — | TODO |
+| `src/lib/drawing/builtin/ray.ts` | — | — | TẠO | — | TODO |
+| `src/lib/drawing/builtin/extendedLine.ts` | — | — | TẠO | — | TODO |
+| `src/lib/drawing/builtin/polyline.ts` | — | — | TẠO | — | TODO |
+| `src/lib/drawing/builtin/dateAndPriceRange.ts` | — | — | TẠO | — | TODO |
+| `src/lib/drawing/builtin/longPosition.ts` | — | — | TẠO | — | TODO |
+| `src/lib/drawing/builtin/shortPosition.ts` | — | — | TẠO | — | TODO |
+| `src/lib/drawing/builtin/fibExtension.ts` | — | — | TẠO | — | TODO |
+| `src/lib/drawing/builtin/parallelChannel.ts` | — | — | — | TẠO | TODO |
+| `src/lib/drawing/builtin/pitchfork.ts` | — | — | — | TẠO | TODO |
+| `src/lib/drawing/builtin/abcdPattern.ts` | — | — | — | TẠO | TODO |
+| `src/lib/drawing/builtin/fibArc.ts` | — | — | — | TẠO | TODO |
+| `src/lib/drawing/builtin/fibTimeZone.ts` | — | — | — | TẠO | TODO |
+| `src/lib/drawing/builtin/regressionChannel.ts` | — | — | — | TẠO | TODO |
+| `src/lib/drawing/types.ts` | ✅ | SỬA | SỬA | SỬA | Done (M1) |
+| `src/lib/drawing/index.ts` | ✅ | SỬA | SỬA | SỬA | Done (M1) |
+| `src/demo/LibraryShowcaseDemo.tsx` | ✅ | SỬA | SỬA | SỬA | Done (M1) |
+| `src/demo/i18n.tsx` | ✅ | SỬA | SỬA | SỬA | Done (M1) |
+| `src/demo/demo.css` | ✅ | SỬA | SỬA | SỬA | Done (M1, partial) |
