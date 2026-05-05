@@ -26,6 +26,7 @@ Tài liệu này là **entry point** cho chương trình chuyển đổi 100% so
 ### Gói bàn giao bổ sung cho tính năng mới
 
 - [splitter-pane-resize/HANDOFF_MANIFEST.md](splitter-pane-resize/HANDOFF_MANIFEST.md): Entry point cho bộ tài liệu triển khai splitter thay đổi chiều cao pane kỹ thuật (GoCharting-style), bao gồm spec, implementation plan, taskboard và audit protocol.
+- [drawing-tools/HANDOFF_MANIFEST.md](drawing-tools/HANDOFF_MANIFEST.md): Entry point cho bộ tài liệu triển khai Drawing Tools Engine (TradingView/GoCharting-grade, 3 milestone M1/M2/M3), bao gồm tech spec, implementation plan, taskboard và audit protocol.
 
 ---
 

@@ -7,13 +7,32 @@ export interface RawOHLCV {
 	volume: number;
 }
 
+export interface IndicatorBandValue {
+	top: number;
+	middle: number;
+	bottom: number;
+}
+
+export interface IndicatorMacdValue {
+	macd: number;
+	signal: number;
+	divergence: number;
+}
+
+export interface IndicatorWhaleValue {
+	whaleBuyVol?: number;
+	whaleSellVol?: number;
+}
+
+export type IndicatorDatumValue = number | IndicatorBandValue | IndicatorMacdValue | IndicatorWhaleValue;
+
 export interface EnrichedDatum extends RawOHLCV {
 	ema13?: number;
 	ema20?: number;
 	ema50?: number;
-	bollingerBand?: { top: number; middle: number; bottom: number };
+	bollingerBand?: IndicatorBandValue;
 	rsi?: number;
-	macd?: { macd: number; signal: number; divergence: number };
+	macd?: IndicatorMacdValue;
 	cvdApprox?: number;
 	cvdDelta?: number;
 	bullPower?: number;
@@ -22,4 +41,5 @@ export interface EnrichedDatum extends RawOHLCV {
 	whaleSellVol?: number;
 	cvdRealtime?: number;
 	strengthRelative?: number;
+	indicatorValues?: Record<string, IndicatorDatumValue | undefined>;
 }

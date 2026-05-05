@@ -24,6 +24,7 @@ import { discontinuousTimeScaleProvider } from "../lib/scale";
 import { ema, sma, macd } from "../lib/indicator";
 import { last } from "../lib/utils";
 import { getOfflineDemoData, type DemoDatum, type MACDPoint } from "./demoData";
+import { DemoI18nBoundary, useDemoI18n } from "./i18n";
 import "./demo.css";
 
 type BrushPoint = {
@@ -44,6 +45,7 @@ type OriginalLikeDatum = DemoDatum & {
 };
 
 const priceFormat = format(".2f");
+const priceFormat1 = format(".1f");
 const priceFormat3 = format(".3f");
 const volumeFormat = format(".3s");
 const volumeAxisFormat = format(".2s");
@@ -74,6 +76,8 @@ const coordinateTheme = {
     textFill: "#e2e8f0",
 };
 
+const bullishColor = "#10b981";
+const bearishColor = "#ef4444";
 const ema12Stroke = "#22d3ee";
 const ema26Stroke = "#f59e0b";
 
@@ -135,7 +139,17 @@ function createOrigin(offsetFromBottom: number) {
     return (_width: number, height: number) => [0, height - offsetFromBottom] as [number, number];
 }
 
-const OriginalLikeDemo = () => {
+const OriginalLikeDemoContent = () => {
+    const { language, setLanguage, t } = useDemoI18n();
+    const tooltipDisplayTexts = useMemo(() => ({
+        d: t("full.tooltip.date"),
+        o: t("full.tooltip.open"),
+        h: t("full.tooltip.high"),
+        l: t("full.tooltip.low"),
+        c: t("full.tooltip.close"),
+        v: t("full.tooltip.volume"),
+        na: t("common.na"),
+    }), [t]);
     const chartSurfaceRef = useRef<HTMLDivElement | null>(null);
     const [chartWidth, setChartWidth] = useState(0);
     const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight);
@@ -165,7 +179,6 @@ const OriginalLikeDemo = () => {
     const [visibleDomain, setVisibleDomain] = useState<[number, number]>(initialXExtents);
     const [xExtents, setXExtents] = useState<[number, number]>(initialXExtents);
     const [brushEnabled, setBrushEnabled] = useState(false);
-    const [resetToken, setResetToken] = useState(0);
 
     useEffect(() => {
         setXExtents(initialXExtents);
@@ -216,21 +229,13 @@ const OriginalLikeDemo = () => {
 
     const handleResetView = () => {
         setBrushEnabled(false);
-        setResetToken(t => t + 1);
         setXExtents(initialXExtents);
         setVisibleDomain(initialXExtents);
     };
 
     const visibleBars = Math.max(1, Math.min(data.length, Math.round(Math.abs(visibleDomain[1] - visibleDomain[0]))));
     const isZoomedIn = visibleBars <= 120;
-    const visibleDomainLabel = useMemo(() => {
-        const fmt = timeFormat("%d/%m %H:%M");
-        const startIdx = Math.max(0, Math.min(data.length - 1, Math.round(visibleDomain[0])));
-        const endIdx = Math.max(0, Math.min(data.length - 1, Math.round(visibleDomain[1])));
-        const s = data[startIdx]?.date;
-        const e = data[endIdx]?.date;
-        return (s && e) ? `${fmt(s)} → ${fmt(e)}` : `${visibleDomain[0].toFixed(0)} → ${visibleDomain[1].toFixed(0)}`;
-    }, [data, visibleDomain]);
+    const visibleDomainLabel = `${visibleDomain[0].toFixed(1)} → ${visibleDomain[1].toFixed(1)}`;
     const priceYAxisTicks = visibleBars <= 120 ? 7 : 5;
     const priceYAxisTickFormat = visibleBars <= 120 ? priceFormat3 : priceFormat;
     const macdYAxisTicks = visibleBars <= 120 ? 5 : 2;
@@ -242,12 +247,12 @@ const OriginalLikeDemo = () => {
         if (!tickDatum) return "";
         if (visibleBars <= 35) return timeFormat("%H:%M:%S")(tickDatum.date);
         if (visibleBars <= 70) return timeFormat("%H:%M")(tickDatum.date);
-        if (visibleBars <= 120) return timeFormat("%I:%M %p")(tickDatum.date);
-        return timeFormat("%I %p")(tickDatum.date);
+        if (visibleBars <= 120) return timeFormat("%-I:%M %p")(tickDatum.date);
+        return timeFormat("%-I %p")(tickDatum.date);
     };
 
     const resolvedChartWidth = chartWidth || Math.max(960, Math.floor(window.innerWidth - 48));
-    const chartHeight = Math.max(480, viewportHeight - 118);
+    const chartHeight = Math.max(340, Math.min(360, Math.round(viewportHeight * 0.70)));
     const margin = { left: 70, right: 70, top: 20, bottom: 30 };
     const priceHeight = Math.round(chartHeight * 0.64);
     const volumeHeight = Math.round(chartHeight * 0.18);
@@ -277,20 +282,34 @@ const OriginalLikeDemo = () => {
                 <section className="demo-chart-card demo-chart-card--classic">
                     <header className="demo-chart-card__header demo-chart-card__header--classic">
                         <div>
-                            <h1 className="demo-chart-card__title">React Stockcharts · bản gốc gọn</h1>
+                            <h1 className="demo-chart-card__title">{t("original.title")}</h1>
                             <p className="demo-chart-card__meta">
-                                Candlestick, volume, MACD, zoom bằng scroll, pan bằng drag và brush span theo mẫu gốc.
+                                {t("original.meta")}
                             </p>
                         </div>
                         <div className="demo-chart-card__chips">
-                            <span className="source-chip source-chip--neutral">Khung nhìn: {visibleBars}/{data.length} nến</span>
+                            <span className="source-chip source-chip--neutral">{t("original.viewRange", { visible: visibleBars, total: data.length })}</span>
                             <span className="source-chip source-chip--accent">X: {visibleDomainLabel}</span>
+                            <button
+                                className={`source-chip source-chip--btn${language === "vi" ? " source-chip--btn-active" : ""}`}
+                                onClick={() => setLanguage("vi")}
+                                title={t("language.label")}
+                            >
+                                {t("language.vi")}
+                            </button>
+                            <button
+                                className={`source-chip source-chip--btn${language === "en" ? " source-chip--btn-active" : ""}`}
+                                onClick={() => setLanguage("en")}
+                                title={t("language.label")}
+                            >
+                                {t("language.en")}
+                            </button>
                             <button
                                 className={`source-chip source-chip--btn${brushEnabled ? " source-chip--btn-active" : ""}`}
                                 onClick={() => setBrushEnabled(v => !v)}
-                                title={brushEnabled ? "Tắt chế độ chọn vùng (Brush)" : "Bật chế độ chọn vùng (Brush)"}
+                                title={brushEnabled ? t("original.brushOnTitle") : t("original.brushOffTitle")}
                             >
-                                {brushEnabled ? "✂ Đang chọn vùng" : "✂ Chọn vùng"}
+                                {brushEnabled ? t("original.brushOn") : t("original.brushOff")}
                             </button>
                         </div>
                     </header>
@@ -304,7 +323,7 @@ const OriginalLikeDemo = () => {
                                     ratio={window.devicePixelRatio || 1}
                                     margin={margin}
                                     type="hybrid"
-                                    seriesName={`BTCUSD-brush-demo-${resetToken}`}
+                                    seriesName="BTCUSD-brush-demo"
                                     data={data}
                                     xScale={xScale}
                                     xAccessor={xAccessor}
@@ -346,7 +365,7 @@ const OriginalLikeDemo = () => {
                                             yAccessor={(datum: OriginalLikeDatum) => datum.close}
                                             fill={(datum: OriginalLikeDatum) => (datum.close > datum.open ? "#6BA583" : "#FF0000")}
                                         />
-                                        <OHLCTooltip origin={[-40, 0]} xDisplayFormat={tooltipDateFormat} volumeFormat={volumeFormat} />
+                                        <OHLCTooltip origin={[-40, 0]} displayTexts={tooltipDisplayTexts} xDisplayFormat={tooltipDateFormat} volumeFormat={volumeFormat} />
                                         <MovingAverageTooltip
                                             origin={[-38, 15]}
                                             displayFormat={priceFormat}
@@ -435,7 +454,7 @@ const OriginalLikeDemo = () => {
                                     <CrossHairCursor stroke="#e2e8f0" opacity={0.16} strokeDasharray="ShortDash" />
                                 </ChartCanvas>
                             ) : (
-                                <div className="chart-placeholder">Đang khởi tạo khung biểu đồ...</div>
+                                <div className="chart-placeholder">{t("common.chartInitializing")}</div>
                             )}
                         </div>
                     </div>
@@ -445,4 +464,10 @@ const OriginalLikeDemo = () => {
     );
 };
 
-export default OriginalLikeDemo;
+export default function OriginalLikeDemo() {
+    return (
+        <DemoI18nBoundary>
+            <OriginalLikeDemoContent />
+        </DemoI18nBoundary>
+    );
+}

@@ -12,8 +12,9 @@ import LineSeries from "../series/LineSeries";
 import MACDSeries from "../series/MACDSeries";
 import OHLCSeries from "../series/OHLCSeries";
 import RSISeries from "../series/RSISeries";
-import type { EnrichedDatum } from "./calculators/types";
+import type { EnrichedDatum, IndicatorBandValue, IndicatorMacdValue, IndicatorWhaleValue } from "./calculators/types";
 import { getSeries } from "./registry/SeriesRegistry";
+import { resolveSeriesStructuredValue, resolveSeriesValue, resolveSeriesValueAccessors } from "./seriesValueResolver";
 import { PaneTooltip, type PaneTooltipEntry } from "./PaneTooltip";
 import type { PaneDescriptor, SeriesConfig, SeriesTypeId } from "./types/pane-descriptor";
 
@@ -54,11 +55,6 @@ function finiteExtent(values: readonly number[]): [number, number] {
 	return [minValue, maxValue];
 }
 
-function firstSeriesParam(series: SeriesConfig, key: string, fallback: number) {
-	const value = series.params?.[key];
-	return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
-
 /** Gap (px) added at the top of each non-first pane to visually separate charts. */
 const INNER_PANE_GAP = 10;
 
@@ -74,42 +70,6 @@ function axisFormatForSeriesTypes(types: SeriesTypeId[]): (v: number) => string 
 	return d3Format(".4s");
 }
 
-function extractSeriesValue(datum: EnrichedDatum, seriesType: SeriesTypeId, series: SeriesConfig): number | undefined {
-	switch (seriesType) {
-		case "Candlestick":
-		case "HollowCandle":
-		case "OHLC":
-		case "HeikinAshi":
-			return datum.close;
-		case "Line":
-		case "Area":
-		case "Bar":
-			return datum.close;
-		case "Volume":
-			return datum.volume;
-		case "EMA": {
-			const period = firstSeriesParam(series, "period", 20);
-			if (period >= 50) return datum.ema50 ?? datum.ema20 ?? datum.close;
-			if (period >= 20) return datum.ema20 ?? datum.ema50 ?? datum.close;
-			return datum.ema13 ?? datum.close;
-		}
-		case "CVDApprox":
-			return datum.cvdApprox;
-		case "CVDRealtime":
-			return datum.cvdRealtime;
-		case "RSI":
-			return datum.rsi;
-		case "MACD":
-			return datum.macd?.macd;
-		case "StrengthRelative":
-			return datum.strengthRelative;
-		case "Whale":
-			return datum.whaleBuyVol ?? datum.whaleSellVol;
-		default:
-			return datum.close;
-	}
-}
-
 function buildTooltipEntriesForSeries(series: SeriesConfig[]): PaneTooltipEntry[] {
 	return series.flatMap((item) => {
 		const entry = getSeries(item.type);
@@ -118,7 +78,7 @@ function buildTooltipEntriesForSeries(series: SeriesConfig[]): PaneTooltipEntry[
 			label: tooltip.label,
 			color: tooltip.color,
 			format: tooltip.format,
-			value: tooltip.accessor,
+			value: (datum) => resolveSeriesValue(datum, item),
 		} satisfies PaneTooltipEntry;
 	});
 }
@@ -134,14 +94,17 @@ function buildPriceTooltipEntries(priceFormat: (value: number) => string, volume
 }
 
 export function buildChartSlots(pane: PaneDescriptor): ChartSlot[] {
+	// Only render series that are not explicitly hidden (visible !== false)
+	const activeSeries = pane.series.filter((s) => s.visible !== false);
+
 	if (!pane.splitScale) {
-		const seriesTypes = pane.series.map((series) => series.type);
-		const hasLeftAxis = pane.series.some((series) => series.yAxis === "left");
-		const hasRightAxis = pane.series.some((series) => series.yAxis === "right");
+		const seriesTypes = activeSeries.map((series) => series.type);
+		const hasLeftAxis = activeSeries.some((series) => series.yAxis === "left");
+		const hasRightAxis = activeSeries.some((series) => series.yAxis === "right");
 		return [{
-			series: pane.series,
-			accessors: pane.series.flatMap((series) => getSeries(series.type).yExtentsAccessors),
-			tooltipEntries: buildTooltipEntriesForSeries(pane.series),
+			series: activeSeries,
+			accessors: activeSeries.flatMap((series) => resolveSeriesValueAccessors(series)),
+			tooltipEntries: buildTooltipEntriesForSeries(activeSeries),
 			hasLeftAxis,
 			hasRightAxis,
 			tooltipMode: pane.tooltip,
@@ -150,15 +113,15 @@ export function buildChartSlots(pane: PaneDescriptor): ChartSlot[] {
 		}];
 	}
 
-	const leftSeries = pane.series.filter((series) => series.yAxis === "left");
-	const rightSeries = pane.series.filter((series) => series.yAxis === "right");
+	const leftSeries = activeSeries.filter((series) => series.yAxis === "left");
+	const rightSeries = activeSeries.filter((series) => series.yAxis === "right");
 	const slots: ChartSlot[] = [];
 
 	if (leftSeries.length > 0) {
 		const seriesTypes = leftSeries.map((s) => s.type);
 		slots.push({
 			series: leftSeries,
-			accessors: leftSeries.flatMap((series) => getSeries(series.type).yExtentsAccessors),
+			accessors: leftSeries.flatMap((series) => resolveSeriesValueAccessors(series)),
 			tooltipEntries: buildTooltipEntriesForSeries(leftSeries),
 			hasLeftAxis: true,
 			hasRightAxis: false,
@@ -172,7 +135,7 @@ export function buildChartSlots(pane: PaneDescriptor): ChartSlot[] {
 		const seriesTypes = rightSeries.map((s) => s.type);
 		slots.push({
 			series: rightSeries,
-			accessors: rightSeries.flatMap((series) => getSeries(series.type).yExtentsAccessors),
+			accessors: rightSeries.flatMap((series) => resolveSeriesValueAccessors(series)),
 			tooltipEntries: buildTooltipEntriesForSeries(rightSeries),
 			hasLeftAxis: false,
 			hasRightAxis: true,
@@ -228,7 +191,7 @@ function renderSeries(series: SeriesConfig) {
 	const upColor = String(params.upColor ?? "#089981");
 	const downColor = String(params.downColor ?? "#f23645");
 
-	const accessor = (datum: EnrichedDatum) => extractSeriesValue(datum, type, series);
+	const accessor = (datum: EnrichedDatum) => resolveSeriesValue(datum, series);
 
 	switch (type) {
 		case "Candlestick":
@@ -288,7 +251,8 @@ function renderSeries(series: SeriesConfig) {
 					width={candleBodyWidth}
 					yAccessor={(datum: EnrichedDatum) => {
 						if (type === "Whale") {
-							return datum.whaleBuyVol ?? (datum.whaleSellVol ? -datum.whaleSellVol : undefined);
+							const whale = resolveSeriesStructuredValue(datum, series) as IndicatorWhaleValue | undefined;
+							return whale?.whaleBuyVol ?? (whale?.whaleSellVol ? -whale.whaleSellVol : undefined);
 						}
 						return accessor(datum) as number | undefined;
 					}}
@@ -300,17 +264,17 @@ function renderSeries(series: SeriesConfig) {
 			return (
 				<BollingerSeries
 					key={type}
-					yAccessor={(datum: EnrichedDatum) => datum.bollingerBand}
+					yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as IndicatorBandValue | undefined}
 					stroke={{ top: lineColor, middle: fillColor, bottom: lineColor }}
 					fill={fillColor}
 				/>
 			);
 		case "RSI":
-			return <RSISeries key={type} yAccessor={(datum: EnrichedDatum) => datum.rsi} />;
+			return <RSISeries key={type} yAccessor={(datum: EnrichedDatum) => resolveSeriesValue(datum, series)} />;
 		case "MACD":
-			return <MACDSeries key={type} yAccessor={(datum: EnrichedDatum) => datum.macd} />;
+			return <MACDSeries key={type} yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as IndicatorMacdValue | undefined} />;
 		case "StrengthElder":
-			return <ElderRaySeries key={type} yAccessor={(datum: EnrichedDatum) => ({ bullPower: datum.bullPower, bearPower: datum.bearPower })} />;
+			return <ElderRaySeries key={type} yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as { bullPower?: number; bearPower?: number }} />;
 		default:
 			return <LineSeries key={type} yAccessor={accessor as any} stroke={lineColor} />;
 	}

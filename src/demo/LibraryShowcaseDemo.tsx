@@ -4,53 +4,60 @@ import { scaleTime } from "d3-scale";
 import { timeFormat } from "d3-time-format";
 
 import {
-	MockAdapter,
 	DynamicChart,
 	PaneHeader,
 	PaneLabel,
-	SeriesPicker,
+	IndicatorLegend,
 	useDynamicPanes,
 	type PaneDescriptor,
 	type SeriesConfig,
 	type SeriesTypeId,
-	type OHLCVBar,
 	ChartSplitter,
 	useChartTheme,
-	createDraftFromTool,
-	createDrawingHistory,
-	createDrawingTool,
-	deserializeDrawings,
-	getIndicator,
-	historyReducer,
-	listDrawingTools,
-	serializeDrawings,
 	version,
 } from "../index";
+import { enrichData } from "../lib/core/calculators/enrichData";
+import type { EnrichedDatum, RawOHLCV } from "../lib/core/calculators/types";
 import ChartCanvas from "../lib/ChartCanvas";
-import Chart from "../lib/Chart";
-import type { IndicatorConfig } from "../lib/types/pane";
-import { XAxis, YAxis } from "../lib/axes";
-import { CrossHairCursor, MouseCoordinateX, MouseCoordinateY } from "../lib/coordinates";
-import AreaSeries from "../lib/series/AreaSeries";
-import BarSeries from "../lib/series/BarSeries";
-import CandlestickSeries from "../lib/series/CandlestickSeries";
-import LineSeries from "../lib/series/LineSeries";
-import MACDSeries from "../lib/series/MACDSeries";
-import OHLCSeries from "../lib/series/OHLCSeries";
-import RSISeries from "../lib/series/RSISeries";
-import { OHLCTooltip } from "../lib/tooltip";
 import { heikinAshi } from "../lib/calculator";
-import { fetchLiveDemoData, getOfflineDemoData, type DemoDatum } from "./demoData";
+import { fetchLiveDemoBars, getOfflineDemoBars } from "./demoData";
+import { useDemoI18n } from "./i18n";
+import { PaneSettingsModal, type SettingsSection } from "./PaneSettingsModal";
 import "./demo.css";
 import "../lib/styles/pane-overlays.css";
 
-// ── Pane layout config (module-level = stable reference, no re-creation on render) ──
-const PANE_CONFIG = {
-	initialRatios: [0.50, 0.27, 0.23],
-	minHeights: [100, 36, 36],
-	storageKey: "rsc-demo-panes-v1",
-	marginV: 36,
-};
+const DEMO_SETTINGS_STORAGE_KEY = "rsc-demo-settings-v1";
+const DEFAULT_MAX_VISIBLE_PANES = 5;
+
+function loadDemoSettings() {
+	if (typeof localStorage === "undefined") {
+		return { maxVisiblePanes: DEFAULT_MAX_VISIBLE_PANES };
+	}
+	try {
+		const raw = localStorage.getItem(DEMO_SETTINGS_STORAGE_KEY);
+		if (!raw) {
+			return { maxVisiblePanes: DEFAULT_MAX_VISIBLE_PANES };
+		}
+		const parsed = JSON.parse(raw) as Partial<{ maxVisiblePanes: number }>;
+		if (typeof parsed.maxVisiblePanes === "number" && Number.isFinite(parsed.maxVisiblePanes)) {
+			return { maxVisiblePanes: Math.max(1, Math.floor(parsed.maxVisiblePanes)) };
+		}
+	} catch {
+		// ignore malformed settings payloads
+	}
+	return { maxVisiblePanes: DEFAULT_MAX_VISIBLE_PANES };
+}
+
+function saveDemoSettings(maxVisiblePanes: number) {
+	if (typeof localStorage === "undefined") {
+		return;
+	}
+	try {
+		localStorage.setItem(DEMO_SETTINGS_STORAGE_KEY, JSON.stringify({ maxVisiblePanes }));
+	} catch {
+		// ignore storage errors
+	}
+}
 
 const priceFormat = format(".2f");
 const volumeFormat = format(".3s");
@@ -59,15 +66,8 @@ const dateFormat = timeFormat("%d/%m/%Y %H:%M");
 const TIMEFRAMES = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "1D", "1W"] as const;
 type Timeframe = typeof TIMEFRAMES[number];
 
-const CHART_TYPES = [
-	{ id: "candlestick" as const, label: "Candlestick" },
-	{ id: "hollow"      as const, label: "Hollow Candle" },
-	{ id: "ohlc"        as const, label: "OHLC Bar" },
-	{ id: "heikinashi"  as const, label: "Heikin Ashi" },
-	{ id: "line"        as const, label: "Line" },
-	{ id: "area"        as const, label: "Area" },
-];
-type ChartTypeId = "candlestick" | "hollow" | "ohlc" | "heikinashi" | "line" | "area";
+const CHART_TYPES = ["candlestick", "hollow", "ohlc", "heikinashi", "line", "area"] as const;
+type ChartTypeId = typeof CHART_TYPES[number];
 
 const CHART_TYPE_TO_SERIES: Record<ChartTypeId, SeriesTypeId> = {
 	candlestick: "Candlestick",
@@ -80,36 +80,14 @@ const CHART_TYPE_TO_SERIES: Record<ChartTypeId, SeriesTypeId> = {
 
 const MAIN_PRICE_SERIES_TYPES: SeriesTypeId[] = ["Candlestick", "HollowCandle", "OHLC", "HeikinAshi", "Line", "Area", "Bar"];
 
-const INDICATOR_OPTIONS = ["EMA", "SMA", "RSI", "MACD", "BOLLINGER", "VOLUME", "CVD"] as const;
-const DRAWING_TOOLS = ["trendLine", "hLine", "vLine", "fibonacci", "channel", "text"] as const;
-type DrawingToolName = typeof DRAWING_TOOLS[number];
-type SidePanelTab = "indicators" | "drawings" | "adapter" | "panes";
-
-const TOOL_DEFS: { id: string; label: string }[] = [
-	{ id: "cursor",    label: "Cursor" },
-	{ id: "crosshair", label: "Crosshair" },
-	{ id: "trendLine", label: "Trend Line" },
-	{ id: "hLine",     label: "Horiz. Line" },
-	{ id: "vLine",     label: "Vert. Line" },
-	{ id: "fibonacci", label: "Fibonacci" },
-	{ id: "channel",   label: "Channel" },
-	{ id: "text",      label: "Text Note" },
-];
-
-type AdapterProbe = {
-	barsFetched: number;
-	barTicks: number;
-	tradeTicks: number;
-	orderbookTicks: number;
-	spreadBps: string;
-	status: "idle" | "running" | "done";
-};
+const TOOL_DEFS = ["cursor", "crosshair", "trendLine", "hLine", "vLine", "fibonacci", "channel", "text"] as const;
+type ToolId = typeof TOOL_DEFS[number];
 
 function normalizeDate(value: Date | number) {
 	return value instanceof Date ? value : new Date(value);
 }
 
-function chartDomain(data: DemoDatum[]) {
+function chartDomain(data: Array<{ date: Date | number }>) {
 	const end = data.length - 1;
 	const start = Math.max(0, end - 140);
 	return [normalizeDate(data[start].date), normalizeDate(data[end].date)] as [Date, Date];
@@ -127,36 +105,7 @@ function paneTemplate(label: string, heightRatio: number, series: SeriesConfig[]
 	};
 }
 
-function formatIndicatorObject(obj: Record<string, unknown>): string {
-	if ("macd" in obj && "signal" in obj) {
-		return `M:${priceFormat(obj.macd as number)} S:${priceFormat(obj.signal as number)}`;
-	}
-	if ("top" in obj && "bottom" in obj) {
-		return `${priceFormat(obj.top as number)} – ${priceFormat(obj.bottom as number)}`;
-	}
-	const first = Object.values(obj).find((v) => typeof v === "number");
-	return first !== undefined ? priceFormat(first as number) : JSON.stringify(obj).slice(0, 40);
-}
-
-function summarizeIndicator(value: unknown): string {
-	if (value === null || value === undefined) return "n/a";
-	if (typeof value === "number") return priceFormat(value);
-	if (typeof value === "object" && !Array.isArray(value)) {
-		return formatIndicatorObject(value as Record<string, unknown>);
-	}
-	if (Array.isArray(value)) {
-		if (value.length === 0) return "empty";
-		const last = value[value.length - 1];
-		if (typeof last === "number") return priceFormat(last);
-		if (last !== null && typeof last === "object") {
-			return formatIndicatorObject(last as Record<string, unknown>);
-		}
-		return String(last);
-	}
-	return String(value);
-}
-
-// ── SVG Tool Icons ───────────────────────────────────────────────────────────
+// SVG tool icons
 function ToolIcon({ id }: { id: string }) {
 	switch (id) {
 		case "cursor":
@@ -230,59 +179,8 @@ function ToolIcon({ id }: { id: string }) {
 	}
 }
 
-// Price series switcher — renders the correct series for the chosen chart type
-function PriceSeries({
-	chartType,
-	candleWidth,
-}: {
-	chartType: ChartTypeId;
-	candleWidth: (props: { widthRatio?: number }, moreProps: {
-		xScale: (value: Date) => number;
-		xAccessor: (datum: DemoDatum) => Date;
-		plotData: DemoDatum[];
-	}) => number;
-}) {
-	const up = "#089981";
-	const dn = "#f23645";
-	switch (chartType) {
-		case "ohlc":
-			return (
-				<OHLCSeries
-					stroke={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
-				/>
-			);
-		case "line":
-			return <LineSeries yAccessor={(d: DemoDatum) => d.close} stroke="#2962ff" strokeWidth={1.5} />;
-		case "area":
-			return (
-				<AreaSeries
-					yAccessor={(d: DemoDatum) => d.close}
-					stroke="#2962ff"
-					fill="#2962ff"
-					strokeWidth={1.5}
-				/>
-			);
-		case "hollow":
-			return (
-				<CandlestickSeries
-					width={candleWidth}
-					wickStroke={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
-					fill={(d: DemoDatum) => (d.close >= d.open ? "transparent" : dn)}
-					stroke={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
-				/>
-			);
-		default: // candlestick | heikinashi
-			return (
-				<CandlestickSeries
-					width={candleWidth}
-					wickStroke={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
-					fill={(d: DemoDatum) => (d.close >= d.open ? up : dn)}
-				/>
-			);
-	}
-}
-
 export default function LibraryShowcaseDemo() {
+	const { language, setLanguage, t, getPaneLabel } = useDemoI18n();
 	const shellRef = useRef<HTMLDivElement | null>(null);
 	const chartMenuRef = useRef<HTMLDivElement | null>(null);
 	const [chartWidth, setChartWidth] = useState(0);
@@ -293,27 +191,23 @@ export default function LibraryShowcaseDemo() {
 	const [showPanesMenu, setShowPanesMenu] = useState(false);
 	const panesMenuRef = useRef<HTMLDivElement | null>(null);
 	const [activeTool, setActiveTool] = useState<string>("cursor");
-	const [sidePanelTab, setSidePanelTab] = useState<SidePanelTab>("indicators");
 	const [selectedPaneId, setSelectedPaneId] = useState("price");
-	const [showSeriesPicker, setShowSeriesPicker] = useState(false);
-	const seriesPickerAnchorRef = useRef<HTMLButtonElement | null>(null);
+
+	const [settingsSection, setSettingsSection] = useState<SettingsSection>("layout");
+	const [settingsPaneId, setSettingsPaneId] = useState("price");
+	const [maxVisiblePanes, setMaxVisiblePanes] = useState(() => loadDemoSettings().maxVisiblePanes);
+	const [settingsOpen, setSettingsOpen] = useState(false);
 
 	// Live Binance data state
-	const [liveData, setLiveData] = useState<DemoDatum[]>([]);
+	const [liveData, setLiveData] = useState<RawOHLCV[]>([]);
 	const [dataStatus, setDataStatus] = useState<"loading" | "live" | "offline" | "error">("loading");
 	const [dataError, setDataError] = useState<string>("");
 
-	const [adapterProbe, setAdapterProbe] = useState<AdapterProbe>({
-		barsFetched: 0,
-		barTicks: 0,
-		tradeTicks: 0,
-		orderbookTicks: 0,
-		spreadBps: "0.00",
-		status: "idle",
-	});
-	const [drawingState, setDrawingState] = useState(() => createDrawingHistory([]));
+	const paneState = useDynamicPanes(chartHeight, { maxVisiblePanes });
 
-	const paneState = useDynamicPanes(chartHeight);
+	useEffect(() => {
+		saveDemoSettings(maxVisiblePanes);
+	}, [maxVisiblePanes]);
 
 	// Fetch live Binance data on mount and on timeframe change
 	useEffect(() => {
@@ -321,7 +215,7 @@ export default function LibraryShowcaseDemo() {
 		setDataStatus("loading");
 		setDataError("");
 
-		fetchLiveDemoData({ interval: timeframe, limit: 300, signal: abortController.signal })
+		fetchLiveDemoBars({ interval: timeframe, limit: 300, signal: abortController.signal })
 			.then((bars) => {
 				if (abortController.signal.aborted) return;
 				setLiveData(bars);
@@ -332,31 +226,37 @@ export default function LibraryShowcaseDemo() {
 				const msg = err instanceof Error ? err.message : String(err);
 				setDataError(msg);
 				// Fallback to offline data
-				setLiveData(getOfflineDemoData());
+				setLiveData(getOfflineDemoBars());
 				setDataStatus("offline");
 			});
 
 		return () => abortController.abort();
 	}, [timeframe]);
 
-	const data = useMemo(
-		() => (liveData.length > 0 ? liveData : getOfflineDemoData()),
+	const data = useMemo<RawOHLCV[]>(
+		() => (liveData.length > 0 ? liveData : getOfflineDemoBars()),
 		[liveData],
 	);
 
+	const indicatorSeries = useMemo(
+		() => paneState.panes.flatMap((pane) => pane.series),
+		[paneState.panes],
+	);
+
 	// Heikin Ashi transform — reuse base indicator fields, swap OHLC only
-	const plotData = useMemo<DemoDatum[]>(() => {
-		if (chartType !== "heikinashi" || data.length === 0) return data;
+	const plotData = useMemo<EnrichedDatum[]>(() => {
+		const enrichedData = enrichData(data, { series: indicatorSeries });
+		if (chartType !== "heikinashi" || enrichedData.length === 0) return enrichedData;
 		const haCalc = heikinAshi();
-		const transformed = haCalc(data as any[]) as any[];
+		const transformed = haCalc(enrichedData as any[]) as any[];
 		return transformed.map((bar: any, i: number) => ({
-			...data[i],
+			...enrichedData[i],
 			open:  bar.open,
 			high:  bar.high,
 			low:   bar.low,
 			close: bar.close,
 		}));
-	}, [data, chartType]);
+	}, [data, chartType, indicatorSeries]);
 
 	// scaleTime + default candlestick width can collapse to near-zero body width.
 	// Use distance between adjacent bars in screen space for stable candle bodies.
@@ -365,8 +265,8 @@ export default function LibraryShowcaseDemo() {
 			props: { widthRatio?: number },
 			moreProps: {
 				xScale: (value: Date) => number;
-				xAccessor: (datum: DemoDatum) => Date;
-				plotData: DemoDatum[];
+				xAccessor: (datum: EnrichedDatum) => Date;
+				plotData: EnrichedDatum[];
 			},
 		): number => {
 			const { xScale, xAccessor, plotData } = moreProps;
@@ -389,6 +289,14 @@ export default function LibraryShowcaseDemo() {
 		() => paneState.panes.find((pane) => pane.id === selectedPaneId) ?? paneState.visiblePanes[0] ?? paneState.panes[0],
 		[paneState.panes, paneState.visiblePanes, selectedPaneId],
 	);
+
+	const paneLabel = useCallback((pane: PaneDescriptor) => getPaneLabel(pane.id, pane.label), [getPaneLabel]);
+	const localizePane = useCallback((pane: PaneDescriptor): PaneDescriptor => {
+		const nextLabel = paneLabel(pane);
+		return nextLabel === pane.label ? pane : { ...pane, label: nextLabel };
+	}, [paneLabel]);
+	const chartTypeLabel = useCallback((type: ChartTypeId) => t(`chartType.${type}`), [t]);
+	const toolLabel = useCallback((toolId: ToolId) => t(`tool.${toolId}`), [t]);
 
 	useEffect(() => {
 		if (!selectedPane && paneState.panes.length > 0) {
@@ -441,106 +349,35 @@ export default function LibraryShowcaseDemo() {
 	useEffect(() => {
 		const node = shellRef.current;
 		if (!node) return;
-		const update = () => {
+
+		const readSize = () => {
+			// getBoundingClientRect forces a synchronous layout and always returns
+			// accurate post-resize dimensions regardless of how the resize was triggered.
 			const rect = node.getBoundingClientRect();
-			setChartWidth(Math.floor(rect.width));
-			setChartHeight(Math.floor(rect.height));
+			const w = Math.floor(rect.width);
+			const h = Math.floor(rect.height);
+			if (w > 0 && h > 0) {
+				setChartWidth(w);
+				setChartHeight(h);
+			}
 		};
-		update();
-		const observer = new ResizeObserver(update);
+
+		// Initial measurement
+		readSize();
+
+		// ResizeObserver covers CSS/layout-driven resizes (e.g., pane splitter)
+		const observer = new ResizeObserver(readSize);
 		observer.observe(node);
-		window.addEventListener("resize", update);
+
+		// window resize listener guarantees detection of browser-window resizes,
+		// which is the primary scenario where ResizeObserver may fire late or not at all.
+		window.addEventListener("resize", readSize);
+
 		return () => {
 			observer.disconnect();
-			window.removeEventListener("resize", update);
+			window.removeEventListener("resize", readSize);
 		};
 	}, []);
-
-	useEffect(() => {
-		const adapter = new MockAdapter({ intervalMs: 180 });
-		const from = normalizeDate(data[Math.max(0, data.length - 100)]?.date ?? new Date(Date.now() - 86_400_000 * 7));
-		const to = normalizeDate(data[data.length - 1]?.date ?? new Date());
-		let stopBars: (() => void) | undefined;
-		let stopTrades: (() => void) | undefined;
-		let stopOrderbook: (() => void) | undefined;
-		let timerId: number | undefined;
-		let disposed = false;
-
-		setAdapterProbe((prev) => ({ ...prev, status: "running", barTicks: 0, tradeTicks: 0, orderbookTicks: 0, spreadBps: "0.00" }));
-
-		adapter.fetchBars("BTCUSD", timeframe, from, to).then((bars) => {
-			if (disposed) return;
-			setAdapterProbe((prev) => ({ ...prev, barsFetched: bars.length }));
-
-			stopBars = adapter.subscribeToBar("BTCUSD", timeframe, () => {
-				setAdapterProbe((prev) => ({ ...prev, barTicks: prev.barTicks + 1 }));
-			});
-			stopTrades = adapter.subscribeToTrades("BTCUSD", () => {
-				setAdapterProbe((prev) => ({ ...prev, tradeTicks: prev.tradeTicks + 1 }));
-			});
-			stopOrderbook = adapter.subscribeToOrderbook("BTCUSD", (snapshot) => {
-				const bestBid = snapshot.bids[0]?.price ?? 0;
-				const bestAsk = snapshot.asks[0]?.price ?? 0;
-				const mid = (bestAsk + bestBid) / 2;
-				const spreadBps = mid > 0 ? ((bestAsk - bestBid) / mid) * 10000 : 0;
-				setAdapterProbe((prev) => ({
-					...prev,
-					orderbookTicks: prev.orderbookTicks + 1,
-					spreadBps: spreadBps.toFixed(2),
-				}));
-			});
-
-			timerId = window.setTimeout(() => {
-				stopBars?.();
-				stopTrades?.();
-				stopOrderbook?.();
-				setAdapterProbe((prev) => ({ ...prev, status: "done" }));
-			}, 1800);
-		}).catch(() => {
-			if (!disposed) setAdapterProbe((prev) => ({ ...prev, status: "done" }));
-		});
-
-		return () => {
-			disposed = true;
-			if (timerId !== undefined) window.clearTimeout(timerId);
-			stopBars?.();
-			stopTrades?.();
-			stopOrderbook?.();
-		};
-	}, [data, timeframe]);
-
-	const indicatorProbe = useMemo(() => {
-		const sample = data.slice(Math.max(0, data.length - 90));
-		const input: OHLCVBar[] = sample.map((datum, index) => ({
-			date: normalizeDate(datum.date),
-			open: datum.open,
-			high: datum.high,
-			low: datum.low,
-			close: datum.close,
-			volume: datum.volume,
-			buyVolume: datum.buyVolume,
-			sellVolume: datum.sellVolume,
-			openInterest: datum.openInterest,
-			index,
-			dataIndex: index,
-		}));
-		return INDICATOR_OPTIONS.map((name) => {
-			const indicator = getIndicator(name);
-			if (!indicator) return { name, status: "missing", sample: "n/a" };
-			return { name, status: "ok", sample: summarizeIndicator(indicator.compute(input)) };
-		});
-	}, [data]);
-
-	const drawingProbe = useMemo(() => {
-		const serialized = serializeDrawings(drawingState.present);
-		return {
-			toolNames: listDrawingTools().map((tool) => tool.name),
-			count: drawingState.present.length,
-			past: drawingState.past.length,
-			future: drawingState.future.length,
-			serialized,
-		};
-	}, [drawingState]);
 
 	const chartReady = chartWidth > 0 && chartHeight > 0 && plotData.length > 0 && paneState.visiblePanes.length > 0;
 
@@ -567,11 +404,22 @@ export default function LibraryShowcaseDemo() {
 		document.addEventListener("mousedown", handler);
 		return () => document.removeEventListener("mousedown", handler);
 	}, [showPanesMenu]);
+
 	const ratio = window.devicePixelRatio || 1;
 	const priceIsUp = (lastBar?.close ?? 0) >= (lastBar?.open ?? 0);
 
 	// ── Theme ─────────────────────────────────────────────────────────────────
 	const { theme, toggleTheme, isDark } = useChartTheme();
+
+	useEffect(() => {
+		document.documentElement.setAttribute("data-chart-theme", theme);
+	}, [theme]);
+
+	useEffect(() => {
+		return () => {
+			document.documentElement.removeAttribute("data-chart-theme");
+		};
+	}, []);
 
 	const { visiblePanes, heights: paneHeights, applyDelta, resetToDefault, available } = paneState;
 
@@ -582,61 +430,64 @@ export default function LibraryShowcaseDemo() {
 	const canvasBg      = isDark ? "#1e2130" : "#ffffff";
 
 	const addPane = () => {
-		paneState.addPane(paneTemplate(`Pane ${paneState.panes.length + 1}`, 0.18));
-	};
-	const removePane = () => {
-		if (!selectedPane || paneState.visiblePanes.length <= 1) return;
-		paneState.removePane(selectedPane.id);
-	};
-	const restorePane = () => {
-		if (!selectedPane) return;
-		paneState.restorePane(selectedPane.id);
-	};
-	const movePaneUp = () => {
-		if (!selectedPane) return;
-		const index = paneState.visiblePanes.findIndex((pane) => pane.id === selectedPane.id);
-		if (index > 0) {
-			paneState.reorderPanes(index, index - 1);
-		}
-	};
-	const movePaneDown = () => {
-		if (!selectedPane) return;
-		const index = paneState.visiblePanes.findIndex((pane) => pane.id === selectedPane.id);
-		if (index >= 0 && index < paneState.visiblePanes.length - 1) {
-			paneState.reorderPanes(index, index + 1);
-		}
+		paneState.addPane(paneTemplate(t("library.genericPaneLabel", { index: paneState.panes.length + 1 }), 0.18));
 	};
 
-	const addDrawing = (tool: DrawingToolName) => {
-		const startX = 24 + drawingState.present.length * 12;
-		const draft = createDraftFromTool(tool, { x: startX, y: 42 });
-		const completed = createDrawingTool(tool).updateDraft(draft, { x: startX + 120, y: 84 });
-		setDrawingState((prev) => historyReducer(prev, { type: "PUSH", drawing: completed }));
-	};
-	const undoDrawing   = () => setDrawingState((prev) => historyReducer(prev, { type: "UNDO" }));
-	const redoDrawing   = () => setDrawingState((prev) => historyReducer(prev, { type: "REDO" }));
-	const clearDrawing  = () => setDrawingState((prev) => historyReducer(prev, { type: "CLEAR" }));
-	const restoreDrawing = () => {
-		const restored = deserializeDrawings(drawingProbe.serialized);
-		setDrawingState((prev) => historyReducer(prev, { type: "REPLACE", drawings: restored }));
-	};
+	const paneHeaderLabels = useMemo(() => ({
+		dragAriaLabel: (label: string) => t("library.dragPane", { pane: label }),
+		dragTitle: (pane: PaneDescriptor) => pane.pinned ? t("library.dragDisabled") : t("library.dragTitle"),
+		addSeriesAriaLabel: (label: string) => t("library.addSeriesToPane", { pane: label }),
+		addSeriesTitle: t("library.addSeries"),
+		toggleVisibleAriaLabel: (label: string, visible: boolean) => t(visible ? "library.hidePaneAria" : "library.showPaneAria", { pane: label }),
+		toggleVisibleTitle: (pane: PaneDescriptor) => pane.pinned ? t("library.primaryPaneLocked") : t(pane.visible ? "library.hidePane" : "library.restorePane"),
+		removeAriaLabel: (label: string) => t("library.hidePaneAria", { pane: label }),
+		removeTitle: t("library.removePaneHint"),
+	}), [t]);
+
+	const indicatorLegendLabels = useMemo(() => ({
+		showIndicatorTitle: t("library.showIndicator"),
+		hideIndicatorTitle: t("library.hideIndicator"),
+		removeIndicatorTitle: t("library.removeIndicator"),
+		showIndicatorAriaLabel: (label: string) => t("library.showIndicatorAria", { series: label }),
+		hideIndicatorAriaLabel: (label: string) => t("library.hideIndicatorAria", { series: label }),
+		removeIndicatorAriaLabel: (label: string) => t("library.removeIndicatorAria", { series: label }),
+	}), [t]);
+
+	const openSettings = useCallback((section: SettingsSection, paneId?: string) => {
+		setSettingsSection(section);
+		if (paneId) {
+			setSettingsPaneId(paneId);
+		}
+		setSettingsOpen(true);
+	}, []);
+
+	const closeSettings = useCallback(() => {
+		setSettingsOpen(false);
+	}, []);
+
+	const handleResetSettings = useCallback(() => {
+		paneState.resetToDefault();
+		setMaxVisiblePanes(DEFAULT_MAX_VISIBLE_PANES);
+		saveDemoSettings(DEFAULT_MAX_VISIBLE_PANES);
+		setSettingsSection("layout");
+		setSettingsPaneId("price");
+		setSettingsOpen(false);
+	}, [paneState]);
 
 	return (
 		<div className="gc-terminal" data-chart-theme={theme}>
-
-			{/* ─── TOP BAR ────────────────────────────────────────────────── */}
 			<header className="gc-topbar">
 				<div className="gc-topbar__left">
-					<div className="gc-logo" aria-label="BT Charts">BT</div>
+					<div className="gc-logo" aria-label={t("library.topbarAria")}>BT</div>
 
 					<div className="gc-symbol-block">
 						<span className="gc-symbol-name">BTCUSD</span>
-								<span className="gc-symbol-exchange">BINANCE</span>
+						<span className="gc-symbol-exchange">BINANCE</span>
 					</div>
 
 					<div className="gc-topbar-sep" />
 
-					<nav className="gc-tf-chips" aria-label="Khung thời gian">
+					<nav className="gc-tf-chips" aria-label={t("library.timeframes")}>
 						{TIMEFRAMES.map((tf) => (
 							<button
 								key={tf}
@@ -662,7 +513,7 @@ export default function LibraryShowcaseDemo() {
 								<rect x="6" y="6" width="3" height="9" fill="currentColor" rx="1" />
 								<rect x="11" y="2" width="3" height="13" fill="currentColor" rx="1" />
 							</svg>
-							{CHART_TYPES.find((ct) => ct.id === chartType)?.label ?? "Candlestick"}
+							{chartTypeLabel(chartType)}
 							<svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 4 }}>
 								<path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
 							</svg>
@@ -670,13 +521,13 @@ export default function LibraryShowcaseDemo() {
 
 						{showChartMenu && (
 							<div className="gc-chart-type-menu">
-								{CHART_TYPES.map(({ id, label }) => (
+								{CHART_TYPES.map((id) => (
 									<button
 										key={id}
 										type="button"
 										className={`gc-chart-type-item${chartType === id ? " gc-chart-type-item--active" : ""}`}
 										onClick={() => {
-											handleChartTypeChange(id as ChartTypeId);
+											handleChartTypeChange(id);
 											setShowChartMenu(false);
 										}}
 									>
@@ -685,34 +536,34 @@ export default function LibraryShowcaseDemo() {
 												<path d="M2 6l3 3 5-5" stroke="#2962ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
 											</svg>
 										)}
-										{label}
+										{chartTypeLabel(id)}
 									</button>
 								))}
 							</div>
 						)}
 					</div>
-					<button type="button" className="gc-topbar-btn">Compare</button>
-					<button type="button" className="gc-topbar-btn">Study</button>
-					<button type="button" className="gc-topbar-btn">Replay</button>
 
-					{/* Panes visibility menu */}
+					<button type="button" className="gc-topbar-btn">{t("library.compare")}</button>
+					<button type="button" className="gc-topbar-btn">{t("library.replay")}</button>
+
 					<div className="gc-topbar-sep" />
 					<div className="gc-chart-type-wrap" ref={panesMenuRef}>
 						<button
 							type="button"
 							className={`gc-topbar-btn${showPanesMenu ? " gc-topbar-btn--active" : ""}`}
 							onClick={() => setShowPanesMenu((v) => !v)}
-							title="Quản lý panes"
+							title={t("library.managePanes")}
 						>
 							<svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
 								<rect x="1" y="1" width="14" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
 								<rect x="1" y="9" width="14" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
 							</svg>
-							Panes
+							{t("common.panes")}
 							<svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 4 }}>
 								<path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
 							</svg>
 						</button>
+
 						{showPanesMenu && (
 							<div className="gc-chart-type-menu">
 								{paneState.panes.map((pane) => (
@@ -720,18 +571,22 @@ export default function LibraryShowcaseDemo() {
 										key={pane.id}
 										type="button"
 										className={`gc-chart-type-item${pane.visible ? " gc-chart-type-item--active" : ""}`}
-										onClick={() => { if (!pane.pinned) paneState.toggleVisible(pane.id); }}
+										onClick={() => {
+											if (!pane.pinned) {
+												paneState.toggleVisible(pane.id);
+											}
+										}}
 										disabled={pane.pinned}
-										title={pane.pinned ? "Pane chính luôn hiển thị" : pane.visible ? "Ẩn pane" : "Hiện pane"}
+										title={pane.pinned ? t("library.primaryPaneLocked") : pane.visible ? t("library.hidePane") : t("library.showPane")}
 									>
-										{pane.visible
-											? (
-												<svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: 6, flexShrink: 0 }}>
-													<path d="M2 6l3 3 5-5" stroke="#2962ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-												</svg>
-											)
-											: <span style={{ display: "inline-block", width: 18, flexShrink: 0 }} />}
-										{pane.label}
+										{pane.visible ? (
+											<svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: 6, flexShrink: 0 }}>
+												<path d="M2 6l3 3 5-5" stroke="#2962ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+											</svg>
+										) : (
+											<span style={{ display: "inline-block", width: 18, flexShrink: 0 }} />
+										)}
+										{paneLabel(pane)}
 										{pane.pinned && <span style={{ marginLeft: 4, fontSize: 10, opacity: 0.5 }}>🔒</span>}
 									</button>
 								))}
@@ -741,56 +596,66 @@ export default function LibraryShowcaseDemo() {
 				</div>
 
 				<div className="gc-topbar__right">
-					{dataStatus === "live" && (
-						<span className="gc-live-badge">● LIVE · Binance</span>
-					)}
-					{dataStatus === "offline" && (
-						<span className="gc-offline-badge" title={dataError}>⚠ Offline fallback</span>
-					)}
-					{dataStatus === "loading" && (
-						<span className="gc-loading-badge">↻ Loading…</span>
-					)}
+					{dataStatus === "live" && <span className="gc-live-badge">{t("common.liveBinance")}</span>}
+					{dataStatus === "offline" && <span className="gc-offline-badge" title={dataError}>{t("common.offlineFallback")}</span>}
+					{dataStatus === "loading" && <span className="gc-loading-badge">{t("common.loading")}</span>}
+					<div className="gc-chart-type-wrap" role="group" aria-label={t("language.label")}>
+						<button type="button" className={`gc-topbar-btn${language === "vi" ? " gc-topbar-btn--active" : ""}`} onClick={() => setLanguage("vi")}>
+							{t("language.vi")}
+						</button>
+						<button type="button" className={`gc-topbar-btn${language === "en" ? " gc-topbar-btn--active" : ""}`} onClick={() => setLanguage("en")}>
+							{t("language.en")}
+						</button>
+					</div>
 					<span className="gc-version-text">v{version}</span>
 					<div className="gc-topbar-sep" />
 					<button
 						type="button"
 						className="gc-topbar-btn gc-theme-toggle"
 						onClick={toggleTheme}
-						title={isDark ? "Chửế độ sáng" : "Chửế độ tối"}
-						aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+						title={isDark ? t("library.switchToLight") : t("library.switchToDark")}
+						aria-label={isDark ? t("library.switchToLightAria") : t("library.switchToDarkAria")}
 					>
 						{isDark ? (
 							<svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-								<circle cx="8" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
-								<line x1="8" y1="1" x2="8" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-								<line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-								<line x1="1" y1="8" x2="3" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-								<line x1="13" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-								<line x1="3.05" y1="3.05" x2="4.46" y2="4.46" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-								<line x1="11.54" y1="11.54" x2="12.95" y2="12.95" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-								<line x1="11.54" y1="4.46" x2="12.95" y2="3.05" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-								<line x1="3.05" y1="12.95" x2="4.46" y2="11.54" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+								<circle cx="8" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+								<line x1="8" y1="1" x2="8" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+								<line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+								<line x1="1" y1="8" x2="3" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+								<line x1="13" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+								<line x1="3.05" y1="3.05" x2="4.46" y2="4.46" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+								<line x1="11.54" y1="11.54" x2="12.95" y2="12.95" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+								<line x1="11.54" y1="4.46" x2="12.95" y2="3.05" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+								<line x1="3.05" y1="12.95" x2="4.46" y2="11.54" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
 							</svg>
 						) : (
 							<svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-								<path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6 6 0 1 0 8 8z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+								<path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6 6 0 1 0 8 8z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
 							</svg>
 						)}
 					</button>
-					<button type="button" className="gc-upgrade-btn">Upgrade</button>
+					<button
+						type="button"
+						className="gc-topbar-btn gc-theme-toggle"
+						onClick={() => {
+							openSettings("layout", selectedPane?.id ?? "price");
+						}}
+						title={t("settings.open")}
+						aria-label={t("settings.openDialog")}
+					>
+						<ToolIcon id="settings" />
+					</button>
+					<button type="button" className="gc-upgrade-btn">{t("library.upgrade")}</button>
 				</div>
 			</header>
 
-			{/* ─── MAIN ───────────────────────────────────────────────────── */}
 			<div className="gc-main">
-
-				{/* Left toolbar */}
-				<aside className="gc-tools" aria-label="Drawing tools">
-					{TOOL_DEFS.map(({ id, label }) => (
+				<aside className="gc-tools" aria-label={t("library.drawingTools")}>
+					{TOOL_DEFS.map((id) => (
 						<button
 							key={id}
 							type="button"
-							title={label}
+							title={toolLabel(id)}
 							aria-pressed={activeTool === id}
 							className={`gc-tool-btn${activeTool === id ? " gc-tool-btn--active" : ""}`}
 							onClick={() => setActiveTool(id)}
@@ -798,21 +663,9 @@ export default function LibraryShowcaseDemo() {
 							<ToolIcon id={id} />
 						</button>
 					))}
-
-					<div className="gc-tools-gap" />
-
-					<button
-						type="button"
-						title="Settings"
-						className="gc-tool-btn"
-					>
-						<ToolIcon id="settings" />
-					</button>
 				</aside>
 
-				{/* Chart area */}
 				<section className="gc-chart-area">
-					{/* OHLC info strip */}
 					<div className="gc-ohlc-strip">
 						<span className="gc-ohlc-pair">BTCUSD <span className="gc-ohlc-tf">· {timeframe}</span></span>
 						{dataStatus !== "loading" && lastBar ? (
@@ -821,95 +674,103 @@ export default function LibraryShowcaseDemo() {
 								<span className="gc-ohlc-item">H <b className="gc-col-up">{priceFormat(lastBar.high)}</b></span>
 								<span className="gc-ohlc-item">L <b className="gc-col-dn">{priceFormat(lastBar.low)}</b></span>
 								<span className="gc-ohlc-item">C <b className={priceIsUp ? "gc-col-up" : "gc-col-dn"}>{priceFormat(lastBar.close)}</b></span>
-								<span className="gc-ohlc-item gc-ohlc-vol">Vol <b>{volumeFormat(lastBar.volume)}</b></span>
-								<span className="gc-ohlc-item gc-ohlc-bars">{data.length} bars</span>
+								<span className="gc-ohlc-item gc-ohlc-vol">{t("library.volumeShort")} <b>{volumeFormat(lastBar.volume)}</b></span>
+								<span className="gc-ohlc-item gc-ohlc-bars">{t("library.pairBars", { count: data.length })}</span>
 							</>
 						) : (
-							<span className="gc-ohlc-loading">Đang tải dữ liệu Binance…</span>
+							<span className="gc-ohlc-loading">{t("library.loadingPriceData")}</span>
 						)}
 					</div>
 
-					{/* Canvas */}
 					<div className="gc-chart-shell" ref={shellRef} style={{ background: canvasBg }}>
 						{dataStatus === "loading" ? (
 							<div className="gc-chart-placeholder gc-chart-loading">
 								<div className="gc-spinner" />
-								<span>Đang tải dữ liệu thật từ Binance…</span>
+								<span>{t("library.loadingRealData")}</span>
 							</div>
 						) : chartReady ? (
 							<>
-							<ChartCanvas
-								key={`chart-canvas-${chartType}-${timeframe}-${paneHeights.join("-")}-${theme}`}
-								height={chartHeight}
-								width={chartWidth}
-								margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
-								type="hybrid"
-								seriesName={`terminal-demo-${chartType}-${paneHeights.join("-")}`}
-								data={plotData}
-								xScale={scaleTime()}
-								xAccessor={(datum: DemoDatum) => datum.date}
-								displayXAccessor={(datum: DemoDatum) => datum.date}
-								xExtents={xExtents}
-								ratio={ratio}
-								mouseMoveEvent
-								zoomEvent
-								panEvent
-								useCrossHairStyleCursor
-							>
-								{DynamicChart({
-									panes: visiblePanes,
-									heights: paneHeights,
-									data: plotData as any,
-									axisStroke,
-									axisTickFill,
-									isDark,
-									dateFormat,
-									priceFormat,
-									volumeFormat,
-								})}
-							</ChartCanvas>
-							{visiblePanes.map((pane, index) => {
-								const paneTop = 8 + paneHeights.slice(0, index).reduce((sum, value) => sum + value, 0);
-								const paneH = paneHeights[index] ?? 0;
-								return (
-									<Fragment key={pane.id}>
-										{/* Hover-activated topbar: covers only the top 28px of each pane
-										    so chart pan/zoom still works in the rest of the pane */}
-										<div
-											className="rsc-pane-wrap"
-											style={{
-												position: "absolute",
-												top: paneTop,
-												left: 0,
-												right: 0,
-												height: 28,
-												zIndex: 20,
-											}}
-										>
-											<PaneHeader
-												pane={pane}
-												onToggleVisible={() => paneState.toggleVisible(pane.id)}
-												onRemove={() => paneState.removePane(pane.id)}
-												onAddSeries={() => {
-													setSelectedPaneId(pane.id);
-													setShowSeriesPicker(true);
+								<ChartCanvas
+									key={`chart-canvas-${chartType}-${timeframe}-${theme}`}
+									height={chartHeight}
+									width={chartWidth}
+									margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
+									type="hybrid"
+									seriesName={`terminal-demo-${chartType}`}
+									data={plotData}
+									xScale={scaleTime()}
+									xAccessor={(datum: EnrichedDatum) => datum.date}
+									displayXAccessor={(datum: EnrichedDatum) => datum.date}
+									xExtents={xExtents}
+									ratio={ratio}
+									mouseMoveEvent
+									zoomEvent
+									panEvent
+									useCrossHairStyleCursor
+								>
+									{DynamicChart({
+										panes: visiblePanes,
+										heights: paneHeights,
+										data: plotData as any,
+										axisStroke,
+										axisTickFill,
+										isDark,
+										dateFormat,
+										priceFormat,
+										volumeFormat,
+									})}
+								</ChartCanvas>
+
+								{visiblePanes.map((pane, index) => {
+									const paneTop = 8 + paneHeights.slice(0, index).reduce((sum, value) => sum + value, 0);
+									const paneH = paneHeights[index] ?? 0;
+									return (
+										<Fragment key={pane.id}>
+											<div
+												className="rsc-pane-wrap"
+												style={{
+													position: "absolute",
+													top: paneTop,
+													left: 0,
+													right: 0,
+													height: 28,
+													zIndex: 20,
 												}}
-												addButtonRef={pane.id === selectedPaneId ? seriesPickerAnchorRef : undefined}
-											/>
-										</div>
-										<PaneLabel
-											label={pane.label}
-											top={paneTop}
-											height={paneH}
-										/>
-									</Fragment>
-								);
-							})}
+											>
+												{(() => {
+													const localizedPane = localizePane(pane);
+													return (
+														<>
+															<PaneHeader
+																pane={localizedPane}
+																onToggleVisible={() => paneState.toggleVisible(pane.id)}
+																onRemove={() => paneState.removePane(pane.id)}
+																onAddSeries={() => {
+																	setSelectedPaneId(pane.id);
+																	openSettings("indicators", pane.id);
+																}}
+																addButtonRef={undefined}
+																labels={paneHeaderLabels}
+															/>
+															<IndicatorLegend
+																pane={localizedPane}
+																onToggleSeries={(seriesType, seriesIndex) => paneState.toggleSeriesVisible(pane.id, seriesType, seriesIndex)}
+																onRemoveSeries={(seriesType, seriesIndex) => paneState.removeSeries(pane.id, seriesType, seriesIndex)}
+																labels={indicatorLegendLabels}
+															/>
+														</>
+													);
+												})()}
+											</div>
+											<PaneLabel label={paneLabel(pane)} top={paneTop} height={paneH} />
+										</Fragment>
+									);
+								})}
 							</>
 						) : (
-							<div className="gc-chart-placeholder">Đang khởi tạo canvas…</div>
+							<div className="gc-chart-placeholder">{t("common.canvasInitializing")}</div>
 						)}
-						{/* Splitter overlays — positioned absolute on top of canvas */}
+
 						{chartReady && (
 							<>
 								{visiblePanes.slice(0, -1).map((pane, index) => {
@@ -921,6 +782,7 @@ export default function LibraryShowcaseDemo() {
 											available={available}
 											onCommitDelta={applyDelta}
 											onDoubleClick={resetToDefault}
+												title={t("library.splitterHint")}
 											style={{ top }}
 										/>
 									);
@@ -930,188 +792,42 @@ export default function LibraryShowcaseDemo() {
 					</div>
 				</section>
 
-				{/* Right side panel */}
-				<aside className="gc-sidepanel" aria-label="Side panel">
-					{/* Tab bar */}
-					<div className="gc-sp-tabbar">
-						{([
-							["indicators", "Indicators"],
-							["drawings",   "Drawing"],
-							["adapter",    "Adapter"],
-							["panes",      "Layout"],
-						] as [SidePanelTab, string][]).map(([tab, label]) => (
-							<button
-								key={tab}
-								type="button"
-								className={`gc-sp-tab${sidePanelTab === tab ? " gc-sp-tab--active" : ""}`}
-								onClick={() => setSidePanelTab(tab)}
-							>
-								{label}
-							</button>
-						))}
-					</div>
-
-					{/* ── Indicators ── */}
-					{sidePanelTab === "indicators" && (
-						<div className="gc-sp-body">
-							<div className="gc-sp-label">
-								Pane: <strong>{selectedPane?.label ?? "–"}</strong>
-							</div>
-							<div className="gc-chip-wrap">
-								{selectedPane?.series.map((series, index) => (
-									<span key={`${selectedPane.id}-${series.type}-${index}`} className="gc-chip gc-chip--on">{series.type}</span>
-								))}
-							</div>
-							<div className="gc-row gc-gap4">
-								<button type="button" className="gc-btn gc-btn--accent" onClick={() => {
-									setSidePanelTab("panes");
-									setShowSeriesPicker(true);
-								}} disabled={!selectedPane}>Manage series</button>
-								<button type="button" className="gc-btn" onClick={restorePane} disabled={!selectedPane || selectedPane.visible}>Restore pane</button>
-							</div>
-							<div className="gc-sp-divider" />
-							<div className="gc-sp-label">Computed values</div>
-							<table className="gc-tbl">
-								<tbody>
-									{indicatorProbe.map((item) => (
-										<tr key={item.name}>
-											<td className={`gc-tbl-name gc-tbl-st--${item.status}`}>{item.name}</td>
-											<td className="gc-tbl-val">{item.sample}</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
-					)}
-
-					{/* ── Drawings ── */}
-					{sidePanelTab === "drawings" && (
-						<div className="gc-sp-body">
-							<div className="gc-sp-label">Add drawing</div>
-							<div className="gc-chip-wrap">
-								{DRAWING_TOOLS.map((tool) => (
-									<button key={tool} type="button" className="gc-chip" onClick={() => addDrawing(tool)}>
-										{tool}
-									</button>
-								))}
-							</div>
-							<div className="gc-sp-divider" />
-							<div className="gc-row gc-gap4">
-								<button type="button" className="gc-btn" onClick={undoDrawing} disabled={drawingProbe.past === 0}>↩ Undo</button>
-								<button type="button" className="gc-btn" onClick={redoDrawing} disabled={drawingProbe.future === 0}>↪ Redo</button>
-								<button type="button" className="gc-btn" onClick={clearDrawing}>Clear</button>
-								<button type="button" className="gc-btn" onClick={restoreDrawing}>Restore</button>
-							</div>
-							<div className="gc-sp-divider" />
-							<table className="gc-tbl">
-								<tbody>
-									<tr><td className="gc-tbl-name">Drawings</td><td className="gc-tbl-val">{drawingProbe.count}</td></tr>
-									<tr><td className="gc-tbl-name">Past / Future</td><td className="gc-tbl-val">{drawingProbe.past} / {drawingProbe.future}</td></tr>
-									<tr><td className="gc-tbl-name">Available tools</td><td className="gc-tbl-val">{drawingProbe.toolNames.length}</td></tr>
-								</tbody>
-							</table>
-						</div>
-					)}
-
-					{/* ── Adapter ── */}
-					{sidePanelTab === "adapter" && (
-						<div className="gc-sp-body">
-							<div className="gc-sp-label">MockAdapter · {timeframe}</div>
-							<div className={`gc-status-badge gc-st--${adapterProbe.status}`}>
-								{adapterProbe.status.toUpperCase()}
-							</div>
-							<div className="gc-sp-divider" />
-							<table className="gc-tbl">
-								<tbody>
-									<tr><td className="gc-tbl-name">Bars fetched</td><td className="gc-tbl-val">{adapterProbe.barsFetched}</td></tr>
-									<tr><td className="gc-tbl-name">Bar ticks</td><td className="gc-tbl-val">{adapterProbe.barTicks}</td></tr>
-									<tr><td className="gc-tbl-name">Trade ticks</td><td className="gc-tbl-val">{adapterProbe.tradeTicks}</td></tr>
-									<tr><td className="gc-tbl-name">Orderbook ticks</td><td className="gc-tbl-val">{adapterProbe.orderbookTicks}</td></tr>
-									<tr><td className="gc-tbl-name">Spread (bps)</td><td className="gc-tbl-val">{adapterProbe.spreadBps}</td></tr>
-								</tbody>
-							</table>
-						</div>
-					)}
-
-					{/* ── Layout / Panes ── */}
-					{sidePanelTab === "panes" && (
-						<div className="gc-sp-body">
-							<div className="gc-sp-label">Pane layout</div>
-							<div className="gc-row gc-gap4">
-								<button type="button" className="gc-btn gc-btn--accent" onClick={addPane}>+ Add</button>
-								<button type="button" className="gc-btn" onClick={removePane} disabled={paneState.visiblePanes.length <= 1}>Remove</button>
-								<button type="button" className="gc-btn" onClick={restorePane} disabled={!selectedPane || selectedPane.visible}>Restore</button>
-							</div>
-							<div className="gc-sp-divider" />
-							<div className="gc-pane-lab">
-								{paneState.panes.map((pane) => {
-									const visibleIndex = paneState.visiblePanes.findIndex((visiblePane) => visiblePane.id === pane.id);
-									const isSelected = pane.id === selectedPane?.id;
-									return (
-										<div key={pane.id} className={`gc-pane-card rsc-pane-wrap${isSelected ? " gc-pane-item--active" : ""}`} onClick={() => setSelectedPaneId(pane.id)}>
-											<PaneHeader
-												pane={pane}
-												onToggleVisible={() => paneState.toggleVisible(pane.id)}
-												onRemove={() => paneState.removePane(pane.id)}
-												onAddSeries={() => {
-													setSelectedPaneId(pane.id);
-													setShowSeriesPicker(true);
-												}}
-												addButtonRef={isSelected ? seriesPickerAnchorRef : undefined}
-												className="gc-pane-header--sidepanel"
-											/>
-											<div className="gc-pane-card__body">
-												<div className="gc-pane-item__head">
-													<span className="gc-pane-label">{pane.label}</span>
-													<span className="gc-pane-px">{Math.round(pane.heightRatio * 100)}%</span>
-												</div>
-												<div className="gc-tag-wrap">
-													{pane.series.map((series, index) => (
-														<span key={`${pane.id}-${series.type}-${index}`} className="gc-tag">{series.type}</span>
-													))}
-												</div>
-												<div className="gc-row gc-gap4 gc-pane-actions">
-													<button type="button" className="gc-btn" onClick={(event) => { event.stopPropagation(); movePaneUp(); }} disabled={visibleIndex <= 0}>↑</button>
-													<button type="button" className="gc-btn" onClick={(event) => { event.stopPropagation(); movePaneDown(); }} disabled={visibleIndex < 0 || visibleIndex >= paneState.visiblePanes.length - 1}>↓</button>
-													<button type="button" className="gc-btn" onClick={(event) => { event.stopPropagation(); paneState.toggleVisible(pane.id); }} disabled={pane.pinned}>{pane.visible ? "Hide" : "Show"}</button>
-												</div>
-											</div>
-										</div>
-									);
-								})}
-							</div>
-							{showSeriesPicker && selectedPane ? (
-								<SeriesPicker
-									pane={selectedPane}
-									onAddSeries={(series) => paneState.addSeries(selectedPane.id, series)}
-									onRemoveSeries={(type) => paneState.removeSeries(selectedPane.id, type)}
-									anchorRef={seriesPickerAnchorRef}
-									onClose={() => setShowSeriesPicker(false)}
-								/>
-							) : null}
-						</div>
-					)}
-				</aside>
+				{settingsOpen ? (
+					<PaneSettingsModal
+						open={settingsOpen}
+						section={settingsSection}
+						onSectionChange={setSettingsSection}
+						selectedPaneId={settingsPaneId}
+						onSelectedPaneIdChange={setSettingsPaneId}
+						paneState={paneState}
+						maxVisiblePanes={maxVisiblePanes}
+						onMaxVisiblePanesChange={setMaxVisiblePanes}
+						onAddPane={addPane}
+						onReset={handleResetSettings}
+						isDark={isDark}
+						toggleTheme={toggleTheme}
+						onClose={closeSettings}
+					/>
+				) : null}
 			</div>
 
-			{/* ─── BOTTOM BAR ─────────────────────────────────────────────── */}
 			<footer className="gc-bottombar">
-				{(["1D", "5D", "1M", "3M", "YTD", "1Y", "All"] as const).map((range, i) => (
+				{(["1D", "5D", "1M", "3M", "YTD", "1Y", "All"] as const).map((range, index) => (
 					<button
 						key={range}
 						type="button"
-						className={`gc-bottom-btn${i === 0 ? " gc-bottom-btn--active" : ""}`}
+						className={`gc-bottom-btn${index === 0 ? " gc-bottom-btn--active" : ""}`}
 					>
 						{range}
 					</button>
 				))}
 				<div className="gc-bottombar-sep" />
-				<button type="button" className="gc-bottom-btn">Script</button>
-				<button type="button" className="gc-bottom-btn">Alert</button>
-				<button type="button" className="gc-bottom-btn">Trade</button>
+				<button type="button" className="gc-bottom-btn">{t("common.script")}</button>
+				<button type="button" className="gc-bottom-btn">{t("common.alert")}</button>
+				<button type="button" className="gc-bottom-btn">{t("common.trade")}</button>
 				<div className="gc-grow" />
 				<span className="gc-version-badge">v{version}</span>
-				<button type="button" className="gc-publish-btn">Publish</button>
+				<button type="button" className="gc-publish-btn">{t("common.publish")}</button>
 			</footer>
 		</div>
 	);

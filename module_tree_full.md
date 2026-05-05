@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-04 10:53:13`
+Generated at: `2026-05-04 23:14:18`
 
 ## Summary
 
-- Total modules: 599
+- Total modules: 623
 - Python modules: 1
-- JS/TS modules: 598
+- JS/TS modules: 622
 - Total classes: 348
-- Total functions: 3456
-- Total top-level variables: 7171
+- Total functions: 3548
+- Total top-level variables: 7427
 
 ## Python Modules
 
@@ -2097,16 +2097,23 @@ Generated at: `2026-05-04 10:53:13`
 ### `src/demo/demoData.ts`
 
 - Functions:
-  - `computeIndicators`, `fetchLiveDemoData`, `formatBinanceKlines`, `getOfflineDemoData`, `parseCsvRow`, `parseDateTime`
+  - `computeIndicators`, `fetchLiveDemoBars`, `fetchLiveDemoData`, `formatBinanceKlineBars`, `formatBinanceKlines`, `getOfflineDemoBars`, `getOfflineDemoData`, `normalizeBars`, `parseCsvRow`, `parseDateTime`
 - Top-level variables:
-  - `BINANCE_BASE`, `BINANCE_INTERVAL_MAP`, `BOLLINGER_BAND_OPTIONS`, `DEMO_WINDOW`, `binanceInterval`, `bollingerBandCalculator`, `ema20`, `ema50`, `enriched`, `json`, `macdCalculator`, `parsed`, `response`, `rsiCalculator`, `url`
+  - `BINANCE_BASE`, `BINANCE_INTERVAL_MAP`, `BOLLINGER_BAND_OPTIONS`, `DEMO_WINDOW`, `binanceInterval`, `bollingerBandCalculator`, `ema20`, `ema50`, `enriched`, `json`, `macdCalculator`, `response`, `rsiCalculator`, `url`
 
 ### `src/demo/FullDemo.tsx`
 
 - Functions:
-  - `FullDemo`, `LegendRow`, `MetricTile`, `createOrigin`, `formatSigned`, `getInitialExtents`, `handleBrush`, `handleResetView`, `handleResize`, `normalizeBrushExtents`, `updateWidth`
+  - `FullDemoContent`, `LegendRow`, `MetricTile`, `createOrigin`, `formatSigned`, `getInitialExtents`, `handleBrush`, `handleResetView`, `handleResize`, `normalizeBrushExtents`, `updateWidth`
 - Top-level variables:
   - `axisTheme`, `bearishColor`, `bollingerAppearance`, `bottomXAxisTheme`, `bullishColor`, `cancelled`, `chartData`, `chartHeight`, `chartSurfaceRef`, `controller`, `coordinateTheme`, `dateFormat`, `ema20Stroke`, `ema50Stroke`, `emaTrendUp`, `endDate`, `endIndex`, `gridWidth`, `integerFormat`, `latest`, `macdAppearance`, `macdHeight`, `macdOrigin`, `margin`, `node`, `observer`, `offlineData`, `overviewHeight`, `overviewOrigin`, `percentFormat`, `plotHeight`, `previous`, `priceChange`, `priceChangePercent`, `priceFormat`, `priceHeight`, `priceYAxisTheme`, `resolvedChartWidth`, `rsiAppearance`, `rsiOrigin`, `rsiPanelHeight`, `rsiValue`, `sign`, `sourceStatusLabel`, `sourceTone`, `startDate`, `startIndex`, `themeFontFamily`, `tooltipDisplayTexts`, `topXAxisTheme`, `volumeFormat`, `volumeHeight`, `volumeOrigin`, `volumeYAxisTheme`
+
+### `src/demo/i18n.tsx`
+
+- Functions:
+  - `DemoI18nBoundary`, `DemoI18nProvider`, `interpolate`, `readStoredLanguage`, `translate`, `useDemoI18n`
+- Top-level variables:
+  - `DEMO_LANGUAGE_STORAGE_KEY`, `DemoI18nContext`, `context`, `defaultContextValue`, `getPaneLabel`, `key`, `paneLabelKeys`, `setLanguage`, `stored`, `t`, `template`, `translations`, `value`
 
 ### `src/demo/index.tsx`
 
@@ -2116,23 +2123,30 @@ Generated at: `2026-05-04 10:53:13`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `PriceSeries`, `ToolIcon`, `addDrawing`, `addPane`, `chartDomain`, `clearDrawing`, `formatIndicatorObject`, `handler`, `normalizeDate`, `paneTemplate`, `redoDrawing`, `removePane`, `restoreDrawing`, `summarizeIndicator`, `toggleIndicator`, `undoDrawing`, `update`
+  - `ToolIcon`, `addPane`, `chartDomain`, `handler`, `loadDemoSettings`, `normalizeDate`, `paneTemplate`, `saveDemoSettings`, `update`
 - Top-level variables:
-  - `CHART_TYPES`, `DRAWING_TOOLS`, `INDICATOR_OPTIONS`, `PANE_CONFIG`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `active`, `adapter`, `axisStroke`, `axisTickFill`, `bestAsk`, `bestBid`, `candleWidth`, `canvasBg`, `chartMenuRef`, `chartReady`, `completed`, `data`, `dateFormat`, `disposed`, `dn`, `draft`, `drawingProbe`, `end`, `first`, `from`, `haCalc`, `hasIt`, `id`, `indicator`, `indicatorProbe`, `indicators`, `input`, `last`, `lastBar`, `mid`, `msg`, `node`, `observer`, `paneManager`, `plotData`, `priceFormat`, `priceIsUp`, `ratio`, `rect`, `restored`, `sample`, `second`, `selectedPane`, `serialized`, `shellRef`, `spreadBps`, `start`, `startX`, `stepPx`, `stopBars`, `stopOrderbook`, `stopTrades`, `timerId`, `to`, `transformed`, `up`, `volumeFormat`, `xExtents`
+  - `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `MAIN_PRICE_SERIES_TYPES`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `axisStroke`, `axisTickFill`, `candleWidth`, `canvasBg`, `chartMenuRef`, `chartReady`, `chartTypeLabel`, `closeSettings`, `data`, `dateFormat`, `desiredType`, `end`, `enrichedData`, `first`, `haCalc`, `handleChartTypeChange`, `handleResetSettings`, `indicatorLegendLabels`, `indicatorSeries`, `lastBar`, `localizePane`, `localizedPane`, `msg`, `nextLabel`, `node`, `observer`, `openSettings`, `paneH`, `paneHeaderLabels`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `parsed`, `plotData`, `priceFormat`, `priceIsUp`, `pricePane`, `primary`, `ratio`, `raw`, `rect`, `second`, `selectedPane`, `shellRef`, `start`, `stepPx`, `toolLabel`, `top`, `transformed`, `volumeFormat`, `xExtents`
 
 ### `src/demo/LiveDemo.tsx`
 
 - Functions:
-  - `LiveDemo`
+  - `LiveDemoContent`
 - Top-level variables:
-  - `cancelled`, `height`, `margin`, `width`
+  - `cancelled`, `height`, `margin`, `sourceLabel`, `width`
 
 ### `src/demo/OriginalLikeDemo.tsx`
 
 - Functions:
-  - `OriginalLikeDemo`, `createOrigin`, `handleBrush`, `handleResetView`, `handleResize`, `handleVisibleDomainChange`, `updateWidth`, `xAxisTickFormat`
+  - `OriginalLikeDemoContent`, `createOrigin`, `handleBrush`, `handleResetView`, `handleResize`, `handleVisibleDomainChange`, `updateWidth`, `xAxisTickFormat`
 - Top-level variables:
-  - `BRUSH_TYPE`, `axisTheme`, `calculatedData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `e`, `ema12`, `ema12Stroke`, `ema26`, `ema26Stroke`, `endIdx`, `endIndex`, `fmt`, `initialXExtents`, `isZoomedIn`, `left`, `macdAppearance`, `macdCalculator`, `macdDateFormat`, `macdFormat`, `macdFormat3`, `macdHeight`, `macdOrigin`, `macdYAxisTheme`, `macdYAxisTickFormat`, `macdYAxisTicks`, `margin`, `node`, `observer`, `priceFormat`, `priceFormat3`, `priceHeight`, `priceYAxisTheme`, `priceYAxisTickFormat`, `priceYAxisTicks`, `rawData`, `resolvedChartWidth`, `right`, `s`, `smaVolume10`, `startIdx`, `startIndex`, `themeFontFamily`, `tickDatum`, `tickIndex`, `tooltipDateFormat`, `visibleBars`, `visibleDomainLabel`, `volumeAxisFormat`, `volumeFormat`, `volumeHeight`, `volumeMouseFormat`, `volumeOrigin`, `volumeYAxisTheme`, `xScaleProvider`
+  - `BRUSH_TYPE`, `axisTheme`, `bearishColor`, `bullishColor`, `calculatedData`, `chartHeight`, `chartSurfaceRef`, `coordinateTheme`, `ema12`, `ema12Stroke`, `ema26`, `ema26Stroke`, `endIndex`, `initialXExtents`, `isZoomedIn`, `left`, `macdAppearance`, `macdCalculator`, `macdDateFormat`, `macdFormat`, `macdFormat3`, `macdHeight`, `macdOrigin`, `macdYAxisTheme`, `macdYAxisTickFormat`, `macdYAxisTicks`, `margin`, `node`, `observer`, `priceFormat`, `priceFormat1`, `priceFormat3`, `priceHeight`, `priceYAxisTheme`, `priceYAxisTickFormat`, `priceYAxisTicks`, `rawData`, `resolvedChartWidth`, `right`, `smaVolume10`, `startIndex`, `themeFontFamily`, `tickDatum`, `tickIndex`, `tooltipDateFormat`, `tooltipDisplayTexts`, `visibleBars`, `visibleDomainLabel`, `volumeAxisFormat`, `volumeFormat`, `volumeHeight`, `volumeMouseFormat`, `volumeOrigin`, `volumeYAxisTheme`, `xScaleProvider`
+
+### `src/demo/PaneSettingsModal.tsx`
+
+- Functions:
+  - `PaneSettingsModal`, `describeSeries`, `handleAddSeries`, `handleBackdropMouseDown`, `handleKeyDown`, `handleSeriesParamChange`, `paneLabel`, `parseNumber`, `renderIndicatorsSection`, `renderLayoutSection`, `renderResetSection`, `renderSeriesParams`, `renderThemeSection`
+- Top-level variables:
+  - `availableSeriesTypes`, `canAddPane`, `canMoveDown`, `canMoveUp`, `composerEntry`, `currentFast`, `currentPeriod`, `currentSignal`, `currentSlow`, `currentStdDev`, `currentThreshold`, `dialogRef`, `fast`, `hidden`, `isSelected`, `label`, `next`, `overLimit`, `resolvedComposerType`, `revealEnabled`, `sectionLabels`, `selectedPane`, `slow`, `visibleCount`, `visibleIndex`
 
 ### `src/demo/usePaneLayout.ts`
 
@@ -2577,6 +2591,55 @@ Generated at: `2026-05-04 10:53:13`
 - Top-level variables:
   - `coordinate`, `coordinateProps`, `edgeAt`, `hideLine`, `props`, `show`, `type`, `x1`, `y`
 
+### `src/lib/core/__tests__/seriesValueResolver.test.ts`
+
+- Functions:
+  - `makeDatum`
+- Top-level variables:
+  - `accessors`, `datum`, `ema21`, `ema34`, `ema50`, `series`, `value`
+
+### `src/lib/core/calculators/__tests__/enrichData.test.ts`
+
+- Top-level variables:
+  - `bar`, `bigData`, `cumulative`, `enriched`, `result`, `series`, `singleBar`, `startedAt`
+
+### `src/lib/core/calculators/calcCVDApprox.ts`
+
+- Functions:
+  - `calcCVDApprox`
+- Top-level variables:
+  - `buyVol`, `cumulative`, `delta`, `range`, `sellVol`
+
+### `src/lib/core/calculators/calcStrengthElder.ts`
+
+- Functions:
+  - `blankUntil`, `calcStrengthElder`
+- Top-level variables:
+  - `closes`, `ema`, `ema13`
+
+### `src/lib/core/calculators/calcWhaleApprox.ts`
+
+- Functions:
+  - `calcWhaleApprox`
+- Top-level variables:
+  - `buyDollar`, `buyShare`, `dollarVolume`, `next`, `range`, `sellDollar`, `sellShare`
+
+### `src/lib/core/calculators/enrichData.ts`
+
+- Functions:
+  - `blankUntil`, `defaultSeries`, `enrichData`, `indicatorKey`, `mergeBand`, `normalizeOptions`, `numberParam`
+- Top-level variables:
+  - `bollingerByKey`, `bollingerConfigs`, `closes`, `cvd`, `defaultBollingerKey`, `defaultBollingerSeries`, `defaultMacd`, `defaultMacdKey`, `defaultMacdSeries`, `defaultWhale`, `defaultWhaleKey`, `defaultWhaleSeries`, `ema13`, `emaByPeriod`, `emaPeriods`, `histogramLine`, `histogramValue`, `indicatorValues`, `key`, `macd`, `macdByKey`, `macdConfigs`, `macdLine`, `macdValue`, `options`, `rsiByPeriod`, `rsiPeriods`, `series`, `signalLine`, `signalValue`, `strength`, `strengthPoint`, `value`, `whaleByKey`, `whaleThresholds`
+
+### `src/lib/core/calculators/fixtures/mockData.ts`
+
+- Top-level variables:
+  - `base`, `close`, `drift`, `high`, `low`, `mockOHLCV300`, `open`, `volume`
+
+### `src/lib/core/calculators/types.ts`
+
+- No parseable top-level symbols found
+
 ### `src/lib/core/ChartPane.tsx`
 
 - Functions:
@@ -2619,6 +2682,20 @@ Generated at: `2026-05-04 10:53:13`
 - Top-level variables:
   - `PaneManagerContext`, `context`
 
+### `src/lib/core/DynamicChart.tsx`
+
+- Functions:
+  - `DynamicChart`, `accessor`, `axisFormatForSeriesTypes`, `buildChartSlots`, `buildPriceTooltipEntries`, `buildTooltipEntriesForSeries`, `buildYExtents`, `candleBodyWidth`, `finiteExtent`, `origin`, `renderSeries`
+- Top-level variables:
+  - `BAR_SERIES_TYPES`, `INNER_PANE_GAP`, `OSCILLATOR_SERIES`, `PRICE_SERIES`, `VOLUME_SERIES`, `accessors`, `activeSeries`, `chartId`, `chartSlots`, `downColor`, `entry`, `fillColor`, `finiteValues`, `first`, `gap`, `hasBottomAxis`, `hasLeftAxis`, `hasRightAxis`, `isInnerPane`, `isLastSlot`, `leftSeries`, `lineColor`, `maxValue`, `minValue`, `paneHeight`, `paneIndex`, `paneSlotCounter`, `params`, `ratio`, `rightSeries`, `second`, `seriesTypes`, `slotInPane`, `slots`, `stepPx`, `tooltip`, `tooltipY`, `type`, `upColor`, `whale`, `yAxisFormat`, `yExtents`
+
+### `src/lib/core/hooks/__tests__/useDynamicPanes.test.ts`
+
+- Functions:
+  - `createMockStorage`
+- Top-level variables:
+  - `next`, `panes`, `payload`, `rsi`, `state`, `storage`, `sum`, `value`
+
 ### `src/lib/core/hooks/useCanvasResize.ts`
 
 - Functions:
@@ -2632,6 +2709,13 @@ Generated at: `2026-05-04 10:53:13`
   - `useChartTheme`
 - Top-level variables:
   - `STORAGE_KEY`, `setTheme`, `stored`, `toggleTheme`
+
+### `src/lib/core/hooks/useDynamicPanes.ts`
+
+- Functions:
+  - `clonePane`, `clonePaneList`, `cloneSeries`, `createDefaultPaneLayout`, `createId`, `dynamicPanesReducer`, `getVisiblePanes`, `heightsToRatios`, `loadPaneLayout`, `makeDefaultLayout`, `mutateVisibleRatio`, `normalizeVisibleRatios`, `ratiosToHeights`, `readStoredPaneLayout`, `reorderVisiblePanes`, `resolveSeriesIndex`, `sanitizeLayout`, `savePaneLayout`, `syncSplitScale`, `useDynamicPanes`, `validatePane`, `visibleCount`, `visibleIndices`, `writeStoredPaneLayout`
+- Top-level variables:
+  - `FRAME_VERTICAL_MARGIN`, `MIN_PANE_HEIGHT`, `activeSeries`, `addPane`, `addSeries`, `allocated`, `anyVisible`, `applyDelta`, `available`, `bottomHeight`, `bottomPane`, `cursor`, `height`, `heights`, `indices`, `layout`, `maxVisiblePanes`, `minBottom`, `minTop`, `next`, `nextBottom`, `nextTop`, `orderedVisible`, `pairTotal`, `pane`, `parsed`, `ratio`, `raw`, `removePane`, `removeSeries`, `reorderPanes`, `replacement`, `resetToDefault`, `restorePane`, `series`, `seriesIndex`, `stored`, `toggleSeriesVisible`, `toggleVisible`, `topHeight`, `topPane`, `total`, `updateSeriesParams`, `updateSeriesYAxis`, `updated`, `visible`, `visibleCursor`, `visiblePanes`, `visibleSlots`
 
 ### `src/lib/core/hooks/usePaneManager.test.ts`
 
@@ -2656,6 +2740,27 @@ Generated at: `2026-05-04 10:53:13`
 
 - No parseable top-level symbols found
 
+### `src/lib/core/IndicatorLegend.tsx`
+
+- Functions:
+  - `IndicatorLegend`, `seriesLabel`
+- Top-level variables:
+  - `PRIMARY_CHART_TYPES`, `SERIES_LABELS`, `base`, `chipStyle`, `chips`, `fast`, `hidden`, `seriesIndex`, `shortLabel`, `slow`
+
+### `src/lib/core/PaneHeader.tsx`
+
+- Functions:
+  - `PaneHeader`
+- Top-level variables:
+  - `style`
+
+### `src/lib/core/PaneLabel.tsx`
+
+- Functions:
+  - `PaneLabel`
+- Top-level variables:
+  - `style`
+
 ### `src/lib/core/PaneSplitter.tsx`
 
 - Functions:
@@ -2663,12 +2768,60 @@ Generated at: `2026-05-04 10:53:13`
 - Top-level variables:
   - `availableHeight`, `bottomPaneElement`, `deltaY`, `dragState`, `dragStateRef`, `mergedStyle`, `nextHeight`, `splitterElement`, `startTopHeight`, `topPaneElement`
 
+### `src/lib/core/PaneTooltip.tsx`
+
+- Functions:
+  - `PaneTooltip`, `defaultDateValue`, `toDisplayValue`
+- Top-level variables:
+  - `chartConfigList`, `config`, `currentItem`, `lines`, `rawValue`, `renderSVG`, `resolvedOrigin`
+
+### `src/lib/core/registry/__tests__/SeriesRegistry.test.ts`
+
+- Top-level variables:
+  - `entry`, `phaseOneTypes`, `registered`
+
+### `src/lib/core/registry/registerAll.ts`
+
+- Functions:
+  - `initRegistry`
+
+### `src/lib/core/registry/SeriesRegistry.ts`
+
+- Functions:
+  - `clearRegistry`, `colorFromConfig`, `getSeries`, `listRegistered`, `periodFromConfig`, `registerLineSeries`, `registerPhaseOneSeries`, `registerSeries`
+- Top-level variables:
+  - `entry`, `period`, `registry`
+
 ### `src/lib/core/scales/computeScales.ts`
 
 - Functions:
   - `collectAxisExtents`, `computeScales`, `finiteExtent`, `mergeExtents`
 - Top-level variables:
   - `computed`, `definition`, `extents`, `finiteValues`, `flattened`, `hasRightAxis`, `leftScale`, `leftSeriesExtents`, `leftValues`, `maxValue`, `minValue`, `rightScale`, `rightSeriesExtents`, `rightValues`
+
+### `src/lib/core/SeriesPicker.tsx`
+
+- Functions:
+  - `SeriesPicker`, `buildDefaultSeries`, `handleKeyDown`, `handleMouseDown`, `updatePosition`
+- Top-level variables:
+  - `active`, `anchor`, `anchorRect`, `clickInsideAnchor`, `clickInsidePicker`, `container`, `containerRect`, `entry`, `picker`, `pickerRef`, `seriesTypes`, `target`
+
+### `src/lib/core/seriesValueResolver.ts`
+
+- Functions:
+  - `asNumber`, `buildIndicatorSeriesKey`, `exactLegacyValue`, `numberParam`, `resolveSeriesDatumValue`, `resolveSeriesStructuredValue`, `resolveSeriesValue`, `resolveSeriesValueAccessors`
+- Top-level variables:
+  - `fast`, `key`, `period`, `signal`, `slow`, `stdDev`, `threshold`, `value`, `whale`
+
+### `src/lib/core/types/__tests__/pane-descriptor.test.ts`
+
+- Top-level variables:
+  - `ids`, `sum`, `visible`
+
+### `src/lib/core/types/pane-descriptor.ts`
+
+- Top-level variables:
+  - `DEFAULT_PANES`, `PANE_LAYOUT_STORAGE_KEY`, `PANE_MAX_VISIBLE`
 
 ### `src/lib/drawing/builtin/channel.ts`
 

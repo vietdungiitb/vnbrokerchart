@@ -8,10 +8,11 @@
 
 ## 2.1 Indicator Manager Architecture
 
-### Study Panel (Modal)
-- Nút "Indicators" trên toolbar → mở modal
+### Settings Modal (Gear Icon)
+- Nút gear ở góc phải topbar (cạnh theme) → mở modal
 - Tìm kiếm theo tên, lọc theo nhóm (Overlay / Oscillator / Momentum / Orderflow)
 - Click indicator → thêm vào chart với settings mặc định
+- Khi add indicator vào pane, bắt buộc chọn Y-axis `left` hoặc `right`
 - Mỗi indicator hiện thị trên **pane riêng** hoặc **overlay lên price** tùy loại
 
 ### Indicator Instance

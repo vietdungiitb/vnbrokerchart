@@ -14,6 +14,7 @@
 4. **Không thay đổi API public đã định nghĩa ở S1.1 mà không cập nhật tài liệu.**
 5. **Commit message format:** `feat(slice-X.Y): <mô tả ngắn>` hoặc `fix(slice-X.Y): <mô tả>`.
 6. **Không merge vào `main` cho đến khi Phase 1 + Phase 2 pass toàn bộ audit checklist.**
+7. **Indicator phải tuân thủ SSOT:** cùng `source + timeframe + transform + indicatorType + params` phải dùng cùng canonical series. Xem [INDICATOR_SSOT_POLICY.md](INDICATOR_SSOT_POLICY.md).
 
 ---
 
@@ -738,23 +739,208 @@ class BinanceTradeWS {
 
 ### S4.2 — CVD Real-time Accumulator
 
+**Mục tiêu:** Tích lũy CVD thật từ trade events, bucket theo timeframe, override `cvdApprox`.
+
 **File tạo mới:** `src/lib/core/ws/CVDAccumulator.ts`
 
-- Nhận `TradeEvent` stream
-- Bucket vào timeframe bars (1m, 5m, 1h...)
-- Output: `cvdRealtime` per bar (override `cvdApprox`)
-- Reset khi đổi timeframe hoặc symbol
+```typescript
+export interface CVDBucket {
+  openTime: number;   // epoch ms — mốc mở bar
+  closeTime: number;  // openTime + timeframeDurationMs
+  buyVol: number;
+  sellVol: number;
+  delta: number;      // buyVol - sellVol
+  cvd: number;        // cumulative từ bar đầu tiên trong session
+}
+
+export class CVDAccumulator {
+  private buckets: CVDBucket[] = [];
+  private timeframeMs: number;
+
+  constructor(timeframeMs: number) {
+    this.timeframeMs = timeframeMs;
+  }
+
+  // Gọi từ BinanceTradeWS.onTrade (qua buffer — xem Architecture trap 3.12)
+  addTrade(event: TradeEvent): void {
+    const barTime = Math.floor(event.tradeTime / this.timeframeMs) * this.timeframeMs;
+    let bucket = this.buckets.find(b => b.openTime === barTime);
+    if (!bucket) {
+      bucket = { openTime: barTime, closeTime: barTime + this.timeframeMs,
+                 buyVol: 0, sellVol: 0, delta: 0, cvd: 0 };
+      this.buckets.push(bucket);
+    }
+    // m=true → buyer là maker → seller là aggressor = SELL (market sell order)
+    if (event.isBuyerMaker) bucket.sellVol += event.quantity;
+    else                     bucket.buyVol  += event.quantity;
+    bucket.delta = bucket.buyVol - bucket.sellVol;
+    // Recalculate running CVD
+    this.recalcCVD();
+  }
+
+  // Gộp vào EnrichedDatum[] — override cvdRealtime field
+  mergeInto(data: EnrichedDatum[]): EnrichedDatum[] {
+    return data.map(d => {
+      const bucket = this.buckets.find(b =>
+        d.date.getTime() >= b.openTime && d.date.getTime() < b.closeTime
+      );
+      return bucket ? { ...d, cvdRealtime: bucket.cvd } : d;
+    });
+  }
+
+  reset(): void {
+    this.buckets = [];
+  }
+
+  private recalcCVD(): void {
+    let running = 0;
+    this.buckets
+      .sort((a, b) => a.openTime - b.openTime)
+      .forEach(b => { running += b.delta; b.cvd = running; });
+  }
+}
+```
+
+**Hook tích hợp:** `src/lib/core/ws/useWSEnrichedData.ts`
+```typescript
+// Kết hợp BinanceTradeWS + CVDAccumulator + buffer flush (250ms)
+// Trả về enrichedData với cvdRealtime override cvdApprox
+export function useWSEnrichedData(
+  baseData: EnrichedDatum[],
+  symbol: string,
+  timeframeMs: number
+): EnrichedDatum[]
+```
+
+**Acceptance criteria:**
+- [ ] `addTrade({ isBuyerMaker: false, quantity: 1.0 })` → `buyVol += 1.0`, `delta = +1`
+- [ ] `addTrade({ isBuyerMaker: true, quantity: 0.5 })` → `sellVol += 0.5`, `delta = 0.5`
+- [ ] CVD cộng dồn đúng sau nhiều buckets
+- [ ] `reset()` → buckets rỗng
+- [ ] `mergeInto(data)` override đúng bar tương ứng
+- [ ] Đổi timeframe → `reset()` được gọi, CVD tính lại từ đầu
+
+---
 
 ### S4.3 — Whale Real-time Filter
 
-- Từ `TradeEvent`: `if (price * quantity >= threshold)` → accumulate `whaleBuyVol` / `whaleSellVol` per bar
-- Threshold mặc định: $50,000 USD (configurable)
+**Mục tiêu:** Lọc trades lớn ≥ threshold từ WS stream, hiển thị histogram Whale Buy/Sell per bar.
+
+**File tạo mới:** `src/lib/core/ws/WhaleAccumulator.ts`
+
+```typescript
+export interface WhaleBucket {
+  openTime: number;
+  whaleBuyVol: number;
+  whaleSellVol: number;
+  whaleBuyCount: number;   // số lượng whale buy trades
+  whaleSellCount: number;
+}
+
+export class WhaleAccumulator {
+  private buckets: WhaleBucket[] = [];
+  private timeframeMs: number;
+  private threshold: number;   // USD (default 50_000)
+
+  constructor(timeframeMs: number, threshold = 50_000) {
+    this.timeframeMs = timeframeMs;
+    this.threshold   = threshold;
+  }
+
+  addTrade(event: TradeEvent): void {
+    const dollarValue = event.price * event.quantity;
+    if (dollarValue < this.threshold) return;  // không phải whale → skip
+
+    const barTime = Math.floor(event.tradeTime / this.timeframeMs) * this.timeframeMs;
+    let bucket = this.buckets.find(b => b.openTime === barTime);
+    if (!bucket) {
+      bucket = { openTime: barTime, whaleBuyVol: 0, whaleSellVol: 0,
+                 whaleBuyCount: 0, whaleSellCount: 0 };
+      this.buckets.push(bucket);
+    }
+    if (event.isBuyerMaker) {
+      bucket.whaleSellVol += event.quantity;
+      bucket.whaleSellCount++;
+    } else {
+      bucket.whaleBuyVol += event.quantity;
+      bucket.whaleBuyCount++;
+    }
+  }
+
+  mergeInto(data: EnrichedDatum[]): EnrichedDatum[] {
+    return data.map(d => {
+      const bucket = this.buckets.find(b =>
+        d.date.getTime() >= b.openTime && d.date.getTime() < b.openTime + this.timeframeMs
+      );
+      return bucket
+        ? { ...d, whaleBuyVol: bucket.whaleBuyVol, whaleSellVol: bucket.whaleSellVol }
+        : d;
+    });
+  }
+
+  reset(): void { this.buckets = []; }
+}
+```
+
+**Acceptance criteria:**
+- [ ] Trade < $50k → không vào bucket
+- [ ] Trade = $60k buy (isBuyerMaker=false) → `whaleBuyVol += qty`
+- [ ] Trade = $60k sell (isBuyerMaker=true) → `whaleSellVol += qty`
+- [ ] `mergeInto()` override đúng bar
+- [ ] Threshold configurable khi khởi tạo
+
+---
 
 ### S4.4 — Strength Relative vs BTC
 
-- Cần 2 WS stream song song: asset + BTCUSDT
-- `strengthRelative[i] = (close_asset[i] / close_asset[0]) / (close_btc[i] / close_btc[0])`
-- Baseline = 1.0, hiển thị dạng line
+**Mục tiêu:** Tính RS = sức mạnh tương đối của asset so với BTC, cập nhật real-time.
+
+**File tạo mới:** `src/lib/core/ws/StrengthRelativeCalc.ts`
+
+```typescript
+// Công thức: RS[i] = (close_asset[i] / close_asset[0]) / (close_btc[i] / close_btc[0])
+// close_asset[0] và close_btc[0] là giá mở phiên (hoặc bar đầu tiên trong window)
+// RS > 1: asset mạnh hơn BTC. RS < 1: yếu hơn. RS = 1: baseline.
+
+export function calcStrengthRelative(
+  assetData: EnrichedDatum[],
+  btcCloses: Map<number, number>   // epoch ms → close price
+): EnrichedDatum[] {
+  if (assetData.length === 0) return assetData;
+
+  const assetBase = assetData[0].close;
+  // btcBase: giá BTC tại thời điểm gần nhất với bar đầu tiên của asset
+  const firstTime = assetData[0].date.getTime();
+  const btcBase = findClosestBTCClose(btcCloses, firstTime);
+  if (!btcBase) return assetData;   // BTC data chưa có → skip
+
+  return assetData.map(d => {
+    const btcClose = findClosestBTCClose(btcCloses, d.date.getTime());
+    if (!btcClose) return d;
+    const strengthRelative = (d.close / assetBase) / (btcClose / btcBase);
+    return { ...d, strengthRelative };
+  });
+}
+
+// Helper: tìm giá BTC gần nhất trong map
+function findClosestBTCClose(map: Map<number, number>, targetMs: number): number | undefined {
+  // Tìm key gần nhất (trong ±timeframe tolerance)
+  // Implementation: iterate sorted keys, find closest
+}
+```
+
+**Nguồn BTC data:**
+- Phase 4: dùng `BinanceTradeWS` với symbol `"btcusdt"` song song với asset stream
+- Track last close price của mỗi bar BTC → `btcCloses` map
+
+**Hook tích hợp:** Trong `useWSEnrichedData`, nếu `symbol !== "btcusdt"`, mở thêm 1 WS stream cho BTCUSDT. Cả 2 stream share cùng `BinanceTradeWS` class.
+
+**Acceptance criteria:**
+- [ ] `calcStrengthRelative(assetBars, btcCloses)` với BTC và asset đồng đều → RS ≈ 1.0 cho mọi bar
+- [ ] Asset tăng 10%, BTC flat → RS = 1.1 tại bar đó
+- [ ] Asset flat, BTC tăng 10% → RS = 0.909 tại bar đó
+- [ ] `btcCloses` rỗng → không crash, trả về data không modified
+- [ ] Symbol = "btcusdt" → không mở 2nd WS stream (tránh circular)
 
 ---
 
@@ -781,17 +967,32 @@ src/lib/core/
   registry/
     SeriesRegistry.ts            [NEW - S1.2]
     registerAll.ts               [NEW - S1.2]
+    __tests__/
+      SeriesRegistry.test.ts     [NEW - S1.2 audit]
   calculators/
     types.ts                     [NEW - S1.3]
     calcCVDApprox.ts             [NEW - S1.3]
     calcStrengthElder.ts         [NEW - S1.3]
     calcWhaleApprox.ts           [NEW - S1.3]
     enrichData.ts                [NEW - S1.3]
+    fixtures/
+      mockData.ts                [NEW - S1.3 test fixture]
+    __tests__/
+      enrichData.test.ts         [NEW - S1.3 audit]
   hooks/
     useDynamicPanes.ts           [NEW - S1.4]
+    __tests__/
+      useDynamicPanes.test.ts    [NEW - S1.4 audit]
   ws/
     BinanceTradeWS.ts            [NEW - S4.1]
     CVDAccumulator.ts            [NEW - S4.2]
+    WhaleAccumulator.ts          [NEW - S4.3]
+    StrengthRelativeCalc.ts      [NEW - S4.4]
+    useWSEnrichedData.ts         [NEW - S4.2, S4.3, S4.4 integration hook]
+    __tests__/
+      CVDAccumulator.test.ts     [NEW - S4.2 audit]
+      WhaleAccumulator.test.ts   [NEW - S4.3 audit]
+      StrengthRelativeCalc.test.ts [NEW - S4.4 audit]
   DynamicChart.tsx               [NEW - S1.5]
   PaneLabel.tsx                  [NEW - S1.6]
   PaneTooltip.tsx                [NEW - S1.6]
@@ -799,14 +1000,15 @@ src/lib/core/
   SeriesPicker.tsx               [NEW - S2.1]
   index.ts                       [MODIFIED - S1.1, S1.2, S1.7]
 src/lib/styles/
-  pane-overlays.css              [NEW - S1.6]
-src/index.ts                     [MODIFIED - S1.1]
+  pane-overlays.css              [NEW - S1.6, S1.7 styles]
+src/index.ts                     [MODIFIED - re-export core types]
 src/demo/
-  LibraryShowcaseDemo.tsx        [MODIFIED - S1.8]
-  demo.css                       [MODIFIED - S1.7 pane header styles]
+  LibraryShowcaseDemo.tsx        [MODIFIED - S1.8 integration]
+  demo.css                       [MODIFIED - S1.7 pane header styles, S2.2 topbar button]
 docs/planning/
+  evidence/                      [NEW - screenshots per AUDIT_PROTOCOL.md naming]
   IMPLEMENTATION_PLAN.md         [này]
   ARCHITECTURE_GUIDE.md          [tham chiếu]
   AUDIT_PROTOCOL.md              [tham chiếu]
-  DYNAMIC_PANE_SYSTEM.md         [gốc]
+  DYNAMIC_PANE_SYSTEM.md         [gốc - master design]
 ```

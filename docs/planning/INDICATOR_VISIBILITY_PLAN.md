@@ -83,19 +83,19 @@ In `renderSeries()` and `buildChartSlots()` there is no guard for `series.visibl
 ### 1.6 Existing tests — `src/lib/core/{hooks,types,registry}/...`
 
 27 unit tests currently passing (vitest). Affected by this plan:
-- `pane-descriptor.test.ts` — will need updating when DEFAULT_PANES grows to 5
-- `useDynamicPanes.test.ts` — needs new cases for `toggleSeriesVisible` action
+- `pane-descriptor.test.ts` — will need updating when the pane-settings model becomes configurable
+- `useDynamicPanes.test.ts` — needs new cases for `toggleSeriesVisible`, `maxVisiblePanes`, and pane-local `yAxis` selection
 
 ### 1.7 CSS — `src/lib/styles/pane-overlays.css`
 
 Existing classes: `.rsc-pane-label`, `.rsc-pane-header`, `.rsc-pane-btn`, `.rsc-series-picker*`  
 **Missing:** `.rsc-indicator-chip` classes for the legend strip overlay
 
-### 1.8 Demo side panel tabs — `src/demo/LibraryShowcaseDemo.tsx`
+### 1.8 Demo settings entry — `src/demo/LibraryShowcaseDemo.tsx`
 
 Current tabs: `indicators | drawings | adapter | panes`  
-**Missing:** `settings` tab.  
-**Placeholder buttons in topbar:** `Study` (opens settings/study panel)
+**New canonical entry:** gear icon in the top-right cluster, next to the theme toggle, opens the settings modal.  
+**Legacy flow:** the old `Study` button should not be the primary affordance.
 
 ---
 
@@ -112,9 +112,9 @@ When `toggleSeriesVisible` fires:
 2. If a series in a hidden pane is set to visible → `pane.visible = true` automatically
 3. Pinned pane (price) is exempt from rule #1 (it never auto-hides)
 
-### AD-3: `PANE_MAX_VISIBLE` → 5
-Increase from 3 to 5 to accommodate OrderFlow and Strength panes.  
-`addPane` action already guards against this constant.
+### AD-3: `maxVisiblePanes` is configurable
+Default the visible-pane ceiling to 5, but read it from demo settings rather than a hard-coded constant.  
+`addPane` / restore-pane logic must guard against the current setting value.
 
 ### AD-4: `DEFAULT_PANES` storage versioning
 The storage key stays `"rsc-pane-layout-v1"`. However, changing `DEFAULT_PANES` means users with **no stored layout** get the new 5-pane default; users with a **stored layout** keep their layout (only `resetToDefault` resets them). This is safe because `sanitizeLayout()` validates before using stored data.
@@ -122,8 +122,11 @@ The storage key stays `"rsc-pane-layout-v1"`. However, changing `DEFAULT_PANES` 
 ### AD-5: Indicator Legend Chips
 HTML overlay (not SVG) positioned absolutely above each pane. Z-index: 15 (below pane-header z=20, above chart canvas). Chips appear on pane hover, like pane-header.
 
-### AD-6: Settings panel location
-Added as a new tab `"settings"` in the right side panel — consistent with existing pattern. Also wired to the `Study` topbar button.
+### AD-6: Settings modal location
+The settings surface is a GoCharting-style modal dialog opened by the gear icon near the theme toggle. Pane-local editing belongs in this modal, not in a right side panel.
+
+### AD-7: Optional custom templates
+If the registry supports multiple render modes, the settings modal may expose a template selector for line/bar/area/histogram style indicators. This is optional but should be documented and wired into the data model now.
 
 ---
 
@@ -629,96 +632,36 @@ it("addPane is rejected when five panes are already visible", () => {
 
 ---
 
-### SLICE S-5: Settings Panel
+### SLICE S-5: Settings Dialog
 
-**Goal:** Users can configure indicator parameters (EMA period, RSI period, BB params, Whale threshold) via a Settings side panel. Also wires the `Study` topbar button.
+**Goal:** Ship the GoCharting-style modal settings flow documented in [S5_SETTINGS_DIALOG_SPEC.md](S5_SETTINGS_DIALOG_SPEC.md). The settings surface must live behind the top-right gear icon, support pane-local indicator editing, require `yAxis` selection on add/edit, and allow the visible-pane ceiling to be changed at runtime.
 
 **Files to modify:**
 | File | Change |
 |------|--------|
-| `src/demo/LibraryShowcaseDemo.tsx` | Add `"settings"` tab, wire Study button |
-| `src/lib/core/hooks/useDynamicPanes.ts` | Add `updateSeriesParams` action |
-| `src/lib/core/types/pane-descriptor.ts` | No interface change needed |
+| `src/demo/LibraryShowcaseDemo.tsx` | Replace the old right-side settings flow with the gear-icon modal entry and pane inspector |
+| `src/demo/demo.css` | Add modal, dialog, and inspector styling |
+| `src/lib/core/hooks/useDynamicPanes.ts` | Enforce runtime `maxVisiblePanes`, add/update/remove series with `yAxis` awareness |
+| `src/lib/core/types/pane-descriptor.ts` | Add any dialog-driven series fields needed by the composer |
+| `src/lib/core/DynamicChart.tsx` | Rebuild chart slots immediately when pane structure changes |
 
-#### New action: `updateSeriesParams`
-```typescript
-// ADD to DynamicPaneAction union:
-| { type: "updateSeriesParams"; paneId: string; seriesType: SeriesTypeId; params: Record<string, unknown> }
+**Required behavior:**
+- The gear icon is the only primary opener for settings.
+- Every add-indicator flow must expose `left` / `right` Y-axis choice before commit.
+- Any pane-local change that affects structure or axis assignment must redraw immediately.
+- `maxVisiblePanes` is persisted and respected when restoring or adding panes.
+- Optional template selection may appear for indicators that support multiple render modes.
 
-// Reducer case:
-case "updateSeriesParams": {
-  const next = clonePaneList(state);
-  const pane = next.find((p) => p.id === action.paneId);
-  if (!pane) return next;
-  const series = pane.series.find((s) => s.type === action.seriesType);
-  if (!series) return next;
-  series.params = { ...(series.params ?? {}), ...action.params };
-  return next;
-}
-```
-
-#### Settings tab UI in `LibraryShowcaseDemo.tsx`
-
-Add `"settings"` to `SidePanelTab` type and tab bar. The panel shows:
-
-```
-─── Indicator Parameters ───
-EMA (Price pane)
-  Period 1: [20]  (input type=number, min=1, max=200)
-  Period 2: [50]  (input type=number, min=1, max=200)
-
-Bollinger Band (Price pane)
-  Period:  [20]   (input type=number, min=5, max=200)
-  Std Dev: [2]    (input type=number, min=0.5, max=5, step=0.5)
-
-RSI (Momentum pane)
-  Period: [14]   (input type=number, min=2, max=50)
-
-Whale Threshold (Order Flow pane)
-  Min USD size: [50000]  (input type=number, min=1000, step=1000)
-
-─── Display ───
-  Max visible panes: [3] (select: 3/4/5)
-
-─── Reset ───
-  [Reset all to default]  ← calls paneState.resetToDefault()
-```
-
-All `onBlur` / `onChange` fire `paneState.updateSeriesParams(paneId, seriesType, { period: newValue })`.
-
-**Note:** Changing `enrichData` params (RSI period, MACD params) requires re-enriching `plotData`. In the demo, `plotData` is currently a `useMemo` of `data`. After S-5, `plotData` depends additionally on a `indicatorParams` config object. The `enrichData()` call in the pipeline needs to be triggered with updated params.
-
-**enrichData pipeline adjustment:**
-```typescript
-// LibraryShowcaseDemo.tsx
-// Current:
-const enrichedData = useMemo(() => enrichData(rawData), [rawData]);
-
-// After S-5: drive off pane state params
-const indicatorParams = useMemo(() => {
-  const emaPane = paneState.panes.find(p => p.id === "price");
-  const rsiPane = paneState.panes.find(p => p.id === "momentum");
-  return {
-    emaFastPeriod: emaPane?.series.find(s => s.type === "EMA" && s.params?.period === 20)?.params?.period ?? 20,
-    emaMidPeriod: emaPane?.series.find(s => s.type === "EMA" && s.params?.period === 50)?.params?.period ?? 50,
-    rsiPeriod: rsiPane?.series.find(s => s.type === "RSI")?.params?.period ?? 14,
-    whaleThr: paneState.panes.find(p => p.id === "orderflow")?.series.find(s => s.type === "Whale")?.params?.threshold ?? 50_000,
-  };
-}, [paneState.panes]);
-
-const enrichedData = useMemo(
-  () => enrichData(rawData, indicatorParams.whaleThr),
-  [rawData, indicatorParams.whaleThr]
-);
-// Note: EMA / RSI period changes require modifying enrichData() signature or re-running
-// calculators selectively. See section 4 "Deferred work" below.
-```
+**See also:** [S5_SETTINGS_DIALOG_SPEC.md](S5_SETTINGS_DIALOG_SPEC.md) for the full UI contract and component-level layout.
 
 **Acceptance criteria (S-5):**
-- [ ] Changing EMA period in Settings → EMA re-renders with new period
-- [ ] Whale threshold change → Whale bars update
-- [ ] Study button in topbar opens Settings tab
-- [ ] `[Reset all to default]` button triggers full reset
+- [ ] Gear icon in the top-right cluster opens the settings modal
+- [ ] Modal contains pane-local inspector controls, not a right-side settings tab
+- [ ] Adding an indicator requires an explicit `yAxis` choice
+- [ ] Changing `yAxis`, visibility, or pane order redraws immediately
+- [ ] `maxVisiblePanes` can be changed and persists across reloads
+- [ ] Optional template selector appears for multi-template indicators
+- [ ] Reset action restores the default pane layout and indicator params
 
 ---
 
@@ -800,12 +743,13 @@ Each slice is considered **DONE** when ALL items below are checked:
 
 ### S-5 checklist
 - [ ] `updateSeriesParams` action added to reducer
-- [ ] Settings tab added to side panel
-- [ ] Study topbar button opens settings tab
+- [ ] Gear icon opens the settings modal
+- [ ] Pane inspector exposes explicit `left` / `right` Y-axis selection
 - [ ] EMA period editable
 - [ ] BB period + stdDev editable
 - [ ] RSI period editable
 - [ ] Whale threshold editable
+- [ ] `maxVisiblePanes` is editable and persisted
 - [ ] Reset button calls `resetToDefault`
 - [ ] `npm run build:docs` → OK
 
@@ -843,3 +787,36 @@ npm run build:docs
 ---
 
 *End of document. This plan is self-contained. The dev team can implement S-1 through S-5 sequentially without further clarification.*
+
+---
+
+## 9. Actual Task Audit Snapshot — 2026-05-04
+
+### Validation results
+- `npm run type-check` → PASS
+- `npm run test` → PASS (`51/51` tests)
+- `scripts/generate_module_tree.py` → regenerated `module_tree_full.md` (`619` modules)
+
+### Modified files
+- `docs/planning/INDICATOR_VISIBILITY_PLAN.md`
+- `src/lib/core/types/pane-descriptor.ts`
+- `src/lib/core/hooks/useDynamicPanes.ts`
+- `src/lib/core/DynamicChart.tsx`
+- `src/lib/core/IndicatorLegend.tsx`
+- `src/lib/core/index.ts`
+- `src/index.ts`
+- `src/lib/styles/pane-overlays.css`
+- `src/demo/LibraryShowcaseDemo.tsx`
+- `src/demo/demo.css`
+- `src/lib/core/types/__tests__/pane-descriptor.test.ts`
+- `src/lib/core/hooks/__tests__/useDynamicPanes.test.ts`
+- `module_tree_full.md`
+
+## 10. Follow-up Fix Snapshot — 2026-05-04
+
+### Validation results
+- `npm run build:docs` → PASS
+
+### Modified files
+- `src/demo/demo.css`
+- `docs/planning/INDICATOR_VISIBILITY_PLAN.md`

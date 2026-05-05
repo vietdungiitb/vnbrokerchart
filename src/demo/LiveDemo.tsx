@@ -4,10 +4,12 @@ import ChartCanvas from "../lib/ChartCanvas";
 import Chart from "../lib/Chart";
 import CandlestickSeries from "../lib/series/CandlestickSeries";
 import { formatBinanceKlines, getOfflineDemoData, type DemoDatum } from "./demoData";
+import { DemoI18nBoundary, useDemoI18n } from "./i18n";
 
-const LiveDemo = () => {
+const LiveDemoContent = () => {
+    const { language, setLanguage, t } = useDemoI18n();
     const [data, setData] = useState<DemoDatum[]>(() => getOfflineDemoData());
-    const [sourceLabel, setSourceLabel] = useState("Local fallback data");
+    const [sourceMode, setSourceMode] = useState<"local" | "live">("local");
 
     useEffect(() => {
         let cancelled = false;
@@ -18,13 +20,13 @@ const LiveDemo = () => {
             .then(json => {
                 if (cancelled) return;
                 setData(formatBinanceKlines(json));
-                setSourceLabel("Live Binance data");
+                setSourceMode("live");
             })
             .catch(err => {
                 console.error("Failed to fetch data:", err);
                 if (cancelled) return;
                 setData(getOfflineDemoData());
-                setSourceLabel("Local fallback data");
+                setSourceMode("local");
             });
 
         return () => {
@@ -32,15 +34,26 @@ const LiveDemo = () => {
         };
     }, []);
 
-    if (data.length === 0) return <div style={{ color: "red", padding: 20 }}>No data available.</div>;
+    if (data.length === 0) return <div style={{ color: "red", padding: 20 }}>{t("live.error")}</div>;
 
     const width = window.innerWidth - 40;
     const height = window.innerHeight - 150;
     const margin = { left: 50, right: 50, top: 20, bottom: 30 };
+    const sourceLabel = t(sourceMode === "live" ? "live.binance" : "live.localFallback");
 
     return (
         <div>
-            <div style={{ color: "white", padding: "0 20px 12px" }}>{sourceLabel}</div>
+            <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "space-between", color: "white", padding: "0 20px 12px", flexWrap: "wrap" }}>
+                <div>{sourceLabel}</div>
+                <div style={{ display: "flex", gap: 8 }} role="group" aria-label={t("language.label")}>
+                    <button type="button" onClick={() => setLanguage("vi")} style={{ padding: "4px 10px", borderRadius: 999, border: language === "vi" ? "1px solid #22d3ee" : "1px solid rgba(255,255,255,0.2)", background: "transparent", color: "white" }}>
+                        {t("language.vi")}
+                    </button>
+                    <button type="button" onClick={() => setLanguage("en")} style={{ padding: "4px 10px", borderRadius: 999, border: language === "en" ? "1px solid #22d3ee" : "1px solid rgba(255,255,255,0.2)", background: "transparent", color: "white" }}>
+                        {t("language.en")}
+                    </button>
+                </div>
+            </div>
             <ChartCanvas
                 height={height}
                 width={width}
@@ -61,4 +74,10 @@ const LiveDemo = () => {
     );
 };
 
-export default LiveDemo;
+export default function LiveDemo() {
+    return (
+        <DemoI18nBoundary>
+            <LiveDemoContent />
+        </DemoI18nBoundary>
+    );
+}

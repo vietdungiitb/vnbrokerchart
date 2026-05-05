@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer } from "react";
-import type { PaneDescriptor, SeriesConfig, SeriesTypeId } from "../types/pane-descriptor";
+import type { PaneDescriptor, SeriesConfig, SeriesTypeId, YAxisSide } from "../types/pane-descriptor";
 import { DEFAULT_PANES, PANE_LAYOUT_STORAGE_KEY, PANE_MAX_VISIBLE } from "../types/pane-descriptor";
 
 const FRAME_VERTICAL_MARGIN = 36;
@@ -16,13 +16,20 @@ export interface PaneLayoutStorageLike {
 	removeItem: (key: string) => void;
 }
 
+export interface UseDynamicPanesOptions {
+	maxVisiblePanes?: number;
+}
+
 export type DynamicPaneAction =
-	| { type: "toggleVisible"; id: string }
-	| { type: "addPane"; pane: Omit<PaneDescriptor, "id"> }
+	| { type: "toggleVisible"; id: string; maxVisiblePanes?: number }
+	| { type: "addPane"; pane: Omit<PaneDescriptor, "id">; maxVisiblePanes?: number }
 	| { type: "removePane"; id: string }
-	| { type: "restorePane"; id: string }
-	| { type: "addSeries"; paneId: string; series: SeriesConfig }
-	| { type: "removeSeries"; paneId: string; seriesType: SeriesTypeId }
+	| { type: "restorePane"; id: string; maxVisiblePanes?: number }
+	| { type: "addSeries"; paneId: string; series: SeriesConfig; maxVisiblePanes?: number }
+	| { type: "removeSeries"; paneId: string; seriesType: SeriesTypeId; seriesIndex?: number }
+	| { type: "toggleSeriesVisible"; paneId: string; seriesType: SeriesTypeId; seriesIndex?: number; maxVisiblePanes?: number }
+	| { type: "updateSeriesParams"; paneId: string; seriesType: SeriesTypeId; params: Record<string, unknown>; seriesIndex?: number }
+	| { type: "updateSeriesYAxis"; paneId: string; seriesType: SeriesTypeId; yAxis: YAxisSide; seriesIndex?: number }
 	| { type: "applyDelta"; splitterIndex: number; deltaY: number; available: number }
 	| { type: "resetToDefault" }
 	| { type: "reorderPanes"; fromVisibleIndex: number; toVisibleIndex: number };
@@ -37,7 +44,10 @@ export interface UseDynamicPanesResult {
 	removePane: (id: string) => void;
 	restorePane: (id: string) => void;
 	addSeries: (paneId: string, series: SeriesConfig) => void;
-	removeSeries: (paneId: string, seriesType: SeriesTypeId) => void;
+	removeSeries: (paneId: string, seriesType: SeriesTypeId, seriesIndex?: number) => void;
+	toggleSeriesVisible: (paneId: string, seriesType: SeriesTypeId, seriesIndex?: number) => void;
+	updateSeriesParams: (paneId: string, seriesType: SeriesTypeId, params: Record<string, unknown>, seriesIndex?: number) => void;
+	updateSeriesYAxis: (paneId: string, seriesType: SeriesTypeId, yAxis: YAxisSide, seriesIndex?: number) => void;
 	applyDelta: (splitterIndex: number, deltaY: number) => void;
 	resetToDefault: () => void;
 	reorderPanes: (fromVisibleIndex: number, toVisibleIndex: number) => void;
@@ -67,6 +77,11 @@ function clonePane(pane: PaneDescriptor): PaneDescriptor {
 
 function clonePaneList(panes: readonly PaneDescriptor[]): PaneDescriptor[] {
 	return panes.map(clonePane);
+}
+
+function syncSplitScale(pane: PaneDescriptor): void {
+	const activeSeries = pane.series.filter((series) => series.visible !== false);
+	pane.splitScale = activeSeries.some((series) => series.yAxis === "left") && activeSeries.some((series) => series.yAxis === "right");
 }
 
 function getVisiblePanes(panes: readonly PaneDescriptor[]): PaneDescriptor[] {
@@ -260,7 +275,16 @@ function reorderVisiblePanes(panes: readonly PaneDescriptor[], fromVisibleIndex:
 	});
 }
 
+function resolveSeriesIndex(series: readonly SeriesConfig[], seriesType: SeriesTypeId, seriesIndex?: number): number {
+	if (typeof seriesIndex === "number" && seriesIndex >= 0 && seriesIndex < series.length) {
+		return seriesIndex;
+	}
+	return series.findIndex((item) => item.type === seriesType);
+}
+
 export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: DynamicPaneAction): PaneDescriptor[] {
+	const maxVisiblePanes = Math.max(1, ("maxVisiblePanes" in action ? action.maxVisiblePanes : undefined) ?? PANE_MAX_VISIBLE);
+
 	switch (action.type) {
 		case "toggleVisible": {
 			const next = clonePaneList(state);
@@ -271,12 +295,19 @@ export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: Dy
 			if (pane.visible && visibleCount(next) === 1) {
 				return next;
 			}
-			pane.visible = !pane.visible;
+			if (pane.visible) {
+				pane.visible = false;
+			} else {
+				if (visibleCount(next) >= maxVisiblePanes) {
+					return next;
+				}
+				pane.visible = true;
+			}
 			return normalizeVisibleRatios(next);
 		}
 		case "addPane": {
 			const next = clonePaneList(state);
-			if (visibleCount(next) >= PANE_MAX_VISIBLE) {
+			if (visibleCount(next) >= maxVisiblePanes) {
 				return next;
 			}
 			const pane: PaneDescriptor = {
@@ -302,7 +333,7 @@ export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: Dy
 		}
 		case "restorePane": {
 			const next = clonePaneList(state);
-			if (visibleCount(next) >= PANE_MAX_VISIBLE) {
+			if (visibleCount(next) >= maxVisiblePanes) {
 				return next;
 			}
 			const pane = next.find((item) => item.id === action.id);
@@ -310,19 +341,29 @@ export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: Dy
 				return next;
 			}
 			pane.visible = true;
+			// Restore all series visibility when restoring a pane
+			pane.series.forEach((s) => { s.visible = true; });
+			syncSplitScale(pane);
 			return normalizeVisibleRatios(next);
 		}
 		case "addSeries": {
 			const next = clonePaneList(state);
 			const pane = next.find((item) => item.id === action.paneId);
-			if (!pane || pane.series.some((series) => series.type === action.series.type)) {
+			if (!pane) {
 				return next;
+			}
+			if (!pane.visible) {
+				if (visibleCount(next) >= maxVisiblePanes) {
+					return next;
+				}
+				pane.visible = true;
 			}
 			pane.series.push({
 				...action.series,
 				params: action.series.params ? { ...action.series.params } : undefined,
 			});
-			return next;
+			syncSplitScale(pane);
+			return normalizeVisibleRatios(next);
 		}
 		case "removeSeries": {
 			const next = clonePaneList(state);
@@ -330,8 +371,19 @@ export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: Dy
 			if (!pane) {
 				return next;
 			}
-			pane.series = pane.series.filter((series) => series.type !== action.seriesType);
-			return next;
+			const seriesIndex = resolveSeriesIndex(pane.series, action.seriesType, action.seriesIndex);
+			if (seriesIndex < 0) {
+				return next;
+			}
+			pane.series = pane.series.filter((_, index) => index !== seriesIndex);
+			if (!pane.pinned) {
+				const anyVisible = pane.series.some((series) => series.visible !== false);
+				if (!anyVisible && pane.visible && visibleCount(next) > 1) {
+					pane.visible = false;
+				}
+			}
+			syncSplitScale(pane);
+			return normalizeVisibleRatios(next);
 		}
 		case "applyDelta": {
 			const next = clonePaneList(state);
@@ -369,6 +421,53 @@ export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: Dy
 			return makeDefaultLayout();
 		case "reorderPanes":
 			return reorderVisiblePanes(state, action.fromVisibleIndex, action.toVisibleIndex);
+		case "toggleSeriesVisible": {
+			const next = clonePaneList(state);
+			const pane = next.find((p) => p.id === action.paneId);
+			if (!pane) return next;
+			const seriesIndex = resolveSeriesIndex(pane.series, action.seriesType, action.seriesIndex);
+			const series = pane.series[seriesIndex];
+			if (!series) return next;
+			// Toggle: false → true, undefined/true → false
+			series.visible = series.visible === false ? true : false;
+			if (series.visible === true && !pane.visible) {
+				if (visibleCount(next) >= maxVisiblePanes) {
+					return next;
+				}
+				pane.visible = true;
+			}
+			// AD-2: auto-hide non-pinned pane when all its series are hidden
+			if (!pane.pinned) {
+				const anyVisible = pane.series.some((s) => s.visible !== false);
+				if (!anyVisible && pane.visible && visibleCount(next) > 1) {
+					pane.visible = false;
+				}
+			}
+			syncSplitScale(pane);
+			return normalizeVisibleRatios(next);
+		}
+		case "updateSeriesParams": {
+			const next = clonePaneList(state);
+			const pane = next.find((p) => p.id === action.paneId);
+			if (!pane) return next;
+			const seriesIndex = resolveSeriesIndex(pane.series, action.seriesType, action.seriesIndex);
+			const series = pane.series[seriesIndex];
+			if (!series) return next;
+			series.params = { ...(series.params ?? {}), ...action.params };
+			syncSplitScale(pane);
+			return normalizeVisibleRatios(next);
+		}
+		case "updateSeriesYAxis": {
+			const next = clonePaneList(state);
+			const pane = next.find((p) => p.id === action.paneId);
+			if (!pane) return next;
+			const seriesIndex = resolveSeriesIndex(pane.series, action.seriesType, action.seriesIndex);
+			const series = pane.series[seriesIndex];
+			if (!series) return next;
+			series.yAxis = action.yAxis;
+			syncSplitScale(pane);
+			return normalizeVisibleRatios(next);
+		}
 		default:
 			return clonePaneList(state);
 	}
@@ -386,8 +485,9 @@ export function savePaneLayout(panes: readonly PaneDescriptor[], storage?: PaneL
 	writeStoredPaneLayout(panes, storage);
 }
 
-export function useDynamicPanes(totalHeight: number): UseDynamicPanesResult {
+export function useDynamicPanes(totalHeight: number, options: UseDynamicPanesOptions = {}): UseDynamicPanesResult {
 	const [panes, dispatch] = useReducer(dynamicPanesReducer, undefined, () => loadPaneLayout());
+	const maxVisiblePanes = Math.max(1, options.maxVisiblePanes ?? PANE_MAX_VISIBLE);
 
 	const available = useMemo(() => {
 		const visible = panes.filter((pane) => pane.visible).length;
@@ -402,27 +502,27 @@ export function useDynamicPanes(totalHeight: number): UseDynamicPanesResult {
 	}, [panes]);
 
 	const toggleVisible = useCallback((id: string) => {
-		dispatch({ type: "toggleVisible", id });
-	}, []);
+		dispatch({ type: "toggleVisible", id, maxVisiblePanes });
+	}, [maxVisiblePanes]);
 
 	const addPane = useCallback((pane: Omit<PaneDescriptor, "id">) => {
-		dispatch({ type: "addPane", pane });
-	}, []);
+		dispatch({ type: "addPane", pane, maxVisiblePanes });
+	}, [maxVisiblePanes]);
 
 	const removePane = useCallback((id: string) => {
 		dispatch({ type: "removePane", id });
 	}, []);
 
 	const restorePane = useCallback((id: string) => {
-		dispatch({ type: "restorePane", id });
-	}, []);
+		dispatch({ type: "restorePane", id, maxVisiblePanes });
+	}, [maxVisiblePanes]);
 
 	const addSeries = useCallback((paneId: string, series: SeriesConfig) => {
-		dispatch({ type: "addSeries", paneId, series });
-	}, []);
+		dispatch({ type: "addSeries", paneId, series, maxVisiblePanes });
+	}, [maxVisiblePanes]);
 
-	const removeSeries = useCallback((paneId: string, seriesType: SeriesTypeId) => {
-		dispatch({ type: "removeSeries", paneId, seriesType });
+	const removeSeries = useCallback((paneId: string, seriesType: SeriesTypeId, seriesIndex?: number) => {
+		dispatch({ type: "removeSeries", paneId, seriesType, seriesIndex });
 	}, []);
 
 	const applyDelta = useCallback((splitterIndex: number, deltaY: number) => {
@@ -444,6 +544,18 @@ export function useDynamicPanes(totalHeight: number): UseDynamicPanesResult {
 		dispatch({ type: "reorderPanes", fromVisibleIndex, toVisibleIndex });
 	}, []);
 
+	const toggleSeriesVisible = useCallback((paneId: string, seriesType: SeriesTypeId, seriesIndex?: number) => {
+		dispatch({ type: "toggleSeriesVisible", paneId, seriesType, seriesIndex, maxVisiblePanes });
+	}, [maxVisiblePanes]);
+
+	const updateSeriesParams = useCallback((paneId: string, seriesType: SeriesTypeId, params: Record<string, unknown>, seriesIndex?: number) => {
+		dispatch({ type: "updateSeriesParams", paneId, seriesType, params, seriesIndex });
+	}, []);
+
+	const updateSeriesYAxis = useCallback((paneId: string, seriesType: SeriesTypeId, yAxis: YAxisSide, seriesIndex?: number) => {
+		dispatch({ type: "updateSeriesYAxis", paneId, seriesType, yAxis, seriesIndex });
+	}, []);
+
 	return {
 		panes,
 		visiblePanes,
@@ -455,9 +567,12 @@ export function useDynamicPanes(totalHeight: number): UseDynamicPanesResult {
 		restorePane,
 		addSeries,
 		removeSeries,
+		toggleSeriesVisible,
+		updateSeriesParams,
+		updateSeriesYAxis,
 		applyDelta,
 		resetToDefault,
 		reorderPanes,
-		canAddPane: visiblePanes.length < PANE_MAX_VISIBLE,
+		canAddPane: visiblePanes.length < maxVisiblePanes,
 	};
 }

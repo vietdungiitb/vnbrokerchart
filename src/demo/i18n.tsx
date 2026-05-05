@@ -1,0 +1,508 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+
+export type DemoLanguage = "vi" | "en";
+
+type TranslationParams = Record<string, string | number | undefined>;
+export type DemoTranslate = (key: string, params?: TranslationParams) => string;
+
+const DEMO_LANGUAGE_STORAGE_KEY = "rsc-demo-language-v1";
+
+const translations: Record<DemoLanguage, Record<string, string>> = {
+	vi: {
+		"language.label": "Ngôn ngữ",
+		"language.vi": "VI",
+		"language.en": "EN",
+		"common.na": "n/a",
+		"common.liveBinance": "● LIVE · Binance",
+		"common.offlineFallback": "⚠ Dự phòng offline",
+		"common.loading": "↻ Đang tải…",
+		"common.binanceLoading": "Đang tải dữ liệu Binance…",
+		"common.binanceLiveLoading": "Đang tải dữ liệu thật từ Binance…",
+		"common.canvasInitializing": "Đang khởi tạo canvas…",
+		"common.chartInitializing": "Đang khởi tạo khung biểu đồ...",
+		"common.compare": "So sánh",
+		"common.replay": "Phát lại",
+		"common.upgrade": "Nâng cấp",
+		"common.publish": "Xuất bản",
+		"common.script": "Kịch bản",
+		"common.alert": "Cảnh báo",
+		"common.trade": "Giao dịch",
+		"common.panes": "Panes",
+		"common.bars": "nến",
+		"common.source": "Nguồn dữ liệu",
+		"common.range": "Khung nhìn",
+		"common.status": "Trạng thái",
+		"theme.light": "Chế độ sáng",
+		"theme.dark": "Chế độ tối",
+		"theme.switchToLight": "Chuyển sang sáng",
+		"theme.switchToDark": "Chuyển sang tối",
+		"theme.shellMode": "Thay đổi giao diện áp dụng cho toàn bộ shell và canvas biểu đồ. Chế độ hiện tại: {mode}.",
+		"theme.mode.light": "sáng",
+		"theme.mode.dark": "tối",
+		"settings.open": "Cài đặt",
+		"settings.openDialog": "Mở hộp thoại cài đặt",
+		"settings.dialogTitle": "Hộp thoại cài đặt kiểu GoCharting",
+		"settings.dialogClose": "Đóng hộp thoại cài đặt",
+		"settings.layout": "Bố cục",
+		"settings.indicators": "Chỉ báo",
+		"settings.theme": "Giao diện",
+		"settings.reset": "Đặt lại",
+		"settings.manageSections": "Các mục cài đặt",
+		"settings.managePanes": "Quản lý pane",
+		"settings.maxVisible": "Số pane hiển thị tối đa",
+		"settings.addPane": "+ Thêm pane",
+		"settings.overLimit": "Số pane đang hiển thị vượt quá giới hạn đã cấu hình. Hãy giảm bớt trước khi thêm pane mới.",
+		"settings.pinned": "Đã ghim",
+		"settings.restore": "Khôi phục",
+		"settings.hide": "Ẩn",
+		"settings.locked": "Đã khóa",
+		"settings.visible": "Hiện",
+		"settings.hidden": "Ẩn",
+		"settings.indicatorEditor": "Biên tập theo khung",
+		"settings.pane": "Khung",
+		"settings.yAxis": "Trục Y",
+		"settings.yAxisLeft": "Trái",
+		"settings.yAxisRight": "Phải",
+		"settings.period": "Chu kỳ",
+		"settings.stdDev": "Độ lệch chuẩn",
+		"settings.fast": "Nhanh",
+		"settings.slow": "Chậm",
+		"settings.signal": "Tín hiệu",
+		"settings.thresholdUsd": "Ngưỡng USD",
+		"settings.remove": "Xóa",
+		"settings.addIndicator": "Thêm chỉ báo",
+		"settings.createIndicator": "Tạo một chỉ báo mới",
+		"settings.indicatorType": "Loại",
+		"settings.composerNote": "Bộ tạo dùng tham số mặc định từ registry và luôn yêu cầu chọn trục Y trước khi thêm.",
+		"settings.paneSummary": "Mỗi thao tác thêm hoặc chỉnh sửa đều phải chọn trục Y rõ ràng.",
+		"settings.noPane": "Không có khung nào khả dụng.",
+		"settings.appearanceShell": "Diện mạo shell",
+		"settings.resetDefaults": "Khôi phục mặc định",
+		"settings.resetLayout": "Đặt lại bố cục",
+		"settings.resetNote": "Đặt lại sẽ khôi phục bố cục khung và tham số chỉ báo mặc định. Giới hạn khung hiển thị có thể được đặt lại từ mục Bố cục.",
+		"settings.layoutKicker": "Bố cục",
+		"settings.indicatorKicker": "Chỉ báo",
+		"settings.themeKicker": "Giao diện",
+		"settings.resetKicker": "Đặt lại",
+		"settings.dialogKicker": "Cài đặt",
+		"settings.seriesMeta": "{count} chỉ báo · {ratio}%",
+		"library.topbarAria": "BT Charts",
+		"library.timeframes": "Khung thời gian",
+		"library.managePanes": "Quản lý panes",
+		"library.primaryPaneLocked": "Pane chính luôn hiển thị",
+		"library.dragPane": "Kéo {pane}",
+		"library.dragDisabled": "Pane chính không thể kéo",
+		"library.dragTitle": "Kéo để đổi vị trí pane",
+		"library.addSeriesToPane": "Thêm series cho {pane}",
+		"library.addSeries": "Thêm indicator/series",
+		"library.hidePane": "Ẩn pane",
+		"library.showPane": "Hiện pane",
+		"library.restorePane": "Hiện lại pane",
+		"library.hidePaneAria": "Ẩn {pane}",
+		"library.showPaneAria": "Hiện {pane}",
+		"library.removePaneHint": "Ẩn pane (có thể khôi phục từ menu Panes)",
+		"library.showIndicator": "Hiện indicator",
+		"library.hideIndicator": "Ẩn indicator",
+		"library.showIndicatorAria": "Hiện {series}",
+		"library.hideIndicatorAria": "Ẩn {series}",
+		"library.removeIndicator": "Xóa indicator khỏi pane này",
+		"library.removeIndicatorAria": "Xóa {series}",
+		"library.splitterHint": "Kéo để thay đổi chiều cao pane • Nhấp đúp để đặt lại",
+		"library.switchToLight": "Chế độ sáng",
+		"library.switchToDark": "Chế độ tối",
+		"library.switchToLightAria": "Chuyển sang giao diện sáng",
+		"library.switchToDarkAria": "Chuyển sang giao diện tối",
+		"library.drawingTools": "Công cụ vẽ",
+		"library.loadingPriceData": "Đang tải dữ liệu Binance…",
+		"library.loadingRealData": "Đang tải dữ liệu thật từ Binance…",
+		"library.pairBars": "{count} nến",
+		"library.volumeShort": "Vol",
+		"library.compare": "So sánh",
+		"library.replay": "Phát lại",
+		"library.upgrade": "Nâng cấp",
+		"library.pricePaneLabel": "Price",
+		"library.volumePaneLabel": "Volume",
+		"library.momentumPaneLabel": "RSI+MACD",
+		"library.orderflowPaneLabel": "Order Flow",
+		"library.strengthPaneLabel": "Strength",
+		"library.genericPaneLabel": "Khung {index}",
+		"chartType.candlestick": "Candlestick",
+		"chartType.hollow": "Hollow Candle",
+		"chartType.ohlc": "OHLC Bar",
+		"chartType.heikinashi": "Heikin Ashi",
+		"chartType.line": "Line",
+		"chartType.area": "Area",
+		"tool.cursor": "Cursor",
+		"tool.crosshair": "Crosshair",
+		"tool.trendLine": "Trend Line",
+		"tool.hLine": "Horizontal Line",
+		"tool.vLine": "Vertical Line",
+		"tool.fibonacci": "Fibonacci",
+		"tool.channel": "Channel",
+		"tool.text": "Text Note",
+		"full.eyebrow": "Demo tương tác đầy đủ",
+		"full.title": "Biểu đồ nến BTC/USD với đầy đủ lớp chỉ báo và điều khiển",
+		"full.subtitle": "Bản demo này chạy mặc định bằng dữ liệu cục bộ để luôn mở được offline, nhưng vẫn cho phép chuyển sang dữ liệu Binance trực tiếp. Chart có nến, Bollinger Band, volume, EMA 20/50, RSI, MACD, crosshair, zoom bằng scroll, pan bằng drag và brush span ở panel dưới.",
+		"full.badge.candlestick": "Candlestick",
+		"full.badge.bollinger": "Bollinger Band",
+		"full.badge.volume": "Volume",
+		"full.badge.ema": "EMA 20/50",
+		"full.badge.rsi": "RSI 14",
+		"full.badge.macd": "MACD 12/26/9",
+		"full.badge.crosshair": "Crosshair",
+		"full.badge.zoomPan": "Zoom / Pan",
+		"full.badge.brush": "Brush span",
+		"full.badge.offline": "Fallback offline",
+		"full.source.local": "Dữ liệu cục bộ",
+		"full.source.loading": "Đang tải Binance",
+		"full.source.live": "Binance trực tiếp",
+		"full.source.fallback": "Binance dự phòng cục bộ",
+		"full.summaryMeta": "Khung 1 giờ · Hybrid canvas",
+		"full.metric.close": "Giá đóng cửa",
+		"full.metric.volume": "Volume",
+		"full.metric.volumeDetail": "Cột Volume mới nhất",
+		"full.metric.rsi": "RSI 14",
+		"full.metric.rsi.overbought": "Vùng quá mua",
+		"full.metric.rsi.oversold": "Vùng quá bán",
+		"full.metric.rsi.neutral": "Vùng trung tính",
+		"full.metric.ema": "EMA 20/50",
+		"full.metric.ema.uptrend": "Xu hướng tăng",
+		"full.metric.ema.downtrend": "Xu hướng giảm",
+		"full.metric.ema.diff": "Chênh lệch {value}",
+		"full.chartTitle": "BTC/USD · biểu đồ nhiều lớp",
+		"full.chartMeta": "Candlestick, Bollinger Band, volume, EMA 20/50, RSI và MACD trong một khung tương tác duy nhất. Zoom bằng scroll, pan bằng drag, và kéo brush ở panel dưới để đổi span.",
+		"full.sourceSwitcher": "Chọn nguồn dữ liệu",
+		"full.sourceSwitcher.local": "Dữ liệu cục bộ",
+		"full.sourceSwitcher.live": "Binance trực tiếp",
+		"full.interactionGuide": "Hướng dẫn tương tác",
+		"full.guide.zoom": "Zoom bằng scroll, pan bằng drag, rồi dùng nút reset để trở về khung nhìn mặc định.",
+		"full.guide.hover": "Di chuột qua từng panel để đọc OHLC, Bollinger Band, EMA, RSI, MACD và giá trị Volume.",
+		"full.guide.source": "Nút nguồn dữ liệu cho phép chuyển giữa CSV cục bộ và dữ liệu Binance trực tiếp.",
+		"full.guide.brush": "Kéo span ở panel dưới để chọn lại vùng dữ liệu quan sát, giống brush support của bản gốc.",
+		"full.guide.fallback": "Nếu mạng lỗi, demo tự rơi về nguồn cục bộ để người xem vẫn kiểm tra được toàn bộ chart.",
+		"full.legendTitle": "Chú giải lớp biểu đồ",
+		"full.legend.candlestick.detail": "Mỗi cây nến hiển thị mở, cao, thấp và đóng.",
+		"full.legend.bollinger.detail": "Dải biến động theo chu kỳ 20, multiplier 2.",
+		"full.legend.ema20.detail": "Đường xu hướng ngắn hạn.",
+		"full.legend.ema50.detail": "Đường xu hướng trung hạn.",
+		"full.legend.rsi.detail": "Động lượng và vùng quá mua/quá bán.",
+		"full.legend.macd.detail": "Xung lực xu hướng và tín hiệu giao cắt.",
+		"full.legend.brush.detail": "Kéo ở panel dưới để zoom vùng quan sát.",
+		"full.dataNotes": "Ghi chú dữ liệu",
+		"full.dataNotesBody": "Mặc định page dùng CSV nội bộ để luôn mở được offline. Chế độ Binance trực tiếp sẽ tự tải dữ liệu mới và tự chuyển về fallback cục bộ nếu mạng không sẵn sàng.",
+		"full.tooltip.date": "Ngày: ",
+		"full.tooltip.open": " Mở: ",
+		"full.tooltip.high": " Cao: ",
+		"full.tooltip.low": " Thấp: ",
+		"full.tooltip.close": " Đóng: ",
+		"full.tooltip.volume": " KL: ",
+		"original.title": "React Stockcharts · bản gốc gọn",
+		"original.meta": "Candlestick, volume, MACD, zoom bằng scroll, pan bằng drag và brush span theo mẫu gốc.",
+		"original.viewRange": "Khung nhìn: {visible}/{total} nến",
+		"original.brushOn": "✂ Đang chọn vùng",
+		"original.brushOff": "✂ Chọn vùng",
+		"original.brushOnTitle": "Tắt chế độ chọn vùng (Brush)",
+		"original.brushOffTitle": "Bật chế độ chọn vùng (Brush)",
+		"live.localFallback": "Dữ liệu dự phòng cục bộ",
+		"live.binance": "Dữ liệu Binance trực tiếp",
+		"live.error": "Không có dữ liệu khả dụng.",
+	},
+	en: {
+		"language.label": "Language",
+		"language.vi": "VI",
+		"language.en": "EN",
+		"common.na": "n/a",
+		"common.liveBinance": "● LIVE · Binance",
+		"common.offlineFallback": "⚠ Offline fallback",
+		"common.loading": "↻ Loading…",
+		"common.binanceLoading": "Loading Binance data…",
+		"common.binanceLiveLoading": "Loading live Binance data…",
+		"common.canvasInitializing": "Initializing canvas…",
+		"common.chartInitializing": "Initializing chart surface...",
+		"common.compare": "Compare",
+		"common.replay": "Replay",
+		"common.upgrade": "Upgrade",
+		"common.publish": "Publish",
+		"common.script": "Script",
+		"common.alert": "Alert",
+		"common.trade": "Trade",
+		"common.panes": "Panes",
+		"common.bars": "bars",
+		"common.source": "Source",
+		"common.range": "View",
+		"common.status": "Status",
+		"theme.light": "Light mode",
+		"theme.dark": "Dark mode",
+		"theme.switchToLight": "Switch to light",
+		"theme.switchToDark": "Switch to dark",
+		"theme.shellMode": "Appearance updates the whole shell and chart canvas. Current mode: {mode}.",
+		"theme.mode.light": "light",
+		"theme.mode.dark": "dark",
+		"settings.open": "Settings",
+		"settings.openDialog": "Open settings dialog",
+		"settings.dialogTitle": "GoCharting-style settings dialog",
+		"settings.dialogClose": "Close settings dialog",
+		"settings.layout": "Layout",
+		"settings.indicators": "Indicators",
+		"settings.theme": "Theme",
+		"settings.reset": "Reset",
+		"settings.manageSections": "Settings sections",
+		"settings.managePanes": "Manage panes",
+		"settings.maxVisible": "Maximum visible panes",
+		"settings.addPane": "+ Add pane",
+		"settings.overLimit": "The current visible pane count exceeds the configured limit. Reduce it before adding another pane.",
+		"settings.pinned": "Pinned",
+		"settings.restore": "Restore",
+		"settings.hide": "Hide",
+		"settings.locked": "Locked",
+		"settings.visible": "Visible",
+		"settings.hidden": "Hidden",
+		"settings.indicatorEditor": "Pane editor",
+		"settings.pane": "Pane",
+		"settings.yAxis": "Y axis",
+		"settings.yAxisLeft": "Left",
+		"settings.yAxisRight": "Right",
+		"settings.period": "Period",
+		"settings.stdDev": "Std. deviation",
+		"settings.fast": "Fast",
+		"settings.slow": "Slow",
+		"settings.signal": "Signal",
+		"settings.thresholdUsd": "USD threshold",
+		"settings.remove": "Remove",
+		"settings.addIndicator": "Add indicator",
+		"settings.createIndicator": "Create a new indicator",
+		"settings.indicatorType": "Type",
+		"settings.composerNote": "The composer uses registry defaults and always requires an explicit Y-axis before adding.",
+		"settings.paneSummary": "Every add or edit action must choose a Y axis explicitly.",
+		"settings.noPane": "No panes are available.",
+		"settings.appearanceShell": "Shell appearance",
+		"settings.resetDefaults": "Restore defaults",
+		"settings.resetLayout": "Reset layout",
+		"settings.resetNote": "Reset restores the default pane layout and indicator params. The visible pane limit can be adjusted again from Layout.",
+		"settings.layoutKicker": "Layout",
+		"settings.indicatorKicker": "Indicators",
+		"settings.themeKicker": "Theme",
+		"settings.resetKicker": "Reset",
+		"settings.dialogKicker": "Settings",
+		"settings.seriesMeta": "{count} indicators · {ratio}%",
+		"library.topbarAria": "BT Charts",
+		"library.timeframes": "Timeframes",
+		"library.managePanes": "Manage panes",
+		"library.primaryPaneLocked": "The primary pane is always visible",
+		"library.dragPane": "Drag {pane}",
+		"library.dragDisabled": "The primary pane cannot be dragged",
+		"library.dragTitle": "Drag to reorder pane",
+		"library.addSeriesToPane": "Add series to {pane}",
+		"library.addSeries": "Add indicator/series",
+		"library.hidePane": "Hide pane",
+		"library.showPane": "Show pane",
+		"library.restorePane": "Show pane again",
+		"library.hidePaneAria": "Hide {pane}",
+		"library.showPaneAria": "Show {pane}",
+		"library.removePaneHint": "Hide pane (can be restored from the Panes menu)",
+		"library.showIndicator": "Show indicator",
+		"library.hideIndicator": "Hide indicator",
+		"library.showIndicatorAria": "Show {series}",
+		"library.hideIndicatorAria": "Hide {series}",
+		"library.removeIndicator": "Remove indicator from this pane",
+		"library.removeIndicatorAria": "Remove {series}",
+		"library.splitterHint": "Drag to resize pane • Double-click to reset",
+		"library.switchToLight": "Light mode",
+		"library.switchToDark": "Dark mode",
+		"library.switchToLightAria": "Switch to light mode",
+		"library.switchToDarkAria": "Switch to dark mode",
+		"library.drawingTools": "Drawing tools",
+		"library.loadingPriceData": "Loading Binance data…",
+		"library.loadingRealData": "Loading live Binance data…",
+		"library.pairBars": "{count} bars",
+		"library.volumeShort": "Vol",
+		"library.compare": "Compare",
+		"library.replay": "Replay",
+		"library.upgrade": "Upgrade",
+		"library.pricePaneLabel": "Price",
+		"library.volumePaneLabel": "Volume",
+		"library.momentumPaneLabel": "RSI+MACD",
+		"library.orderflowPaneLabel": "Order Flow",
+		"library.strengthPaneLabel": "Strength",
+		"library.genericPaneLabel": "Pane {index}",
+		"chartType.candlestick": "Candlestick",
+		"chartType.hollow": "Hollow Candle",
+		"chartType.ohlc": "OHLC Bar",
+		"chartType.heikinashi": "Heikin Ashi",
+		"chartType.line": "Line",
+		"chartType.area": "Area",
+		"tool.cursor": "Cursor",
+		"tool.crosshair": "Crosshair",
+		"tool.trendLine": "Trend Line",
+		"tool.hLine": "Horizontal Line",
+		"tool.vLine": "Vertical Line",
+		"tool.fibonacci": "Fibonacci",
+		"tool.channel": "Channel",
+		"tool.text": "Text Note",
+		"full.eyebrow": "Full interaction demo",
+		"full.title": "BTC/USD candlestick chart with the full indicator and controls stack",
+		"full.subtitle": "This demo boots with local data so it always opens offline, while still letting you switch to live Binance data. The chart includes candles, Bollinger Band, volume, EMA 20/50, RSI, MACD, a crosshair, scroll zoom, drag pan, and a brush span in the lower panel.",
+		"full.badge.candlestick": "Candlestick",
+		"full.badge.bollinger": "Bollinger Band",
+		"full.badge.volume": "Volume",
+		"full.badge.ema": "EMA 20/50",
+		"full.badge.rsi": "RSI 14",
+		"full.badge.macd": "MACD 12/26/9",
+		"full.badge.crosshair": "Crosshair",
+		"full.badge.zoomPan": "Zoom / Pan",
+		"full.badge.brush": "Brush span",
+		"full.badge.offline": "Offline fallback",
+		"full.source.local": "Local data",
+		"full.source.loading": "Loading Binance",
+		"full.source.live": "Live Binance",
+		"full.source.fallback": "Binance with local fallback",
+		"full.summaryMeta": "1 hour frame · Hybrid canvas",
+		"full.metric.close": "Close price",
+		"full.metric.volume": "Volume",
+		"full.metric.volumeDetail": "Latest volume bar",
+		"full.metric.rsi": "RSI 14",
+		"full.metric.rsi.overbought": "Overbought zone",
+		"full.metric.rsi.oversold": "Oversold zone",
+		"full.metric.rsi.neutral": "Neutral zone",
+		"full.metric.ema": "EMA 20/50",
+		"full.metric.ema.uptrend": "Uptrend",
+		"full.metric.ema.downtrend": "Downtrend",
+		"full.metric.ema.diff": "Spread {value}",
+		"full.chartTitle": "BTC/USD · multilayer chart",
+		"full.chartMeta": "Candlestick, Bollinger Band, volume, EMA 20/50, RSI, and MACD in a single interactive chart. Zoom with scroll, pan with drag, and move the lower brush to change the visible span.",
+		"full.sourceSwitcher": "Select data source",
+		"full.sourceSwitcher.local": "Local data",
+		"full.sourceSwitcher.live": "Live Binance",
+		"full.interactionGuide": "Interaction guide",
+		"full.guide.zoom": "Zoom with scroll, pan with drag, then use reset to return to the default viewport.",
+		"full.guide.hover": "Hover each panel to inspect OHLC, Bollinger Band, EMA, RSI, MACD, and volume values.",
+		"full.guide.source": "The source control lets you switch between local CSV data and live Binance data.",
+		"full.guide.brush": "Drag the lower span to select a new visible range, similar to the original brush support.",
+		"full.guide.fallback": "If the network fails, the demo automatically falls back to local data so the full chart remains reviewable.",
+		"full.legendTitle": "Chart layer legend",
+		"full.legend.candlestick.detail": "Each candle shows open, high, low, and close.",
+		"full.legend.bollinger.detail": "Volatility band using period 20 and multiplier 2.",
+		"full.legend.ema20.detail": "Short-term trend line.",
+		"full.legend.ema50.detail": "Mid-term trend line.",
+		"full.legend.rsi.detail": "Momentum plus overbought and oversold zones.",
+		"full.legend.macd.detail": "Trend momentum and crossover signals.",
+		"full.legend.brush.detail": "Drag the lower panel to zoom the visible range.",
+		"full.dataNotes": "Data notes",
+		"full.dataNotesBody": "The page defaults to the embedded CSV so it always opens offline. Live Binance mode fetches fresh data and falls back to local data if the network is unavailable.",
+		"full.tooltip.date": "Date: ",
+		"full.tooltip.open": " Open: ",
+		"full.tooltip.high": " High: ",
+		"full.tooltip.low": " Low: ",
+		"full.tooltip.close": " Close: ",
+		"full.tooltip.volume": " Vol: ",
+		"original.title": "React Stockcharts · compact original",
+		"original.meta": "Candlestick, volume, MACD, scroll zoom, drag pan, and a brush span that stays close to the original example.",
+		"original.viewRange": "View: {visible}/{total} bars",
+		"original.brushOn": "✂ Brush active",
+		"original.brushOff": "✂ Brush range",
+		"original.brushOnTitle": "Turn brush mode off",
+		"original.brushOffTitle": "Turn brush mode on",
+		"live.localFallback": "Local fallback data",
+		"live.binance": "Live Binance data",
+		"live.error": "No data available.",
+	},
+};
+
+const paneLabelKeys: Record<string, string> = {
+	price: "library.pricePaneLabel",
+	volume: "library.volumePaneLabel",
+	momentum: "library.momentumPaneLabel",
+	orderflow: "library.orderflowPaneLabel",
+	strength: "library.strengthPaneLabel",
+};
+
+interface DemoI18nContextValue {
+	language: DemoLanguage;
+	setLanguage: (language: DemoLanguage) => void;
+	t: DemoTranslate;
+	getPaneLabel: (paneId: string, fallback?: string) => string;
+	hasProvider: boolean;
+}
+
+function readStoredLanguage(): DemoLanguage {
+	if (typeof window === "undefined") {
+		return "vi";
+	}
+	try {
+		const stored = window.localStorage.getItem(DEMO_LANGUAGE_STORAGE_KEY);
+		if (stored === "vi" || stored === "en") {
+			return stored;
+		}
+	} catch {
+		// ignore storage errors
+	}
+	return document.documentElement.lang.toLowerCase().startsWith("en") ? "en" : "vi";
+}
+
+function interpolate(message: string, params?: TranslationParams): string {
+	if (!params) {
+		return message;
+	}
+	return message.replace(/\{(\w+)\}/g, (_match, key: string) => {
+		const value = params[key];
+		return value === undefined ? `{${key}}` : String(value);
+	});
+}
+
+function translate(language: DemoLanguage, key: string, params?: TranslationParams): string {
+	const template = translations[language][key] ?? translations.vi[key] ?? key;
+	return interpolate(template, params);
+}
+
+const defaultContextValue: DemoI18nContextValue = {
+	language: "vi",
+	setLanguage: () => {},
+	t: (key, params) => translate("vi", key, params),
+	getPaneLabel: (paneId, fallback) => translate("vi", paneLabelKeys[paneId] ?? "library.genericPaneLabel", paneLabelKeys[paneId] ? undefined : { index: fallback ?? paneId }),
+	hasProvider: false,
+};
+
+const DemoI18nContext = createContext<DemoI18nContextValue>(defaultContextValue);
+
+export function DemoI18nProvider({ children }: { children: ReactNode }) {
+	const [language, setLanguageState] = useState<DemoLanguage>(readStoredLanguage);
+
+	useEffect(() => {
+		document.documentElement.lang = language;
+		try {
+			window.localStorage.setItem(DEMO_LANGUAGE_STORAGE_KEY, language);
+		} catch {
+			// ignore storage errors
+		}
+	}, [language]);
+
+	const setLanguage = useCallback((nextLanguage: DemoLanguage) => {
+		setLanguageState(nextLanguage);
+	}, []);
+
+	const t = useCallback<DemoTranslate>((key, params) => translate(language, key, params), [language]);
+
+	const getPaneLabel = useCallback((paneId: string, fallback?: string) => {
+		const key = paneLabelKeys[paneId];
+		if (key) {
+			return t(key);
+		}
+		return fallback ?? t("library.genericPaneLabel", { index: paneId });
+	}, [t]);
+
+	const value = useMemo(() => ({ language, setLanguage, t, getPaneLabel, hasProvider: true }), [getPaneLabel, language, setLanguage, t]);
+
+	return <DemoI18nContext.Provider value={value}>{children}</DemoI18nContext.Provider>;
+}
+
+export function useDemoI18n() {
+	return useContext(DemoI18nContext);
+}
+
+export function DemoI18nBoundary({ children }: { children: ReactNode }) {
+	const context = useContext(DemoI18nContext);
+	if (context.hasProvider) {
+		return <>{children}</>;
+	}
+	return <DemoI18nProvider>{children}</DemoI18nProvider>;
+}

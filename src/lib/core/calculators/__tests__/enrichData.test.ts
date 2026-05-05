@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { calcCVDApprox } from "../calcCVDApprox";
 import { enrichData } from "../enrichData";
 import { mockOHLCV300 } from "../fixtures/mockData";
+import { resolveSeriesStructuredValue, resolveSeriesValue } from "../../seriesValueResolver";
 import type { RawOHLCV } from "../types";
 
 describe("enrichData", () => {
@@ -78,5 +79,28 @@ describe("enrichData", () => {
 		const startedAt = performance.now();
 		enrichData(bigData);
 		expect(performance.now() - startedAt).toBeLessThan(50);
+	});
+
+	it("materializes canonical indicator values for requested runtime params", () => {
+		const series = [
+			{ type: "EMA", yAxis: "right", params: { period: 21 } },
+			{ type: "RSI", yAxis: "left", params: { period: 21 } },
+			{ type: "BollingerBand", yAxis: "right", params: { period: 10, stdDev: 3 } },
+			{ type: "MACD", yAxis: "right", params: { fast: 8, slow: 21, signal: 5 } },
+			{ type: "Whale", yAxis: "right", params: { threshold: 75_000 } },
+		] as const;
+		const enriched = enrichData(mockOHLCV300, { series });
+		const bar = enriched[80];
+
+		expect(resolveSeriesValue(bar!, series[0])).toBeTypeOf("number");
+		expect(resolveSeriesValue(bar!, series[1])).toBeTypeOf("number");
+		expect(resolveSeriesStructuredValue(bar!, series[2])).toEqual(
+			expect.objectContaining({ top: expect.any(Number), middle: expect.any(Number), bottom: expect.any(Number) }),
+		);
+		expect(resolveSeriesStructuredValue(bar!, series[3])).toEqual(
+			expect.objectContaining({ macd: expect.any(Number), signal: expect.any(Number), divergence: expect.any(Number) }),
+		);
+		expect(bar?.indicatorValues?.["EMA:period=21"]).toBeDefined();
+		expect(bar?.indicatorValues?.["RSI:period=21"]).toBeDefined();
 	});
 });

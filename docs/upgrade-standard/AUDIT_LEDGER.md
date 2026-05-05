@@ -51,6 +51,83 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 | S21 Migrate indicator/interactive | ✅ Completed | Indicator/Interaction owners | Indicator + interactive sub-slices complete; type-check + build:docs pass; module tree regenerated; 0 .js in src/lib/interactive |
 | S22 Migrate root files + Gate G3 + Final audit | ✅ Completed | Release owner | Root files migrated; type-check + build:docs pass; browser smoke pass; 0 file .js trong src/ |
 
+### Ad-hoc documentation package — GoCharting-style settings dialog rewrite
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: settings modal / pane inspector documentation alignment for the dynamic-pane rewrite
+- Files modified:
+  - `docs/planning/S5_SETTINGS_DIALOG_SPEC.md`
+  - `docs/planning/S5_SETTINGS_PANEL_SPEC.md`
+  - `docs/planning/INDICATOR_VISIBILITY_PLAN.md`
+  - `docs/planning/DYNAMIC_PANE_SYSTEM.md`
+  - `docs/planning/AUDIT_EVIDENCE_TEMPLATE.md`
+  - `docs/TypeScript/ARCHITECTURE.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Modal settings dialog with top-right gear icon near theme toggle.
+  - Pane-local indicator editor with mandatory `left` / `right` Y-axis selection.
+  - Configurable `maxVisiblePanes` persisted in demo settings.
+  - Optional multi-template indicator support documented as a stretch path.
+- Validation:
+  - Documentation alignment review → PASS
+
+### Ad-hoc documentation package — Indicator SSOT policy
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: lưu trữ quyết định kiến trúc về SSOT cho indicator data để dùng làm chuẩn phát triển và code review
+- Files modified:
+  - `docs/planning/INDICATOR_SSOT_POLICY.md`
+  - `docs/planning/ARCHITECTURE_GUIDE.md`
+  - `docs/planning/IMPLEMENTATION_PLAN.md`
+  - `docs/planning/DYNAMIC_PANE_SYSTEM.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Xác nhận indicator không phải nguồn dữ liệu riêng mà là phép chiếu từ cùng `RawOHLCV` hoặc transform đã phê duyệt.
+  - Chốt rule canonical identity cho indicator theo `source + timeframe + transform + type + params`.
+  - Chốt yêu cầu chart, tooltip, yExtents, computed values và settings phải cùng đọc một canonical series.
+  - Ghi lại anti-pattern bị cấm và acceptance checks bắt buộc cho các thay đổi sau này.
+- Validation:
+  - Documentation alignment review → PASS
+
+### Ad-hoc documentation amendment — Indicator SSOT visual invariance example
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: làm rõ bằng ví dụ trực quan rằng cùng indicator trên cùng nguồn phải trùng X timeline và Y value ở mọi pane
+- Files modified:
+  - `docs/planning/INDICATOR_SSOT_POLICY.md`
+  - `docs/planning/DYNAMIC_PANE_SYSTEM.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Bổ sung ví dụ chuẩn với `BTCUSDT` Binance để chốt rằng cùng indicator ở 2 pane phải trùng timestamp trên trục X.
+  - Chốt thêm rằng giá trị Y tại cùng timestamp phải giống nhau tuyệt đối; khác biệt hợp lệ chỉ là pane height hoặc y-scale tick spacing.
+  - Nâng acceptance checks để QA có thể bắt lỗi lệch hình, lệch timestamp hoặc lệch value giữa các pane.
+- Validation:
+  - Documentation alignment review → PASS
+
+### Ad-hoc demo task — GoCharting settings modal implementation
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: gear-icon settings modal, pane-local indicator editing, and dynamic-pane runtime wiring
+- Files modified:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/PaneSettingsModal.tsx`
+  - `src/demo/demo.css`
+  - `src/lib/core/hooks/useDynamicPanes.ts`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Gear icon đặt cạnh theme toggle để mở modal cài đặt GoCharting-style.
+  - Composer chỉ báo bắt buộc chọn trục Y trái/phải trước khi thêm.
+  - `maxVisiblePanes` được persist và đồng bộ với layout động của pane.
+  - Modal được Việt hóa đầy đủ và có CSS riêng cho backdrop, navigation, panel, và responsive layout.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run test` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 620)
+
 ### Ad-hoc documentation package — Pane splitter resize handoff
 
 - Người thực hiện: GitHub Copilot
@@ -72,6 +149,33 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 - Validation:
   - Documentation completeness review → PASS
 
+---
+
+### Ad-hoc documentation package — Drawing Tools Engine handoff (M1/M2/M3)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: Tài liệu bàn giao đầy đủ cho đội code triển khai Drawing Tools Engine chuẩn TradingView/GoCharting (3 milestone)
+- Files created:
+  - `docs/upgrade-standard/drawing-tools/HANDOFF_MANIFEST.md`
+  - `docs/upgrade-standard/drawing-tools/TECH_SPEC.md`
+  - `docs/upgrade-standard/drawing-tools/IMPLEMENTATION_PLAN.md`
+  - `docs/upgrade-standard/drawing-tools/TASKBOARD.md`
+  - `docs/upgrade-standard/drawing-tools/AUDIT_PROTOCOL.md`
+- Files modified:
+  - `docs/upgrade-standard/HANDOFF_MANIFEST.md` (thêm link drawing-tools package)
+  - `docs/upgrade-standard/BACKLOG.md` (thêm B-130–B-139)
+  - `docs/upgrade-standard/TASKBOARD.md` (thêm TB-41–TB-63)
+  - `docs/upgrade-standard/AUDIT_LEDGER.md` (entry này)
+- Nội dung bàn giao:
+  - Gap analysis: 3 vấn đề cốt lõi (activeTool không wire, render stubs, không có coordinate bridge).
+  - TECH_SPEC với TypeScript interface specs đầy đủ cho ChartScales, DrawingLayer, useDrawingInteraction.
+  - IMPLEMENTATION_PLAN với thứ tự dependency bắt buộc cho 11 bước M1, 8 bước M2, 9 bước M3.
+  - TASKBOARD với task ID DT-01–DT-28 + gate checklist per milestone.
+  - AUDIT_PROTOCOL với functional matrix F01–F47, regression matrix R01–R08, unit test specs, edge cases E01–E08.
+- Validation:
+  - Documentation completeness review → PASS
+
 ### Ad-hoc demo task — Chart type switcher (GoCharting-style)
 
 - Người thực hiện: GitHub Copilot
@@ -90,6 +194,169 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - `npm run type-check` → PASS
   - `npm run build:docs` → PASS
   - `python scripts/generate_module_tree.py` → PASS (Modules: 594)
+
+### Ad-hoc demo task — Dynamic pane runtime integration
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: core dynamic pane state, registry bridge, chart runtime, and demo wiring
+- Files modified:
+  - `src/lib/core/types/pane-descriptor.ts`
+  - `src/lib/core/calculators/types.ts`
+  - `src/lib/core/calculators/fixtures/mockData.ts`
+  - `src/lib/core/calculators/calcCVDApprox.ts`
+  - `src/lib/core/calculators/calcStrengthElder.ts`
+  - `src/lib/core/calculators/calcWhaleApprox.ts`
+  - `src/lib/core/calculators/enrichData.ts`
+  - `src/lib/core/calculators/__tests__/enrichData.test.ts`
+  - `src/lib/core/registry/SeriesRegistry.ts`
+  - `src/lib/core/registry/registerAll.ts`
+  - `src/lib/core/registry/__tests__/SeriesRegistry.test.ts`
+  - `src/lib/core/hooks/useDynamicPanes.ts`
+  - `src/lib/core/hooks/__tests__/useDynamicPanes.test.ts`
+  - `src/lib/core/DynamicChart.tsx`
+  - `src/lib/core/PaneHeader.tsx`
+  - `src/lib/core/PaneLabel.tsx`
+  - `src/lib/core/PaneTooltip.tsx`
+  - `src/lib/core/SeriesPicker.tsx`
+  - `src/lib/core/index.ts`
+  - `src/lib/styles/pane-overlays.css`
+  - `src/index.ts`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/demo.css`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Tính năng bàn giao:
+  - `DynamicChart` renders visible panes from `useDynamicPanes` state and drives per-pane tooltips, overlays, and splitters.
+  - `PaneHeader`, `PaneLabel`, `PaneTooltip`, and `SeriesPicker` are exported from the core package and wired into the demo shell.
+  - The demo topbar chart type selector now swaps the primary price series instead of relying on a fixed three-chart stack.
+  - Pane layout persists in localStorage and rebuilds cleanly after reset/reorder/show-hide operations.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm test -- src/lib/core/types/__tests__/pane-descriptor.test.ts src/lib/core/calculators/__tests__/enrichData.test.ts src/lib/core/registry/__tests__/SeriesRegistry.test.ts src/lib/core/hooks/__tests__/useDynamicPanes.test.ts` → PASS (27 tests)
+  - `npm run build:docs` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 618)
+  - Browser smoke on [build/index.html](../../build/index.html) → PASS; demo shell loads, live/offline data path renders, duplicate-key warning cleared after rebuild
+
+### Demo hotfix — direct Chart children
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: `src/lib/core/DynamicChart.tsx`, `src/demo/LibraryShowcaseDemo.tsx`, `module_tree_full.md`
+- Root cause: `ChartCanvas` only reads `Chart` configs from direct children. The earlier `<DynamicChart />` wrapper hid the price/volume chart elements, so those panes mounted as empty frames.
+- Fix: dynamic chart slots are now emitted as direct children of `ChartCanvas` by calling `DynamicChart({...})` inside the demo render tree.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke on [build/index.html](../../build/index.html) → PASS; price, volume, and momentum panes render visually with live values
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 618)
+
+### Demo hotfix — restore candlestick body width
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: `src/lib/core/DynamicChart.tsx`
+- Historical root cause: commit `64dbf3b` previously fixed candlestick width in the demo by injecting a `width` callback into `CandlestickSeries`. The later dynamic-chart refactor dropped that prop, so the default width path became active again.
+- Fix: reintroduced the candle body width callback and applied it to both `Candlestick` and `HollowCandle` series inside `DynamicChart`.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke on [build/index.html](../../build/index.html) → PASS; candlestick bodies render with stable width again
+
+### Demo hotfix — pane labels outside SVG
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: `src/demo/LibraryShowcaseDemo.tsx`
+- Root cause: `PaneLabel` was rendered as a child of `ChartCanvas`, so it was inserted into the SVG subtree and lost its absolute-position overlay behavior.
+- Fix: moved `PaneLabel` outside `ChartCanvas` so it renders as an HTML overlay in `gc-chart-shell`, keeping the vertical pane names outside the left Y axis.
+- Validation:
+  - `npm run build:docs` → PASS
+  - Browser smoke on [build/index.html](../../build/index.html) → PASS; pane labels now render vertically outside the left axis area
+
+### Demo hotfix — remove bottom XAxis domain line
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: `src/lib/core/DynamicChart.tsx`, `docs/upgrade-standard/AUDIT_LEDGER.md`, `module_tree_full.md`
+- Root cause: the bottom `XAxis` was still rendering its default domain path, which appears as a black streak under the time axis.
+- Fix: set `showDomain={false}` on the bottom `XAxis` so the tick labels remain visible without the line artifact.
+- Validation:
+  - `get_errors` on `src/lib/core/DynamicChart.tsx` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 618)
+
+### Demo cleanup — modal shell, theme parity, and splitter restoration
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: `src/demo/LibraryShowcaseDemo.tsx`, `src/demo/demo.css`, `module_tree_full.md`, `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Files modified:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/demo.css`
+  - `module_tree_full.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Root cause:
+  - `LibraryShowcaseDemo.tsx` vẫn còn render right-side panel legacy sau khi đã migrate sang settings modal.
+  - `src/demo/demo.css` không import lại `chart-theme.css` và `chart-splitter.css`, khiến shell bị lẫn sáng/tối và splitter hover không nhận đúng style `.rsc-splitter`.
+  - File CSS demo vẫn giữ một khối selector side-panel/splitter legacy không còn khớp với cây JSX mới.
+- Fix:
+  - Dựng lại toàn bộ render tree cuối của `LibraryShowcaseDemo.tsx` để chỉ còn topbar, chart shell, settings modal, và footer; gỡ hẳn right-side panel cũ.
+  - Đồng bộ `data-chart-theme` lên `document.documentElement` để theme áp dụng xuyên suốt toàn shell.
+  - Import lại shared theme/splitter CSS trong `src/demo/demo.css`, chuyển `gc-main` về layout 2 cột, và dọn selector sidepanel/splitter/settings legacy đã chết.
+- Validation:
+  - `npm run build:docs` → PASS
+  - `npm run type-check` → PASS
+  - `npm test` → PASS (`51/51` tests)
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 620)
+
+### Ad-hoc delivery task — Demo VN/EN i18n rollout and handoff package
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: triển khai i18n cục bộ cho demo bằng tiếng Việt/English, giữ `src/lib/core` độc lập với demo, và tạo bộ tài liệu chuyển giao + quality playbook cho giai đoạn tiếp theo.
+- Files modified:
+  - `src/demo/i18n.tsx`
+  - `src/demo/index.tsx`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/PaneSettingsModal.tsx`
+  - `src/demo/FullDemo.tsx`
+  - `src/demo/OriginalLikeDemo.tsx`
+  - `src/demo/LiveDemo.tsx`
+  - `src/lib/core/PaneHeader.tsx`
+  - `src/lib/core/IndicatorLegend.tsx`
+  - `src/lib/core/ChartSplitter.tsx`
+  - `src/lib/core/index.ts`
+  - `src/index.ts`
+  - `docs/project-delivery/HANDOFF_MANIFEST.md`
+  - `docs/project-delivery/PROJECT_GOVERNANCE.md`
+  - `docs/project-delivery/TECH_SPEC.md`
+  - `docs/project-delivery/IMPLEMENTATION_PLAN.md`
+  - `docs/project-delivery/TASKBOARD.md`
+  - `docs/project-delivery/BACKLOG.md`
+  - `docs/project-delivery/AUDIT_PROTOCOL.md`
+  - `docs/project-delivery/HANDOFF_CHECKLIST.md`
+  - `quality/QUALITY.md`
+  - `quality/RUN_CODE_REVIEW.md`
+  - `quality/RUN_INTEGRATION_TESTS.md`
+  - `quality/RUN_SPEC_AUDIT.md`
+  - `quality/code_reviews/.gitkeep`
+  - `quality/results/.gitkeep`
+  - `quality/spec_audits/.gitkeep`
+  - `AGENTS.md`
+  - `build/index.html`
+  - `build/react-stockcharts-demo.7ed268f353b1c5b827e6.js`
+  - `module_tree_full.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Thêm `DemoI18nProvider` mặc định `vi`, hỗ trợ `en`, lưu locale vào localStorage và đồng bộ `document.documentElement.lang`.
+  - Việt hóa/Anh hóa shell demo chính, settings modal, và các demo standalone (`FullDemo`, `OriginalLikeDemo`, `LiveDemo`) theo hướng sẵn sàng tách widget sau này.
+  - Mở rộng `PaneHeader`, `IndicatorLegend`, và `ChartSplitter` bằng optional label props để demo truyền text đã localize mà không tạo dependency ngược từ core sang `src/demo`.
+  - Tạo bộ `docs/project-delivery/*`, `quality/*`, và `AGENTS.md` để bàn giao cho đội code với governance, taskboard, audit protocol, review flow, integration test flow, và spec audit flow.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm test` → PASS (`51/51` tests)
+  - `npm run build:docs` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 621)
 
 ### S21 progress — indicator sub-slice
 
@@ -288,6 +555,95 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - Browser smoke on `http://127.0.0.1:4173/index.html` → PASS
   - `xExtents` reset verified via browser state after brush callback
 - Kết luận: PASS — demo gọn nhưng giữ cấu trúc gốc; wheel zoom và brush span đều hoạt động.
+
+### Ad-hoc runtime task — Indicator SSOT canonical resolver integration
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: hợp nhất canonical indicator access giữa enrich pipeline, dynamic renderer, tooltip/yExtents accessor, và main demo data path để cùng `indicatorType + params` luôn đọc cùng series.
+- Files modified:
+  - `src/lib/core/calculators/types.ts`
+  - `src/lib/core/seriesValueResolver.ts`
+  - `src/lib/core/__tests__/seriesValueResolver.test.ts`
+  - `src/lib/core/calculators/enrichData.ts`
+  - `src/lib/core/calculators/__tests__/enrichData.test.ts`
+  - `src/lib/core/DynamicChart.tsx`
+  - `src/demo/demoData.ts`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `module_tree_full.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Thêm canonical resolver layer để build exact indicator keys theo runtime params và tái sử dụng cùng accessor cho chart render, tooltip, và `yExtents`.
+  - Mở rộng `EnrichedDatum` với `indicatorValues` để materialize series values theo params thay vì chỉ dựa vào các field legacy cố định như `ema20`, `ema50`, `rsi14`.
+  - Cập nhật `enrichData()` để tính và lưu canonical EMA, RSI, Bollinger, MACD, và Whale values cho các series thực tế đang được yêu cầu.
+  - Cập nhật `DynamicChart` và main demo pipeline để dùng canonical resolver thay cho threshold fallback, qua đó giữ cùng indicator cùng params cho cùng hình dạng ở nhiều pane.
+  - Bổ sung regression tests cho canonical key building, exact EMA lookup, structured Bollinger/MACD access, và enrichData runtime-param materialization.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm test -- src/lib/core/__tests__/seriesValueResolver.test.ts` → PASS (`4/4` tests)
+  - `npm test -- src/lib/core/__tests__/seriesValueResolver.test.ts src/lib/core/calculators/__tests__/enrichData.test.ts` → PASS (`12/12` tests)
+  - `npm test` → PASS (`56/56` tests)
+  - `npm run build:docs` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 623)
+
+### Ad-hoc UI task — Settings modal template alignment with root shell
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: đồng bộ visual language của Settings modal với terminal shell chung của root page để bỏ cảm giác lệch template, quá nặng hiệu ứng, và thiếu style cho summary/tag blocks.
+- Files modified:
+  - `src/demo/PaneSettingsModal.tsx`
+  - `src/demo/demo.css`
+  - `module_tree_full.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Chuyển header, nav rail, content surface, pane cards, series cards, tags, và close button của Settings modal về cùng hệ token và hình khối `gc-*` của shell chính.
+  - Thêm meta badges ở header để modal hiển thị section hiện tại, pane count, và pane đang chọn theo cùng nhịp UI của root shell.
+  - Bổ sung style còn thiếu cho `gc-settings-pane-summary`, `gc-tag`, và highlight state cho pane đang được chọn.
+  - Giảm blur/gradient riêng của modal, làm input/button/panel nhất quán hơn với topbar, dropdown, và chart shell hiện có.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke on `build/index.html` → PASS; Settings modal mở đúng, header/nav/card spacing đồng nhất với shell và không còn block summary/tag bị thô.
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 623)
+
+### Ad-hoc i18n task — Keep indicator labels in English for VI locale
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: chuẩn hóa các study/pane names theo English financial terminology ngay cả khi UI shell đang ở locale tiếng Việt.
+- Files modified:
+  - `src/demo/i18n.tsx`
+  - `module_tree_full.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Đổi các pane labels trong locale VI từ `Giá`, `Khối lượng`, `Dòng lệnh`, `Sức mạnh` sang `Price`, `Volume`, `Order Flow`, `Strength`.
+  - Giữ các tên study đang hiển thị như `EMA`, `RSI`, `MACD`, `Bollinger Band`, `Volume` theo English chuẩn tài chính thay vì Việt hóa.
+  - Chuẩn hóa thêm volume badge/metric/guide text để UI tiếng Việt vẫn đọc tự nhiên nhưng không đổi tên indicator.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke on `build/index.html` → PASS; chart shell hiển thị `Price`, `Volume`, `RSI+MACD` và tooltip/pane controls dùng English labels đúng theo locale rule mới.
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 623)
+
+### Ad-hoc i18n task — Keep charting tool terms in English for VI locale
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-04
+- Scope: chuẩn hóa chart-type labels và drawing-tool labels trong locale tiếng Việt theo English charting terminology.
+- Files modified:
+  - `src/demo/i18n.tsx`
+  - `module_tree_full.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Đổi `chartType.hollow`, `chartType.ohlc`, `chartType.line`, `chartType.area` sang `Hollow Candle`, `OHLC Bar`, `Line`, `Area` trong locale VI.
+  - Đổi `tool.cursor`, `tool.trendLine`, `tool.hLine`, `tool.vLine`, `tool.channel`, `tool.text` sang `Cursor`, `Trend Line`, `Horizontal Line`, `Vertical Line`, `Channel`, `Text Note`.
+  - Giữ nguyên phần vỏ UI tiếng Việt, chỉ chuẩn hóa các thuật ngữ chart/drawing để nhất quán với terminology tài chính trên toàn bộ demo shell.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke on `build/index.html` → PASS; toolbar hiển thị `Cursor`, `Trend Line`, `Horizontal Line`, `Vertical Line`, `Channel`, `Text Note`, và chart-type label active giữ English.
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 623)
 
 ## 3. Modified-file rule
 
@@ -1243,3 +1599,26 @@ Every completed slice must update this ledger with the exact files changed in th
 - [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
 - [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
 - [module_tree_full.md](../../module_tree_full.md)
+
+---
+
+### Ad-hoc documentation sync — Drawing Tools central docs alignment (2026-05-05)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: Đồng bộ central project-delivery docs với drawing-tools package đã có sẵn ở `docs/upgrade-standard/drawing-tools/`
+- Files modified:
+  - `docs/project-delivery/BACKLOG.md` (thêm section 3b: B-130–B-139 Drawing Tools workstream)
+  - `docs/project-delivery/TASKBOARD.md` (thêm section 7: TB-41–TB-63 M1/M2/M3 task list)
+  - `docs/project-delivery/HANDOFF_MANIFEST.md` (thêm link tới `docs/upgrade-standard/drawing-tools/HANDOFF_MANIFEST.md`)
+  - `docs/upgrade-standard/AUDIT_LEDGER.md` (entry này)
+- Nội dung:
+  - `docs/project-delivery/BACKLOG.md` section 3b: 10 backlog items B-130–B-139 phân nhóm theo milestone M1/M2/M3, pointer về HANDOFF_MANIFEST package.
+  - `docs/project-delivery/TASKBOARD.md` section 7: 23 tasks TB-41–TB-63 (TB-41–TB-51 M1, TB-52–TB-59 M2, TB-60–TB-63 M3) với trạng thái TODO, đầu ra bắt buộc, và gate summary per milestone.
+  - `docs/project-delivery/HANDOFF_MANIFEST.md`: thêm row bảng cho `docs/upgrade-standard/drawing-tools/HANDOFF_MANIFEST.md` để team có entry point từ central manifest.
+- Context:
+  - `docs/upgrade-standard/drawing-tools/` đã có 5 file hoàn chỉnh (HANDOFF_MANIFEST, TECH_SPEC, IMPLEMENTATION_PLAN, TASKBOARD, AUDIT_PROTOCOL) từ 2026-05-04.
+  - `docs/upgrade-standard/BACKLOG.md` và `docs/upgrade-standard/TASKBOARD.md` đã có Drawing Tools sections từ trước.
+  - Đây là lần sync để project-delivery docs (bề mặt central governance) cũng reflect workstream drawing tools.
+- Validation:
+  - Documentation review → PASS; no broken links; no content gaps

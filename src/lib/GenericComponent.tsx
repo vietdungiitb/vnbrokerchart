@@ -205,6 +205,9 @@ class GenericComponent extends Component<GenericComponentProps, GenericComponent
 		if (isDefined(moreProps)) {
 			this.updateMoreProps(moreProps);
 		}
+		// Internal moreProps sync — only update cache, skip event processing and SVG re-renders.
+		// Using a regular event type here would trigger forceUpdate() causing flicker.
+		if (type === "__sync__") return;
 		this.evaluationInProgress = true;
 		this.evaluateType(type, e);
 		this.evaluationInProgress = false;

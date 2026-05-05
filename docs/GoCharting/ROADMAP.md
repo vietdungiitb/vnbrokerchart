@@ -70,7 +70,7 @@ Phase 1 (Foundation) ──► Phase 2 (Indicators + Drawings)
 > **File chi tiết:** [PHASE2_INDICATORS.md](./PHASE2_INDICATORS.md)
 
 ### 2.1 Indicator Manager
-- [ ] Study panel — modal tìm kiếm indicator, add vào chart
+- [ ] Settings modal (gear icon) — modal tìm kiếm indicator, add vào chart, chọn Y-axis trái/phải
 - [ ] Indicator settings — dialog cài thông số (period, color, line style)
 - [ ] Indicator on indicator — ví dụ EMA của RSI
 

@@ -468,30 +468,170 @@ JSON.parse(localStorage.getItem("rsc-pane-layout-v1"))
 
 ### SLICE S2.1 — SeriesPicker
 
-| # | Kịch bản | Expected |
-|---|---------|----------|
-| 2.1.1 | Click `+` trên Volume header | Dropdown mở ngay dưới nút |
-| 2.1.2 | EMA trong picker (đang có trên Price pane) | Hiện checkmark nếu là pane đang mở |
-| 2.1.3 | Click Whale trong picker | Whale series thêm vào pane, render histogram |
-| 2.1.4 | Click EMA lần 2 (remove) | EMA xóa khỏi pane |
-| 2.1.5 | Nhấn Escape | Picker đóng |
-| 2.1.6 | focus-within giữ header visible | Header không fade khi picker open |
+#### Unit Tests
+
+**File:** `src/lib/core/__tests__/SeriesPicker.test.tsx`
+
+```typescript
+import { render, screen, fireEvent } from "@testing-library/react";
+import { SeriesPicker } from "../SeriesPicker";
+import { initRegistry } from "../registry/registerAll";
+
+const mockPane = DEFAULT_PANES[0]; // Price pane with Candlestick+EMA+Bollinger
+
+beforeAll(() => initRegistry());
+
+describe("SeriesPicker", () => {
+  it("hiển thị danh sách tất cả registered series", () => {
+    render(<SeriesPicker pane={mockPane} onAddSeries={jest.fn()} onRemoveSeries={jest.fn()} anchorRef={{ current: null }} />);
+    expect(screen.getByText(/CVDApprox/i)).toBeInTheDocument();
+    expect(screen.getByText(/Whale/i)).toBeInTheDocument();
+  });
+
+  it("series đã có trong pane → hiện checkmark", () => {
+    render(<SeriesPicker pane={mockPane} onAddSeries={jest.fn()} onRemoveSeries={jest.fn()} anchorRef={{ current: null }} />);
+    const candlestickItem = screen.getByText(/Candlestick/i).closest("li");
+    expect(candlestickItem).toHaveClass("rsc-series-item--active");  // hoặc aria-checked
+  });
+
+  it("click series chưa có → gọi onAddSeries với config đúng", () => {
+    const onAdd = jest.fn();
+    render(<SeriesPicker pane={mockPane} onAddSeries={onAdd} onRemoveSeries={jest.fn()} anchorRef={{ current: null }} />);
+    fireEvent.click(screen.getByText(/Whale/i));
+    expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ type: "Whale" }));
+  });
+
+  it("click series đã có → gọi onRemoveSeries", () => {
+    const onRemove = jest.fn();
+    render(<SeriesPicker pane={mockPane} onAddSeries={jest.fn()} onRemoveSeries={onRemove} anchorRef={{ current: null }} />);
+    fireEvent.click(screen.getByText(/Candlestick/i));
+    expect(onRemove).toHaveBeenCalledWith("Candlestick");
+  });
+});
+```
+
+#### Manual Test Scenarios
+
+| # | Kịch bản | Expected | Screenshot |
+|---|---------|----------|------------|
+| 2.1.1 | Click `+` trên Volume header | Dropdown mở ngay dưới nút | evidence/s2.1-01-picker-open.png |
+| 2.1.2 | EMA hiện trong picker với checkmark (Price pane đang chứa EMA) | Checkmark visual rõ ràng | evidence/s2.1-02-checkmark.png |
+| 2.1.3 | Click Whale trong picker | Whale series thêm vào pane, render histogram | evidence/s2.1-03-add-whale.png |
+| 2.1.4 | Click EMA lần 2 (remove) | EMA xóa khỏi pane | evidence/s2.1-04-remove-ema.png |
+| 2.1.5 | Nhấn Escape | Picker đóng | evidence/s2.1-05-escape.png |
+| 2.1.6 | focus-within giữ header visible | Header không fade khi picker open | evidence/s2.1-06-focus-within.png |
+
+#### Evidence
+
+| Item | Kết quả | Commit SHA |
+|------|---------|------------|
+| `npx tsc --noEmit` | ☐ PASS / ☐ FAIL | |
+| Unit tests pass | ☐ PASS / ☐ FAIL | |
+| Scenarios 2.1.1-2.1.6 | ☐ ALL PASS / ☐ FAIL: ___ | |
+
+---
 
 ### SLICE S2.2 — Add Pane Menu
 
-| # | Kịch bản | Expected |
-|---|---------|----------|
-| 2.2.1 | 3 visible pane, click `+` topbar | Menu mở, "Thêm mới" items disabled |
-| 2.2.2 | Ẩn Volume, click `+` topbar | "Thêm Volume" disabled, "Hiện lại: Volume" enabled |
-| 2.2.3 | Click "Hiện lại: Volume" | Volume restore, heights normalize |
-| 2.2.4 | Click "CVD" | Pane CVD mới với CVDApprox series xuất hiện |
+#### Unit Tests (via useDynamicPanes integration)
+
+Dùng lại `useDynamicPanes` tests, bổ sung:
+
+```typescript
+describe("AddPaneMenu — canAddPane logic", () => {
+  it("3 visible → canAddPane = false, menu items disabled", () => {
+    const { result } = renderHook(() => useDynamicPanes(600));
+    expect(result.current.canAddPane).toBe(false);
+  });
+
+  it("ẩn 1 pane → canAddPane = true", () => {
+    const { result } = renderHook(() => useDynamicPanes(600));
+    act(() => result.current.toggleVisible("momentum"));
+    expect(result.current.canAddPane).toBe(true);
+  });
+
+  it("restorePane khi canAddPane = false → không có effect", () => {
+    const { result } = renderHook(() => useDynamicPanes(600));
+    // Tất cả 3 visible → thêm hidden pane không thể
+    act(() => result.current.addPane({
+      label: "CVD", pinned: false, visible: true,
+      heightRatio: 0.2, series: [], splitScale: false, tooltip: "value"
+    }));
+    expect(result.current.visiblePanes.length).toBe(3); // vẫn 3
+  });
+});
+```
+
+#### Manual Test Scenarios
+
+| # | Kịch bản | Expected | Screenshot |
+|---|---------|----------|------------|
+| 2.2.1 | 3 visible pane, click `+` topbar | Menu mở, "Thêm mới" items disabled | evidence/s2.2-01-menu-full.png |
+| 2.2.2 | Ẩn Volume, click `+` topbar | "Thêm Volume" disabled, "Hiện lại: Volume" enabled | evidence/s2.2-02-restore-available.png |
+| 2.2.3 | Click "Hiện lại: Volume" | Volume restore, heights normalize (sum ≈ total) | evidence/s2.2-03-restored.png |
+| 2.2.4 | Click "CVD" | Pane CVD mới với CVDApprox series xuất hiện | evidence/s2.2-04-add-cvd.png |
+| 2.2.5 | Đóng menu bằng Escape hoặc click ngoài | Menu đóng | evidence/s2.2-05-dismiss.png |
+
+#### Evidence
+
+| Item | Kết quả | Commit SHA |
+|------|---------|------------|
+| `npx tsc --noEmit` | ☐ PASS / ☐ FAIL | |
+| Unit tests pass | ☐ PASS / ☐ FAIL | |
+| Scenarios 2.2.1-2.2.5 | ☐ ALL PASS / ☐ FAIL: ___ | |
+
+---
 
 ### SLICE S2.3 — Reset to Default
 
-| # | Kịch bản | Expected |
-|---|---------|----------|
-| 2.3.1 | Click "↺ Mặc định" → confirm | Layout reset về 3 pane mặc định |
-| 2.3.2 | Sau reset, reload trang | Vẫn DEFAULT_PANES (localStorage cleared) |
+#### Unit Tests
+
+```typescript
+describe("resetToDefault", () => {
+  it("sau reset → state = DEFAULT_PANES", () => {
+    const { result } = renderHook(() => useDynamicPanes(600));
+    act(() => result.current.toggleVisible("momentum"));
+    act(() => result.current.removePane("volume"));
+    act(() => result.current.resetToDefault());
+    // Phải khớp DEFAULT_PANES
+    expect(result.current.panes.length).toBe(DEFAULT_PANES.length);
+    expect(result.current.visiblePanes.length).toBe(3);
+  });
+
+  it("sau reset → localStorage key bị xóa", () => {
+    const { result } = renderHook(() => useDynamicPanes(600));
+    act(() => result.current.toggleVisible("momentum"));
+    act(() => result.current.resetToDefault());
+    expect(localStorage.getItem(PANE_LAYOUT_STORAGE_KEY)).toBeNull();
+  });
+
+  it("reload sau reset → vẫn là DEFAULT_PANES (không restore cũ)", () => {
+    // Simulate reload bằng cách unmount rồi remount hook
+    const { result, unmount } = renderHook(() => useDynamicPanes(600));
+    act(() => result.current.toggleVisible("momentum"));
+    act(() => result.current.resetToDefault());
+    unmount();
+    // Mount lại — localStorage đã cleared
+    const { result: result2 } = renderHook(() => useDynamicPanes(600));
+    expect(result2.current.visiblePanes.length).toBe(3);
+  });
+});
+```
+
+#### Manual Test Scenarios
+
+| # | Kịch bản | Expected | Screenshot |
+|---|---------|----------|------------|
+| 2.3.1 | Click "↺ Mặc định" → confirm | Layout reset về 3 pane mặc định | evidence/s2.3-01-reset.png |
+| 2.3.2 | Sau reset, reload trang | Vẫn DEFAULT_PANES (localStorage cleared) | evidence/s2.3-02-reload-after-reset.png |
+
+#### Evidence
+
+| Item | Kết quả | Commit SHA |
+|------|---------|------------|
+| `npx tsc --noEmit` | ☐ PASS / ☐ FAIL | |
+| Unit tests (3 cases) | ☐ PASS / ☐ FAIL | |
+| Scenarios 2.3.1-2.3.2 | ☐ ALL PASS / ☐ FAIL | |
 
 ---
 
@@ -499,13 +639,79 @@ JSON.parse(localStorage.getItem("rsc-pane-layout-v1"))
 
 ### SLICE S3.1 — Drag Reorder
 
-| # | Kịch bản | Expected |
-|---|---------|----------|
-| 3.1.1 | Drag Momentum lên trên Volume | Thứ tự đổi: Price → Momentum → Volume |
-| 3.1.2 | Cố drag Price pane | Cursor không đổi, không có drag behavior |
-| 3.1.3 | Cố drop vào vị trí 0 | Không thay đổi thứ tự |
-| 3.1.4 | Heights sau reorder | Mỗi pane giữ nguyên height của nó |
-| 3.1.5 | localStorage sau reorder | Thứ tự mới được persist |
+#### Unit Tests
+
+**File:** `src/lib/core/hooks/__tests__/useDynamicPanes-reorder.test.ts`
+
+```typescript
+describe("useDynamicPanes — reorderPanes", () => {
+  it("reorder non-pinned panes → thứ tự thay đổi", () => {
+    const { result } = renderHook(() => useDynamicPanes(600));
+    // Initial order: price[0], volume[1], momentum[2]
+    act(() => result.current.reorderPanes(2, 1)); // momentum → vị trí 1
+    const ids = result.current.visiblePanes.map(p => p.id);
+    expect(ids[0]).toBe("price");     // pinned, luôn vị trí 0
+    expect(ids[1]).toBe("momentum");  // sau reorder
+    expect(ids[2]).toBe("volume");
+  });
+
+  it("reorder về vị trí 0 → bị reject (Price guard)", () => {
+    const { result } = renderHook(() => useDynamicPanes(600));
+    const initialIds = result.current.visiblePanes.map(p => p.id);
+    act(() => result.current.reorderPanes(1, 0)); // volume → vị trí 0
+    const afterIds = result.current.visiblePanes.map(p => p.id);
+    expect(afterIds).toEqual(initialIds); // không thay đổi
+  });
+
+  it("reorder pane pinned → bị reject", () => {
+    const { result } = renderHook(() => useDynamicPanes(600));
+    const initialIds = result.current.visiblePanes.map(p => p.id);
+    act(() => result.current.reorderPanes(0, 2)); // price → vị trí 2
+    const afterIds = result.current.visiblePanes.map(p => p.id);
+    expect(afterIds).toEqual(initialIds); // không thay đổi
+  });
+
+  it("heights giữ nguyên theo pane sau reorder", () => {
+    const { result } = renderHook(() => useDynamicPanes(600));
+    const heightsBefore = [...result.current.heights]; // [h0, h1, h2]
+    act(() => result.current.reorderPanes(1, 2)); // volume ↔ momentum
+    // Heights của pane[1] và pane[2] phải swap theo pane
+    const [h0, h1, h2] = heightsBefore;
+    expect(result.current.heights[0]).toBeCloseTo(h0);
+    expect(result.current.heights[1]).toBeCloseTo(h2); // momentum height
+    expect(result.current.heights[2]).toBeCloseTo(h1); // volume height
+  });
+
+  it("localStorage persist sau reorder", () => {
+    const { result } = renderHook(() => useDynamicPanes(600));
+    act(() => result.current.reorderPanes(2, 1));
+    const stored = JSON.parse(localStorage.getItem(PANE_LAYOUT_STORAGE_KEY)!);
+    expect(stored.panes[1].id).toBe("momentum");
+    expect(stored.panes[2].id).toBe("volume");
+    localStorage.clear();
+  });
+});
+```
+
+**Lưu ý:** `reorderPanes(fromIndex, toIndex)` phải được thêm vào `UseDynamicPanesResult` interface tại S3.1. Đây là action mới, không có ở Phase 1.
+
+#### Manual Test Scenarios
+
+| # | Kịch bản | Expected | Screenshot |
+|---|---------|----------|------------|
+| 3.1.1 | Drag Momentum lên trên Volume | Thứ tự đổi: Price → Momentum → Volume | evidence/s3.1-01-reorder.png |
+| 3.1.2 | Cố drag Price pane (grab handle) | Handle ẩn hoặc cursor mặc định (không draggable) | evidence/s3.1-02-price-no-drag.png |
+| 3.1.3 | Cố drop vào vị trí 0 (trên Price) | Không thay đổi thứ tự, ghost snap back | evidence/s3.1-03-drop-guard.png |
+| 3.1.4 | Heights sau reorder | Mỗi pane giữ nguyên chiều cao tương đối của nó | evidence/s3.1-04-heights.png |
+| 3.1.5 | localStorage sau reorder | Kiểm tra Console: `JSON.parse(localStorage.getItem("rsc-pane-layout-v1"))` → order mới | evidence/s3.1-05-localstorage.png |
+
+#### Evidence
+
+| Item | Kết quả | Commit SHA |
+|------|---------|------------|
+| `npx tsc --noEmit` | ☐ PASS / ☐ FAIL | |
+| Unit tests (5 cases) | ☐ PASS / ☐ FAIL | |
+| Scenarios 3.1.1-3.1.5 | ☐ ALL PASS / ☐ FAIL: ___ | |
 
 ---
 
@@ -513,25 +719,272 @@ JSON.parse(localStorage.getItem("rsc-pane-layout-v1"))
 
 ### SLICE S4.1 — WebSocket
 
-| # | Kịch bản | Expected |
-|---|---------|----------|
-| 4.1.1 | Connect với BTCUSDT | Console: "WS connected", events flow vào |
-| 4.1.2 | Tắt network tạm → bật lại | Auto-reconnect sau backoff |
-| 4.1.3 | Đổi symbol | Disconnect + reconnect với symbol mới |
+#### Unit Tests
+
+**File:** `src/lib/core/ws/__tests__/BinanceTradeWS.test.ts`
+
+```typescript
+// Dùng mock WebSocket (jest.fn hoặc 'ws' mock library)
+describe("BinanceTradeWS", () => {
+  it("connect → gửi đúng URL endpoint", () => {
+    const mockWS = jest.fn();
+    (global as any).WebSocket = mockWS;
+    new BinanceTradeWS({ symbol: "btcusdt", onTrade: jest.fn() }).connect();
+    expect(mockWS).toHaveBeenCalledWith(
+      expect.stringContaining("btcusdt@trade")
+    );
+  });
+
+  it("parse message đúng TradeEvent format", () => {
+    const onTrade = jest.fn();
+    const ws = new BinanceTradeWS({ symbol: "btcusdt", onTrade });
+    const rawMsg = JSON.stringify({
+      e: "trade", T: 1699000000000, s: "BTCUSDT",
+      p: "35000.00", q: "0.001", m: false
+    });
+    ws["handleMessage"]({ data: rawMsg } as MessageEvent);
+    expect(onTrade).toHaveBeenCalledWith({
+      symbol: "BTCUSDT",
+      price: 35000,
+      quantity: 0.001,
+      isBuyerMaker: false,
+      tradeTime: 1699000000000,
+    });
+  });
+
+  it("disconnect → không gọi onTrade sau đó", () => {
+    const onTrade = jest.fn();
+    const ws = new BinanceTradeWS({ symbol: "btcusdt", onTrade });
+    ws.connect();
+    ws.disconnect();
+    // Simulate message after disconnect
+    ws["handleMessage"]({ data: JSON.stringify({ e: "trade", T: 1, s: "BTCUSDT", p: "35000", q: "0.001", m: false }) } as MessageEvent);
+    expect(onTrade).not.toHaveBeenCalled();
+  });
+});
+```
+
+#### Manual Test Scenarios
+
+| # | Kịch bản | Expected | Screenshot |
+|---|---------|----------|------------|
+| 4.1.1 | Mở DevTools Network, kết nối BTCUSDT | Tab WS hiện stream trades liên tục | evidence/s4.1-01-ws-connected.png |
+| 4.1.2 | Tắt Network Throttling → "Offline" 3s → bật lại | Console: reconnect attempts với backoff, rồi "WS connected" | evidence/s4.1-02-reconnect.png |
+| 4.1.3 | Đổi symbol từ BTCUSDT sang ETHUSDT | WS cũ đóng, WS mới mở với ethusdt@trade | evidence/s4.1-03-change-symbol.png |
+
+#### Evidence
+
+| Item | Kết quả | Commit SHA |
+|------|---------|------------|
+| `npx tsc --noEmit` | ☐ PASS / ☐ FAIL | |
+| Unit tests (3 cases) | ☐ PASS / ☐ FAIL | |
+| Scenarios 4.1.1-4.1.3 | ☐ ALL PASS / ☐ FAIL: ___ | |
+
+---
 
 ### SLICE S4.2 — CVD Real-time
 
-| # | Kịch bản | Expected |
-|---|---------|----------|
-| 4.2.1 | CVD pane visible với WS connected | CVD line cập nhật real-time |
-| 4.2.2 | Đổi timeframe 1m → 5m | CVD reset và tính lại theo timeframe mới |
+#### Unit Tests
+
+**File:** `src/lib/core/ws/__tests__/CVDAccumulator.test.ts`
+
+```typescript
+describe("CVDAccumulator", () => {
+  const TIMEFRAME_1M = 60_000;
+
+  it("buy trade → buyVol tăng, sellVol không đổi", () => {
+    const acc = new CVDAccumulator(TIMEFRAME_1M);
+    acc.addTrade({ price: 35000, quantity: 1.0, isBuyerMaker: false, tradeTime: 1699000000000, symbol: "BTCUSDT" });
+    const buckets = acc["buckets"];
+    expect(buckets[0].buyVol).toBeCloseTo(1.0);
+    expect(buckets[0].sellVol).toBeCloseTo(0);
+    expect(buckets[0].delta).toBeCloseTo(1.0);
+  });
+
+  it("sell trade (isBuyerMaker=true) → sellVol tăng", () => {
+    const acc = new CVDAccumulator(TIMEFRAME_1M);
+    acc.addTrade({ price: 35000, quantity: 0.5, isBuyerMaker: true, tradeTime: 1699000000000, symbol: "BTCUSDT" });
+    expect(acc["buckets"][0].sellVol).toBeCloseTo(0.5);
+    expect(acc["buckets"][0].delta).toBeCloseTo(-0.5);
+  });
+
+  it("CVD cộng dồn đúng qua nhiều buckets", () => {
+    const acc = new CVDAccumulator(TIMEFRAME_1M);
+    // Bar 1: delta = +2
+    acc.addTrade({ price: 35000, quantity: 2, isBuyerMaker: false, tradeTime: 1699000000000, symbol: "BTCUSDT" });
+    // Bar 2 (1 phút sau): delta = -1
+    acc.addTrade({ price: 35000, quantity: 1, isBuyerMaker: true, tradeTime: 1699000060000, symbol: "BTCUSDT" });
+    const buckets = acc["buckets"].sort((a, b) => a.openTime - b.openTime);
+    expect(buckets[0].cvd).toBeCloseTo(2);
+    expect(buckets[1].cvd).toBeCloseTo(1);  // 2 + (-1)
+  });
+
+  it("reset() → buckets rỗng", () => {
+    const acc = new CVDAccumulator(TIMEFRAME_1M);
+    acc.addTrade({ price: 35000, quantity: 1, isBuyerMaker: false, tradeTime: 1699000000000, symbol: "BTCUSDT" });
+    acc.reset();
+    expect(acc["buckets"].length).toBe(0);
+  });
+
+  it("mergeInto() override đúng cvdRealtime field", () => {
+    const acc = new CVDAccumulator(TIMEFRAME_1M);
+    acc.addTrade({ price: 35000, quantity: 3, isBuyerMaker: false, tradeTime: 1699000000000, symbol: "BTCUSDT" });
+    const mockData: EnrichedDatum[] = [{
+      date: new Date(1699000030000), open: 35000, high: 35100, low: 34900, close: 35050, volume: 100
+    } as EnrichedDatum];
+    const merged = acc.mergeInto(mockData);
+    expect(merged[0].cvdRealtime).toBeCloseTo(3);
+  });
+});
+```
+
+#### Manual Test Scenarios
+
+| # | Kịch bản | Expected | Screenshot |
+|---|---------|----------|------------|
+| 4.2.1 | CVD pane visible với WS connected | CVD line thay đổi real-time (mỗi 250ms flush) | evidence/s4.2-01-cvd-realtime.png |
+| 4.2.2 | Đổi timeframe 1m → 5m | CVD reset về 0, tính lại từ đầu theo 5m bars | evidence/s4.2-02-timeframe-reset.png |
+
+#### Evidence
+
+| Item | Kết quả | Commit SHA |
+|------|---------|------------|
+| `npx tsc --noEmit` | ☐ PASS / ☐ FAIL | |
+| Unit tests (5 cases) | ☐ PASS / ☐ FAIL | |
+| Scenarios 4.2.1-4.2.2 | ☐ ALL PASS / ☐ FAIL: ___ | |
+
+---
 
 ### SLICE S4.3 — Whale Real-time
 
-| # | Kịch bản | Expected |
-|---|---------|----------|
-| 4.3.1 | Trade > $50k USD xuất hiện | Whale marker hiển thị trên Price pane |
-| 4.3.2 | Console log whale event | `{ side: "buy" | "sell", dollar: 51234, price: 35000 }` |
+#### Unit Tests
+
+**File:** `src/lib/core/ws/__tests__/WhaleAccumulator.test.ts`
+
+```typescript
+describe("WhaleAccumulator", () => {
+  it("trade < threshold → không vào bucket", () => {
+    const acc = new WhaleAccumulator(60_000, 50_000);
+    acc.addTrade({ price: 35000, quantity: 1.0, isBuyerMaker: false, tradeTime: 1699000000000, symbol: "BTCUSDT" });
+    // 35000 * 1.0 = $35,000 < $50,000
+    expect(acc["buckets"].length).toBe(0);
+  });
+
+  it("trade >= threshold → vào bucket", () => {
+    const acc = new WhaleAccumulator(60_000, 50_000);
+    acc.addTrade({ price: 35000, quantity: 2.0, isBuyerMaker: false, tradeTime: 1699000000000, symbol: "BTCUSDT" });
+    // 35000 * 2.0 = $70,000 >= $50,000
+    expect(acc["buckets"].length).toBe(1);
+    expect(acc["buckets"][0].whaleBuyVol).toBeCloseTo(2.0);
+  });
+
+  it("whale buy vs whale sell phân biệt đúng", () => {
+    const acc = new WhaleAccumulator(60_000, 50_000);
+    acc.addTrade({ price: 35000, quantity: 2, isBuyerMaker: false, tradeTime: 1699000000000, symbol: "BTCUSDT" }); // buy
+    acc.addTrade({ price: 35000, quantity: 2, isBuyerMaker: true,  tradeTime: 1699000001000, symbol: "BTCUSDT" }); // sell
+    expect(acc["buckets"][0].whaleBuyVol).toBeCloseTo(2);
+    expect(acc["buckets"][0].whaleSellVol).toBeCloseTo(2);
+  });
+
+  it("threshold configurable", () => {
+    const acc = new WhaleAccumulator(60_000, 100_000); // $100k threshold
+    acc.addTrade({ price: 35000, quantity: 2.0, isBuyerMaker: false, tradeTime: 1699000000000, symbol: "BTCUSDT" }); // $70k — dưới threshold
+    expect(acc["buckets"].length).toBe(0);
+  });
+
+  it("whaleBuyVol và whaleSellVol không âm", () => {
+    const acc = new WhaleAccumulator(60_000, 50_000);
+    acc.addTrade({ price: 35000, quantity: 2, isBuyerMaker: false, tradeTime: 1699000000000, symbol: "BTCUSDT" });
+    expect(acc["buckets"][0].whaleBuyVol).toBeGreaterThanOrEqual(0);
+    expect(acc["buckets"][0].whaleSellVol).toBeGreaterThanOrEqual(0);
+  });
+});
+```
+
+#### Manual Test Scenarios
+
+| # | Kịch bản | Expected | Screenshot |
+|---|---------|----------|------------|
+| 4.3.1 | Console: `acc.addTrade({ price: 35000, quantity: 2, ... })` | whaleBuyVol tăng, whaleSellVol = 0 | evidence/s4.3-01-whale-buy.png |
+| 4.3.2 | Whale pane visible trên chart khi có WS connected | Whale histogram bars xuất hiện cho trades > $50k | evidence/s4.3-02-whale-chart.png |
+
+#### Evidence
+
+| Item | Kết quả | Commit SHA |
+|------|---------|------------|
+| `npx tsc --noEmit` | ☐ PASS / ☐ FAIL | |
+| Unit tests (5 cases) | ☐ PASS / ☐ FAIL | |
+| Scenarios 4.3.1-4.3.2 | ☐ ALL PASS / ☐ FAIL: ___ | |
+
+---
+
+### SLICE S4.4 — Strength Relative vs BTC
+
+#### Unit Tests
+
+**File:** `src/lib/core/ws/__tests__/StrengthRelativeCalc.test.ts`
+
+```typescript
+import { calcStrengthRelative } from "../StrengthRelativeCalc";
+
+function makeDatum(date: number, close: number): EnrichedDatum {
+  return { date: new Date(date), open: close, high: close, low: close, close, volume: 1000 } as EnrichedDatum;
+}
+
+describe("calcStrengthRelative", () => {
+  it("asset và BTC tăng cùng tỉ lệ → RS = 1.0", () => {
+    const asset = [makeDatum(1000, 100), makeDatum(2000, 110), makeDatum(3000, 121)];
+    const btcCloses = new Map([[1000, 50000], [2000, 55000], [3000, 60500]]);
+    const result = calcStrengthRelative(asset, btcCloses);
+    result.forEach(d => {
+      if (d.strengthRelative !== undefined) {
+        expect(d.strengthRelative).toBeCloseTo(1.0, 3);
+      }
+    });
+  });
+
+  it("asset tăng 10%, BTC flat → RS ≈ 1.1", () => {
+    const asset = [makeDatum(1000, 100), makeDatum(2000, 110)];
+    const btcCloses = new Map([[1000, 50000], [2000, 50000]]);
+    const result = calcStrengthRelative(asset, btcCloses);
+    expect(result[1].strengthRelative).toBeCloseTo(1.1, 3);
+  });
+
+  it("asset flat, BTC tăng 10% → RS ≈ 0.909", () => {
+    const asset = [makeDatum(1000, 100), makeDatum(2000, 100)];
+    const btcCloses = new Map([[1000, 50000], [2000, 55000]]);
+    const result = calcStrengthRelative(asset, btcCloses);
+    expect(result[1].strengthRelative).toBeCloseTo(1/1.1, 3);
+  });
+
+  it("btcCloses rỗng → không crash, data không thay đổi", () => {
+    const asset = [makeDatum(1000, 100), makeDatum(2000, 110)];
+    const result = calcStrengthRelative(asset, new Map());
+    expect(result).toHaveLength(2);
+    expect(result[0].strengthRelative).toBeUndefined();
+  });
+
+  it("asset rỗng → trả về mảng rỗng", () => {
+    const result = calcStrengthRelative([], new Map([[1000, 50000]]));
+    expect(result).toHaveLength(0);
+  });
+});
+```
+
+#### Manual Test Scenarios
+
+| # | Kịch bản | Expected | Screenshot |
+|---|---------|----------|------------|
+| 4.4.1 | Strength pane visible, WS connected với asset + BTC stream | RS line hiển thị, baseline = 1.0 | evidence/s4.4-01-rs-line.png |
+| 4.4.2 | Symbol = "btcusdt" | Không mở 2nd WS stream (kiểm tra Network tab: chỉ 1 WS) | evidence/s4.4-02-no-dual-stream.png |
+
+#### Evidence
+
+| Item | Kết quả | Commit SHA |
+|------|---------|------------|
+| `npx tsc --noEmit` | ☐ PASS / ☐ FAIL | |
+| Unit tests (5 cases) | ☐ PASS / ☐ FAIL | |
+| Scenarios 4.4.1-4.4.2 | ☐ ALL PASS / ☐ FAIL: ___ | |
 
 ---
 

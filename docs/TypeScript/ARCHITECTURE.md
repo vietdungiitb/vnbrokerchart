@@ -462,7 +462,7 @@ export interface IndicatorDefinition {
     /** Tooltip text khi crosshair hover */
     tooltip?(computed: ComputedIndicator, dataIndex: number): TooltipItem[];
 
-    /** Settings UI — tự động generate form */
+    /** Settings UI — optional field hints for a hand-authored dialog */
     paramSchema?: ParamSchema[];
 }
 
@@ -731,7 +731,7 @@ src/
 | **Dual Y-axis** | `<YAxisRight>` wrapper + `yAxis: 'right'` prop | Không có |
 | **Resize pane** | `<PaneSplitter onResize>` + `resizePane()` | Không có |
 | **React dependency** | Bắt buộc — đây là React library | Optional wrapper |
-| **Indicator settings UI** | Auto-generate từ `paramSchema` | Tự build |
+| **Indicator settings UI** | GoCharting-style modal + pane-local inspector; `paramSchema` chỉ cung cấp gợi ý field | Tự build |
 | **Theme** | CSS variables + Tailwind | JS styles object |
 | **Testing** | React Testing Library + Vitest | Vitest |
 
@@ -780,7 +780,8 @@ Phase 6: Data Adapter (2 tuần)
     useDataLoader hook (infinite scroll + realtime)
 
 Phase 7: Indicator Settings UI (2 tuần)
-    paramSchema → auto-generate settings modal
+    GoCharting-style settings modal
+    Pane-local indicator editor với `yAxis` selector và optional template selector
     Runtime update params → recompute → redraw
     Undo/redo cho indicator changes
 ```

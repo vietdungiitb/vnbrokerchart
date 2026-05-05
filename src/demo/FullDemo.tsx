@@ -17,6 +17,7 @@ import { XAxis, YAxis } from "../lib/axes";
 import { CrossHairCursor, CurrentCoordinate, EdgeIndicator, MouseCoordinateX, MouseCoordinateY } from "../lib/coordinates";
 import { BollingerBandTooltip, MACDTooltip, OHLCTooltip, RSITooltip } from "../lib/tooltip";
 import { BOLLINGER_BAND_OPTIONS, fetchLiveDemoData, getOfflineDemoData, type DemoDatum } from "./demoData";
+import { DemoI18nBoundary, useDemoI18n } from "./i18n";
 import "./demo.css";
 
 type DemoSourceMode = "local" | "live";
@@ -126,16 +127,6 @@ const rsiAppearance = {
     },
 };
 
-const tooltipDisplayTexts = {
-    d: "Ngày: ",
-    o: " Mở: ",
-    h: " Cao: ",
-    l: " Thấp: ",
-    c: " Đóng: ",
-    v: " KL: ",
-    na: "n/a",
-};
-
 function formatSigned(value: number, formatter: (input: number) => string) {
     const sign = value > 0 ? "+" : value < 0 ? "-" : "";
     return `${sign}${formatter(Math.abs(value))}`;
@@ -181,7 +172,8 @@ function normalizeBrushExtents(start: BrushPoint, end: BrushPoint): [Date, Date]
         : [endDate, startDate];
 }
 
-const FullDemo = () => {
+const FullDemoContent = () => {
+    const { language, setLanguage, t } = useDemoI18n();
     const offlineData = useMemo(() => getOfflineDemoData(), []);
     const [sourceMode, setSourceMode] = useState<DemoSourceMode>("local");
     const [loadState, setLoadState] = useState<DemoLoadState>("local");
@@ -262,9 +254,19 @@ const FullDemo = () => {
         setResetToken(token => token + 1);
     }, [rawData]);
 
+    const tooltipDisplayTexts = useMemo(() => ({
+        d: t("full.tooltip.date"),
+        o: t("full.tooltip.open"),
+        h: t("full.tooltip.high"),
+        l: t("full.tooltip.low"),
+        c: t("full.tooltip.close"),
+        v: t("full.tooltip.volume"),
+        na: t("common.na"),
+    }), [t]);
+
     const chartData = rawData;
     if (!chartData.length) {
-        return <div style={{ color: "#f87171", padding: 20 }}>Không có dữ liệu demo cục bộ.</div>;
+        return <div style={{ color: "#f87171", padding: 20 }}>{t("live.error")}</div>;
     }
 
     const latest = chartData[chartData.length - 1];
@@ -274,12 +276,12 @@ const FullDemo = () => {
     const emaTrendUp = Boolean(latest?.ema20 !== undefined && latest?.ema50 !== undefined && latest.ema20 >= latest.ema50);
     const rsiValue = latest?.rsi;
     const sourceStatusLabel = sourceMode === "local"
-        ? "Dữ liệu cục bộ"
+        ? t("full.source.local")
         : loadState === "loading"
-            ? "Đang tải Binance"
+            ? t("full.source.loading")
             : loadState === "live"
-                ? "Binance trực tiếp"
-                : "Binance dự phòng cục bộ";
+                ? t("full.source.live")
+                : t("full.source.fallback");
 
     const sourceTone = sourceMode === "local"
         ? "neutral"
@@ -344,56 +346,61 @@ const FullDemo = () => {
             <div className="demo-frame">
                 <section className="demo-hero">
                     <div className="demo-hero__content">
-                        <div className="demo-eyebrow">Demo tương tác đầy đủ</div>
-                        <h1 className="demo-title">Biểu đồ nến BTC/USD với đầy đủ lớp chỉ báo và điều khiển</h1>
-                        <p className="demo-subtitle">
-                            Bản demo này chạy mặc định bằng dữ liệu cục bộ để luôn mở được offline, nhưng vẫn cho phép chuyển sang dữ liệu Binance trực tiếp.
-                            Chart có nến, Bollinger Band, volume, EMA 20/50, RSI, MACD, crosshair, zoom bằng scroll, pan bằng drag và brush span ở panel dưới.
-                        </p>
+                        <div className="demo-eyebrow">{t("full.eyebrow")}</div>
+                        <h1 className="demo-title">{t("full.title")}</h1>
+                        <p className="demo-subtitle">{t("full.subtitle")}</p>
                         <div className="demo-badges">
                             {[
-                                "Candlestick",
-                                "Bollinger Band",
-                                "Khối lượng",
-                                "EMA 20/50",
-                                "RSI 14",
-                                "MACD 12/26/9",
-                                "Crosshair",
-                                "Zoom / Pan",
-                                "Brush span",
-                                "Fallback offline",
+                                t("full.badge.candlestick"),
+                                t("full.badge.bollinger"),
+                                t("full.badge.volume"),
+                                t("full.badge.ema"),
+                                t("full.badge.rsi"),
+                                t("full.badge.macd"),
+                                t("full.badge.crosshair"),
+                                t("full.badge.zoomPan"),
+                                t("full.badge.brush"),
+                                t("full.badge.offline"),
                             ].map((badge) => <span key={badge} className="demo-badge">{badge}</span>)}
+                        </div>
+                        <div className="source-switch" role="group" aria-label={t("language.label")}>
+                            <button type="button" className="source-switch__button" aria-pressed={language === "vi"} onClick={() => setLanguage("vi")}>
+                                {t("language.vi")}
+                            </button>
+                            <button type="button" className="source-switch__button" aria-pressed={language === "en"} onClick={() => setLanguage("en")}>
+                                {t("language.en")}
+                            </button>
                         </div>
                     </div>
 
                     <aside className="demo-summary-card" aria-live="polite">
                         <div className="demo-summary-card__header">
                             <span className={`source-chip source-chip--${sourceTone}`}>{sourceStatusLabel}</span>
-                            <span className="demo-summary-card__meta">Khung 1 giờ · Hybrid canvas</span>
+                            <span className="demo-summary-card__meta">{t("full.summaryMeta")}</span>
                         </div>
                         <div className="demo-summary-grid">
                             <MetricTile
-                                label="Giá đóng cửa"
+                                label={t("full.metric.close")}
                                 value={priceFormat(latest.close)}
                                 detail={`${formatSigned(priceChange, priceFormat)} (${formatSigned(priceChangePercent, percentFormat)})`}
                                 tone={priceChange >= 0 ? "positive" : "negative"}
                             />
                             <MetricTile
-                                label="Khối lượng"
+                                label={t("full.metric.volume")}
                                 value={volumeFormat(latest.volume)}
-                                detail="Cột volume mới nhất"
+                                detail={t("full.metric.volumeDetail")}
                                 tone="accent"
                             />
                             <MetricTile
-                                label="RSI 14"
-                                value={rsiValue != null ? priceFormat(rsiValue) : "n/a"}
-                                detail={rsiValue != null ? (rsiValue > 70 ? "Vùng quá mua" : rsiValue < 30 ? "Vùng quá bán" : "Vùng trung tính") : "n/a"}
+                                label={t("full.metric.rsi")}
+                                value={rsiValue != null ? priceFormat(rsiValue) : t("common.na")}
+                                detail={rsiValue != null ? (rsiValue > 70 ? t("full.metric.rsi.overbought") : rsiValue < 30 ? t("full.metric.rsi.oversold") : t("full.metric.rsi.neutral")) : t("common.na")}
                                 tone={rsiValue != null && rsiValue >= 70 ? "negative" : rsiValue != null && rsiValue <= 30 ? "positive" : "neutral"}
                             />
                             <MetricTile
-                                label="EMA 20/50"
-                                value={emaTrendUp ? "Xu hướng tăng" : "Xu hướng giảm"}
-                                detail={latest.ema20 != null && latest.ema50 != null ? `Chênh lệch ${formatSigned(latest.ema20 - latest.ema50, priceFormat)}` : "n/a"}
+                                label={t("full.metric.ema")}
+                                value={emaTrendUp ? t("full.metric.ema.uptrend") : t("full.metric.ema.downtrend")}
+                                detail={latest.ema20 != null && latest.ema50 != null ? t("full.metric.ema.diff", { value: formatSigned(latest.ema20 - latest.ema50, priceFormat) }) : t("common.na")}
                                 tone={emaTrendUp ? "positive" : "negative"}
                             />
                         </div>
@@ -404,16 +411,26 @@ const FullDemo = () => {
                     <article className="demo-chart-card">
                         <header className="demo-chart-card__header">
                             <div>
-                                <h2 className="demo-chart-card__title">BTC/USD · biểu đồ nhiều lớp</h2>
-                                <p className="demo-chart-card__meta">Candlestick, Bollinger Band, volume, EMA 20/50, RSI và MACD trong một khung tương tác duy nhất. Zoom bằng scroll, pan bằng drag, và kéo brush ở panel dưới để đổi span.</p>
+                                <h2 className="demo-chart-card__title">{t("full.chartTitle")}</h2>
+                                <p className="demo-chart-card__meta">{t("full.chartMeta")}</p>
                             </div>
-                            <div className="source-switch" role="group" aria-label="Chọn nguồn dữ liệu">
-                                <button type="button" className="source-switch__button" aria-pressed={sourceMode === "local"} onClick={() => setSourceMode("local")}>
-                                    Dữ liệu cục bộ
-                                </button>
-                                <button type="button" className="source-switch__button" aria-pressed={sourceMode === "live"} onClick={() => setSourceMode("live")}>
-                                    Binance trực tiếp
-                                </button>
+                            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                                <div className="source-switch" role="group" aria-label={t("full.sourceSwitcher")}>
+                                    <button type="button" className="source-switch__button" aria-pressed={sourceMode === "local"} onClick={() => setSourceMode("local")}>
+                                        {t("full.sourceSwitcher.local")}
+                                    </button>
+                                    <button type="button" className="source-switch__button" aria-pressed={sourceMode === "live"} onClick={() => setSourceMode("live")}>
+                                        {t("full.sourceSwitcher.live")}
+                                    </button>
+                                </div>
+                                <div className="source-switch" role="group" aria-label={t("language.label")}>
+                                    <button type="button" className="source-switch__button" aria-pressed={language === "vi"} onClick={() => setLanguage("vi")}>
+                                        {t("language.vi")}
+                                    </button>
+                                    <button type="button" className="source-switch__button" aria-pressed={language === "en"} onClick={() => setLanguage("en")}>
+                                        {t("language.en")}
+                                    </button>
+                                </div>
                             </div>
                         </header>
 
@@ -516,7 +533,7 @@ const FullDemo = () => {
                                         <CrossHairCursor stroke="#e2e8f0" opacity={0.16} strokeDasharray="ShortDash" />
                                     </ChartCanvas>
                                 ) : (
-                                    <div className="chart-placeholder">Đang khởi tạo khung biểu đồ...</div>
+                                    <div className="chart-placeholder">{t("common.chartInitializing")}</div>
                                 )}
                             </div>
                         </div>
@@ -524,33 +541,33 @@ const FullDemo = () => {
 
                     <aside className="demo-side">
                         <section className="demo-panel">
-                            <h2>Hướng dẫn tương tác</h2>
+                            <h2>{t("full.interactionGuide")}</h2>
                             <div className="feature-list">
-                                <div className="feature-item"><span className="feature-dot" /><p>Zoom bằng scroll, pan bằng drag, rồi dùng nút reset để trở về khung nhìn mặc định.</p></div>
-                                <div className="feature-item"><span className="feature-dot" /><p>Di chuột qua từng panel để đọc OHLC, Bollinger Band, EMA, RSI, MACD và giá trị khối lượng.</p></div>
-                                <div className="feature-item"><span className="feature-dot" /><p>Nút nguồn dữ liệu cho phép chuyển giữa CSV cục bộ và dữ liệu Binance trực tiếp.</p></div>
-                                <div className="feature-item"><span className="feature-dot" /><p>Kéo span ở panel dưới để chọn lại vùng dữ liệu quan sát, giống brush support của bản gốc.</p></div>
-                                <div className="feature-item"><span className="feature-dot" /><p>Nếu mạng lỗi, demo tự rơi về nguồn cục bộ để người xem vẫn kiểm tra được toàn bộ chart.</p></div>
+                                <div className="feature-item"><span className="feature-dot" /><p>{t("full.guide.zoom")}</p></div>
+                                <div className="feature-item"><span className="feature-dot" /><p>{t("full.guide.hover")}</p></div>
+                                <div className="feature-item"><span className="feature-dot" /><p>{t("full.guide.source")}</p></div>
+                                <div className="feature-item"><span className="feature-dot" /><p>{t("full.guide.brush")}</p></div>
+                                <div className="feature-item"><span className="feature-dot" /><p>{t("full.guide.fallback")}</p></div>
                             </div>
                         </section>
 
                         <section className="demo-panel">
-                            <h2>Chú giải lớp biểu đồ</h2>
+                            <h2>{t("full.legendTitle")}</h2>
                             <div className="legend-list">
-                                <LegendRow color={bullishColor} label="Candlestick" detail="Mỗi cây nến hiển thị mở, cao, thấp và đóng." variant="block" />
-                                <LegendRow color="#38bdf8" label="Bollinger Band" detail="Dải biến động theo chu kỳ 20, multiplier 2." />
-                                <LegendRow color="#38bdf8" label="EMA 20" detail="Đường xu hướng ngắn hạn." />
-                                <LegendRow color={ema50Stroke} label="EMA 50" detail="Đường xu hướng trung hạn." />
-                                <LegendRow color="#60a5fa" label="RSI 14" detail="Động lượng và vùng quá mua/quá bán." />
-                                <LegendRow color="#f59e0b" label="MACD" detail="Xung lực xu hướng và tín hiệu giao cắt." />
-                                <LegendRow color="#22d3ee" label="Brush span" detail="Kéo ở panel dưới để zoom vùng quan sát." />
+                                <LegendRow color={bullishColor} label={t("full.badge.candlestick")} detail={t("full.legend.candlestick.detail")} variant="block" />
+                                <LegendRow color="#38bdf8" label={t("full.badge.bollinger")} detail={t("full.legend.bollinger.detail")} />
+                                <LegendRow color="#38bdf8" label="EMA 20" detail={t("full.legend.ema20.detail")} />
+                                <LegendRow color={ema50Stroke} label="EMA 50" detail={t("full.legend.ema50.detail")} />
+                                <LegendRow color="#60a5fa" label={t("full.badge.rsi")} detail={t("full.legend.rsi.detail")} />
+                                <LegendRow color="#f59e0b" label={t("full.badge.macd")} detail={t("full.legend.macd.detail")} />
+                                <LegendRow color="#22d3ee" label={t("full.badge.brush")} detail={t("full.legend.brush.detail")} />
                             </div>
                         </section>
 
                         <section className="demo-panel">
-                            <h2>Ghi chú dữ liệu</h2>
+                            <h2>{t("full.dataNotes")}</h2>
                             <p className="demo-note">
-                                Mặc định page dùng CSV nội bộ để luôn mở được offline. Chế độ Binance trực tiếp sẽ tự tải dữ liệu mới và tự chuyển về fallback cục bộ nếu mạng không sẵn sàng.
+                                {t("full.dataNotesBody")}
                             </p>
                         </section>
                     </aside>
@@ -560,4 +577,10 @@ const FullDemo = () => {
     );
 };
 
-export default FullDemo;
+export default function FullDemo() {
+    return (
+        <DemoI18nBoundary>
+            <FullDemoContent />
+        </DemoI18nBoundary>
+    );
+}

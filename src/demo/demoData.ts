@@ -1,5 +1,6 @@
 import { bollingerBand, ema, macd, rsi } from "../lib/indicator";
 import type { OHLCV } from "../lib/types";
+import type { RawOHLCV } from "../lib/core/calculators/types";
 import bitstampCsv from "../../docs/data/bitfinex_xbtusd_1m.csv";
 
 export interface BollingerBandPoint {
@@ -42,7 +43,7 @@ function parseDateTime(value: string) {
 	return new Date(value.replace(" ", "T"));
 }
 
-function parseCsvRow(row: string): DemoDatum {
+function parseCsvRow(row: string): RawOHLCV {
 	const [date, open, high, low, close, volume] = row.split(",");
 
 	return {
@@ -55,8 +56,15 @@ function parseCsvRow(row: string): DemoDatum {
 	};
 }
 
-function computeIndicators(data: DemoDatum[]) {
-	const enriched = data.slice().sort((left, right) => left.date.valueOf() - right.date.valueOf());
+function normalizeBars(data: readonly RawOHLCV[]): RawOHLCV[] {
+	return data
+		.slice()
+		.sort((left, right) => left.date.valueOf() - right.date.valueOf())
+		.slice(-DEMO_WINDOW);
+}
+
+function computeIndicators(data: readonly RawOHLCV[]) {
+	const enriched = normalizeBars(data).map((bar) => ({ ...bar })) as DemoDatum[];
 	type IndicatorBuilder = any;
 
 	const ema20 = (ema() as IndicatorBuilder)
@@ -91,26 +99,32 @@ function computeIndicators(data: DemoDatum[]) {
 	rsiCalculator(enriched);
 	macdCalculator(enriched);
 	bollingerBandCalculator(enriched);
-	return enriched.slice(-DEMO_WINDOW);
+	return enriched;
+}
+
+export function getOfflineDemoBars(): RawOHLCV[] {
+	return normalizeBars(bitstampCsv.trim().split(/\r?\n/).slice(1).map(parseCsvRow));
 }
 
 export function getOfflineDemoData(): DemoDatum[] {
-	return computeIndicators(bitstampCsv.trim().split(/\r?\n/).slice(1).map(parseCsvRow));
+	return computeIndicators(getOfflineDemoBars());
 }
 
 type BinanceKline = [number | string, string, string, string, string, string, ...unknown[]];
 
-export function formatBinanceKlines(json: BinanceKline[]): DemoDatum[] {
-	const parsed = json.map((d: any) => ({
+export function formatBinanceKlineBars(json: BinanceKline[]): RawOHLCV[] {
+	return normalizeBars(json.map((d: any) => ({
 		date: new Date(d[0]),
 		open: parseFloat(d[1]),
 		high: parseFloat(d[2]),
 		low: parseFloat(d[3]),
 		close: parseFloat(d[4]),
 		volume: parseFloat(d[5]),
-	}));
+	})));
+}
 
-	return computeIndicators(parsed);
+export function formatBinanceKlines(json: BinanceKline[]): DemoDatum[] {
+	return computeIndicators(formatBinanceKlineBars(json));
 }
 
 export interface FetchLiveOptions {
@@ -120,7 +134,7 @@ export interface FetchLiveOptions {
 	signal?: AbortSignal;
 }
 
-export async function fetchLiveDemoData(options: FetchLiveOptions = {}): Promise<DemoDatum[]> {
+export async function fetchLiveDemoBars(options: FetchLiveOptions = {}): Promise<RawOHLCV[]> {
 	const { symbol = "BTCUSDT", interval = "1h", limit = 300, signal } = options;
 	const binanceInterval = BINANCE_INTERVAL_MAP[interval] ?? interval;
 	const url = `${BINANCE_BASE}?symbol=${encodeURIComponent(symbol)}&interval=${binanceInterval}&limit=${limit}`;
@@ -131,5 +145,9 @@ export async function fetchLiveDemoData(options: FetchLiveOptions = {}): Promise
 	}
 
 	const json = await response.json() as BinanceKline[];
-	return formatBinanceKlines(json);
+	return formatBinanceKlineBars(json);
+}
+
+export async function fetchLiveDemoData(options: FetchLiveOptions = {}): Promise<DemoDatum[]> {
+	return computeIndicators(await fetchLiveDemoBars(options));
 }

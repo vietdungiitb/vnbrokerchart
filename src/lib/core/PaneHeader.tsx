@@ -9,9 +9,19 @@ export interface PaneHeaderProps {
 	onDragStart?: (event: ReactDragEvent<HTMLButtonElement>) => void;
 	addButtonRef?: RefObject<HTMLButtonElement | null>;
 	className?: string;
+	labels?: {
+		dragAriaLabel?: (paneLabel: string) => string;
+		dragTitle?: (pane: PaneDescriptor) => string;
+		addSeriesAriaLabel?: (paneLabel: string) => string;
+		addSeriesTitle?: string;
+		toggleVisibleAriaLabel?: (paneLabel: string, visible: boolean) => string;
+		toggleVisibleTitle?: (pane: PaneDescriptor) => string;
+		removeAriaLabel?: (paneLabel: string) => string;
+		removeTitle?: string;
+	};
 }
 
-export function PaneHeader({ pane, onToggleVisible, onRemove, onAddSeries, onDragStart, addButtonRef, className }: PaneHeaderProps) {
+export function PaneHeader({ pane, onToggleVisible, onRemove, onAddSeries, onDragStart, addButtonRef, className, labels }: PaneHeaderProps) {
 	const style: CSSProperties = {};
 
 	return (
@@ -24,8 +34,8 @@ export function PaneHeader({ pane, onToggleVisible, onRemove, onAddSeries, onDra
 						className="rsc-pane-btn rsc-pane-btn--drag"
 						draggable={!pane.pinned}
 						onDragStart={onDragStart}
-						aria-label={`Kéo ${pane.label}`}
-						title={pane.pinned ? "Pane chính không thể kéo" : "Kéo để đổi vị trí pane"}
+						aria-label={labels?.dragAriaLabel?.(pane.label) ?? `Kéo ${pane.label}`}
+						title={labels?.dragTitle?.(pane) ?? (pane.pinned ? "Pane chính không thể kéo" : "Kéo để đổi vị trí pane")}
 					>
 						⠿
 					</button>
@@ -36,8 +46,8 @@ export function PaneHeader({ pane, onToggleVisible, onRemove, onAddSeries, onDra
 						type="button"
 						className="rsc-pane-btn"
 						onClick={onAddSeries}
-						aria-label={`Thêm series cho ${pane.label}`}
-						title="Thêm indicator/series"
+						aria-label={labels?.addSeriesAriaLabel?.(pane.label) ?? `Thêm series cho ${pane.label}`}
+						title={labels?.addSeriesTitle ?? "Thêm indicator/series"}
 					>
 						+
 					</button>
@@ -47,8 +57,8 @@ export function PaneHeader({ pane, onToggleVisible, onRemove, onAddSeries, onDra
 					className="rsc-pane-btn"
 					onClick={onToggleVisible}
 					disabled={pane.pinned}
-					aria-label={pane.visible ? `Ẩn ${pane.label}` : `Hiện ${pane.label}`}
-					title={pane.pinned ? "Pane chính luôn hiển thị" : pane.visible ? "Ẩn pane" : "Hiện lại pane"}
+						aria-label={labels?.toggleVisibleAriaLabel?.(pane.label, pane.visible) ?? (pane.visible ? `Ẩn ${pane.label}` : `Hiện ${pane.label}`)}
+						title={labels?.toggleVisibleTitle?.(pane) ?? (pane.pinned ? "Pane chính luôn hiển thị" : pane.visible ? "Ẩn pane" : "Hiện lại pane")}
 				>
 					{pane.visible ? "👁" : "◌"}
 				</button>
@@ -57,8 +67,8 @@ export function PaneHeader({ pane, onToggleVisible, onRemove, onAddSeries, onDra
 						type="button"
 						className="rsc-pane-btn"
 						onClick={onRemove}
-						aria-label={`Ẩn ${pane.label}`}
-						title="Ẩn pane (có thể khôi phục từ menu Panes)"
+						aria-label={labels?.removeAriaLabel?.(pane.label) ?? `Ẩn ${pane.label}`}
+						title={labels?.removeTitle ?? "Ẩn pane (có thể khôi phục từ menu Panes)"}
 					>
 						×
 					</button>

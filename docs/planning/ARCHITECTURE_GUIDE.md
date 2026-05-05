@@ -59,7 +59,7 @@ Data Sources
 LibraryShowcaseDemo
   ├── TopBar
   │     ├── CandlestickButton
-  │     ├── StudyButton
+  │     ├── SettingsGearButton → opens PaneSettingsModal
   │     ├── ReplayButton
   │     ├── CompareButton
   │     ├── AddPaneButton → AddPaneMenu (S2.2)
@@ -70,15 +70,17 @@ LibraryShowcaseDemo
         │     ├── PaneLabel (position absolute, left=0)
         │     ├── PaneHeader (position absolute, hover overlay) ← S1.7
         │     │     ├── label span
-        │     │     ├── [+] button → SeriesPicker dropdown ← S2.1
+        │     │     ├── [+] button → pane-local composer in PaneSettingsModal ← S2.1
         │     │     ├── [👁] button → toggleVisible()
         │     │     └── [×] button → removePane() (hidden nếu pinned)
         │     └── [ChartCanvas area]
         │
         ├── ChartSplitter × (N-1)     ← drag resize between panes
         │
-        └── ChartCanvas
-              └── DynamicChart (renders <Chart> slots)
+        ├── ChartCanvas
+        │     └── DynamicChart (renders <Chart> slots)
+        │
+        └── PaneSettingsModal (modal overlay, top-right gear icon)
 ```
 
 ---
@@ -153,6 +155,164 @@ const paneTop = (i: number) => {
   return margin + heights.slice(0, i).reduce((a, b) => a + b, 0);
 };
 ```
+
+### 3.6 `xAccessor` vs `displayXAccessor` — phân biệt bắt buộc
+
+react-stockcharts dùng 2 loại accessor khác nhau:
+
+- **`xAccessor`**: trả về **index số** sau khi đã loại bỏ gaps (dùng `discontinuousTimeScaleProvider`). Đây là giá trị tính toán scale.
+- **`displayXAccessor`**: trả về **Date** gốc để hiển thị trên tooltip và XAxis.
+
+```tsx
+const xScaleProvider = discontinuousTimeScaleProvider.inputDateAccessor(d => d.date);
+const { data: scaledData, xScale, xAccessor, displayXAccessor } = xScaleProvider(rawData);
+
+// ĐÚNG: pass scaledData, không phải rawData
+<ChartCanvas data={scaledData} xAccessor={xAccessor} displayXAccessor={displayXAccessor} ... />
+
+// SAI: nếu pass rawData với xAccessor = d => d.date → scale bị lỗi khi có weekend gaps
+```
+
+**Hệ quả cho EnrichedDatum:** `enrichData()` phải nhận và trả về data đã qua `xScaleProvider` transform, hoặc `DynamicChart` phải tự apply transform trước khi pass vào `ChartCanvas`.
+
+### 3.7 `ChartCanvas` width phải là pixel integer — đo bằng ResizeObserver
+
+`ChartCanvas` không hỗ trợ CSS `width`. Phải đo container width bằng ResizeObserver rồi pass giá trị số:
+
+```tsx
+const containerRef = useRef<HTMLDivElement>(null);
+const [width, setWidth] = useState(0);
+
+useEffect(() => {
+  const obs = new ResizeObserver(entries => {
+    setWidth(Math.floor(entries[0].contentRect.width));
+  });
+  obs.observe(containerRef.current!);
+  return () => obs.disconnect();
+}, []);
+
+<div ref={containerRef}>
+  {width > 0 && <ChartCanvas width={width} ... />}
+</div>
+```
+
+**Lưu ý:** Render `ChartCanvas` chỉ khi `width > 0`. Nếu width = 0 → crash hoặc blank canvas.
+
+### 3.8 `yExtents` với accessor trả về `undefined` — tránh `NaN`
+
+react-stockcharts xử lý `undefined` từ accessor bằng cách ignore datum đó khi tính scale. `NaN` thì **không** — gây scale broken hoàn toàn.
+
+```tsx
+// ĐÚNG — trả về undefined thay vì NaN
+yExtents={[d => d.ema20, d => d.ema50]}       // undefined ok cho bars đầu
+
+// SAI — nếu giá trị tính toán cho ra NaN
+yExtents={d => d.high - d.low === 0 ? NaN : d.close / (d.high - d.low)}
+// Fix: thêm guard
+yExtents={d => d.high - d.low === 0 ? undefined : d.close / (d.high - d.low)}
+```
+
+Với Bollinger Band (accessor trả về object):
+```tsx
+// Phải destructure thành từng accessor riêng
+yExtents={[d => d.bollingerBand?.top, d => d.bollingerBand?.bottom]}
+```
+
+### 3.9 `ChartCanvas` chỉ accept `<Chart>` làm children trực tiếp
+
+DOM elements (div, span) bên trong `ChartCanvas` → undefined behavior hoặc crash. **Mọi DOM overlay phải nằm ngoài `ChartCanvas`.**
+
+```tsx
+// ĐÚNG
+<div style={{ position: "relative" }}>
+  <PaneHeader ... />        {/* DOM overlay — ngoài ChartCanvas */}
+  <ChartCanvas ...>
+    <Chart ...>...</Chart>  {/* chỉ Chart bên trong */}
+  </ChartCanvas>
+</div>
+
+// SAI
+<ChartCanvas ...>
+  <div class="overlay">...</div>  {/* crash */}
+  <Chart ...>...</Chart>
+</ChartCanvas>
+```
+
+### 3.10 `<MouseCoordinateY>` cần `displayFormat` và `rectWidth` tường minh
+
+Nếu không pass `displayFormat`, một số chart types gây console warning hoặc hiển thị `[object Object]`. Luôn khai báo tường minh:
+
+```tsx
+<MouseCoordinateY
+  at="right"
+  orient="right"
+  displayFormat={format(".2f")}
+  rectWidth={64}
+/>
+```
+
+Với pane có scale khác (RSI 0-100, CVD lớn) → điều chỉnh `displayFormat` phù hợp:
+- RSI: `format(".1f")` (1 decimal)
+- CVD: `format(".3s")` (SI prefix: "1.2M", "300k")
+
+### 3.11 `<Chart>` id counter phải reset mỗi render cycle — không dùng global
+
+```tsx
+// SAI — biến global, không reset → id trùng sau remount
+let globalChartId = 1;
+
+// ĐÚNG — reset mỗi lần DynamicChart render
+const DynamicChart = ({ panes, ... }) => {
+  let chartId = 1;  // local variable, reset every render
+  return (
+    <>
+      {panes.flatMap(pane => buildChartSlots(pane).map(slot => (
+        <Chart id={chartId++} ... />  // luôn sequential từ 1
+      )))}
+    </>
+  );
+};
+```
+
+**Tại sao quan trọng:** react-stockcharts dùng `id` để register Chart vào ChartCanvas context. Nếu id trùng → crosshair, tooltip, event dispatch bị sai chart.
+
+### 3.12 Phase 4: WebSocket event — không setState trực tiếp, phải batch
+
+Binance `@trade` stream gửi hàng nghìn events/giây. `setState` mỗi event → React render storm → UI freeze.
+
+**Pattern bắt buộc — buffer 250ms:**
+
+```tsx
+const tradeBuffer = useRef<TradeEvent[]>([]);
+const flushTimerRef = useRef<ReturnType<typeof setInterval>>();
+
+// Trong WS onTrade callback:
+const handleTrade = useCallback((event: TradeEvent) => {
+  tradeBuffer.current.push(event);
+}, []);
+
+// Batch flush mỗi 250ms:
+useEffect(() => {
+  flushTimerRef.current = setInterval(() => {
+    const events = tradeBuffer.current.splice(0);  // drain buffer
+    if (events.length === 0) return;
+    setEnrichedData(prev => mergeTradeEvents(prev, events));
+  }, 250);
+  return () => clearInterval(flushTimerRef.current);
+}, []);
+```
+
+**Không** dùng `useEffect` với dependency array là buffer — React không track `ref.current` mutations.
+
+### 3.13 Indicator SSOT — quy định bắt buộc
+
+Indicator trong dự án này phải tuân thủ **Single Source of Truth**.
+
+- Cùng `indicatorType + source + timeframe + transform + params` phải cho ra cùng một canonical series.
+- Pane, `yAxis`, template render, theme, và layout chỉ là presentation layer.
+- `DynamicChart`, tooltip, `yExtents`, computed values, settings preview không được đọc từ các nguồn khác nhau cho cùng một indicator instance.
+
+Tài liệu chuẩn: [INDICATOR_SSOT_POLICY.md](INDICATOR_SSOT_POLICY.md)
 
 ---
 

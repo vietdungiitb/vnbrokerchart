@@ -67,6 +67,27 @@ Mỗi item: priority, slice, scope, phụ thuộc, tiêu chí nghiệm thu.
 
 ---
 
+## 3b. Drawing Tools Engine — Workstream mới (DT-M1/M2/M3)
+
+*Tham chiếu đầy đủ: `docs/upgrade-standard/drawing-tools/HANDOFF_MANIFEST.md`*
+
+| ID | Priority | Milestone | Task | Scope | Depends on | Acceptance criteria | Est. | Status |
+| :--- | :---: | :--- | :--- | :--- | :--- | :--- | :---: | :--- |
+| B-130 | P0 | DT-M1 | Tạo `coordinateUtils.ts` | Coordinate bridge pixel↔chart | — | Roundtrip unit test pass | S | Open |
+| B-131 | P0 | DT-M1 | Tạo `renderSvg.ts` | SVG render cho 8 tool types | B-130 | `renderDrawingToSvg` trả đúng elements | M | Open |
+| B-132 | P0 | DT-M1 | Tạo `useDrawingInteraction.ts` | Hook wrap state machine + history | — | undo/redo/delete/cancel hoạt động | S | Open |
+| B-133 | P0 | DT-M1 | Tạo `DrawingLayer.tsx` | SVG overlay + pointer events | B-130, B-131, B-132 | Browser smoke: click → line appears | M | Open |
+| B-134 | P0 | DT-M1 | Wire `LibraryShowcaseDemo.tsx` | Mount DrawingLayer + keyboard | B-133 | Ctrl+Z/Y/ESC/Del hoạt động | M | Open |
+| B-135 | P1 | DT-M1 | Tạo `rectangle.ts` + `arrow.ts` built-ins | 2 tool mới | — | createDraft/updateDraft test pass | S | Open |
+| B-136 | P0 | DT-M2 | Tạo `DrawingInspector.tsx` | Floating property panel | Gate M1 | Color/stroke/lock controls | M | Open |
+| B-137 | P0 | DT-M2 | Tạo `DrawingStorage.ts` + `useDrawingStorage.ts` | localStorage persistence | Gate M1 | Reload → drawings persist | M | Open |
+| B-138 | P1 | DT-M3 | Tạo `priceRange.ts`, `positionBox.ts`, `fibExtension.ts` | 3 advanced tools | Gate M2 | Badge + R/R ratio đúng | L | Open |
+| B-139 | P1 | DT-M3 | Multi-select + toolbar groups | Shift+click; divider UI | Gate M2 | Shift+click 2 → Delete xóa 2 | M | Open |
+
+**Drawing Tools open items: 10**
+
+---
+
 ## 4. Ghi chú cho team
 
 - **Không bắt đầu Giai đoạn 2 trước khi Gate G1 pass**.

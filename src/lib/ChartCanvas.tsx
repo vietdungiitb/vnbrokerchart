@@ -259,10 +259,14 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 
 	componentDidUpdate(prevProps: Readonly<AnyRecord>) {
 		const reset = shouldResetChart(prevProps, this.props);
-		if (reset || prevProps.data !== this.props.data || prevProps.width !== this.props.width || prevProps.height !== this.props.height) {
+		const sizeChanged = prevProps.width !== this.props.width || prevProps.height !== this.props.height;
+		if (reset || prevProps.data !== this.props.data || sizeChanged) {
 			const { fullData, ...state } = resetChart(this.props);
 			this.fullData = fullData;
 			this.setState(state, () => {
+				this.syncStateToSubscriptions();
+				this.clearThreeCanvas();
+				this.draw({ force: true });
 				this.notifyVisibleDomainChange();
 			});
 		}
@@ -341,6 +345,20 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 	draw(props: { trigger?: string; force?: boolean } = { force: false }) { this.subscriptions.forEach(each => { if (isDefined(each.draw)) each.draw(props); }); }
 	redraw() { this.clearThreeCanvas(); this.draw({ force: true }); }
 
+	/**
+	 * Push state into every subscription's moreProps using the "__sync__" event type.
+	 * "__sync__" causes only updateMoreProps() — no evaluateType(), no forceUpdate().
+	 * Call this BEFORE clearThreeCanvas()+draw() so draws use the correct scale/data.
+	 */
+	syncStateToSubscriptions(state?: { xScale: any; plotData: any; chartConfig: any }) {
+		const s = state ?? {
+			xScale: this.state.xScale,
+			plotData: this.state.plotData,
+			chartConfig: this.state.chartConfig,
+		};
+		this.triggerEvent("__sync__", s, null);
+	}
+
 	handleZoom(zoomDirection: number, mouseXY: MouseXY, e: unknown) {
 		if (this.panInProgress) return;
 		const { xAccessor, xScale: initialXScale, plotData: initialPlotData } = this.state;
@@ -350,9 +368,11 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		const c = zoomDirection > 0 ? 1 * zoomMultiplier : 1 / zoomMultiplier;
 		const newDomain = initialXScale.range().map((x: number) => cx + (x - cx) * c).map(initialXScale.invert);
 		const { xScale, plotData, chartConfig } = this.calculateStateForDomain(newDomain);
+		// Pre-sync moreProps BEFORE React re-renders so componentDidUpdate draws
+		// with the correct zoom scale instead of stale pan scale.
+		this.syncStateToSubscriptions({ xScale, plotData, chartConfig });
+		this.clearThreeCanvas();
 		this.setState({ xScale, plotData, chartConfig }, () => {
-			this.triggerEvent("zoom", { xScale, plotData, chartConfig }, e);
-			this.clearThreeCanvas();
 			this.draw({ force: true });
 			this.notifyVisibleDomainChange(xScale);
 		});
@@ -360,9 +380,9 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 
 	xAxisZoom(newDomain: any[]) {
 		const { xScale, plotData, chartConfig } = this.calculateStateForDomain(newDomain);
+		this.syncStateToSubscriptions({ xScale, plotData, chartConfig });
+		this.clearThreeCanvas();
 		this.setState({ xScale, plotData, chartConfig }, () => {
-			this.triggerEvent("zoom", { xScale, plotData, chartConfig }, undefined);
-			this.clearThreeCanvas();
 			this.draw({ force: true });
 			this.notifyVisibleDomainChange(xScale);
 		});
@@ -410,6 +430,8 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 	handlePanEnd(mousePosition: MouseXY, panStartXScale: any, dxdy: { dx: number; dy: number }, chartsToPan: any, e: unknown) {
 		const state = this.panHelper(mousePosition, panStartXScale, dxdy, chartsToPan);
 		this.panInProgress = false;
+		// Pre-sync moreProps with final pan state so componentDidUpdate draws correctly.
+		this.syncStateToSubscriptions({ xScale: state.xScale, plotData: state.plotData, chartConfig: state.chartConfig });
 		this.clearThreeCanvas();
 		this.setState(state, () => {
 			this.notifyVisibleDomainChange(state.xScale);
@@ -597,7 +619,7 @@ ChartCanvas.defaultProps = {
 	mouseMoveEvent: true,
 	panEvent: true,
 	zoomEvent: true,
-	zoomMultiplier: 1.2,
+	zoomMultiplier: 1.6,
 	clamp: false,
 	zoomAnchor: mouseBasedZoomAnchor,
 	maintainPointsPerPixelOnResize: true,

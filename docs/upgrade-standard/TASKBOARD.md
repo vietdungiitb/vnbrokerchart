@@ -82,3 +82,47 @@
 | TB-38 | Migrate `CanvasContainer.js` | Core owner | B-116 | Gate G2 |
 | TB-39 | Migrate `BackgroundText.js` + `ZoomButtons.js` | Core owner | B-117, B-118 | Gate G2 |
 | TB-40 | Gate G3 + Final 100% TS validation | QA/Release owner | B-119–121 | TB-35–39 |
+
+---
+
+## 7. Ready lane — Drawing Tools Engine (M1/M2/M3)
+
+*Tham chiếu: `docs/upgrade-standard/drawing-tools/TASKBOARD.md` cho chi tiết từng task DT-01–DT-28.*
+
+### Milestone M1 — Core Drawing Engine
+
+| ID | Task | Owner role | Backlog ref | Depends on |
+| :--- | :--- | :--- | :--- | :--- |
+| TB-41 | Tạo `coordinateUtils.ts` | Drawing core | B-130 | — |
+| TB-42 | Tạo `renderSvg.ts` | Drawing render | B-131 | TB-41 |
+| TB-43 | Tạo `useDrawingInteraction.ts` | Drawing core | B-132 | — |
+| TB-44 | Tạo `DrawingLayer.tsx` | Drawing UI | B-133 | TB-41, TB-42, TB-43 |
+| TB-45 | Tạo `rectangle.ts` + `arrow.ts` built-ins | Drawing core | B-135 | — |
+| TB-46 | Sửa `types.ts` (M1 extension) | Drawing core | B-130 | TB-45 |
+| TB-47 | Sửa `drawing/index.ts` (M1 exports) | Drawing core | B-130 | TB-44, TB-45, TB-46 |
+| TB-48 | Wire `LibraryShowcaseDemo.tsx` + keyboard | Demo | B-134 | TB-44, TB-47 |
+| TB-49 | Sửa `i18n.tsx` + `demo.css` (M1 keys) | Demo | B-134 | TB-48 |
+| TB-50 | Gate M1 validation (type-check + test + smoke) | QA | B-134 | TB-41–TB-49 |
+
+### Milestone M2 — Inspector + Persistence
+
+| ID | Task | Owner role | Backlog ref | Depends on |
+| :--- | :--- | :--- | :--- | :--- |
+| TB-51 | Tạo `DrawingStorage.ts` | Drawing data | B-137 | TB-50 |
+| TB-52 | Tạo `useDrawingStorage.ts` | Drawing data | B-137 | TB-51 |
+| TB-53 | Tạo `DrawingInspector.tsx` | Drawing UI | B-136 | TB-50 |
+| TB-54 | Sửa `types.ts` + `drawing/index.ts` (M2) | Drawing core | B-137 | TB-51 |
+| TB-55 | Wire M2 vào `LibraryShowcaseDemo.tsx` | Demo | B-136, B-137 | TB-52, TB-53, TB-54 |
+| TB-56 | Sửa `i18n.tsx` + `demo.css` (M2 keys) | Demo | B-136 | TB-55 |
+| TB-57 | Gate M2 validation | QA | B-136, B-137 | TB-51–TB-56 |
+
+### Milestone M3 — Advanced Tools
+
+| ID | Task | Owner role | Backlog ref | Depends on |
+| :--- | :--- | :--- | :--- | :--- |
+| TB-58 | Sửa `types.ts` M3 (3 tool types, riskReward) | Drawing core | B-138 | TB-57 |
+| TB-59 | Tạo `priceRange.ts`, `positionBox.ts`, `fibExtension.ts` | Drawing core | B-138 | TB-58 |
+| TB-60 | Sửa `renderSvg.ts` + `DrawingLayer.tsx` (M3) | Drawing render | B-138, B-139 | TB-59 |
+| TB-61 | Wire M3 vào `LibraryShowcaseDemo.tsx` + toolbar groups | Demo | B-138, B-139 | TB-60 |
+| TB-62 | Sửa `i18n.tsx` + `demo.css` (M3 keys) | Demo | B-139 | TB-61 |
+| TB-63 | Gate M3 validation | QA | B-138, B-139 | TB-58–TB-62 |

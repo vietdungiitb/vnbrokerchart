@@ -152,13 +152,13 @@ Tests updated: 2 (pane-descriptor.test + useDynamicPanes.test)
 
 ---
 
-## S-5: Settings Panel + Study Button
+## S-5: Settings Dialog + Gear Icon
 
 ### Code changes
 | File | Thay đổi |
 |------|----------|
-| `src/demo/LibraryShowcaseDemo.tsx` | Thêm `"settings"` tab, wire Study button, render settings content |
-| `src/demo/demo.css` | Thêm `.gc-setting-row`, `.gc-setting-label`, `.gc-setting-input`, `.gc-btn--danger` |
+| `src/demo/LibraryShowcaseDemo.tsx` | Thêm gear icon top-right, mở modal settings, render pane inspector |
+| `src/demo/demo.css` | Thêm modal shell, pane inspector, y-axis selector, và styles cho reset |
 
 ### Test run
 ```
@@ -167,13 +167,15 @@ npm run test: PASSED
 ```
 
 ### Browser visual test
-- [ ] Click nút "Study" trong topbar → Settings tab mở ra
-- [ ] Tab "Settings" xuất hiện trong tab bar
+- [ ] Click gear icon ở góc phải → settings modal mở ra
+- [ ] Modal có pane inspector, không phải right-side panel
 - [ ] EMA period inputs hiển thị (default 20 và 50)
 - [ ] BB inputs hiển thị
 - [ ] RSI period input hiển thị
 - [ ] Whale threshold input hiển thị (nếu orderflow pane tồn tại)
-- [ ] Thay đổi EMA period → `paneState` cập nhật (kiểm tra qua DevTools)
+- [ ] Mỗi add-indicator flow bắt buộc chọn `Y-axis` trái/phải
+- [ ] Thay đổi EMA period hoặc Y-axis → pane redraw ngay
+- [ ] `maxVisiblePanes` có thể chỉnh trong modal và được lưu lại
 - [ ] Reset button → panes trở về default
 
 ---
@@ -188,10 +190,10 @@ npm run test: PASSED
 4. Open Panes menu → enable Order Flow
 5. Open Panes menu → enable Strength (now 5 panes)
 6. Hover Price pane → click 👁 on EMA(20) chip → EMA line gone
-7. Hover Momentum pane → click 👁 on RSI chip → RSI gone; pane stays (MACD still visible)
-8. Open Settings → change RSI period to 21 → blur → localStorage updated
-9. Hover Momentum pane → click 👁 on MACD chip → momentum pane auto-hides
-10. Open Panes menu → re-enable Momentum → pane appears with both series visible
+7. Open gear icon → settings modal opens
+8. In Layout tab, change max visible panes to 4 then back to 5 → value persists after reload
+9. In Momentum pane inspector, set RSI y-axis to left and RSI period to 21 → pane redraws immediately
+10. Add a series through the modal with an explicit y-axis selection → series appears on the chosen axis
 11. resetToDefault → 3 visible panes, all series visible
 ```
 

@@ -17,9 +17,12 @@ describe("DEFAULT_PANES", () => {
 		expect(new Set(ids).size).toBe(ids.length);
 	});
 
-	it("DEFAULT_PANES has 3 panes all visible", () => {
-		expect(DEFAULT_PANES).toHaveLength(3);
-		expect(DEFAULT_PANES.every((pane) => pane.visible)).toBe(true);
+	it("DEFAULT_PANES has 5 panes, 3 visible by default", () => {
+		expect(DEFAULT_PANES).toHaveLength(5);
+		expect(DEFAULT_PANES.filter((pane) => pane.visible)).toHaveLength(3);
+		// Only the pinned pane is guaranteed visible; others vary
+		expect(DEFAULT_PANES[0]?.pinned).toBe(true);
+		expect(DEFAULT_PANES[0]?.visible).toBe(true);
 	});
 });
 

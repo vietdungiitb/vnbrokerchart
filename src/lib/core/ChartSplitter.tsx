@@ -50,6 +50,9 @@ export interface ChartSplitterProps {
 
 	/** Inline styles merged with the translate preview during drag. */
 	style?: CSSProperties;
+
+	/** Tooltip/title shown on hover. */
+	title?: string;
 }
 
 export function ChartSplitter({
@@ -59,6 +62,7 @@ export function ChartSplitter({
 	onDoubleClick,
 	className,
 	style,
+	title,
 }: ChartSplitterProps) {
 	const [isDragging, setIsDragging] = useState(false);
 	const [visualOffset, setVisualOffset] = useState(0);
@@ -120,7 +124,7 @@ export function ChartSplitter({
 			onPointerUp={stopDragging}
 			onPointerCancel={stopDragging}
 			onDoubleClick={onDoubleClick}
-			title="Drag to resize pane • Double-click to reset"
+			title={title ?? "Drag to resize pane • Double-click to reset"}
 		>
 			<div className="rsc-splitter__handle" />
 		</div>
