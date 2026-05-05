@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getSeries, listRegistered, type PaneDescriptor, type SeriesConfig, type SeriesTypeId, type YAxisSide } from "../lib/core";
 import type { UseDynamicPanesResult } from "../lib/core/hooks/useDynamicPanes";
+import { isDefaultPaneId } from "../lib/core/types/pane-descriptor";
 import { useDemoI18n } from "./i18n";
 
 export type SettingsSection = "layout" | "indicators" | "theme" | "reset";
@@ -153,6 +154,18 @@ export function PaneSettingsModal({
 		paneState.updateSeriesParams(pane.id, series.type, patch, seriesIndex);
 	};
 
+	const handleDeletePane = (pane: PaneDescriptor) => {
+		paneState.deletePane(pane.id);
+		if (pane.id === selectedPaneId) {
+			const nextSelectedPaneId = paneState.visiblePanes.find((visiblePane) => visiblePane.id !== pane.id)?.id
+				?? paneState.panes.find((nextPane) => nextPane.id !== pane.id)?.id
+				?? "";
+			if (nextSelectedPaneId) {
+				onSelectedPaneIdChange(nextSelectedPaneId);
+			}
+		}
+	};
+
 	const renderSeriesParams = (pane: PaneDescriptor, series: SeriesConfig, seriesIndex: number) => {
 		const currentPeriod = typeof series.params?.period === "number" ? series.params.period : undefined;
 		const currentFast = typeof series.params?.fast === "number" ? series.params.fast : undefined;
@@ -293,6 +306,7 @@ export function PaneSettingsModal({
 				{paneState.panes.map((pane) => {
 					const visibleIndex = paneState.visiblePanes.findIndex((visiblePane) => visiblePane.id === pane.id);
 					const hidden = !pane.visible;
+					const isDefaultPane = isDefaultPaneId(pane.id);
 					const isSelected = pane.id === (selectedPane?.id ?? selectedPaneId);
 					const canMoveUp = pane.visible && visibleIndex > 0;
 					const canMoveDown = pane.visible && visibleIndex >= 0 && visibleIndex < paneState.visiblePanes.length - 1;
@@ -309,6 +323,7 @@ export function PaneSettingsModal({
 									<div className="gc-settings-pane__label">
 										{paneLabel(pane)}
 										{pane.pinned ? <span className="gc-settings-pill">{t("settings.pinned")}</span> : null}
+										{isDefaultPane ? <span className="gc-settings-pill">{t("settings.defaultPane")}</span> : <span className="gc-settings-pill gc-settings-pill--muted">{t("settings.customPane")}</span>}
 									</div>
 									<div className="gc-settings-pane__meta">{t("settings.seriesMeta", { count: pane.series.length, ratio: Math.round(pane.heightRatio * 100) })}</div>
 								</div>
@@ -319,8 +334,28 @@ export function PaneSettingsModal({
 									<button type="button" className="gc-btn" onClick={(event) => { event.stopPropagation(); if (pane.visible) paneState.toggleVisible(pane.id); }} disabled={pane.pinned || hidden}>
 										{pane.pinned ? t("settings.locked") : t("settings.visible")}
 									</button>
+									{!isDefaultPane ? (
+										<button
+											type="button"
+											className="gc-btn gc-btn--danger"
+											onClick={(event) => { event.stopPropagation(); handleDeletePane(pane); }}
+										>
+											{t("settings.deletePane")}
+										</button>
+									) : null}
 								</div>
 							</div>
+							{!isDefaultPane ? (
+								<label className="gc-settings-field">
+									<span>{t("settings.paneName")}</span>
+									<input
+										type="text"
+										className="gc-settings-input"
+										value={pane.label}
+										onChange={(event) => paneState.renamePane(pane.id, event.target.value)}
+									/>
+								</label>
+							) : null}
 							<div className="gc-settings-pane__footer">
 								<div className="gc-settings-pane__tags">
 									{pane.series.map((series, index) => (

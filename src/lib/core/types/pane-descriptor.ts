@@ -117,3 +117,9 @@ export const DEFAULT_PANES: PaneDescriptor[] = [
 		],
 	},
 ];
+
+const DEFAULT_PANE_ID_SET = new Set(DEFAULT_PANES.map((pane) => pane.id));
+
+export function isDefaultPaneId(id: string): boolean {
+	return DEFAULT_PANE_ID_SET.has(id);
+}

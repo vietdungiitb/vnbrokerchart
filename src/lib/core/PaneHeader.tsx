@@ -1,5 +1,6 @@
 import type { CSSProperties, RefObject, DragEvent as ReactDragEvent } from "react";
 import type { PaneDescriptor } from "./types/pane-descriptor";
+import { isDefaultPaneId } from "./types/pane-descriptor";
 
 export interface PaneHeaderProps {
 	pane: PaneDescriptor;
@@ -62,7 +63,7 @@ export function PaneHeader({ pane, onToggleVisible, onRemove, onAddSeries, onDra
 				>
 					{pane.visible ? "👁" : "◌"}
 				</button>
-				{!pane.pinned ? (
+				{!pane.pinned && !isDefaultPaneId(pane.id) ? (
 					<button
 						type="button"
 						className="rsc-pane-btn"

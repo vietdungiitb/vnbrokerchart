@@ -23,6 +23,30 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 
 ## 2. Slice Status
 
+### Checkpoint code — Custom pane settings guard
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: allow custom panes to be renamed or deleted from Settings while keeping the 5 default panes immutable in those paths
+- Files sửa:
+  - `src/lib/core/types/pane-descriptor.ts`
+  - `src/lib/core/hooks/useDynamicPanes.ts`
+  - `src/lib/core/PaneHeader.tsx`
+  - `src/demo/PaneSettingsModal.tsx`
+  - `src/demo/i18n.tsx`
+  - `src/lib/core/hooks/__tests__/useDynamicPanes.test.ts`
+  - `src/lib/core/index.ts`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Custom panes now expose an inline name field and a delete action in the Settings modal.
+  - Default panes are protected from rename/delete through both reducer guards and header UI suppression.
+  - Stored layouts are normalized so canonical default panes remain present with their fixed labels.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm test -- --run src/lib/core/hooks/__tests__/useDynamicPanes.test.ts` → PASS (20 tests)
+  - `npm run build:docs` → PASS
+  - Browser smoke on `build/index.html` → PASS (default row has no delete button; custom row shows name input and delete pane button)
+
 ### Checkpoint code — Splitter pane sync fix
 
 - Người thực hiện: GitHub Copilot

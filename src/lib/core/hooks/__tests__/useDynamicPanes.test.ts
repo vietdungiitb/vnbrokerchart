@@ -95,6 +95,34 @@ describe("dynamicPanesReducer", () => {
 		expect(next).toHaveLength(5);
 	});
 
+	it("deletePane removes custom panes but keeps defaults", () => {
+		let state = dynamicPanesReducer(createDefaultPaneLayout(), {
+			type: "addPane",
+			pane: { label: "Research", pinned: false, visible: true, heightRatio: 0.2, series: [], splitScale: false, tooltip: "value" },
+		});
+		const customPaneId = state[state.length - 1]?.id ?? "";
+
+		state = dynamicPanesReducer(state, { type: "deletePane", id: customPaneId });
+		expect(state.some((pane) => pane.id === customPaneId)).toBe(false);
+
+		const defaultState = dynamicPanesReducer(createDefaultPaneLayout(), { type: "deletePane", id: "price" });
+		expect(defaultState.some((pane) => pane.id === "price")).toBe(true);
+	});
+
+	it("renamePane updates custom labels only", () => {
+		let state = dynamicPanesReducer(createDefaultPaneLayout(), {
+			type: "addPane",
+			pane: { label: "Research", pinned: false, visible: true, heightRatio: 0.2, series: [], splitScale: false, tooltip: "value" },
+		});
+		const customPaneId = state[state.length - 1]?.id ?? "";
+
+		state = dynamicPanesReducer(state, { type: "renamePane", paneId: customPaneId, label: "Swing Watch" });
+		expect(state.find((pane) => pane.id === customPaneId)?.label).toBe("Swing Watch");
+
+		const defaultState = dynamicPanesReducer(createDefaultPaneLayout(), { type: "renamePane", paneId: "price", label: "Changed" });
+		expect(defaultState.find((pane) => pane.id === "price")?.label).toBe("Price");
+	});
+
 	it("reorderPanes keeps price pinned at the top", () => {
 		const next = dynamicPanesReducer(createDefaultPaneLayout(), {
 			type: "reorderPanes",

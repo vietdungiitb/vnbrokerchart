@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 import type { PaneDescriptor, SeriesConfig, SeriesTypeId, YAxisSide } from "../types/pane-descriptor";
-import { DEFAULT_PANES, PANE_LAYOUT_STORAGE_KEY, PANE_MAX_VISIBLE } from "../types/pane-descriptor";
+import { DEFAULT_PANES, PANE_LAYOUT_STORAGE_KEY, PANE_MAX_VISIBLE, isDefaultPaneId } from "../types/pane-descriptor";
 
 const FRAME_VERTICAL_MARGIN = 36;
 const MIN_PANE_HEIGHT = 80;
@@ -24,6 +24,8 @@ export type DynamicPaneAction =
 	| { type: "toggleVisible"; id: string; maxVisiblePanes?: number }
 	| { type: "addPane"; pane: Omit<PaneDescriptor, "id">; maxVisiblePanes?: number }
 	| { type: "removePane"; id: string }
+	| { type: "deletePane"; id: string }
+	| { type: "renamePane"; paneId: string; label: string }
 	| { type: "restorePane"; id: string; maxVisiblePanes?: number }
 	| { type: "addSeries"; paneId: string; series: SeriesConfig; maxVisiblePanes?: number }
 	| { type: "removeSeries"; paneId: string; seriesType: SeriesTypeId; seriesIndex?: number }
@@ -42,6 +44,8 @@ export interface UseDynamicPanesResult {
 	toggleVisible: (id: string) => void;
 	addPane: (pane: Omit<PaneDescriptor, "id">) => void;
 	removePane: (id: string) => void;
+	deletePane: (id: string) => void;
+	renamePane: (paneId: string, label: string) => void;
 	restorePane: (id: string) => void;
 	addSeries: (paneId: string, series: SeriesConfig) => void;
 	removeSeries: (paneId: string, seriesType: SeriesTypeId, seriesIndex?: number) => void;
@@ -77,6 +81,26 @@ function clonePane(pane: PaneDescriptor): PaneDescriptor {
 
 function clonePaneList(panes: readonly PaneDescriptor[]): PaneDescriptor[] {
 	return panes.map(clonePane);
+}
+
+function normalizeDefaultPane(pane: PaneDescriptor, template: PaneDescriptor): PaneDescriptor {
+	return {
+		...pane,
+		label: template.label,
+		pinned: template.pinned,
+		tooltip: template.tooltip,
+	};
+}
+
+function normalizeLoadedPaneLayout(panes: readonly PaneDescriptor[]): PaneDescriptor[] {
+	const cloned = clonePaneList(panes);
+	const byId = new Map(cloned.map((pane) => [pane.id, pane] as const));
+	const defaultPanes = DEFAULT_PANES.map((template) => {
+		const stored = byId.get(template.id);
+		return stored ? normalizeDefaultPane(stored, template) : clonePane(template);
+	});
+	const customPanes = cloned.filter((pane) => !isDefaultPaneId(pane.id));
+	return normalizeVisibleRatios([...defaultPanes, ...customPanes]);
 }
 
 function syncSplitScale(pane: PaneDescriptor): void {
@@ -183,13 +207,10 @@ function sanitizeLayout(raw: unknown): PaneDescriptor[] | null {
 	if (stored.version !== 1 || !Array.isArray(stored.panes) || stored.panes.length === 0) {
 		return null;
 	}
-	if (!validatePane(stored.panes[0]) || stored.panes[0].pinned !== true) {
-		return null;
-	}
 	if (!stored.panes.every(validatePane)) {
 		return null;
 	}
-	return normalizeVisibleRatios(stored.panes.map(clonePane));
+	return normalizeLoadedPaneLayout(stored.panes);
 }
 
 function readStoredPaneLayout(storage?: PaneLayoutStorageLike): PaneDescriptor[] {
@@ -321,7 +342,7 @@ export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: Dy
 		case "removePane": {
 			const next = clonePaneList(state);
 			const pane = next.find((item) => item.id === action.id);
-			if (!pane || pane.pinned) {
+			if (!pane || pane.pinned || isDefaultPaneId(pane.id)) {
 				return next;
 			}
 			if (pane.visible && visibleCount(next) === 1) {
@@ -330,6 +351,30 @@ export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: Dy
 			// Soft-delete: hide the pane so it can be restored from the Panes menu
 			pane.visible = false;
 			return normalizeVisibleRatios(next);
+		}
+		case "deletePane": {
+			const next = clonePaneList(state);
+			const pane = next.find((item) => item.id === action.id);
+			if (!pane || pane.pinned || isDefaultPaneId(pane.id)) {
+				return next;
+			}
+			if (pane.visible && visibleCount(next) === 1) {
+				return next;
+			}
+			return normalizeVisibleRatios(next.filter((item) => item.id !== action.id));
+		}
+		case "renamePane": {
+			const next = clonePaneList(state);
+			const pane = next.find((item) => item.id === action.paneId);
+			if (!pane || pane.pinned || isDefaultPaneId(pane.id)) {
+				return next;
+			}
+			const nextLabel = action.label.trim();
+			if (nextLabel.length === 0 || nextLabel === pane.label) {
+				return next;
+			}
+			pane.label = nextLabel;
+			return next;
 		}
 		case "restorePane": {
 			const next = clonePaneList(state);
@@ -513,6 +558,14 @@ export function useDynamicPanes(totalHeight: number, options: UseDynamicPanesOpt
 		dispatch({ type: "removePane", id });
 	}, []);
 
+	const deletePane = useCallback((id: string) => {
+		dispatch({ type: "deletePane", id });
+	}, []);
+
+	const renamePane = useCallback((paneId: string, label: string) => {
+		dispatch({ type: "renamePane", paneId, label });
+	}, []);
+
 	const restorePane = useCallback((id: string) => {
 		dispatch({ type: "restorePane", id, maxVisiblePanes });
 	}, [maxVisiblePanes]);
@@ -564,6 +617,8 @@ export function useDynamicPanes(totalHeight: number, options: UseDynamicPanesOpt
 		toggleVisible,
 		addPane,
 		removePane,
+		deletePane,
+		renamePane,
 		restorePane,
 		addSeries,
 		removeSeries,

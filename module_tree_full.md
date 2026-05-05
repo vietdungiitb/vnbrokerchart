@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-06 00:12:44`
+Generated at: `2026-05-06 00:22:03`
 
 ## Summary
 
@@ -10,8 +10,8 @@ Generated at: `2026-05-06 00:12:44`
 - Python modules: 1
 - JS/TS modules: 668
 - Total classes: 351
-- Total functions: 3681
-- Total top-level variables: 7965
+- Total functions: 3685
+- Total top-level variables: 7977
 
 ## Python Modules
 
@@ -2177,9 +2177,9 @@ Generated at: `2026-05-06 00:12:44`
 ### `src/demo/PaneSettingsModal.tsx`
 
 - Functions:
-  - `PaneSettingsModal`, `describeSeries`, `handleAddSeries`, `handleBackdropMouseDown`, `handleKeyDown`, `handleSeriesParamChange`, `paneLabel`, `parseNumber`, `renderIndicatorsSection`, `renderLayoutSection`, `renderResetSection`, `renderSeriesParams`, `renderThemeSection`
+  - `PaneSettingsModal`, `describeSeries`, `handleAddSeries`, `handleBackdropMouseDown`, `handleDeletePane`, `handleKeyDown`, `handleSeriesParamChange`, `paneLabel`, `parseNumber`, `renderIndicatorsSection`, `renderLayoutSection`, `renderResetSection`, `renderSeriesParams`, `renderThemeSection`
 - Top-level variables:
-  - `availableSeriesTypes`, `canAddPane`, `canMoveDown`, `canMoveUp`, `composerEntry`, `currentFast`, `currentPeriod`, `currentSignal`, `currentSlow`, `currentStdDev`, `currentThreshold`, `dialogRef`, `fast`, `hidden`, `isSelected`, `label`, `next`, `overLimit`, `resolvedComposerType`, `revealEnabled`, `sectionLabels`, `selectedPane`, `slow`, `visibleCount`, `visibleIndex`
+  - `availableSeriesTypes`, `canAddPane`, `canMoveDown`, `canMoveUp`, `composerEntry`, `currentFast`, `currentPeriod`, `currentSignal`, `currentSlow`, `currentStdDev`, `currentThreshold`, `dialogRef`, `fast`, `hidden`, `isDefaultPane`, `isSelected`, `label`, `next`, `nextSelectedPaneId`, `overLimit`, `resolvedComposerType`, `revealEnabled`, `sectionLabels`, `selectedPane`, `slow`, `visibleCount`, `visibleIndex`
 
 ### `src/demo/usePaneLayout.ts`
 
@@ -2727,7 +2727,7 @@ Generated at: `2026-05-06 00:12:44`
 - Functions:
   - `createMockStorage`
 - Top-level variables:
-  - `blocked`, `blockedPane`, `hiddenPane`, `next`, `panes`, `payload`, `restoredPane`, `rsi`, `state`, `storage`, `sum`, `value`
+  - `blocked`, `blockedPane`, `customPaneId`, `defaultState`, `hiddenPane`, `next`, `panes`, `payload`, `restoredPane`, `rsi`, `state`, `storage`, `sum`, `value`
 
 ### `src/lib/core/hooks/useCanvasResize.ts`
 
@@ -2746,9 +2746,9 @@ Generated at: `2026-05-06 00:12:44`
 ### `src/lib/core/hooks/useDynamicPanes.ts`
 
 - Functions:
-  - `clonePane`, `clonePaneList`, `cloneSeries`, `createDefaultPaneLayout`, `createId`, `dynamicPanesReducer`, `getVisiblePanes`, `heightsToRatios`, `loadPaneLayout`, `makeDefaultLayout`, `mutateVisibleRatio`, `normalizeVisibleRatios`, `ratiosToHeights`, `readStoredPaneLayout`, `reorderVisiblePanes`, `resolveSeriesIndex`, `sanitizeLayout`, `savePaneLayout`, `syncSplitScale`, `useDynamicPanes`, `validatePane`, `visibleCount`, `visibleIndices`, `writeStoredPaneLayout`
+  - `clonePane`, `clonePaneList`, `cloneSeries`, `createDefaultPaneLayout`, `createId`, `dynamicPanesReducer`, `getVisiblePanes`, `heightsToRatios`, `loadPaneLayout`, `makeDefaultLayout`, `mutateVisibleRatio`, `normalizeDefaultPane`, `normalizeLoadedPaneLayout`, `normalizeVisibleRatios`, `ratiosToHeights`, `readStoredPaneLayout`, `reorderVisiblePanes`, `resolveSeriesIndex`, `sanitizeLayout`, `savePaneLayout`, `syncSplitScale`, `useDynamicPanes`, `validatePane`, `visibleCount`, `visibleIndices`, `writeStoredPaneLayout`
 - Top-level variables:
-  - `FRAME_VERTICAL_MARGIN`, `MIN_PANE_HEIGHT`, `activeSeries`, `addPane`, `addSeries`, `allocated`, `anyVisible`, `applyDelta`, `available`, `bottomHeight`, `bottomPane`, `cursor`, `height`, `heights`, `indices`, `layout`, `maxVisiblePanes`, `minBottom`, `minTop`, `next`, `nextBottom`, `nextTop`, `orderedVisible`, `pairTotal`, `pane`, `parsed`, `ratio`, `raw`, `removePane`, `removeSeries`, `reorderPanes`, `replacement`, `resetToDefault`, `restorePane`, `series`, `seriesIndex`, `stored`, `toggleSeriesVisible`, `toggleVisible`, `topHeight`, `topPane`, `total`, `updateSeriesParams`, `updateSeriesYAxis`, `updated`, `visible`, `visibleCursor`, `visiblePanes`, `visibleSlots`
+  - `FRAME_VERTICAL_MARGIN`, `MIN_PANE_HEIGHT`, `activeSeries`, `addPane`, `addSeries`, `allocated`, `anyVisible`, `applyDelta`, `available`, `bottomHeight`, `bottomPane`, `byId`, `cloned`, `cursor`, `customPanes`, `defaultPanes`, `deletePane`, `height`, `heights`, `indices`, `layout`, `maxVisiblePanes`, `minBottom`, `minTop`, `next`, `nextBottom`, `nextLabel`, `nextTop`, `orderedVisible`, `pairTotal`, `pane`, `parsed`, `ratio`, `raw`, `removePane`, `removeSeries`, `renamePane`, `reorderPanes`, `replacement`, `resetToDefault`, `restorePane`, `series`, `seriesIndex`, `stored`, `toggleSeriesVisible`, `toggleVisible`, `topHeight`, `topPane`, `total`, `updateSeriesParams`, `updateSeriesYAxis`, `updated`, `visible`, `visibleCursor`, `visiblePanes`, `visibleSlots`
 
 ### `src/lib/core/hooks/usePaneManager.test.ts`
 
@@ -2869,8 +2869,10 @@ Generated at: `2026-05-06 00:12:44`
 
 ### `src/lib/core/types/pane-descriptor.ts`
 
+- Functions:
+  - `isDefaultPaneId`
 - Top-level variables:
-  - `DEFAULT_PANES`, `PANE_LAYOUT_STORAGE_KEY`, `PANE_MAX_VISIBLE`
+  - `DEFAULT_PANES`, `DEFAULT_PANE_ID_SET`, `PANE_LAYOUT_STORAGE_KEY`, `PANE_MAX_VISIBLE`
 
 ### `src/lib/drawing/builtin/abcdPattern.ts`
 
