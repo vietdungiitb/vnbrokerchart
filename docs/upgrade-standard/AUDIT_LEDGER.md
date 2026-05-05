@@ -297,6 +297,26 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - Browser smoke on [build/index.html](../../build/index.html) → PASS; Parallel Channel, Pitchfork, and Regression Channel buttons activate
   - `python scripts/generate_module_tree.py` → PASS (Modules: 653)
 
+### Ad-hoc replay task — M5 slice 1 controller foundation
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: Phase 5 bar replay controller foundation, subscription model, step/play/pause flow, and controller tests
+- Files modified:
+  - `src/lib/core/replay/BarReplayController.ts`
+  - `src/lib/core/replay/BarReplayController.test.ts`
+  - `src/lib/core/index.ts`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Added a reusable `BarReplayController` with visible-data slicing, play/pause, step forward/back, speed control, jump-to-date, and subscription support.
+  - Kept the controller domain-only so it can be wired into the chart shell in the next slice without refactoring the replay state model.
+  - Added targeted tests for slice semantics, replay jumps, and timer-driven playback stop at stream end.
+- Validation:
+  - `npm test -- src/lib/core/replay/BarReplayController.test.ts` → PASS
+  - `npm run type-check` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 655)
+
 ### Ad-hoc governance update — Shared UI template rule
 
 - Người thực hiện: GitHub Copilot

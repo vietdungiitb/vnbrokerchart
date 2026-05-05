@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-05 10:24:12`
+Generated at: `2026-05-05 10:36:12`
 
 ## Summary
 
-- Total modules: 653
+- Total modules: 655
 - Python modules: 1
-- JS/TS modules: 652
-- Total classes: 349
-- Total functions: 3644
-- Total top-level variables: 7774
+- JS/TS modules: 654
+- Total classes: 350
+- Total functions: 3648
+- Total top-level variables: 7780
 
 ## Python Modules
 
@@ -2796,6 +2796,22 @@ Generated at: `2026-05-05 10:24:12`
   - `clearRegistry`, `colorFromConfig`, `getSeries`, `listRegistered`, `periodFromConfig`, `registerLineSeries`, `registerPhaseOneSeries`, `registerSeries`
 - Top-level variables:
   - `entry`, `period`, `registry`
+
+### `src/lib/core/replay/BarReplayController.test.ts`
+
+- Functions:
+  - `createBar`
+- Top-level variables:
+  - `controller`, `states`, `unsubscribe`
+
+### `src/lib/core/replay/BarReplayController.ts`
+
+- Classes:
+  - `BarReplayController`
+- Functions:
+  - `clampIndex`, `intervalForSpeed`, `toTimeValue`
+- Top-level variables:
+  - `foundIndex`, `state`, `targetTime`
 
 ### `src/lib/core/scales/computeScales.ts`
 
