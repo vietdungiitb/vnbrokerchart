@@ -74,6 +74,26 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - `npm run build:docs` → PASS
   - Browser smoke: rewind → `1/300 nến`, play toggle → `aria-pressed=true`, jump latest → `300/300 nến`
 
+### Ad-hoc demo task — Bar replay from here
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: right-click context menu trên chart để replay từ bar đang trỏ
+- Files modified:
+  - `src/lib/ChartCanvas.tsx`
+  - `src/lib/core/DynamicChart.tsx`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/i18n.tsx`
+  - `src/demo/demo.css`
+- Nội dung bàn giao:
+  - `ChartCanvas` gọi thẳng callback right-click của demo với `currentItem` và `currentCharts`.
+  - Demo hiển thị context menu nhẹ “Phát lại từ đây” tại bar được trỏ.
+  - Chọn menu item sẽ `jumpToDate()` rồi `play()` từ bar đó.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke: right-click hiện menu `29/04/2026 16:00`, chọn action làm replay về `161/300 nến`, `aria-pressed=true`
+
 ### Ad-hoc documentation package — GoCharting-style settings dialog rewrite
 
 - Người thực hiện: GitHub Copilot

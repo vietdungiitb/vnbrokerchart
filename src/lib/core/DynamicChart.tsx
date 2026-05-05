@@ -29,6 +29,7 @@ export interface DynamicChartProps {
 	priceFormat?: (value: number) => string;
 	volumeFormat?: (value: number) => string;
 	className?: string;
+	onContextMenu?: (moreProps: { currentItem?: EnrichedDatum; currentCharts?: number[]; mouseXY?: [number, number] }, e: unknown) => void;
 }
 
 interface ChartSlot {
@@ -291,6 +292,7 @@ export function DynamicChart({
 	priceFormat = d3Format(".2f"),
 	volumeFormat = d3Format(".3s"),
 	className,
+	onContextMenu,
 }: DynamicChartProps) {
 	const chartSlots = panes.flatMap((pane) => buildChartSlots(pane).map((slot) => ({ pane, slot })));
 	let chartId = 1;
@@ -328,6 +330,7 @@ export function DynamicChart({
 					origin={origin}
 					yExtents={yExtents}
 					className={className}
+					onContextMenu={onContextMenu}
 				>
 					{slot.hasLeftAxis ? <YAxis axisAt="left" orient="left" ticks={5} stroke={axisStroke} tickLabelFill={axisTickFill} tickStroke={axisStroke} tickFormat={yAxisFormat as any} /> : null}
 					{slot.hasRightAxis ? <YAxis axisAt="right" orient="right" ticks={5} stroke={axisStroke} tickLabelFill={axisTickFill} tickStroke={axisStroke} tickFormat={yAxisFormat as any} /> : null}

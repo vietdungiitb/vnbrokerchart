@@ -450,6 +450,12 @@ export default function LibraryShowcaseDemo() {
 		});
 	}
 	const [replayState, setReplayState] = useState<BarReplayState<RawOHLCV>>(() => replayControllerRef.current!.getState());
+	const [replayContextMenu, setReplayContextMenu] = useState<{
+		x: number;
+		y: number;
+		date: Date | number;
+		label: string;
+	} | null>(null);
 
 	useEffect(() => {
 		const controller = replayControllerRef.current;
@@ -572,6 +578,59 @@ export default function LibraryShowcaseDemo() {
 	const handleReplaySpeedChange = useCallback((speed: ReplaySpeed) => {
 		replayController?.setSpeed(speed);
 	}, [replayController]);
+
+	const closeReplayContextMenu = useCallback(() => {
+		setReplayContextMenu(null);
+	}, []);
+
+	const handleReplayFromHere = useCallback(() => {
+		if (!replayController || !replayContextMenu) {
+			return;
+		}
+
+		replayController.jumpToDate(replayContextMenu.date);
+		replayController.play();
+		setReplayContextMenu(null);
+	}, [replayContextMenu, replayController]);
+
+	const handleReplayContextMenu = useCallback((moreProps: { currentItem?: EnrichedDatum }, event: unknown) => {
+		const currentItem = moreProps.currentItem;
+		if (!currentItem?.date) {
+			return;
+		}
+
+		const shellNode = shellRef.current;
+		if (!shellNode) {
+			return;
+		}
+
+		const nativeEvent = event as MouseEvent | undefined;
+		const rect = shellNode.getBoundingClientRect();
+		const x = Math.min(Math.max(12, (nativeEvent?.clientX ?? rect.left) - rect.left + 8), Math.max(12, rect.width - 198));
+		const y = Math.min(Math.max(12, (nativeEvent?.clientY ?? rect.top) - rect.top + 8), Math.max(12, rect.height - 92));
+
+		setReplayContextMenu({
+			x,
+			y,
+			date: currentItem.date,
+			label: dateFormat(normalizeDate(currentItem.date)),
+		});
+	}, [dateFormat]);
+
+	useEffect(() => {
+		if (!replayContextMenu) {
+			return;
+		}
+
+		const handleEscape = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setReplayContextMenu(null);
+			}
+		};
+
+		window.addEventListener("keydown", handleEscape);
+		return () => window.removeEventListener("keydown", handleEscape);
+	}, [replayContextMenu]);
 
 	const selectedPane = useMemo(
 		() => paneState.panes.find((pane) => pane.id === selectedPaneId) ?? paneState.visiblePanes[0] ?? paneState.panes[0],
@@ -1228,6 +1287,7 @@ export default function LibraryShowcaseDemo() {
 									zoomEvent
 									panEvent
 									useCrossHairStyleCursor
+									onContextMenu={handleReplayContextMenu}
 								>
 									{DynamicChart({
 										panes: visiblePanes,
@@ -1239,6 +1299,7 @@ export default function LibraryShowcaseDemo() {
 										dateFormat,
 										priceFormat,
 										volumeFormat,
+										onContextMenu: handleReplayContextMenu,
 									})}
 									<DrawingLayer
 										activeTool={activeTool}
@@ -1246,6 +1307,18 @@ export default function LibraryShowcaseDemo() {
 										onToolUsed={handleDrawingToolUsed}
 									/>
 								</ChartCanvas>
+
+									{replayContextMenu && (
+										<>
+											<div className="gc-replay-menu-backdrop" aria-hidden="true" onClick={closeReplayContextMenu} />
+											<div className="gc-replay-menu" style={{ left: replayContextMenu.x, top: replayContextMenu.y }}>
+												<div className="gc-replay-menu__meta">{replayContextMenu.label}</div>
+												<button type="button" className="gc-replay-menu__action" onClick={handleReplayFromHere}>
+													{t("replay.fromHere")}
+												</button>
+											</div>
+										</>
+									)}
 
 									<DrawingInspector
 										drawing={selectedDrawing}

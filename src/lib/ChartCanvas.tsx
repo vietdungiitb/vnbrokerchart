@@ -311,6 +311,7 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		const { xAccessor, chartConfig, plotData, xScale } = this.state;
 		const currentCharts = getCurrentCharts(chartConfig, mouseXY);
 		const currentItem = getCurrentItem(xScale, xAccessor, mouseXY, plotData);
+		this.props.onContextMenu?.({ mouseXY, currentItem, currentCharts }, e);
 		this.triggerEvent("contextmenu", { mouseXY, currentItem, currentCharts }, e);
 	}
 
