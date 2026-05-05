@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-04 23:14:18`
+Generated at: `2026-05-05 08:07:05`
 
 ## Summary
 
-- Total modules: 623
+- Total modules: 632
 - Python modules: 1
-- JS/TS modules: 622
+- JS/TS modules: 631
 - Total classes: 348
-- Total functions: 3548
-- Total top-level variables: 7427
+- Total functions: 3583
+- Total top-level variables: 7530
 
 ## Python Modules
 
@@ -2123,9 +2123,9 @@ Generated at: `2026-05-04 23:14:18`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `ToolIcon`, `addPane`, `chartDomain`, `handler`, `loadDemoSettings`, `normalizeDate`, `paneTemplate`, `saveDemoSettings`, `update`
+  - `ToolIcon`, `addPane`, `chartDomain`, `handleKeyDown`, `handler`, `loadDemoSettings`, `normalizeDate`, `paneTemplate`, `readSize`, `saveDemoSettings`
 - Top-level variables:
-  - `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `MAIN_PRICE_SERIES_TYPES`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `axisStroke`, `axisTickFill`, `candleWidth`, `canvasBg`, `chartMenuRef`, `chartReady`, `chartTypeLabel`, `closeSettings`, `data`, `dateFormat`, `desiredType`, `end`, `enrichedData`, `first`, `haCalc`, `handleChartTypeChange`, `handleResetSettings`, `indicatorLegendLabels`, `indicatorSeries`, `lastBar`, `localizePane`, `localizedPane`, `msg`, `nextLabel`, `node`, `observer`, `openSettings`, `paneH`, `paneHeaderLabels`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `parsed`, `plotData`, `priceFormat`, `priceIsUp`, `pricePane`, `primary`, `ratio`, `raw`, `rect`, `second`, `selectedPane`, `shellRef`, `start`, `stepPx`, `toolLabel`, `top`, `transformed`, `volumeFormat`, `xExtents`
+  - `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `MAIN_PRICE_SERIES_TYPES`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `axisStroke`, `axisTickFill`, `candleWidth`, `canvasBg`, `chartMenuRef`, `chartReady`, `chartTypeLabel`, `closeSettings`, `data`, `dateFormat`, `desiredType`, `drawingInteraction`, `end`, `enrichedData`, `first`, `h`, `haCalc`, `handleChartTypeChange`, `handleDrawingToolUsed`, `handleResetSettings`, `indicatorLegendLabels`, `indicatorSeries`, `lastBar`, `localizePane`, `localizedPane`, `msg`, `nextLabel`, `node`, `observer`, `openSettings`, `paneH`, `paneHeaderLabels`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `parsed`, `plotData`, `priceFormat`, `priceIsUp`, `pricePane`, `primary`, `ratio`, `raw`, `rect`, `second`, `selectedPane`, `shellRef`, `start`, `stepPx`, `target`, `toolLabel`, `top`, `transformed`, `volumeFormat`, `w`, `xExtents`
 
 ### `src/demo/LiveDemo.tsx`
 
@@ -2483,7 +2483,7 @@ Generated at: `2026-05-04 23:14:18`
 - Functions:
   - `calculateFullData`, `calculateState`, `getCursorStyle`, `getDimensions`, `getXScaleDirection`, `resetChart`, `setXRange`, `shouldResetChart`, `updateChart`
 - Top-level variables:
-  - `CANDIDATES_FOR_RESET`, `c`, `canvases`, `chartConfig`, `contextValue`, `currentCharts`, `currentItem`, `cursor`, `cursorStyle`, `cx`, `dimensions`, `direction`, `dragableComponents`, `dx`, `extent`, `initialPlotData`, `interaction`, `item`, `lastItem`, `lastItemX`, `log`, `newDomain`, `newDomainExtent`, `newStart`, `plotData`, `reset`, `response`, `result`, `state`, `tooltipStyle`, `updatedScale`, `updatedXScale`, `useWholeData`
+  - `CANDIDATES_FOR_RESET`, `c`, `canvases`, `chartConfig`, `contextValue`, `currentCharts`, `currentItem`, `cursor`, `cursorStyle`, `cx`, `dimensions`, `direction`, `dragableComponents`, `dx`, `extent`, `initialPlotData`, `interaction`, `item`, `lastItem`, `lastItemX`, `log`, `newDomain`, `newDomainExtent`, `newStart`, `plotData`, `reset`, `response`, `result`, `s`, `sizeChanged`, `state`, `tooltipStyle`, `updatedScale`, `updatedXScale`, `useWholeData`
 
 ### `src/lib/ChartContext.tsx`
 
@@ -2823,6 +2823,11 @@ Generated at: `2026-05-04 23:14:18`
 - Top-level variables:
   - `DEFAULT_PANES`, `PANE_LAYOUT_STORAGE_KEY`, `PANE_MAX_VISIBLE`
 
+### `src/lib/drawing/builtin/arrow.ts`
+
+- Top-level variables:
+  - `Arrow`
+
 ### `src/lib/drawing/builtin/channel.ts`
 
 - Top-level variables:
@@ -2837,6 +2842,11 @@ Generated at: `2026-05-04 23:14:18`
 
 - Top-level variables:
   - `HLine`
+
+### `src/lib/drawing/builtin/rectangle.ts`
+
+- Top-level variables:
+  - `Rectangle`
 
 ### `src/lib/drawing/builtin/text.ts`
 
@@ -2853,12 +2863,31 @@ Generated at: `2026-05-04 23:14:18`
 - Top-level variables:
   - `VLine`
 
+### `src/lib/drawing/coordinateUtils.test.ts`
+
+- Top-level variables:
+  - `containerRect`, `pixel`, `point`, `scales`
+
+### `src/lib/drawing/coordinateUtils.ts`
+
+- Functions:
+  - `chartPointToPixel`, `pixelToChartPoint`
+- Top-level variables:
+  - `localX`, `localY`
+
 ### `src/lib/drawing/drawing.test.ts`
 
 - Functions:
   - `createTextObject`, `createTrendLineObject`
 - Top-level variables:
-  - `completeState`, `draft`, `drawing`, `drawingState`, `editingState`, `history`, `initialHistory`, `movingState`, `nextPoint`, `pushedHistory`, `redoneHistory`, `resizingState`, `selectedState`, `serializedDrawing`, `serializedDrawings`, `serializedHistory`, `startPoint`, `text`, `tool`, `toolNames`, `trendLine`, `undoneHistory`, `updatedDraft`, `updatedState`
+  - `arrow`, `completeState`, `draft`, `drawing`, `drawingState`, `editingState`, `history`, `initialHistory`, `movingState`, `nextPoint`, `pushedHistory`, `rectangle`, `redoneHistory`, `resizingState`, `selectedState`, `serializedDrawing`, `serializedDrawings`, `serializedHistory`, `startPoint`, `text`, `tool`, `toolNames`, `trendLine`, `undoneHistory`, `updatedDraft`, `updatedState`
+
+### `src/lib/drawing/DrawingLayer.tsx`
+
+- Functions:
+  - `buildRenderScales`, `currentDrawing`, `getSelectedDrawingId`, `resolveChartConfig`, `toChartPoint`
+- Top-level variables:
+  - `chartConfig`, `chartConfigList`, `chartCursorClass`, `completed`, `dateValue`, `draft`, `drawings`, `handleClick`, `handleMouseDown`, `handleMouseMove`, `midPoint`, `point`, `renderSVG`, `renderScales`, `selectedId`, `startPoint`, `tool`, `toolName`, `updated`, `xValue`, `yValue`
 
 ### `src/lib/drawing/history.ts`
 
@@ -2877,6 +2906,20 @@ Generated at: `2026-05-04 23:14:18`
   - `createDraftFromTool`, `createTool`, `isDrawingToolName`, `listDrawingTools`, `registerDrawingTool`
 - Top-level variables:
   - `drawingToolRegistry`, `tool`
+
+### `src/lib/drawing/renderSvg.test.ts`
+
+- Functions:
+  - `createExtendedDrawing`
+- Top-level variables:
+  - `arrow`, `circleElements`, `drawing`, `elements`, `lineElements`, `options`, `rectangle`, `scales`, `textElements`
+
+### `src/lib/drawing/renderSvg.ts`
+
+- Functions:
+  - `circleElement`, `interactiveProps`, `lineElement`, `numberFormatter`, `polygonElement`, `rectElement`, `renderArrow`, `renderChannel`, `renderDrawingToSvg`, `renderFibonacci`, `renderHLine`, `renderRectangle`, `renderText`, `renderTrendLine`, `renderVLine`, `selectionHandles`, `strokeDasharrayForStyle`, `textElement`, `toPixel`
+- Top-level variables:
+  - `DEFAULT_FIB_LEVELS`, `base`, `bottom`, `distance`, `dx`, `dy`, `elements`, `end`, `headLength`, `headWidth`, `height`, `left`, `length`, `levels`, `line`, `lineProps`, `normal`, `offsetAnchor`, `offsetEnd`, `offsetStart`, `offsetVector`, `pixel`, `pixelDelta`, `point`, `price`, `priceDelta`, `px`, `py`, `right`, `start`, `text`, `top`, `ux`, `uy`, `width`, `x`, `y`
 
 ### `src/lib/drawing/serialization.ts`
 
@@ -2899,6 +2942,20 @@ Generated at: `2026-05-04 23:14:18`
 
 - No parseable top-level symbols found
 
+### `src/lib/drawing/useDrawingInteraction.test.ts`
+
+- Functions:
+  - `createTrendLineDrawing`
+- Top-level variables:
+  - `completeState`, `deletedSnapshot`, `drawing`, `drawingState`, `nextPoint`, `pushedState`, `selectedSnapshot`, `selectedState`, `snapshot`, `startPoint`
+
+### `src/lib/drawing/useDrawingInteraction.ts`
+
+- Functions:
+  - `createDrawingInteractionState`, `deleteSelectedInteractionState`, `drawingInteractionReducer`, `getActiveObjectId`, `isHistoryAction`, `useDrawingInteraction`
+- Top-level variables:
+  - `cancelDrawing`, `deleteSelected`, `nextDrawings`, `nextHistory`, `redo`, `selectedObjectId`, `undo`
+
 ### `src/lib/EventCapture.tsx`
 
 - Classes:
@@ -2913,7 +2970,7 @@ Generated at: `2026-05-04 23:14:18`
 - Functions:
   - `GenericChartComponentWrapper`
 - Top-level variables:
-  - `ALWAYS_TRUE_TYPES`, `canvasOriginX`, `canvasOriginY`, `chartConfig`
+  - `ALWAYS_TRUE_TYPES`, `canvasOriginX`, `canvasOriginY`, `chartConfig`, `chartContext`, `chartId`
 
 ### `src/lib/GenericComponent.tsx`
 

@@ -9,6 +9,8 @@ import {
 	PaneLabel,
 	IndicatorLegend,
 	useDynamicPanes,
+	DrawingLayer,
+	useDrawingInteraction,
 	type PaneDescriptor,
 	type SeriesConfig,
 	type SeriesTypeId,
@@ -80,7 +82,7 @@ const CHART_TYPE_TO_SERIES: Record<ChartTypeId, SeriesTypeId> = {
 
 const MAIN_PRICE_SERIES_TYPES: SeriesTypeId[] = ["Candlestick", "HollowCandle", "OHLC", "HeikinAshi", "Line", "Area", "Bar"];
 
-const TOOL_DEFS = ["cursor", "crosshair", "trendLine", "hLine", "vLine", "fibonacci", "channel", "text"] as const;
+const TOOL_DEFS = ["cursor", "crosshair", "trendLine", "hLine", "vLine", "fibonacci", "channel", "text", "rectangle", "arrow"] as const;
 type ToolId = typeof TOOL_DEFS[number];
 
 function normalizeDate(value: Date | number) {
@@ -167,6 +169,19 @@ function ToolIcon({ id }: { id: string }) {
 					<text x="2" y="13" fontSize="13" fontWeight="700" fill="currentColor" fontFamily="Georgia, serif">T</text>
 				</svg>
 			);
+		case "rectangle":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<rect x="2" y="3" width="12" height="9" rx="1.4" stroke="currentColor" strokeWidth="1.4" />
+				</svg>
+			);
+		case "arrow":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<path d="M3 12L12 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+					<path d="M8.5 3H12V6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+				</svg>
+			);
 		case "settings":
 			return (
 				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -197,6 +212,8 @@ export default function LibraryShowcaseDemo() {
 	const [settingsPaneId, setSettingsPaneId] = useState("price");
 	const [maxVisiblePanes, setMaxVisiblePanes] = useState(() => loadDemoSettings().maxVisiblePanes);
 	const [settingsOpen, setSettingsOpen] = useState(false);
+	const drawingInteraction = useDrawingInteraction();
+	const { undo, redo, deleteSelected, cancelDrawing } = drawingInteraction;
 
 	// Live Binance data state
 	const [liveData, setLiveData] = useState<RawOHLCV[]>([]);
@@ -407,6 +424,7 @@ export default function LibraryShowcaseDemo() {
 
 	const ratio = window.devicePixelRatio || 1;
 	const priceIsUp = (lastBar?.close ?? 0) >= (lastBar?.open ?? 0);
+	const handleDrawingToolUsed = useCallback(() => setActiveTool("cursor"), []);
 
 	// ── Theme ─────────────────────────────────────────────────────────────────
 	const { theme, toggleTheme, isDark } = useChartTheme();
@@ -420,6 +438,46 @@ export default function LibraryShowcaseDemo() {
 			document.documentElement.removeAttribute("data-chart-theme");
 		};
 	}, []);
+
+	useEffect(() => {
+		const handleKeyDown = (event: KeyboardEvent) => {
+			const target = event.target as HTMLElement | null;
+			if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+				return;
+			}
+
+			if (event.key === "Escape") {
+				event.preventDefault();
+				cancelDrawing();
+				setActiveTool("cursor");
+				return;
+			}
+
+			if (event.key === "Delete" || event.key === "Backspace") {
+				event.preventDefault();
+				deleteSelected();
+				return;
+			}
+
+			if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+				event.preventDefault();
+				if (event.shiftKey) {
+					redo();
+				} else {
+					undo();
+				}
+				return;
+			}
+
+			if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "y") {
+				event.preventDefault();
+				redo();
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [cancelDrawing, deleteSelected, redo, setActiveTool, undo]);
 
 	const { visiblePanes, heights: paneHeights, applyDelta, resetToDefault, available } = paneState;
 
@@ -719,6 +777,11 @@ export default function LibraryShowcaseDemo() {
 										priceFormat,
 										volumeFormat,
 									})}
+									<DrawingLayer
+										activeTool={activeTool}
+										interaction={drawingInteraction}
+										onToolUsed={handleDrawingToolUsed}
+									/>
 								</ChartCanvas>
 
 								{visiblePanes.map((pane, index) => {

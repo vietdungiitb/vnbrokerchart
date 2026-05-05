@@ -20,17 +20,35 @@ export {
 	createDraftFromTool,
 	createDrawingHistory,
 	createTool as createDrawingTool,
+	createDrawingInteractionState,
+	deleteSelectedInteractionState,
 	deserializeDrawingHistory,
 	deserializeDrawingObject,
 	deserializeDrawings,
+	drawingInteractionReducer,
 	drawingReducer,
+	chartPointToPixel,
 	historyReducer,
 	isDrawingToolName,
 	listDrawingTools,
+	pixelToChartPoint,
 	registerDrawingTool,
+	renderDrawingToSvg,
 	serializeDrawingHistory,
 	serializeDrawingObject,
 	serializeDrawings,
+	useDrawingInteraction,
+	DrawingLayer,
+	Rectangle,
+	Arrow,
+} from "./lib/drawing";
+
+export type {
+	ChartScales,
+	DrawingInteractionAction,
+	DrawingInteractionState,
+	PlotDatum,
+	UseDrawingInteractionReturn,
 } from "./lib/drawing";
 
 export type {

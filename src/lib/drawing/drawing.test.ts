@@ -31,9 +31,11 @@ describe("drawing registry", () => {
 		const toolNames = listDrawingTools().map((tool) => tool.name).sort();
 
 		expect(toolNames).toEqual(expect.arrayContaining([
+			"arrow",
 			"channel",
 			"fibonacci",
 			"hLine",
+			"rectangle",
 			"text",
 			"trendLine",
 			"vLine",
@@ -43,11 +45,17 @@ describe("drawing registry", () => {
 	it("creates trend line and text drafts", () => {
 		const trendLine = createTool("trendLine").createDraft(startPoint);
 		const text = createTextObject();
+		const rectangle = createTool("rectangle").createDraft(startPoint);
+		const arrow = createTool("arrow").createDraft(startPoint);
 
 		expect(trendLine.type).toBe("trendLine");
 		expect(trendLine.points).toHaveLength(2);
 		expect(text.type).toBe("text");
 		expect(text.points).toHaveLength(1);
+		expect(rectangle.type).toBe("rectangle");
+		expect(rectangle.points).toHaveLength(2);
+		expect(arrow.type).toBe("arrow");
+		expect(arrow.points).toHaveLength(2);
 	});
 });
 

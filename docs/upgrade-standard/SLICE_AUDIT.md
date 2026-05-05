@@ -801,3 +801,14 @@ Mỗi slice nên ghi theo mẫu sau:
 - Rủi ro còn lại: trạng thái mixed JS/TS vẫn tồn tại theo chiến lược migration pha, đã ghi nhận rõ trong closeout report
 - Kết luận: PASS, đóng vòng bàn giao hiện tại với backlog vận hành rỗng
 
+### Drawing tools runtime compatibility bridge
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Slice: Drawing Tools Engine runtime compatibility bridge
+- File đã sửa: `src/lib/GenericChartComponent.tsx`, `docs/upgrade-standard/AUDIT_LEDGER.md`, `docs/upgrade-standard/SLICE_AUDIT.md`, `module_tree_full.md`
+- Lệnh xác minh: `get_errors` trên `src/lib/GenericChartComponent.tsx`; `npm run type-check`; `npm run build:docs`; browser smoke test trên `build/index.html`
+- Kết quả: wrapper của `GenericChartComponent` không còn ném lỗi khi `ChartProvider` vắng mặt trên demo drawing-tools path; browser page load hoàn tất với toolbar vẽ và không còn crash `useChart must be used within a ChartProvider`
+- Rủi ro còn lại: đây là bridge tương thích cho legacy shell, không phải migration toàn bộ chart stack sang provider path mới
+- Kết luận: PASS, chốt evidence cho slice runtime của drawing-tools
+

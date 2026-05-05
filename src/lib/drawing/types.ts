@@ -9,7 +9,9 @@ export type DrawingToolType =
 	| "vLine"
 	| "fibonacci"
 	| "channel"
-	| "text";
+	| "text"
+	| "rectangle"
+	| "arrow";
 
 export interface DrawingStyle {
 	stroke: string;
@@ -27,6 +29,8 @@ export interface DrawingObject {
 	points: Point[];
 	style: DrawingStyle;
 	text?: string;
+	fibLevels?: number[];
+	label?: string;
 	extendLeft?: boolean;
 	extendRight?: boolean;
 	locked?: boolean;

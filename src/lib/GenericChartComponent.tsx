@@ -1,9 +1,10 @@
 import React from "react";
 import GenericComponent, { type GenericComponentProps } from "./GenericComponent";
 import { isDefined, find } from "./utils";
-import { useChart } from "./ChartContext";
+import ChartContext from "./ChartContext";
 import type { AnyRecord } from "./types";
 import type { ChartConfig } from "./StockChartContext";
+import { useStockChart } from "./StockChartContext";
 
 const ALWAYS_TRUE_TYPES = ["drag", "dragend"];
 
@@ -83,7 +84,10 @@ class GenericChartComponent extends GenericComponent {
 
 // Wrapper to provide ChartContext values as props
 const GenericChartComponentWrapper = (props: Omit<GenericComponentProps, "chartId">) => {
-	const { chartId } = useChart();
+	const chartContext = React.useContext(ChartContext);
+	const { chartConfig } = useStockChart();
+	const chartId = chartContext?.chartId ?? chartConfig[0]?.id ?? 0;
+
 	return <GenericChartComponent {...props} chartId={chartId} />;
 };
 

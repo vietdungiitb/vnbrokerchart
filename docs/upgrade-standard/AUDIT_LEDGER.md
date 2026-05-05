@@ -1622,3 +1622,54 @@ Every completed slice must update this ledger with the exact files changed in th
   - Đây là lần sync để project-delivery docs (bề mặt central governance) cũng reflect workstream drawing tools.
 - Validation:
   - Documentation review → PASS; no broken links; no content gaps
+
+### Drawing Tools Engine — Milestone M1 (core engine + demo integration)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: Tạo mới toàn bộ drawing engine M1: coordinate bridge, state machine, undo/redo history, SVG render layer, DrawingLayer overlay component, 8 builtin tools (trendLine, hLine, vLine, fibonacci, channel, text, rectangle, arrow), demo shell toolbar integration, i18n keys, keyboard shortcuts (Ctrl+Z/Y, Del, ESC), Vitest unit tests.
+- Files mới tạo (src/lib/drawing/):
+  - `coordinateUtils.ts` + `coordinateUtils.test.ts`
+  - `stateMachine.ts`
+  - `history.ts`
+  - `renderSvg.ts` + `renderSvg.test.ts`
+  - `DrawingLayer.tsx`
+  - `registry.ts`
+  - `serialization.ts`
+  - `shared.ts`
+  - `types.ts`
+  - `index.ts`
+  - `drawing.test.ts`
+  - `useDrawingInteraction.ts` + `useDrawingInteraction.test.ts`
+  - `builtin/trendLine.ts`, `builtin/hLine.ts`, `builtin/vLine.ts`, `builtin/fibonacci.ts`, `builtin/channel.ts`, `builtin/text.ts`, `builtin/rectangle.ts`, `builtin/arrow.ts`
+- Files cập nhật:
+  - `src/index.ts` (export drawing engine API)
+  - `src/demo/LibraryShowcaseDemo.tsx` (TOOL_DEFS, useDrawingInteraction, DrawingLayer, keyboard shortcuts)
+  - `src/demo/i18n.tsx` (tool.rectangle, tool.arrow keys — cả VI lẫn EN)
+- Validation:
+  - `npm run type-check` → Exit 0, 0 errors
+  - `npm test` → 14 test files, 67 tests, 0 failures (16 drawing tests PASS)
+  - `npm run build:docs` → webpack compiled successfully, 8.31 MiB bundle
+  - Browser smoke → Page loads; toolbar 10 buttons visible; no JS errors; Cursor/Rectangle/Arrow/TrendLine buttons toggle correctly (aria-pressed verified)
+  - R08 regression scan (lib→demo boundary) → grep empty, PASS
+  - `python scripts/generate_module_tree.py` → 632 modules
+  - `module_tree_full.md` regenerated
+
+### Ad-hoc runtime compatibility bridge — GenericChartComponent fallback for drawing tools
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: bridge runtime ChartProvider mismatch so the drawing-tools demo can mount through the legacy ChartCanvas shell without crashing
+- Files modified:
+  - `src/lib/GenericChartComponent.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `docs/upgrade-standard/SLICE_AUDIT.md`
+  - `module_tree_full.md`
+- Nội dung:
+  - `GenericChartComponentWrapper` now resolves `chartId` from `ChartContext` when available and falls back to the active `StockChartContext` chart list when the provider is missing.
+  - The browser demo no longer throws `useChart must be used within a ChartProvider` on the drawing-tools page load path.
+- Validation:
+  - `get_errors` on `src/lib/GenericChartComponent.tsx` → PASS
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke on `build/index.html` → PASS; toolbar renders and the page loads without the ChartProvider crash
