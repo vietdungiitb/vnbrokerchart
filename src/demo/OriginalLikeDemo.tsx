@@ -24,6 +24,7 @@ import { discontinuousTimeScaleProvider } from "../lib/scale";
 import { ema, sma, macd } from "../lib/indicator";
 import { last } from "../lib/utils";
 import { getOfflineDemoData, type DemoDatum, type MACDPoint } from "./demoData";
+import DemoPageShell from "./DemoPageShell";
 import { DemoI18nBoundary, useDemoI18n } from "./i18n";
 import "./demo.css";
 
@@ -277,9 +278,8 @@ const OriginalLikeDemoContent = () => {
     const macdOrigin = createOrigin(macdHeight);
 
     return (
-        <main className="demo-page demo-page--classic">
-            <div className="demo-frame demo-frame--classic">
-                <section className="demo-chart-card demo-chart-card--classic">
+        <DemoPageShell className="demo-page--classic" frameClassName="demo-frame--classic">
+            <section className="demo-chart-card demo-chart-card--classic">
                     <header className="demo-chart-card__header demo-chart-card__header--classic">
                         <div>
                             <h1 className="demo-chart-card__title">{t("original.title")}</h1>
@@ -459,8 +459,7 @@ const OriginalLikeDemoContent = () => {
                         </div>
                     </div>
                 </section>
-            </div>
-        </main>
+        </DemoPageShell>
     );
 };
 

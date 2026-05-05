@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-05 09:10:47`
+Generated at: `2026-05-05 10:04:16`
 
 ## Summary
 
-- Total modules: 632
+- Total modules: 646
 - Python modules: 1
-- JS/TS modules: 631
-- Total classes: 348
-- Total functions: 3583
-- Total top-level variables: 7532
+- JS/TS modules: 645
+- Total classes: 349
+- Total functions: 3625
+- Total top-level variables: 7676
 
 ## Python Modules
 
@@ -2101,6 +2101,11 @@ Generated at: `2026-05-05 09:10:47`
 - Top-level variables:
   - `BINANCE_BASE`, `BINANCE_INTERVAL_MAP`, `BOLLINGER_BAND_OPTIONS`, `DEMO_WINDOW`, `binanceInterval`, `bollingerBandCalculator`, `ema20`, `ema50`, `enriched`, `json`, `macdCalculator`, `response`, `rsiCalculator`, `url`
 
+### `src/demo/DemoPageShell.tsx`
+
+- Top-level variables:
+  - `frameClassNameValue`, `pageClassName`
+
 ### `src/demo/FullDemo.tsx`
 
 - Functions:
@@ -2123,9 +2128,9 @@ Generated at: `2026-05-05 09:10:47`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `ToolIcon`, `addPane`, `chartDomain`, `handleKeyDown`, `handler`, `loadDemoSettings`, `normalizeDate`, `paneTemplate`, `readSize`, `saveDemoSettings`
+  - `ToolIcon`, `addPane`, `chartDomain`, `clonePoint`, `getSelectedDrawingId`, `handleKeyDown`, `handler`, `loadDemoSettings`, `mergeDrawingPatch`, `normalizeDate`, `offsetDrawingByPixels`, `paneTemplate`, `readSize`, `saveDemoSettings`, `sortDrawings`
 - Top-level variables:
-  - `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `MAIN_PRICE_SERIES_TYPES`, `TIMEFRAMES`, `TOOL_DEFS`, `abortController`, `axisStroke`, `axisTickFill`, `candleWidth`, `canvasBg`, `chartMenuRef`, `chartReady`, `chartTypeLabel`, `closeSettings`, `data`, `dateFormat`, `desiredType`, `drawingInteraction`, `end`, `enrichedData`, `first`, `h`, `haCalc`, `handleChartTypeChange`, `handleDrawingToolUsed`, `handleResetSettings`, `indicatorLegendLabels`, `indicatorSeries`, `lastBar`, `localizePane`, `localizedPane`, `msg`, `nextLabel`, `node`, `observer`, `openSettings`, `paneH`, `paneHeaderLabels`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `parsed`, `plotData`, `priceFormat`, `priceIsUp`, `pricePane`, `primary`, `ratio`, `raw`, `rect`, `second`, `selectedPane`, `shellRef`, `start`, `stepPx`, `target`, `toolLabel`, `top`, `transformed`, `volumeFormat`, `w`, `xExtents`
+  - `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `MAIN_PRICE_SERIES_TYPES`, `TIMEFRAMES`, `TOOL_GROUPS`, `abortController`, `allPrices`, `axisStroke`, `axisTickFill`, `bringSelectedToFront`, `candleWidth`, `canvasBg`, `chartMenuRef`, `chartReady`, `chartTypeLabel`, `cloneSelectedDrawing`, `closeSettings`, `data`, `dateFormat`, `deleteDrawingById`, `deleteSelectedDrawing`, `desiredType`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `end`, `enrichedData`, `file`, `first`, `firstBar`, `h`, `haCalc`, `handleChartTypeChange`, `handleClearDrawings`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handleResetSettings`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `innerHeight`, `innerWidth`, `lastBar`, `lastVisibleBar`, `leftZ`, `localizePane`, `localizedPane`, `maxPrice`, `maxZ`, `minPrice`, `minZ`, `msg`, `nextClone`, `nextDrawings`, `nextLabel`, `node`, `observer`, `openSettings`, `paneH`, `paneHeaderLabels`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `parsed`, `plotData`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `ratio`, `raw`, `rect`, `rightZ`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellRef`, `sortedDrawings`, `start`, `stepPx`, `storageToolbarPosition`, `target`, `timeOffset`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `toolLabel`, `top`, `transformed`, `updateSelectedDrawing`, `volumeFormat`, `w`, `xExtents`
 
 ### `src/demo/LiveDemo.tsx`
 
@@ -2833,6 +2838,21 @@ Generated at: `2026-05-05 09:10:47`
 - Top-level variables:
   - `Channel`
 
+### `src/lib/drawing/builtin/dateAndPriceRange.ts`
+
+- Top-level variables:
+  - `DateAndPriceRange`
+
+### `src/lib/drawing/builtin/extendedLine.ts`
+
+- Top-level variables:
+  - `ExtendedLine`
+
+### `src/lib/drawing/builtin/fibExtension.ts`
+
+- Top-level variables:
+  - `FIB_EXTENSION_LEVELS`, `FibExtension`
+
 ### `src/lib/drawing/builtin/fibonacci.ts`
 
 - Top-level variables:
@@ -2843,10 +2863,34 @@ Generated at: `2026-05-05 09:10:47`
 - Top-level variables:
   - `HLine`
 
+### `src/lib/drawing/builtin/longPosition.ts`
+
+- Functions:
+  - `calculateRiskReward`
+- Top-level variables:
+  - `LongPosition`, `updated`
+
+### `src/lib/drawing/builtin/polyline.ts`
+
+- Top-level variables:
+  - `Polyline`
+
+### `src/lib/drawing/builtin/ray.ts`
+
+- Top-level variables:
+  - `Ray`
+
 ### `src/lib/drawing/builtin/rectangle.ts`
 
 - Top-level variables:
   - `Rectangle`
+
+### `src/lib/drawing/builtin/shortPosition.ts`
+
+- Functions:
+  - `calculateRiskReward`
+- Top-level variables:
+  - `ShortPosition`, `updated`
 
 ### `src/lib/drawing/builtin/text.ts`
 
@@ -2882,12 +2926,42 @@ Generated at: `2026-05-05 09:10:47`
 - Top-level variables:
   - `arrow`, `completeState`, `draft`, `drawing`, `drawingState`, `editingState`, `first`, `history`, `initialHistory`, `movingState`, `nextPoint`, `pushedHistory`, `rectangle`, `redoneHistory`, `resizingState`, `second`, `selectedState`, `serializedDrawing`, `serializedDrawings`, `serializedHistory`, `startPoint`, `text`, `tool`, `toolNames`, `trendLine`, `undoneHistory`, `updatedDraft`, `updatedState`
 
+### `src/lib/drawing/DrawingInspector.tsx`
+
+- Functions:
+  - `isColorString`, `updateStyle`
+- Top-level variables:
+  - `left`, `locked`, `strokeDasharray`, `style`, `top`, `visible`
+
 ### `src/lib/drawing/DrawingLayer.tsx`
 
 - Functions:
-  - `buildRenderScales`, `currentDrawing`, `getSelectedDrawingId`, `resolveChartConfig`, `toChartPoint`
+  - `buildRenderScales`, `currentDrawing`, `getSelectedDrawingId`, `handleSelect`, `resolveChartConfig`, `toChartPoint`
 - Top-level variables:
-  - `chartConfig`, `chartConfigList`, `chartCursorClass`, `completed`, `dateValue`, `draft`, `drawings`, `handleClick`, `handleMouseDown`, `handleMouseMove`, `midPoint`, `point`, `renderSVG`, `renderScales`, `selectedId`, `startPoint`, `tool`, `toolName`, `updated`, `xValue`, `yValue`
+  - `chartConfig`, `chartConfigList`, `chartCursorClass`, `completed`, `dateValue`, `draft`, `drawings`, `handleClick`, `handleDoubleClick`, `handleMouseDown`, `handleMouseMove`, `midPoint`, `nextSelectedIds`, `point`, `renderSVG`, `renderScales`, `selectedObjectIdSet`, `selectedObjectIds`, `startPoint`, `tool`, `toolName`, `updated`, `xValue`, `yValue`
+
+### `src/lib/drawing/DrawingListPanel.tsx`
+
+- Functions:
+  - `formatDrawingLabel`, `formatTimestamp`
+- Top-level variables:
+  - `hidden`, `isSelected`, `left`, `locked`, `top`
+
+### `src/lib/drawing/DrawingStorage.test.ts`
+
+- Functions:
+  - `createStorageMock`
+- Top-level variables:
+  - `adapter`, `drawing`, `payload`, `store`
+
+### `src/lib/drawing/DrawingStorage.ts`
+
+- Classes:
+  - `DrawingImportError`
+- Functions:
+  - `createLocalStorageAdapter`, `getStorage`, `getStorageKey`, `isDrawingType`, `isPoint`, `isRecord`, `isRiskReward`, `isStyle`, `normalizeDasharray`, `normalizeDrawingObject`, `normalizeDrawings`
+- Top-level variables:
+  - `DRAWING_TOOL_TYPES`, `createdAt`, `normalized`, `raw`, `style`, `updatedAt`
 
 ### `src/lib/drawing/history.ts`
 
@@ -2899,6 +2973,13 @@ Generated at: `2026-05-05 09:10:47`
 ### `src/lib/drawing/index.ts`
 
 - No parseable top-level symbols found
+
+### `src/lib/drawing/m3.test.ts`
+
+- Functions:
+  - `createSimpleDrawing`
+- Top-level variables:
+  - `completed`, `dateAndPriceRange`, `deleted`, `draft`, `endPoint`, `extendedLine`, `extendedLineElements`, `fibExtension`, `first`, `flatPoint`, `initial`, `longPosition`, `names`, `options`, `polyline`, `preview`, `ray`, `scales`, `second`, `selected`, `shortPosition`, `startPoint`
 
 ### `src/lib/drawing/registry.ts`
 
@@ -2917,9 +2998,9 @@ Generated at: `2026-05-05 09:10:47`
 ### `src/lib/drawing/renderSvg.ts`
 
 - Functions:
-  - `circleElement`, `interactiveProps`, `lineElement`, `numberFormatter`, `polygonElement`, `rectElement`, `renderArrow`, `renderChannel`, `renderDrawingToSvg`, `renderFibonacci`, `renderHLine`, `renderRectangle`, `renderText`, `renderTrendLine`, `renderVLine`, `selectionHandles`, `strokeDasharrayForStyle`, `textElement`, `toPixel`
+  - `circleElement`, `clipSegmentToBox`, `interactiveProps`, `lineElement`, `numberFormatter`, `polygonElement`, `polylineElement`, `rectElement`, `renderArrow`, `renderChannel`, `renderDateAndPriceRange`, `renderDrawingToSvg`, `renderExtendedLine`, `renderFibExtension`, `renderFibonacci`, `renderHLine`, `renderLineWithHandles`, `renderLongPosition`, `renderPolyline`, `renderPositionZones`, `renderRay`, `renderRectangle`, `renderShortPosition`, `renderText`, `renderTrendLine`, `renderVLine`, `selectionHandles`, `strokeDasharrayForStyle`, `textElement`, `toPixel`
 - Top-level variables:
-  - `DEFAULT_FIB_LEVELS`, `base`, `bottom`, `distance`, `dx`, `dy`, `elements`, `end`, `headLength`, `headWidth`, `height`, `left`, `length`, `levels`, `line`, `lineProps`, `normal`, `offsetAnchor`, `offsetEnd`, `offsetStart`, `offsetVector`, `pixel`, `pixelDelta`, `point`, `price`, `priceDelta`, `px`, `py`, `right`, `start`, `text`, `top`, `ux`, `uy`, `width`, `x`, `y`
+  - `DEFAULT_FIB_EXTENSION_LEVELS`, `DEFAULT_FIB_LEVELS`, `badge`, `badgeText`, `bars`, `base`, `bottom`, `clipped`, `distance`, `dx`, `dy`, `edges`, `element`, `elements`, `end`, `entryLine`, `entryY`, `extensionPrice`, `headLength`, `headWidth`, `height`, `left`, `length`, `levels`, `line`, `lineProps`, `normal`, `offsetAnchor`, `offsetEnd`, `offsetStart`, `offsetVector`, `percent`, `pixel`, `pixelDelta`, `pixels`, `point`, `price`, `priceDelta`, `px`, `py`, `r`, `ratio`, `rect`, `reward`, `right`, `risk`, `riskReward`, `slZone`, `slZoneClass`, `start`, `stopLine`, `stopY`, `t0`, `t1`, `targetLine`, `targetY`, `text`, `top`, `tpZone`, `tpZoneClass`, `ux`, `uy`, `vector`, `width`, `x`, `y`
 
 ### `src/lib/drawing/serialization.ts`
 
@@ -2929,14 +3010,16 @@ Generated at: `2026-05-05 09:10:47`
 ### `src/lib/drawing/shared.ts`
 
 - Functions:
-  - `createDrawingId`, `createDrawingObject`, `replacePoint`
+  - `appendPoint`, `clonePoint`, `createDrawingId`, `createDrawingObject`, `replacePoint`
 - Top-level variables:
   - `defaultDrawingStyle`, `drawingIdSeed`, `now`
 
 ### `src/lib/drawing/stateMachine.ts`
 
 - Functions:
-  - `drawingReducer`
+  - `drawingReducer`, `getSelectedObjectIds`, `normalizeSelectedObjectIds`, `selectionStateFor`
+- Top-level variables:
+  - `normalized`
 
 ### `src/lib/drawing/types.ts`
 
@@ -2952,9 +3035,16 @@ Generated at: `2026-05-05 09:10:47`
 ### `src/lib/drawing/useDrawingInteraction.ts`
 
 - Functions:
-  - `createDrawingInteractionState`, `deleteSelectedInteractionState`, `drawingInteractionReducer`, `getActiveObjectId`, `isHistoryAction`, `useDrawingInteraction`
+  - `createDrawingInteractionState`, `deleteSelectedInteractionState`, `drawingInteractionReducer`, `getSelectedObjectIds`, `isHistoryAction`, `useDrawingInteraction`
 - Top-level variables:
-  - `cancelDrawing`, `deleteSelected`, `nextDrawings`, `nextHistory`, `redo`, `selectedObjectId`, `undo`
+  - `cancelDrawing`, `deleteSelected`, `nextDrawings`, `nextHistory`, `redo`, `selectedDrawings`, `selectedObjectIds`, `undo`
+
+### `src/lib/drawing/useDrawingStorage.ts`
+
+- Functions:
+  - `useDrawingStorage`
+- Top-level variables:
+  - `anchor`, `blob`, `clearAll`, `exportJSON`, `hydratedRef`, `importJSON`, `imported`, `loaded`, `payload`, `storage`, `timeoutId`, `url`
 
 ### `src/lib/EventCapture.tsx`
 

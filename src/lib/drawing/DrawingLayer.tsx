@@ -3,10 +3,11 @@ import type { ReactElement } from "react";
 import { getXValue } from "../utils/ChartDataUtil";
 import GenericComponent from "../GenericComponent";
 import { createDraftFromTool, createTool, isDrawingToolName } from "./registry";
-import { replacePoint } from "./shared";
+import { appendPoint, replacePoint } from "./shared";
 import type { DrawingObject, DrawingToolType } from "./types";
 import { renderDrawingToSvg, type RenderSvgOptions } from "./renderSvg";
 import type { UseDrawingInteractionReturn } from "./useDrawingInteraction";
+import { getSelectedObjectIds } from "./stateMachine";
 
 export interface DrawingLayerProps {
 	activeTool: string;
@@ -46,6 +47,8 @@ function getSelectedDrawingId(drawingState: UseDrawingInteractionReturn["drawing
 	switch (drawingState.type) {
 		case "selected":
 			return drawingState.objectId;
+		case "selectedMultiple":
+			return undefined;
 		case "moving":
 		case "resizing":
 		case "editing":
@@ -75,6 +78,9 @@ function currentDrawing(drawings: readonly DrawingObject[], drawingState: UseDra
 }
 
 export default function DrawingLayer({ activeTool, interaction, onToolUsed }: DrawingLayerProps) {
+	const selectedObjectIds = useMemo(() => getSelectedObjectIds(interaction.drawingState), [interaction.drawingState]);
+	const selectedObjectIdSet = useMemo(() => new Set(selectedObjectIds), [selectedObjectIds]);
+
 	const renderSVG = useCallback((moreProps: any): ReactElement[] => {
 		const chartConfig = resolveChartConfig(moreProps);
 		if (!chartConfig) {
@@ -82,25 +88,44 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed }: Dr
 		}
 
 		const renderScales = buildRenderScales(moreProps);
-		const drawings = [...interaction.history.present];
+		const drawings = interaction.history.present
+			.map((drawing, index) => ({ drawing, index }))
+			.filter(({ drawing }) => drawing.visible !== false)
+			.sort((left, right) => (left.drawing.zIndex ?? 0) - (right.drawing.zIndex ?? 0) || left.index - right.index)
+			.map(({ drawing }) => drawing);
 		const draft = currentDrawing(drawings, interaction.drawingState);
 		if (draft && !drawings.some((drawing) => drawing.id === draft.id)) {
 			drawings.push(draft);
 		}
-		const selectedId = getSelectedDrawingId(interaction.drawingState);
+
+		const handleSelect = (drawing: DrawingObject, event?: { shiftKey?: boolean }) => {
+			if (event?.shiftKey) {
+				const nextSelectedIds = selectedObjectIdSet.has(drawing.id)
+					? selectedObjectIds.filter((id) => id !== drawing.id)
+					: [...selectedObjectIds, drawing.id];
+				interaction.dispatch({ type: "SET_SELECTED_OBJECTS", objectIds: nextSelectedIds });
+				return;
+			}
+
+			interaction.dispatch({ type: "SELECT_OBJECT", objectId: drawing.id });
+		};
 
 		return drawings.flatMap((drawing) => renderDrawingToSvg(drawing, renderScales, {
 			chartWidth: chartConfig.width,
 			chartHeight: chartConfig.height,
-			isSelected: drawing.id === selectedId,
+			isSelected: selectedObjectIdSet.has(drawing.id),
 			onSelect: activeTool === "cursor"
-				? () => interaction.dispatch({ type: "SELECT_OBJECT", objectId: drawing.id })
+				? handleSelect
 				: undefined,
 		} satisfies RenderSvgOptions));
-	}, [activeTool, interaction.drawingState, interaction.history.present, interaction.dispatch]);
+	}, [activeTool, interaction.drawingState, interaction.history.present, interaction.dispatch, selectedObjectIdSet, selectedObjectIds]);
 
 	const handleMouseDown = useCallback((moreProps: any) => {
 		if (!isDrawingToolName(activeTool)) {
+			return;
+		}
+
+		if (activeTool === "polyline" && interaction.drawingState.type === "drawing" && interaction.drawingState.toolName === "polyline") {
 			return;
 		}
 
@@ -162,12 +187,37 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed }: Dr
 			return;
 		}
 
+		if (toolName === "polyline") {
+			const updated = appendPoint(draft, point);
+			interaction.dispatch({ type: "UPDATE_DRAWING", object: updated });
+			return;
+		}
+
 		const completed = createTool(toolName).updateDraft(draft, point);
 		interaction.dispatch({ type: "COMPLETE_DRAWING", object: completed });
 		interaction.dispatch({ type: "PUSH", drawing: completed });
 		interaction.dispatch({ type: "SELECT_OBJECT", objectId: completed.id });
 		onToolUsed?.();
 	}, [activeTool, interaction, onToolUsed]);
+
+	const handleDoubleClick = useCallback((moreProps: any) => {
+		if (interaction.drawingState.type !== "drawing" || interaction.drawingState.toolName !== "polyline") {
+			return;
+		}
+
+		const point = toChartPoint(moreProps);
+		if (!point) {
+			return;
+		}
+
+		const tool = createTool("polyline");
+		const completed = tool.updateDraft(interaction.drawingState.object, point);
+		interaction.dispatch({ type: "UPDATE_DRAWING", object: completed });
+		interaction.dispatch({ type: "COMPLETE_DRAWING", object: completed });
+		interaction.dispatch({ type: "PUSH", drawing: completed });
+		interaction.dispatch({ type: "SELECT_OBJECT", objectId: completed.id });
+		onToolUsed?.();
+	}, [interaction, onToolUsed]);
 
 	const chartCursorClass = useMemo(() => {
 		switch (activeTool) {
@@ -194,6 +244,7 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed }: Dr
 			onMouseDown={handleMouseDown}
 			onMouseMove={handleMouseMove}
 			onClick={handleClick}
+			onDoubleClick={handleDoubleClick}
 			drawOn={[
 				"mousemove",
 				"click",

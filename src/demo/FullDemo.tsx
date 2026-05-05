@@ -17,6 +17,7 @@ import { XAxis, YAxis } from "../lib/axes";
 import { CrossHairCursor, CurrentCoordinate, EdgeIndicator, MouseCoordinateX, MouseCoordinateY } from "../lib/coordinates";
 import { BollingerBandTooltip, MACDTooltip, OHLCTooltip, RSITooltip } from "../lib/tooltip";
 import { BOLLINGER_BAND_OPTIONS, fetchLiveDemoData, getOfflineDemoData, type DemoDatum } from "./demoData";
+import DemoPageShell from "./DemoPageShell";
 import { DemoI18nBoundary, useDemoI18n } from "./i18n";
 import "./demo.css";
 
@@ -342,8 +343,7 @@ const FullDemoContent = () => {
     };
 
     return (
-        <main className="demo-page">
-            <div className="demo-frame">
+        <DemoPageShell className="demo-page--classic" frameClassName="demo-frame--classic">
                 <section className="demo-hero">
                     <div className="demo-hero__content">
                         <div className="demo-eyebrow">{t("full.eyebrow")}</div>
@@ -406,7 +406,6 @@ const FullDemoContent = () => {
                         </div>
                     </aside>
                 </section>
-
                 <section className="demo-grid">
                     <article className="demo-chart-card">
                         <header className="demo-chart-card__header">
@@ -572,8 +571,7 @@ const FullDemoContent = () => {
                         </section>
                     </aside>
                 </section>
-            </div>
-        </main>
+        </DemoPageShell>
     );
 };
 

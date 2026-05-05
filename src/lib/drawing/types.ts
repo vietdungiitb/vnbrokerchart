@@ -11,13 +11,21 @@ export type DrawingToolType =
 	| "channel"
 	| "text"
 	| "rectangle"
-	| "arrow";
+	| "arrow"
+	| "ray"
+	| "extendedLine"
+	| "polyline"
+	| "dateAndPriceRange"
+	| "longPosition"
+	| "shortPosition"
+	| "fibExtension";
 
 export interface DrawingStyle {
 	stroke: string;
 	strokeWidth: number;
-	strokeDasharray?: string;
+	strokeDasharray?: "solid" | "dashed" | "dotted";
 	fill?: string;
+	fillOpacity?: number;
 	opacity?: number;
 	fontSize?: number;
 	fontFamily?: string;
@@ -31,6 +39,11 @@ export interface DrawingObject {
 	text?: string;
 	fibLevels?: number[];
 	label?: string;
+	symbol?: string;
+	timeframe?: string;
+	zIndex?: number;
+	clonedFrom?: string;
+	riskReward?: { entry: number; stop: number; target: number; quantity?: number };
 	extendLeft?: boolean;
 	extendRight?: boolean;
 	locked?: boolean;

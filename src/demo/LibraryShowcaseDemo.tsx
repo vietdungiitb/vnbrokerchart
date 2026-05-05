@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { format } from "d3-format";
 import { scaleTime } from "d3-scale";
 import { timeFormat } from "d3-time-format";
@@ -10,7 +10,10 @@ import {
 	IndicatorLegend,
 	useDynamicPanes,
 	DrawingLayer,
+	DrawingInspector,
+	DrawingListPanel,
 	useDrawingInteraction,
+	useDrawingStorage,
 	type PaneDescriptor,
 	type SeriesConfig,
 	type SeriesTypeId,
@@ -18,11 +21,15 @@ import {
 	useChartTheme,
 	version,
 } from "../index";
+import type { DrawingObject } from "../lib/drawing/types";
+import type { DrawingInspectorLabels } from "../lib/drawing/DrawingInspector";
+import type { DrawingListPanelLabels } from "../lib/drawing/DrawingListPanel";
 import { enrichData } from "../lib/core/calculators/enrichData";
 import type { EnrichedDatum, RawOHLCV } from "../lib/core/calculators/types";
 import ChartCanvas from "../lib/ChartCanvas";
 import { heikinAshi } from "../lib/calculator";
 import { fetchLiveDemoBars, getOfflineDemoBars } from "./demoData";
+import DemoPageShell from "./DemoPageShell";
 import { useDemoI18n } from "./i18n";
 import { PaneSettingsModal, type SettingsSection } from "./PaneSettingsModal";
 import "./demo.css";
@@ -82,8 +89,69 @@ const CHART_TYPE_TO_SERIES: Record<ChartTypeId, SeriesTypeId> = {
 
 const MAIN_PRICE_SERIES_TYPES: SeriesTypeId[] = ["Candlestick", "HollowCandle", "OHLC", "HeikinAshi", "Line", "Area", "Bar"];
 
-const TOOL_DEFS = ["cursor", "crosshair", "trendLine", "hLine", "vLine", "fibonacci", "channel", "text", "rectangle", "arrow"] as const;
-type ToolId = typeof TOOL_DEFS[number];
+const TOOL_GROUPS = [
+	{ id: "lines", tools: ["cursor", "crosshair", "trendLine", "ray", "extendedLine", "hLine", "vLine"] as const },
+	{ id: "fibonacci", tools: ["fibonacci", "fibExtension"] as const },
+	{ id: "shapes", tools: ["rectangle", "arrow", "polyline"] as const },
+	{ id: "analysis", tools: ["channel", "text", "dateAndPriceRange", "longPosition", "shortPosition"] as const },
+] as const;
+type ToolId = typeof TOOL_GROUPS[number]["tools"][number];
+
+const DRAWING_PANEL_WIDTH = 360;
+
+function getSelectedDrawingId(drawingState: { type: string; objectId?: string; object?: DrawingObject }) {
+	switch (drawingState.type) {
+		case "selected":
+		case "moving":
+		case "resizing":
+		case "editing":
+			return drawingState.objectId;
+		case "complete":
+			return drawingState.object?.id;
+		default:
+			return undefined;
+	}
+}
+
+function clonePoint(point: { x: number; y: number }) {
+	return { x: point.x, y: point.y };
+}
+
+function mergeDrawingPatch(drawing: DrawingObject, patch: Partial<DrawingObject>): DrawingObject {
+	return {
+		...drawing,
+		...patch,
+		points: patch.points ? patch.points.map(clonePoint) : drawing.points.map(clonePoint),
+		style: patch.style ? { ...drawing.style, ...patch.style } : { ...drawing.style },
+		updatedAt: Date.now(),
+	};
+}
+
+function sortDrawings(drawings: readonly DrawingObject[]) {
+	return [...drawings].sort((left, right) => {
+		const leftZ = left.zIndex ?? 0;
+		const rightZ = right.zIndex ?? 0;
+		if (leftZ !== rightZ) {
+			return leftZ - rightZ;
+		}
+		return left.createdAt - right.createdAt;
+	});
+}
+
+function offsetDrawingByPixels(drawing: DrawingObject, xOffset: number, yOffset: number): DrawingObject {
+	return {
+		...drawing,
+		id: `${drawing.id}-clone-${Date.now()}`,
+		points: drawing.points.map((point) => ({ x: point.x + xOffset, y: point.y + yOffset })),
+		style: { ...drawing.style },
+		locked: false,
+		visible: true,
+		clonedFrom: drawing.id,
+		zIndex: (drawing.zIndex ?? 0) + 1,
+		createdAt: Date.now(),
+		updatedAt: Date.now(),
+	};
+}
 
 function normalizeDate(value: Date | number) {
 	return value instanceof Date ? value : new Date(value);
@@ -134,6 +202,21 @@ function ToolIcon({ id }: { id: string }) {
 					<line x1="4" y1="12" x2="12" y2="4" stroke="currentColor" strokeWidth="1.5" />
 				</svg>
 			);
+		case "ray":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<line x1="3" y1="12" x2="13" y2="4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+					<path d="M10.5 4H13V6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+				</svg>
+			);
+		case "extendedLine":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<line x1="2" y1="12" x2="14" y2="4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+					<circle cx="2" cy="12" r="1.2" fill="currentColor" />
+					<circle cx="14" cy="4" r="1.2" fill="currentColor" />
+				</svg>
+			);
 		case "hLine":
 			return (
 				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -156,6 +239,15 @@ function ToolIcon({ id }: { id: string }) {
 					<line x1="1" y1="12" x2="15" y2="12" stroke="currentColor" strokeWidth="1" />
 				</svg>
 			);
+		case "fibExtension":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<line x1="1" y1="5" x2="15" y2="5" stroke="currentColor" strokeWidth="1" />
+					<line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.3" />
+					<line x1="1" y1="11" x2="15" y2="11" stroke="currentColor" strokeWidth="1" />
+					<line x1="11" y1="3" x2="11" y2="13" stroke="currentColor" strokeWidth="1.2" strokeDasharray="2 1" />
+				</svg>
+			);
 		case "channel":
 			return (
 				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -175,11 +267,42 @@ function ToolIcon({ id }: { id: string }) {
 					<rect x="2" y="3" width="12" height="9" rx="1.4" stroke="currentColor" strokeWidth="1.4" />
 				</svg>
 			);
+		case "polyline":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<polyline points="2,12 5,9 8,11 12,5 14,7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+					<circle cx="2" cy="12" r="1" fill="currentColor" />
+					<circle cx="14" cy="7" r="1" fill="currentColor" />
+				</svg>
+			);
 		case "arrow":
 			return (
 				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
 					<path d="M3 12L12 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
 					<path d="M8.5 3H12V6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+				</svg>
+			);
+		case "dateAndPriceRange":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+					<path d="M4 6.5h8M4 9.5h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+				</svg>
+			);
+		case "longPosition":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<rect x="2" y="4" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+					<path d="M8 11V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+					<path d="M6.2 6.8L8 5l1.8 1.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+				</svg>
+			);
+		case "shortPosition":
+			return (
+				<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+					<rect x="2" y="4" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+					<path d="M8 5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+					<path d="M6.2 9.2L8 11l1.8-1.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
 				</svg>
 			);
 		case "settings":
@@ -214,6 +337,11 @@ export default function LibraryShowcaseDemo() {
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const drawingInteraction = useDrawingInteraction();
 	const { undo, redo, deleteSelected, cancelDrawing } = drawingInteraction;
+	const importInputRef = useRef<HTMLInputElement | null>(null);
+	const handleLoadDrawings = useCallback((drawings: DrawingObject[]) => {
+		drawingInteraction.dispatch({ type: "REPLACE", drawings });
+	}, [drawingInteraction.dispatch]);
+	const drawingStorage = useDrawingStorage("BTCUSD", timeframe, drawingInteraction.allDrawings, handleLoadDrawings);
 
 	// Live Binance data state
 	const [liveData, setLiveData] = useState<RawOHLCV[]>([]);
@@ -301,6 +429,13 @@ export default function LibraryShowcaseDemo() {
 
 	const xExtents = useMemo(() => chartDomain(plotData), [plotData]);
 	const lastBar = plotData[plotData.length - 1];
+	const selectedDrawingId = useMemo(() => getSelectedDrawingId(drawingInteraction.drawingState), [drawingInteraction.drawingState]);
+	const sortedDrawings = useMemo(() => sortDrawings(drawingInteraction.allDrawings), [drawingInteraction.allDrawings]);
+	const selectedDrawing = useMemo(() => sortedDrawings.find((drawing) => drawing.id === selectedDrawingId) ?? null, [selectedDrawingId, sortedDrawings]);
+	const drawingPanelX = useMemo(() => Math.max(16, chartWidth - DRAWING_PANEL_WIDTH - 16), [chartWidth]);
+	const drawingInspectorPosition = useMemo(() => ({ x: drawingPanelX, y: 16 }), [drawingPanelX]);
+	const drawingListPosition = useMemo(() => ({ x: drawingPanelX, y: 286 }), [drawingPanelX]);
+	const storageToolbarPosition = useMemo(() => ({ x: 16, y: 16 }), []);
 
 	const selectedPane = useMemo(
 		() => paneState.panes.find((pane) => pane.id === selectedPaneId) ?? paneState.visiblePanes[0] ?? paneState.panes[0],
@@ -425,6 +560,146 @@ export default function LibraryShowcaseDemo() {
 	const ratio = window.devicePixelRatio || 1;
 	const priceIsUp = (lastBar?.close ?? 0) >= (lastBar?.open ?? 0);
 	const handleDrawingToolUsed = useCallback(() => setActiveTool("cursor"), []);
+	const updateSelectedDrawing = useCallback((patch: Partial<DrawingObject>) => {
+		if (!selectedDrawing) {
+			return;
+		}
+
+		const nextDrawings = drawingInteraction.allDrawings.map((drawing) => (
+			drawing.id === selectedDrawing.id ? mergeDrawingPatch(drawing, patch) : drawing
+		));
+		drawingInteraction.dispatch({ type: "REPLACE", drawings: nextDrawings });
+	}, [drawingInteraction.allDrawings, drawingInteraction.dispatch, selectedDrawing]);
+
+	const toggleSelectedLock = useCallback(() => {
+		if (!selectedDrawing) {
+			return;
+		}
+		updateSelectedDrawing({ locked: !selectedDrawing.locked });
+	}, [selectedDrawing, updateSelectedDrawing]);
+
+	const toggleSelectedVisible = useCallback(() => {
+		if (!selectedDrawing) {
+			return;
+		}
+		updateSelectedDrawing({ visible: selectedDrawing.visible === false });
+	}, [selectedDrawing, updateSelectedDrawing]);
+
+	const bringSelectedToFront = useCallback(() => {
+		if (!selectedDrawing) {
+			return;
+		}
+		const maxZ = drawingInteraction.allDrawings.reduce((currentMax, drawing) => Math.max(currentMax, drawing.zIndex ?? 0), 0);
+		updateSelectedDrawing({ zIndex: maxZ + 1 });
+	}, [drawingInteraction.allDrawings, selectedDrawing, updateSelectedDrawing]);
+
+	const sendSelectedToBack = useCallback(() => {
+		if (!selectedDrawing) {
+			return;
+		}
+		const minZ = drawingInteraction.allDrawings.reduce((currentMin, drawing) => Math.min(currentMin, drawing.zIndex ?? 0), 0);
+		updateSelectedDrawing({ zIndex: minZ - 1 });
+	}, [drawingInteraction.allDrawings, selectedDrawing, updateSelectedDrawing]);
+
+	const cloneSelectedDrawing = useCallback(() => {
+		if (!selectedDrawing || chartWidth <= 0 || chartHeight <= 0 || plotData.length < 2) {
+			return;
+		}
+
+		const firstBar = plotData[0];
+		const lastVisibleBar = plotData[plotData.length - 1];
+		const allPrices = plotData.flatMap((bar) => [bar.open, bar.high, bar.low, bar.close]);
+		const minPrice = Math.min(...allPrices);
+		const maxPrice = Math.max(...allPrices);
+		const innerWidth = Math.max(1, chartWidth - 128);
+		const innerHeight = Math.max(1, chartHeight - 56);
+		const timeOffset = ((new Date(lastVisibleBar.date).getTime() - new Date(firstBar.date).getTime()) / innerWidth) * 20;
+		const priceOffset = -((maxPrice - minPrice) / innerHeight) * 20;
+
+		const nextClone = offsetDrawingByPixels(selectedDrawing, timeOffset, priceOffset);
+		drawingInteraction.dispatch({ type: "REPLACE", drawings: [...drawingInteraction.allDrawings, nextClone] });
+		drawingInteraction.dispatch({ type: "SELECT_OBJECT", objectId: nextClone.id });
+		setActiveTool("cursor");
+	}, [chartHeight, chartWidth, drawingInteraction.allDrawings, drawingInteraction.dispatch, plotData, selectedDrawing]);
+
+	const deleteSelectedDrawing = useCallback(() => {
+		if (!selectedDrawing) {
+			return;
+		}
+		deleteSelected();
+	}, [deleteSelected, selectedDrawing]);
+
+	const selectDrawingById = useCallback((drawingId: string) => {
+		setActiveTool("cursor");
+		drawingInteraction.dispatch({ type: "SELECT_OBJECT", objectId: drawingId });
+	}, [drawingInteraction.dispatch]);
+
+	const toggleDrawingVisibleById = useCallback((drawingId: string) => {
+		const nextDrawings = drawingInteraction.allDrawings.map((drawing) => (
+			drawing.id === drawingId ? mergeDrawingPatch(drawing, { visible: drawing.visible === false }) : drawing
+		));
+		drawingInteraction.dispatch({ type: "REPLACE", drawings: nextDrawings });
+	}, [drawingInteraction.allDrawings, drawingInteraction.dispatch]);
+
+	const deleteDrawingById = useCallback((drawingId: string) => {
+		const target = drawingInteraction.allDrawings.find((drawing) => drawing.id === drawingId);
+		if (!target || target.locked) {
+			return;
+		}
+		drawingInteraction.dispatch({ type: "REPLACE", drawings: drawingInteraction.allDrawings.filter((drawing) => drawing.id !== drawingId) });
+	}, [drawingInteraction.allDrawings, drawingInteraction.dispatch]);
+
+	const drawingInspectorLabels = useMemo<DrawingInspectorLabels>(() => ({
+		title: t("drawing.inspectorTitle"),
+		stroke: t("drawing.stroke"),
+		fill: t("drawing.fill"),
+		strokeWidth: t("drawing.strokeWidth"),
+		lineStyle: t("drawing.lineStyle"),
+		opacity: t("drawing.opacity"),
+		solid: t("drawing.solid"),
+		dashed: t("drawing.dashed"),
+		dotted: t("drawing.dotted"),
+		lock: t("drawing.lock"),
+		unlock: t("drawing.unlock"),
+		clone: t("drawing.clone"),
+		hide: t("drawing.hide"),
+		show: t("drawing.show"),
+		bringToFront: t("drawing.bringToFront"),
+		sendToBack: t("drawing.sendToBack"),
+		delete: t("drawing.delete"),
+		close: t("drawing.close"),
+	}), [t]);
+
+	const drawingListPanelLabels = useMemo<DrawingListPanelLabels>(() => ({
+		title: t("drawing.drawingsList"),
+		empty: t("drawing.drawingsListEmpty"),
+		visible: t("drawing.visible"),
+		hidden: t("drawing.hidden"),
+		locked: t("drawing.locked"),
+		selected: t("drawing.selected"),
+		delete: t("drawing.delete"),
+	}), [t]);
+
+	const handleExportDrawings = useCallback(() => {
+		drawingStorage.exportJSON();
+	}, [drawingStorage]);
+
+	const handleImportButtonClick = useCallback(() => {
+		importInputRef.current?.click();
+	}, []);
+
+	const handleImportFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		event.target.value = "";
+		if (!file) {
+			return;
+		}
+		drawingStorage.importJSON(file).catch(() => undefined);
+	}, [drawingStorage]);
+
+	const handleClearDrawings = useCallback(() => {
+		drawingStorage.clearAll();
+	}, [drawingStorage]);
 
 	// ── Theme ─────────────────────────────────────────────────────────────────
 	const { theme, toggleTheme, isDark } = useChartTheme();
@@ -533,7 +808,8 @@ export default function LibraryShowcaseDemo() {
 	}, [paneState]);
 
 	return (
-		<div className="gc-terminal" data-chart-theme={theme}>
+		<DemoPageShell className="demo-page--terminal" frameClassName="demo-frame--terminal">
+			<div className="gc-terminal gc-terminal--embedded" data-chart-theme={theme}>
 			<header className="gc-topbar">
 				<div className="gc-topbar__left">
 					<div className="gc-logo" aria-label={t("library.topbarAria")}>BT</div>
@@ -709,17 +985,24 @@ export default function LibraryShowcaseDemo() {
 
 			<div className="gc-main">
 				<aside className="gc-tools" aria-label={t("library.drawingTools")}>
-					{TOOL_DEFS.map((id) => (
-						<button
-							key={id}
-							type="button"
-							title={toolLabel(id)}
-							aria-pressed={activeTool === id}
-							className={`gc-tool-btn${activeTool === id ? " gc-tool-btn--active" : ""}`}
-							onClick={() => setActiveTool(id)}
-						>
-							<ToolIcon id={id} />
-						</button>
+					{TOOL_GROUPS.map((group, groupIndex) => (
+						<Fragment key={group.id}>
+							<div className="gc-tools-group">
+								{group.tools.map((id) => (
+									<button
+										key={id}
+										type="button"
+										title={toolLabel(id)}
+										aria-pressed={activeTool === id}
+										className={`gc-tool-btn${activeTool === id ? " gc-tool-btn--active" : ""}`}
+										onClick={() => setActiveTool(id)}
+									>
+										<ToolIcon id={id} />
+									</button>
+								))}
+							</div>
+							{groupIndex < TOOL_GROUPS.length - 1 && <span className="rsc-toolbar-divider" aria-hidden="true" />}
+						</Fragment>
 					))}
 				</aside>
 
@@ -741,6 +1024,13 @@ export default function LibraryShowcaseDemo() {
 					</div>
 
 					<div className="gc-chart-shell" ref={shellRef} style={{ background: canvasBg }}>
+						<div className="rsc-drawing-storage-toolbar" style={{ left: storageToolbarPosition.x, top: storageToolbarPosition.y }}>
+							<button type="button" className="rsc-drawing-storage-toolbar__button" onClick={handleExportDrawings}>{t("drawing.exportJson")}</button>
+							<button type="button" className="rsc-drawing-storage-toolbar__button" onClick={handleImportButtonClick}>{t("drawing.importJson")}</button>
+							<button type="button" className="rsc-drawing-storage-toolbar__button" onClick={handleClearDrawings}>{t("drawing.clearAll")}</button>
+							<input ref={importInputRef} type="file" accept="application/json" hidden onChange={handleImportFileChange} />
+						</div>
+
 						{dataStatus === "loading" ? (
 							<div className="gc-chart-placeholder gc-chart-loading">
 								<div className="gc-spinner" />
@@ -783,6 +1073,29 @@ export default function LibraryShowcaseDemo() {
 										onToolUsed={handleDrawingToolUsed}
 									/>
 								</ChartCanvas>
+
+									<DrawingInspector
+										drawing={selectedDrawing}
+										labels={drawingInspectorLabels}
+										position={drawingInspectorPosition}
+										onUpdate={updateSelectedDrawing}
+										onDelete={deleteSelectedDrawing}
+										onClone={cloneSelectedDrawing}
+										onToggleLock={toggleSelectedLock}
+										onToggleVisible={toggleSelectedVisible}
+										onBringToFront={bringSelectedToFront}
+										onSendToBack={sendSelectedToBack}
+										onClose={() => setActiveTool("cursor")}
+									/>
+									<DrawingListPanel
+										drawings={sortedDrawings}
+										selectedId={selectedDrawingId ?? null}
+										labels={drawingListPanelLabels}
+										position={drawingListPosition}
+										onSelect={selectDrawingById}
+										onToggleVisible={toggleDrawingVisibleById}
+										onDelete={deleteDrawingById}
+									/>
 
 								{visiblePanes.map((pane, index) => {
 									const paneTop = 8 + paneHeights.slice(0, index).reduce((sum, value) => sum + value, 0);
@@ -892,6 +1205,7 @@ export default function LibraryShowcaseDemo() {
 				<span className="gc-version-badge">v{version}</span>
 				<button type="button" className="gc-publish-btn">{t("common.publish")}</button>
 			</footer>
-		</div>
+			</div>
+		</DemoPageShell>
 	);
 }

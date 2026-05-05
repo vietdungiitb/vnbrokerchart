@@ -30,16 +30,18 @@ function isHistoryAction(action: DrawingInteractionAction): action is DrawingHis
 	return action.type === "PUSH" || action.type === "REPLACE" || action.type === "UNDO" || action.type === "REDO" || action.type === "CLEAR";
 }
 
-function getActiveObjectId(state: DrawingState): string | undefined {
+function getSelectedObjectIds(state: DrawingState): string[] {
 	switch (state.type) {
 		case "selected":
-			return state.objectId;
+			return [state.objectId];
+		case "selectedMultiple":
+			return state.objectIds;
 		case "moving":
 		case "resizing":
 		case "editing":
-			return state.objectId;
+			return [state.objectId];
 		default:
-			return undefined;
+			return [];
 	}
 }
 
@@ -68,12 +70,17 @@ export function drawingInteractionReducer(
 }
 
 export function deleteSelectedInteractionState(state: DrawingInteractionState): DrawingInteractionState {
-	const selectedObjectId = getActiveObjectId(state.drawingState);
-	if (!selectedObjectId) {
+	const selectedObjectIds = getSelectedObjectIds(state.drawingState);
+	if (selectedObjectIds.length === 0) {
 		return state;
 	}
 
-	const nextDrawings = state.history.present.filter((drawing) => drawing.id !== selectedObjectId);
+	const selectedDrawings = state.history.present.filter((drawing) => selectedObjectIds.includes(drawing.id));
+	if (selectedDrawings.some((drawing) => drawing.locked)) {
+		return state;
+	}
+
+	const nextDrawings = state.history.present.filter((drawing) => !selectedObjectIds.includes(drawing.id));
 	const nextHistory = nextDrawings.length === state.history.present.length
 		? state.history
 		: historyReducer(state.history, { type: "REPLACE", drawings: nextDrawings });
@@ -100,12 +107,17 @@ export function useDrawingInteraction(initialDrawings: readonly DrawingObject[] 
 	}, [dispatch]);
 
 	const deleteSelected = useCallback(() => {
-		const selectedObjectId = getActiveObjectId(state.drawingState);
-		if (!selectedObjectId) {
+		const selectedObjectIds = getSelectedObjectIds(state.drawingState);
+		if (selectedObjectIds.length === 0) {
 			return;
 		}
 
-		const nextDrawings = state.history.present.filter((drawing) => drawing.id !== selectedObjectId);
+		const selectedDrawings = state.history.present.filter((drawing) => selectedObjectIds.includes(drawing.id));
+		if (selectedDrawings.some((drawing) => drawing.locked)) {
+			return;
+		}
+
+		const nextDrawings = state.history.present.filter((drawing) => !selectedObjectIds.includes(drawing.id));
 		if (nextDrawings.length !== state.history.present.length) {
 			dispatch({ type: "REPLACE", drawings: nextDrawings });
 		}

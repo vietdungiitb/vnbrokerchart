@@ -4,6 +4,7 @@ import ChartCanvas from "../lib/ChartCanvas";
 import Chart from "../lib/Chart";
 import CandlestickSeries from "../lib/series/CandlestickSeries";
 import { formatBinanceKlines, getOfflineDemoData, type DemoDatum } from "./demoData";
+import DemoPageShell from "./DemoPageShell";
 import { DemoI18nBoundary, useDemoI18n } from "./i18n";
 
 const LiveDemoContent = () => {
@@ -42,7 +43,7 @@ const LiveDemoContent = () => {
     const sourceLabel = t(sourceMode === "live" ? "live.binance" : "live.localFallback");
 
     return (
-        <div>
+        <DemoPageShell className="demo-page--classic" frameClassName="demo-frame--full-bleed">
             <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "space-between", color: "white", padding: "0 20px 12px", flexWrap: "wrap" }}>
                 <div>{sourceLabel}</div>
                 <div style={{ display: "flex", gap: 8 }} role="group" aria-label={t("language.label")}>
@@ -70,7 +71,7 @@ const LiveDemoContent = () => {
                     <CandlestickSeries />
                 </Chart>
             </ChartCanvas>
-        </div>
+        </DemoPageShell>
     );
 };
 

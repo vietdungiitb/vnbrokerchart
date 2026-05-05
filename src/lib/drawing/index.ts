@@ -5,6 +5,7 @@ import type { DrawingHistory } from "./history";
 import { createDrawingHistory, historyReducer } from "./history";
 import type { ChartScales, PlotDatum } from "./coordinateUtils";
 import { chartPointToPixel, pixelToChartPoint } from "./coordinateUtils";
+import { createLocalStorageAdapter, DrawingImportError } from "./DrawingStorage";
 import {
 	deserializeDrawingHistory,
 	deserializeDrawingObject,
@@ -21,10 +22,20 @@ import Channel from "./builtin/channel";
 import Text from "./builtin/text";
 import Rectangle from "./builtin/rectangle";
 import Arrow from "./builtin/arrow";
+import Ray from "./builtin/ray";
+import ExtendedLine from "./builtin/extendedLine";
+import Polyline from "./builtin/polyline";
+import DateAndPriceRange from "./builtin/dateAndPriceRange";
+import LongPosition from "./builtin/longPosition";
+import ShortPosition from "./builtin/shortPosition";
+import FibExtension from "./builtin/fibExtension";
+import DrawingInspector from "./DrawingInspector";
+import DrawingListPanel from "./DrawingListPanel";
 import type { DrawingInteractionAction, DrawingInteractionState, UseDrawingInteractionReturn } from "./useDrawingInteraction";
 import { createDrawingInteractionState, deleteSelectedInteractionState, drawingInteractionReducer, useDrawingInteraction } from "./useDrawingInteraction";
 import { renderDrawingToSvg } from "./renderSvg";
 import DrawingLayer from "./DrawingLayer";
+import { useDrawingStorage } from "./useDrawingStorage";
 
 registerDrawingTool(TrendLine);
 registerDrawingTool(HLine);
@@ -34,6 +45,13 @@ registerDrawingTool(Channel);
 registerDrawingTool(Text);
 registerDrawingTool(Rectangle);
 registerDrawingTool(Arrow);
+registerDrawingTool(Ray);
+registerDrawingTool(ExtendedLine);
+registerDrawingTool(Polyline);
+registerDrawingTool(DateAndPriceRange);
+registerDrawingTool(LongPosition);
+registerDrawingTool(ShortPosition);
+registerDrawingTool(FibExtension);
 
 export {
 	createDraftFromTool,
@@ -57,7 +75,12 @@ export {
 	deleteSelectedInteractionState,
 	drawingInteractionReducer,
 	useDrawingInteraction,
+	createLocalStorageAdapter,
+	DrawingImportError,
+	useDrawingStorage,
 	DrawingLayer,
+	DrawingInspector,
+	DrawingListPanel,
 };
 
 export type {
@@ -95,4 +118,11 @@ export {
 	Text,
 	Rectangle,
 	Arrow,
+	Ray,
+	ExtendedLine,
+	Polyline,
+	DateAndPriceRange,
+	LongPosition,
+	ShortPosition,
+	FibExtension,
 };

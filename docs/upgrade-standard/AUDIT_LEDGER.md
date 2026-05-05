@@ -238,6 +238,104 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - `python scripts/generate_module_tree.py` → PASS (Modules: 618)
   - Browser smoke on [build/index.html](../../build/index.html) → PASS; demo shell loads, live/offline data path renders, duplicate-key warning cleared after rebuild
 
+### Ad-hoc demo task — Drawing persistence and floating inspector
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: drawing storage toolbar, floating inspector/list panel, demo i18n, and module tree refresh
+- Files modified:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/i18n.tsx`
+  - `src/demo/demo.css`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Mount drawing export/import/clear controls directly inside the demo chart shell.
+  - Wire the floating inspector and list panel to the drawing interaction state.
+  - Persist drawings by symbol/timeframe through `useDrawingStorage` and rehydrate on mount.
+  - Add Vietnamese and English labels for all new drawing UI controls.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke on [build/index.html](../../build/index.html) → PASS; drawing toolbar renders with localized labels and demo bundle loads cleanly
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 637)
+
+### Ad-hoc governance update — Shared UI template rule
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: repo-wide governance hard rule for a single shared UI template across all surfaces
+- Files modified:
+  - `AGENTS.md`
+  - `docs/project-delivery/PROJECT_GOVERNANCE.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Chốt quy định cứng rằng mọi surface của ứng dụng phải dùng chung template giao diện với web root.
+  - Cấm tạo layout/template riêng cho từng surface nếu cùng chức năng và chưa có phê duyệt riêng.
+  - Bổ sung rule ở lớp agent bootstrap và governance gốc để các slice sau không đi lệch template.
+- Validation:
+  - Documentation alignment review → PASS
+
+### Demo shell unification — shared page frame
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: shared `demo-page` / `demo-frame` wrapper across demo surfaces
+- Files modified:
+  - `src/demo/DemoPageShell.tsx`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/FullDemo.tsx`
+  - `src/demo/OriginalLikeDemo.tsx`
+  - `src/demo/LiveDemo.tsx`
+  - `src/demo/demo.css`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Introduced a shared demo shell wrapper so the drawing runtime and the main demo surfaces use the same outer page frame.
+  - Kept runtime drawing/chart logic intact while moving the outer layout behind a single reusable template.
+  - Added terminal-specific shell modifiers so the embedded drawing surface still receives a full-height canvas.
+- Validation:
+  - `npm run type-check` → PASS
+
+### Milestone M3 slice — advanced drawing tools and grouped toolbar
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: M3 advanced drawing tool family, render layer, selection flow, demo toolbar grouping, and M3 tests
+- Files modified:
+  - `src/lib/drawing/types.ts`
+  - `src/lib/drawing/shared.ts`
+  - `src/lib/drawing/DrawingStorage.ts`
+  - `src/lib/drawing/stateMachine.ts`
+  - `src/lib/drawing/useDrawingInteraction.ts`
+  - `src/lib/drawing/renderSvg.ts`
+  - `src/lib/drawing/DrawingLayer.tsx`
+  - `src/lib/drawing/index.ts`
+  - `src/index.ts`
+  - `src/lib/drawing/m3.test.ts`
+  - `src/lib/drawing/builtin/ray.ts`
+  - `src/lib/drawing/builtin/extendedLine.ts`
+  - `src/lib/drawing/builtin/polyline.ts`
+  - `src/lib/drawing/builtin/dateAndPriceRange.ts`
+  - `src/lib/drawing/builtin/longPosition.ts`
+  - `src/lib/drawing/builtin/shortPosition.ts`
+  - `src/lib/drawing/builtin/fibExtension.ts`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/i18n.tsx`
+  - `src/demo/demo.css`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Added the M3 drawing tool family: ray, extendedLine, polyline, dateAndPriceRange, longPosition, shortPosition, and fibExtension.
+  - Extended the render layer to draw the new shapes, including position zones, R/R badge, extended lines, and polyline paths.
+  - Added shift-click multi-select and polyline multi-click/double-click completion in the interaction layer.
+  - Grouped the demo drawing toolbar into four visual sections with dividers and localized labels.
+  - Added dedicated M3 tests for registration, geometry, polyline accumulation, multi-select delete, and render output.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm test -- src/lib/drawing/m3.test.ts` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke on [build/index.html](../../build/index.html) → PASS; grouped toolbar renders, new tool labels are visible, and the live fallback chart still loads with drawing storage UI intact
+  - `python scripts/generate_module_tree.py` → PASS (Modules: 646)
+
 ### Demo hotfix — direct Chart children
 
 - Người thực hiện: GitHub Copilot
