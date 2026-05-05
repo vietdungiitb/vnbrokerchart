@@ -479,6 +479,7 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 
 	handleClick(mousePosition: MouseXY, e: unknown) {
 		this.triggerEvent("click", this.mutableState, e);
+		this.props.onClick?.(this.mutableState, e);
 		requestAnimationFrame(() => { this.clearMouseCanvas(); this.draw({ trigger: "click" }); });
 	}
 	handleDoubleClick(mousePosition: MouseXY, e: unknown) { this.triggerEvent("dblclick", {}, e); }
@@ -597,6 +598,7 @@ ChartCanvas.propTypes = {
 	clamp: PropTypes.oneOfType([PropTypes.string, PropTypes.bool, PropTypes.func]),
 	zoomEvent: PropTypes.bool,
 	onSelect: PropTypes.func,
+	onClick: PropTypes.func,
 	onVisibleDomainChange: PropTypes.func,
 	maintainPointsPerPixelOnResize: PropTypes.bool,
 	disableInteraction: PropTypes.bool,
@@ -616,6 +618,7 @@ ChartCanvas.defaultProps = {
 	defaultFocus: true,
 	onLoadMore: noop,
 	onSelect: noop,
+	onClick: noop,
 	onVisibleDomainChange: noop,
 	mouseMoveEvent: true,
 	panEvent: true,

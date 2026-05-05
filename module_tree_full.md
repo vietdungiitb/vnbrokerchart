@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-05 11:18:40`
+Generated at: `2026-05-05 11:31:16`
 
 ## Summary
 
@@ -10,8 +10,8 @@ Generated at: `2026-05-05 11:18:40`
 - Python modules: 1
 - JS/TS modules: 654
 - Total classes: 350
-- Total functions: 3649
-- Total top-level variables: 7802
+- Total functions: 3650
+- Total top-level variables: 7808
 
 ## Python Modules
 
@@ -2128,9 +2128,9 @@ Generated at: `2026-05-05 11:18:40`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `ToolIcon`, `addPane`, `chartDomain`, `clonePoint`, `getSelectedDrawingId`, `handleEscape`, `handleKeyDown`, `handler`, `loadDemoSettings`, `mergeDrawingPatch`, `normalizeDate`, `offsetDrawingByPixels`, `paneTemplate`, `readSize`, `saveDemoSettings`, `sortDrawings`
+  - `ToolIcon`, `addPane`, `chartDomain`, `clonePoint`, `formatSignedPrice`, `getSelectedDrawingId`, `handleEscape`, `handleKeyDown`, `handler`, `loadDemoSettings`, `mergeDrawingPatch`, `normalizeDate`, `offsetDrawingByPixels`, `paneTemplate`, `readSize`, `saveDemoSettings`, `sortDrawings`
 - Top-level variables:
-  - `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `MAIN_PRICE_SERIES_TYPES`, `REPLAY_SPEEDS`, `TIMEFRAMES`, `TOOL_GROUPS`, `abortController`, `allPrices`, `axisStroke`, `axisTickFill`, `bringSelectedToFront`, `candleWidth`, `canvasBg`, `chartMenuRef`, `chartReady`, `chartTypeLabel`, `cloneSelectedDrawing`, `closeReplayContextMenu`, `closeSettings`, `controller`, `currentItem`, `data`, `dateFormat`, `deleteDrawingById`, `deleteSelectedDrawing`, `desiredType`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `end`, `enrichedData`, `file`, `first`, `firstBar`, `h`, `haCalc`, `handleChartTypeChange`, `handleClearDrawings`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `innerHeight`, `innerWidth`, `lastBar`, `lastVisibleBar`, `leftZ`, `localizePane`, `localizedPane`, `maxPrice`, `maxZ`, `minPrice`, `minZ`, `msg`, `nativeEvent`, `nextClone`, `nextDrawings`, `nextLabel`, `node`, `observer`, `openSettings`, `paneH`, `paneHeaderLabels`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `parsed`, `plotData`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `ratio`, `raw`, `rect`, `replayController`, `replayControllerRef`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `rightZ`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `sortedDrawings`, `start`, `stepPx`, `storageToolbarPosition`, `target`, `timeOffset`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `toolLabel`, `top`, `transformed`, `updateSelectedDrawing`, `volumeFormat`, `w`, `x`, `xExtents`, `y`
+  - `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `MAIN_PRICE_SERIES_TYPES`, `REPLAY_SPEEDS`, `TIMEFRAMES`, `TOOL_GROUPS`, `abortController`, `allPrices`, `axisStroke`, `axisTickFill`, `bringSelectedToFront`, `candleWidth`, `canvasBg`, `chartMenuRef`, `chartReady`, `chartTypeLabel`, `cloneSelectedDrawing`, `closeReplayContextMenu`, `closeSettings`, `controller`, `currentItem`, `data`, `dateFormat`, `deleteDrawingById`, `deleteSelectedDrawing`, `desiredType`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `end`, `enrichedData`, `exitTrade`, `file`, `first`, `firstBar`, `h`, `haCalc`, `handleChartTypeChange`, `handleClearDrawings`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handlePaperTradeClick`, `handlePaperTradeReset`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `innerHeight`, `innerWidth`, `lastBar`, `lastVisibleBar`, `leftZ`, `localizePane`, `localizedPane`, `maxPrice`, `maxZ`, `minPrice`, `minZ`, `msg`, `nativeEvent`, `nextClone`, `nextDrawings`, `nextLabel`, `node`, `observer`, `openSettings`, `paneH`, `paneHeaderLabels`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `paperTradePanelVisible`, `paperTradeRealizedPnl`, `paperTradeUnrealizedPnl`, `parsed`, `plotData`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `ratio`, `raw`, `rect`, `replayController`, `replayControllerRef`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `rightZ`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `sortedDrawings`, `start`, `stepPx`, `storageToolbarPosition`, `target`, `timeOffset`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `toolLabel`, `top`, `transformed`, `updateSelectedDrawing`, `volumeFormat`, `w`, `x`, `xExtents`, `y`
 
 ### `src/demo/LiveDemo.tsx`
 

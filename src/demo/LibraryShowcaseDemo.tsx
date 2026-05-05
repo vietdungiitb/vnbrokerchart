@@ -103,6 +103,17 @@ type ToolId = typeof TOOL_GROUPS[number]["tools"][number];
 const DRAWING_PANEL_WIDTH = 360;
 const REPLAY_SPEEDS: ReplaySpeed[] = [0.5, 1, 2, 5, 10, "max"];
 
+interface PaperTradePosition {
+	entryDate: Date | number;
+	entryPrice: number;
+}
+
+interface ClosedPaperTrade extends PaperTradePosition {
+	exitDate: Date | number;
+	exitPrice: number;
+	pnl: number;
+}
+
 function getSelectedDrawingId(drawingState: { type: string; objectId?: string; object?: DrawingObject }) {
 	switch (drawingState.type) {
 		case "selected":
@@ -159,6 +170,10 @@ function offsetDrawingByPixels(drawing: DrawingObject, xOffset: number, yOffset:
 
 function normalizeDate(value: Date | number) {
 	return value instanceof Date ? value : new Date(value);
+}
+
+function formatSignedPrice(value: number) {
+	return `${value >= 0 ? "+" : ""}${priceFormat(value)}`;
 }
 
 function chartDomain(data: Array<{ date: Date | number }>) {
@@ -397,6 +412,8 @@ export default function LibraryShowcaseDemo() {
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [showReplayBar, setShowReplayBar] = useState(false);
 	const [showDrawingList, setShowDrawingList] = useState(false);
+	const [paperTradePosition, setPaperTradePosition] = useState<PaperTradePosition | null>(null);
+	const [paperTradeHistory, setPaperTradeHistory] = useState<ClosedPaperTrade[]>([]);
 	const drawingInteraction = useDrawingInteraction();
 	const { undo, redo, deleteSelected, cancelDrawing } = drawingInteraction;
 	const importInputRef = useRef<HTMLInputElement | null>(null);
@@ -472,6 +489,11 @@ export default function LibraryShowcaseDemo() {
 		replayControllerRef.current?.setData(data, data.length);
 	}, [data]);
 
+	useEffect(() => {
+		setPaperTradePosition(null);
+		setPaperTradeHistory([]);
+	}, [timeframe]);
+
 	const indicatorSeries = useMemo(
 		() => paneState.panes.flatMap((pane) => pane.series),
 		[paneState.panes],
@@ -537,6 +559,15 @@ export default function LibraryShowcaseDemo() {
 	const drawingInspectorPosition = useMemo(() => ({ x: drawingPanelX, y: 16 }), [drawingPanelX]);
 	const drawingListPosition = useMemo(() => ({ x: drawingPanelX, y: 286 }), [drawingPanelX]);
 	const storageToolbarPosition = useMemo(() => ({ x: 16, y: 16 }), []);
+	const paperTradePanelVisible = showReplayBar || paperTradePosition !== null || paperTradeHistory.length > 0;
+	const paperTradeRealizedPnl = useMemo(
+		() => paperTradeHistory.reduce((sum, trade) => sum + trade.pnl, 0),
+		[paperTradeHistory],
+	);
+	const paperTradeUnrealizedPnl = useMemo(
+		() => (paperTradePosition && lastBar ? lastBar.close - paperTradePosition.entryPrice : 0),
+		[lastBar, paperTradePosition],
+	);
 	const replayProgressLabel = t("replay.progress", {
 		current: replayState.currentIndex,
 		total: replayState.allData.length,
@@ -618,6 +649,39 @@ export default function LibraryShowcaseDemo() {
 			label: dateFormat(normalizeDate(currentItem.date)),
 		});
 	}, [dateFormat]);
+
+	const handlePaperTradeReset = useCallback(() => {
+		setPaperTradePosition(null);
+		setPaperTradeHistory([]);
+	}, []);
+
+	const handlePaperTradeClick = useCallback((moreProps: { currentItem?: EnrichedDatum }) => {
+		if (!replayState.isPlaying) {
+			return;
+		}
+
+		const currentItem = moreProps.currentItem ?? replayState.currentBar;
+		if (!currentItem) {
+			return;
+		}
+
+		if (paperTradePosition) {
+			const exitTrade: ClosedPaperTrade = {
+				...paperTradePosition,
+				exitDate: currentItem.date,
+				exitPrice: currentItem.close,
+				pnl: currentItem.close - paperTradePosition.entryPrice,
+			};
+			setPaperTradeHistory((history) => [...history, exitTrade]);
+			setPaperTradePosition(null);
+			return;
+		}
+
+		setPaperTradePosition({
+			entryDate: currentItem.date,
+			entryPrice: currentItem.close,
+		});
+	}, [paperTradePosition, replayState.currentBar, replayState.isPlaying]);
 
 	useEffect(() => {
 		if (!replayContextMenu) {
@@ -1355,6 +1419,7 @@ export default function LibraryShowcaseDemo() {
 									zoomEvent
 									panEvent
 									useCrossHairStyleCursor
+									onClick={handlePaperTradeClick}
 									onContextMenu={handleReplayContextMenu}
 								>
 									{DynamicChart({
@@ -1412,6 +1477,54 @@ export default function LibraryShowcaseDemo() {
 											onDelete={deleteDrawingById}
 										/>
 									)}
+										{paperTradePanelVisible && (
+											<div className="gc-paper-trade-panel">
+												<div className="gc-paper-trade-panel__header">
+													<strong>{t("paperTrading.title")}</strong>
+													<button type="button" className="gc-paper-trade-panel__reset" onClick={handlePaperTradeReset}>
+														{t("paperTrading.reset")}
+													</button>
+												</div>
+												<div className="gc-paper-trade-panel__hint">{t("paperTrading.hint")}</div>
+												<div className="gc-paper-trade-panel__stats">
+													<div className="gc-paper-trade-panel__stat">
+														<span className="gc-paper-trade-panel__label">{t("paperTrading.trades")}</span>
+														<strong className="gc-paper-trade-panel__value">{paperTradeHistory.length}</strong>
+													</div>
+													<div className="gc-paper-trade-panel__stat">
+														<span className="gc-paper-trade-panel__label">{t("paperTrading.realized")}</span>
+														<strong className={`gc-paper-trade-panel__value${paperTradeRealizedPnl >= 0 ? " gc-col-up" : " gc-col-dn"}`}>
+															{formatSignedPrice(paperTradeRealizedPnl)}
+														</strong>
+													</div>
+													<div className="gc-paper-trade-panel__stat">
+														<span className="gc-paper-trade-panel__label">{t("paperTrading.unrealized")}</span>
+														<strong className={`gc-paper-trade-panel__value${paperTradeUnrealizedPnl >= 0 ? " gc-col-up" : " gc-col-dn"}`}>
+															{formatSignedPrice(paperTradeUnrealizedPnl)}
+														</strong>
+													</div>
+												</div>
+												{paperTradePosition ? (
+													<div className="gc-paper-trade-panel__position">
+														<span className="gc-paper-trade-panel__position-label">{t("paperTrading.position")}</span>
+														<strong>{t("paperTrading.open")}</strong>
+														<div className="gc-paper-trade-panel__position-meta">
+															<span>{t("paperTrading.entry")}</span>
+															<span>{dateFormat(normalizeDate(paperTradePosition.entryDate))}</span>
+															<span>{priceFormat(paperTradePosition.entryPrice)}</span>
+														</div>
+													</div>
+												) : paperTradeHistory.length > 0 ? (
+													<div className="gc-paper-trade-panel__position gc-paper-trade-panel__position--idle">
+														{t("paperTrading.closed")}
+													</div>
+												) : (
+													<div className="gc-paper-trade-panel__position gc-paper-trade-panel__position--idle">
+														{t("paperTrading.empty")}
+													</div>
+												)}
+											</div>
+										)}
 
 								{visiblePanes.map((pane, index) => {
 									const paneTop = 8 + paneHeights.slice(0, index).reduce((sum, value) => sum + value, 0);

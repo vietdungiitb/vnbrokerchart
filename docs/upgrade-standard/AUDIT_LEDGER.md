@@ -100,6 +100,29 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
   - `npm run build:docs` → PASS (webpack compiled successfully in 3739ms)
   - `python scripts/generate_module_tree.py` → PASS (655 modules)
 
+### Ad-hoc demo task — Paper trading on replay
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-05
+- Scope: paper-trading slice cho Phase 5 replay, dùng click trên chart để mở/đóng vị thế ảo khi replay đang chạy
+- Files modified:
+  - `src/lib/ChartCanvas.tsx`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/i18n.tsx`
+  - `src/demo/demo.css`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - `ChartCanvas` expose callback click cho demo qua `onClick`, không cần hack qua right-click hay tooltip.
+  - Demo giữ một vị thế ảo đơn giản: click đầu tiên mở long theo bar hiện tại, click tiếp theo đóng vị thế và ghi nhận PnL.
+  - Panel `Giao dịch ảo` hiển thị số lệnh, realized PnL, unrealized PnL, và entry hiện tại; chỉ hoạt động khi replay đang chạy.
+  - CSS panel dùng theme variables và đặt gọn ở góc dưới trái của chart shell.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - `npm test` → PASS (18 files, 85 tests)
+  - Browser smoke: replay start → click chart mở vị thế `1/300`, click lần hai đóng vị thế và panel cập nhật `Lệnh 1`, `PnL đã chốt -12.39`, `Đã đóng`
+
 ### Ad-hoc demo task — Bar replay from here
 
 - Người thực hiện: GitHub Copilot
