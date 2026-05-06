@@ -37,8 +37,30 @@
 
 ---
 
-## 3. Cách đọc bảng này
+## 3. IC-3 — Saved Indicator Sets
+
+> **Phụ thuộc:** IC-1 ✅ · IC-2 ✅  
+> **Gate tổng:** type-check · 6 unit tests mới · browser smoke apply/save/import/export  
+> **Chi tiết kỹ thuật:** [IC3_IMPLEMENTATION_PLAN.md](./IC3_IMPLEMENTATION_PLAN.md)
+
+| ID | Trạng thái | Công việc | Đầu ra bắt buộc |
+| --- | --- | --- | --- |
+| IC3-01 | READY | Tạo `IndicatorSet` type + `IndicatorSetsStorage` | `src/lib/core/types/indicator-set.ts` mới, type-check PASS |
+| IC3-02 | TODO | Hook `useIndicatorSets` — CRUD + localStorage | `src/lib/core/hooks/useIndicatorSets.ts` mới, 6 unit tests PASS |
+| IC3-03 | TODO | 3 built-in templates tĩnh | `src/lib/core/data/builtinTemplates.ts` mới, shape validate PASS |
+| IC3-04 | TODO | Wire `applySet` vào `LibraryShowcaseDemo.tsx` + `useDynamicPanes` | Browser smoke: apply template → chart đúng |
+| IC3-05 | TODO | Tab "Bộ chỉ báo của tôi" trong `PaneSettingsModal.tsx` | Browser smoke: list + save + apply UI hoạt động |
+| IC3-06 | TODO | Import/export `.vnsc-set` file | Round-trip test: export → import → `deepEqual` PASS |
+| IC3-07 | TODO | i18n keys IC-3 (13 keys × 2 ngôn ngữ) | `src/demo/i18n.tsx` updated, type-check PASS |
+| IC3-08 | TODO | Audit ledger + module tree refresh + commit | `AUDIT_LEDGER.md` entry, `module_tree_full.md` updated, commit `dev` |
+
+**Gate IC-3:** `npm run type-check` · `npm test` (≥ 111 tests PASS) · `npm run build:docs` · browser smoke đủ 6 kịch bản
+
+---
+
+## 4. Cách đọc bảng này
 
 - Làm theo thứ tự từ trên xuống dưới.
 - Không bắt đầu IC-2 cho đến khi IC-1 pass gate và có audit entry.
+- Không bắt đầu IC-3 cho đến khi IC-2 pass gate và có audit entry.
 - Nếu task nào phát hiện scope mới ngoài plan, dừng lại và cập nhật tài liệu trước khi code tiếp.

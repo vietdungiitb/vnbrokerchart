@@ -1,7 +1,8 @@
-# Handoff Manifest — Indicator Platform (GĐ1: IC-1 + IC-2)
+# Handoff Manifest — Indicator Platform (GĐ1+GĐ3: IC-1 + IC-2 + IC-3)
 
-> **Trạng thái:** APPROVED — Sẵn sàng code  
-> **Phiên bản:** 1.0 · 2026-05-06  
+> **Trạng thái GĐ1 (IC-1+IC-2):** COMPLETE ✅  
+> **Trạng thái GĐ3 (IC-3):** READY TO CODE  
+> **Phiên bản:** 2.0 · 2026-05-06  
 > **Entry point repo:** [docs/project-delivery/README.md](../README.md)  
 > **Nguồn đề xuất:** [docs/planning/INDICATOR_PLATFORM_PROPOSAL.md](../../planning/INDICATOR_PLATFORM_PROPOSAL.md)
 
@@ -41,10 +42,11 @@ hai slice đầu tiên (IC-1 + IC-2) trong lộ trình 5 giai đoạn đã đư�
 
 - VNInvest adapter / PAT auth
 - Whale Bubbles, CVD real-time (GĐ2)
-- Saved indicator sets (GĐ3)
+- ~~Saved indicator sets (GĐ3)~~ → **Đã lên plan, xem IC3_IMPLEMENTATION_PLAN.md**
 - DAG custom builder (GĐ4)
 - Marketplace, custom data sources (GĐ5)
-- Thêm indicator mới (freeze đến khi IC-2 xong — xem Rule #4 bên dưới)
+- Cloud sync cho sets (GĐ3 Enterprise — sau IC-3 localStorage)
+- Thêm indicator mới (freeze đến khi IC-3 xong)
 
 ---
 
@@ -70,6 +72,7 @@ hai slice đầu tiên (IC-1 + IC-2) trong lộ trình 5 giai đoạn đã đư�
 | `HANDOFF_MANIFEST.md` *(file này)* | Entry point, scope và quyết định đã chốt |
 | `TECH_SPEC.md` | Đặc tả kỹ thuật target architecture IC-1 + IC-2 |
 | `IMPLEMENTATION_PLAN.md` | Slice definition IC-1 + IC-2 với DoD từng task |
+| `IC3_IMPLEMENTATION_PLAN.md` | **[MỚI]** Slice definition IC-3 với DoD từng task |
 | `TASKBOARD.md` | Bảng task tác chiến hằng ngày, trạng thái ticket |
 | `AUDIT_PROTOCOL.md` | Gate commands, evidence template, smoke checklist |
 | `[docs/project-delivery/PROJECT_GOVERNANCE.md](../PROJECT_GOVERNANCE.md)` | Luật bắt buộc |
@@ -79,26 +82,44 @@ hai slice đầu tiên (IC-1 + IC-2) trong lộ trình 5 giai đoạn đã đư�
 
 ---
 
-## 5. Tiêu chí chấp nhận GĐ1 (cả IC-1 lẫn IC-2)
+## 5. Tiêu chí chấp nhận
+
+### GĐ1 (IC-1 + IC-2) — COMPLETE ✅
 
 - `npm run type-check` → PASS (0 errors)
-- `npm test` → PASS (tất cả test hiện tại + test mới cho IC-1/IC-2)
+- `npm test` → PASS (105/105 tests)
 - `npm run build:docs` → PASS
-- `python scripts/generate_module_tree.py` → PASS, `module_tree_full.md` regenerated
-- Browser smoke: thêm indicator mới vào registry → settings modal hiển thị đúng params từ
-  `inputSchema`, không cần chỉnh `PaneSettingsModal.tsx`
-- `docs/upgrade-standard/AUDIT_LEDGER.md` có entry cho mỗi IC slice khi đóng
+- `python scripts/generate_module_tree.py` → 672 modules
+- Browser smoke: settings modal generic renderer hoạt động
+- `AUDIT_LEDGER.md` có entry IC-1 + IC-2
+
+### GĐ3 (IC-3) — Tiêu chí cần đạt
+
+- `npm run type-check` → PASS (0 errors)
+- `npm test` → PASS (≥ 111 tests — 6 unit tests mới cho `useIndicatorSets`)
+- `npm run build:docs` → PASS, bundle tăng ≤ 15KB gzipped
+- Browser smoke:
+  - 3 built-in templates hiển thị trong tab "Bộ chỉ báo"
+  - Apply "VN Swing Setup" → chart hiển thị EMA20 + EMA50 + BB + RSI + Volume
+  - Save current → đặt tên → xuất hiện trong "Bộ của tôi"
+  - Export → file `.vnsc-set` tải về, mở ra JSON hợp lệ
+  - Import file đó → set xuất hiện lại
+  - Reload trang → user sets vẫn còn (localStorage persist)
+- `AUDIT_LEDGER.md` có entry IC-3
 
 ---
 
 ## 6. Thứ tự dependency
 
 ```
-IC-1 (Canonical Store Hardening)
-  ↓ PHẢI xong trước
-IC-2 (Indicator Catalog Metadata)
-  ↓ có thể overlap ở cuối
-IC-3 (Saved Sets) ← KHÔNG bắt đầu trong package này
+IC-1 (Canonical Store Hardening)  ✅ DONE
+  ↓
+IC-2 (Indicator Catalog Metadata) ✅ DONE
+  ↓
+IC-3 (Saved Indicator Sets)       ← READY TO CODE — plan tại IC3_IMPLEMENTATION_PLAN.md
+  ↓ (future)
+IC-4 (DAG Custom Builder)
+IC-5 (Marketplace)
 ```
 
 ---
