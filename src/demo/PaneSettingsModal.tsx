@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { getSeries, listRegistered, type PaneDescriptor, type SeriesConfig, type SeriesSettingField, type SeriesTypeId, type YAxisSide } from "../lib/core";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { getSeries, listRegistered, type IndicatorSet, type PaneDescriptor, type SeriesConfig, type SeriesSettingField, type SeriesTypeId, type YAxisSide } from "../lib/core";
 import type { UseDynamicPanesResult } from "../lib/core/hooks/useDynamicPanes";
+import { useIndicatorSets } from "../lib/core/hooks/useIndicatorSets";
 import { isDefaultPaneId } from "../lib/core/types/pane-descriptor";
 import { useDemoI18n } from "./i18n";
 
-export type SettingsSection = "layout" | "indicators" | "theme" | "reset";
+export type SettingsSection = "layout" | "indicators" | "indicatorSets" | "theme" | "reset";
 
 export interface PaneSettingsModalProps {
 	open: boolean;
@@ -66,6 +67,9 @@ export function PaneSettingsModal({
 }: PaneSettingsModalProps) {
 	const { t, getPaneLabel } = useDemoI18n();
 	const dialogRef = useRef<HTMLDivElement | null>(null);
+	const importInputRef = useRef<HTMLInputElement | null>(null);
+	const [indicatorSetName, setIndicatorSetName] = useState("");
+	const [indicatorSetMessage, setIndicatorSetMessage] = useState("");
 	const availableSeriesTypes = useMemo(() => listRegistered(), []);
 	const [composerType, setComposerType] = useState<SeriesTypeId>("EMA");
 	const [composerYAxis, setComposerYAxis] = useState<YAxisSide>("right");
@@ -74,6 +78,17 @@ export function PaneSettingsModal({
 		() => paneState.panes.find((pane) => pane.id === selectedPaneId) ?? paneState.visiblePanes[0] ?? paneState.panes[0],
 		[paneState.panes, paneState.visiblePanes, selectedPaneId],
 	);
+
+	const indicatorSets = useIndicatorSets({
+		currentPanes: paneState.panes,
+		onApplyPanes: (nextPanes) => {
+			paneState.replaceLayout(nextPanes);
+			const nextSelectedPaneId = nextPanes.find((pane) => pane.visible)?.id ?? nextPanes[0]?.id ?? "";
+			if (nextSelectedPaneId) {
+				onSelectedPaneIdChange(nextSelectedPaneId);
+			}
+		},
+	});
 
 	useEffect(() => {
 		if (!open) {
@@ -118,6 +133,70 @@ export function PaneSettingsModal({
 		}
 	}, [composerEntry, resolvedComposerType]);
 
+	const getIndicatorSetLabel = (set: IndicatorSet) => {
+		if (!set.isBuiltin) {
+			return set.name;
+		}
+		switch (set.id) {
+			case "builtin-vn-swing-setup":
+				return t("indicatorSet.vnSwingSetup");
+			case "builtin-orderflow-suite":
+				return t("indicatorSet.orderflowSuite");
+			case "builtin-crypto-standard":
+				return t("indicatorSet.cryptoStandard");
+			default:
+				return set.name;
+		}
+	};
+
+	const handleApplyIndicatorSet = (setId: string) => {
+		const set = indicatorSets.getSetById(setId);
+		if (!set) {
+			return;
+		}
+		if (indicatorSets.applySet(setId)) {
+			setIndicatorSetMessage(t("settings.setApplied", { name: getIndicatorSetLabel(set) }));
+		}
+	};
+
+	const handleDeleteIndicatorSet = (setId: string) => {
+		const set = indicatorSets.getSetById(setId);
+		if (!set || set.isBuiltin) {
+			return;
+		}
+		if (indicatorSets.deleteSet(setId)) {
+			setIndicatorSetMessage(t("settings.setDeleted", { name: getIndicatorSetLabel(set) }));
+		}
+	};
+
+	const handleSaveCurrentIndicatorSet = () => {
+		const saved = indicatorSets.saveCurrentAsSet(indicatorSetName.trim() || t("settings.defaultSetName"));
+		if (!saved) {
+			setIndicatorSetMessage(t("settings.importError"));
+			return;
+		}
+		setIndicatorSetName("");
+		setIndicatorSetMessage(t("settings.setSaved", { name: saved.name }));
+	};
+
+	const handleImportIndicatorSetClick = () => {
+		importInputRef.current?.click();
+	};
+
+	const handleImportIndicatorSetChange = async (event: ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) {
+			return;
+		}
+		const imported = await indicatorSets.importSet(file);
+		event.target.value = "";
+		if (!imported) {
+			setIndicatorSetMessage(t("settings.importError"));
+			return;
+		}
+		setIndicatorSetMessage(t("settings.setImported", { name: getIndicatorSetLabel(imported) }));
+	};
+
 	if (!open) {
 		return null;
 	}
@@ -129,6 +208,7 @@ export function PaneSettingsModal({
 	const sectionLabels = useMemo<Record<SettingsSection, string>>(() => ({
 		layout: t("settings.layout"),
 		indicators: t("settings.indicators"),
+		indicatorSets: t("settings.indicatorSets"),
 		theme: t("settings.theme"),
 		reset: t("settings.reset"),
 	}), [t]);
@@ -419,6 +499,104 @@ export function PaneSettingsModal({
 		</div>
 	);
 
+	const renderIndicatorSetsSection = () => {
+		const builtinSets = indicatorSets.builtinSets;
+		const userSets = indicatorSets.userSets;
+
+		const renderSetCard = (set: IndicatorSet, isBuiltin: boolean) => (
+			<div key={set.id} className="gc-settings-series">
+				<div className="gc-settings-series__head">
+					<div>
+						<div className="gc-settings-series__title">{getIndicatorSetLabel(set)}</div>
+						<div className="gc-settings-series__meta">
+							{t("settings.setPaneCount", { count: set.panes.filter((pane) => pane.visible).length })}
+						</div>
+					</div>
+					<div className="gc-settings-series__actions">
+						<button type="button" className="gc-btn gc-btn--accent" onClick={() => handleApplyIndicatorSet(set.id)}>
+							{t("settings.applySet")}
+						</button>
+						{!isBuiltin ? (
+							<>
+								<button type="button" className="gc-btn" onClick={() => indicatorSets.exportSet(set.id)}>
+									{t("settings.exportSet")}
+								</button>
+								<button type="button" className="gc-btn gc-btn--danger" onClick={() => handleDeleteIndicatorSet(set.id)}>
+									{t("settings.deleteSet")}
+								</button>
+							</>
+						) : null}
+					</div>
+				</div>
+				<div className="gc-settings-pane__tags">
+					{set.panes.filter((pane) => pane.visible).map((pane) => (
+						<span key={`${set.id}-${pane.id}`} className="gc-tag">
+							{getPaneLabel(pane.id, pane.label)}
+						</span>
+					))}
+				</div>
+			</div>
+		);
+
+		return (
+			<div className="gc-settings-panel">
+				<div className="gc-settings-panel__header">
+					<div>
+						<div className="gc-settings-kicker">{t("settings.indicatorSetsKicker")}</div>
+						<h3>{t("settings.indicatorSetsTitle")}</h3>
+					</div>
+					<button type="button" className="gc-btn gc-btn--accent" onClick={handleSaveCurrentIndicatorSet}>
+						{t("settings.saveCurrentSet")}
+					</button>
+				</div>
+
+				<div className="gc-settings-row gc-settings-row--split">
+					<label className="gc-settings-field">
+						<span>{t("settings.setName")}</span>
+						<input
+							type="text"
+							className="gc-settings-input"
+							value={indicatorSetName}
+							placeholder={t("settings.setNamePlaceholder")}
+							onChange={(event) => setIndicatorSetName(event.target.value)}
+						/>
+					</label>
+					<div className="gc-settings-field gc-settings-field--compact">
+						<span>{t("settings.importSet")}</span>
+						<button type="button" className="gc-btn" onClick={handleImportIndicatorSetClick}>
+							{t("settings.importSet")}
+						</button>
+						<input ref={importInputRef} type="file" accept=".vnsc-set,application/json" style={{ display: "none" }} onChange={handleImportIndicatorSetChange} />
+					</div>
+				</div>
+
+				{indicatorSetMessage ? <div className="gc-settings-note">{indicatorSetMessage}</div> : null}
+
+				<div className="gc-settings-panel__header gc-settings-panel__header--subtle">
+					<div>
+						<div className="gc-settings-kicker">{t("settings.builtinSets")}</div>
+						<h4>{t("settings.builtinSetsTitle")}</h4>
+					</div>
+				</div>
+				<div className="gc-settings-series-list">
+					{builtinSets.map((set) => renderSetCard(set, true))}
+				</div>
+
+				<div className="gc-settings-panel__header gc-settings-panel__header--subtle">
+					<div>
+						<div className="gc-settings-kicker">{t("settings.mySets")}</div>
+						<h4>{t("settings.mySetsTitle")}</h4>
+					</div>
+				</div>
+				<div className="gc-settings-series-list">
+					{userSets.length > 0
+						? userSets.map((set) => renderSetCard(set, false))
+						: <div className="gc-settings-empty">{t("settings.noUserSets")}</div>}
+				</div>
+			</div>
+		);
+	};
+
 	const renderThemeSection = () => (
 		<div className="gc-settings-panel">
 			<div className="gc-settings-panel__header">
@@ -478,6 +656,7 @@ export function PaneSettingsModal({
 						{([
 							["layout", t("settings.layout")],
 							["indicators", t("settings.indicators")],
+							["indicatorSets", t("settings.indicatorSets")],
 							["theme", t("settings.theme")],
 							["reset", t("settings.reset")],
 						] as const).map(([nextSection, label]) => (
@@ -495,6 +674,7 @@ export function PaneSettingsModal({
 						<div className="gc-settings-modal__surface">
 							{section === "layout" ? renderLayoutSection() : null}
 							{section === "indicators" ? renderIndicatorsSection() : null}
+							{section === "indicatorSets" ? renderIndicatorSetsSection() : null}
 							{section === "theme" ? renderThemeSection() : null}
 							{section === "reset" ? renderResetSection() : null}
 						</div>

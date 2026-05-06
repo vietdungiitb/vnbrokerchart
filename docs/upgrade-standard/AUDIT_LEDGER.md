@@ -2558,6 +2558,44 @@ Every completed slice must update this ledger with the exact files changed in th
 
 ### IC-2 follow-up — Dedicated catalog type module + core export alignment (2026-05-06)
 
+## 24. IC-3 Saved Indicator Sets — localStorage templates + settings modal tab
+
+### Completed
+
+- Added canonical indicator-set storage types, built-in templates, and pure codec helpers for clone/sanitize/save/load/export/import.
+- Extended the pane reducer with full-layout replacement so a saved set can apply the whole chart stack in one action.
+- Wired the demo settings modal to the new indicator-set tab, including save current, apply, delete, export, and import flows with localized Vietnamese/English copy.
+- Refreshed `module_tree_full.md` after the final source change and verified the full suite still passes.
+
+### Validation
+
+- Command run: `npm test -- src/lib/core/sets/__tests__/indicatorSetCodec.test.ts`
+- Command run: `python scripts/generate_module_tree.py`
+- Command run: `npm run type-check`
+- Command run: `npm test`
+- Result: codec round-trip tests pass, module inventory is current at 677 modules, type-check passes, and the full test suite passes with 114 tests.
+
+### Files touched in this slice
+
+- [src/lib/core/types/indicator-set.ts](../../src/lib/core/types/indicator-set.ts)
+- [src/lib/core/sets/builtins.ts](../../src/lib/core/sets/builtins.ts)
+- [src/lib/core/sets/builtins/vn-swing-setup.json](../../src/lib/core/sets/builtins/vn-swing-setup.json)
+- [src/lib/core/sets/builtins/orderflow-suite.json](../../src/lib/core/sets/builtins/orderflow-suite.json)
+- [src/lib/core/sets/builtins/crypto-standard.json](../../src/lib/core/sets/builtins/crypto-standard.json)
+- [src/lib/core/sets/indicatorSetCodec.ts](../../src/lib/core/sets/indicatorSetCodec.ts)
+- [src/lib/core/sets/__tests__/indicatorSetCodec.test.ts](../../src/lib/core/sets/__tests__/indicatorSetCodec.test.ts)
+- [src/lib/core/hooks/useIndicatorSets.ts](../../src/lib/core/hooks/useIndicatorSets.ts)
+- [src/lib/core/hooks/useDynamicPanes.ts](../../src/lib/core/hooks/useDynamicPanes.ts)
+- [src/lib/core/hooks/__tests__/useDynamicPanes.test.ts](../../src/lib/core/hooks/__tests__/useDynamicPanes.test.ts)
+- [src/lib/core/index.ts](../../src/lib/core/index.ts)
+- [src/index.ts](../../src/index.ts)
+- [src/demo/PaneSettingsModal.tsx](../../src/demo/PaneSettingsModal.tsx)
+- [src/demo/i18n.tsx](../../src/demo/i18n.tsx)
+- [docs/project-delivery/indicator-platform/IC3_IMPLEMENTATION_PLAN.md](../../docs/project-delivery/indicator-platform/IC3_IMPLEMENTATION_PLAN.md)
+- [docs/project-delivery/indicator-platform/TASKBOARD.md](../../docs/project-delivery/indicator-platform/TASKBOARD.md)
+- [docs/project-delivery/indicator-platform/HANDOFF_MANIFEST.md](../../docs/project-delivery/indicator-platform/HANDOFF_MANIFEST.md)
+- [module_tree_full.md](../../module_tree_full.md)
+
 - Người thực hiện: GitHub Copilot
 - Ngày: 2026-05-06
 - Scope: Tách type catalog ra module riêng để khớp deliverable của IC-2 và re-export qua core barrel.

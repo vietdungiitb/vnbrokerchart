@@ -143,6 +143,27 @@ describe("dynamicPanesReducer", () => {
 		expect(Math.abs(sum - 1)).toBeLessThan(0.001);
 	});
 
+	it("replaceLayout swaps the full pane layout", () => {
+		const next = dynamicPanesReducer(createDefaultPaneLayout(), {
+			type: "replaceLayout",
+			panes: [
+				{
+					id: "price",
+					label: "Price",
+					pinned: true,
+					visible: true,
+					heightRatio: 1,
+					splitScale: false,
+					tooltip: "ohlc",
+					series: [{ type: "Candlestick", yAxis: "right" }],
+				},
+			],
+		});
+		expect(next).toHaveLength(1);
+		expect(next[0]?.series).toHaveLength(1);
+		expect(next[0]?.visible).toBe(true);
+	});
+
 	it("toggleSeriesVisible hides an individual series", () => {
 		const next = dynamicPanesReducer(createDefaultPaneLayout(), {
 			type: "toggleSeriesVisible",

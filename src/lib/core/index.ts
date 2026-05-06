@@ -9,6 +9,7 @@ export { computeScales } from "./scales/computeScales";
 export { ChartSplitter } from "./ChartSplitter";
 export { usePaneSizes } from "./hooks/usePaneSizes";
 export { useChartTheme } from "./hooks/useChartTheme";
+export { useIndicatorSets } from "./hooks/useIndicatorSets";
 export { DynamicChart } from "./DynamicChart";
 export { PaneLabel } from "./PaneLabel";
 export { PaneHeader } from "./PaneHeader";
@@ -21,6 +22,8 @@ export { useDynamicPanes, dynamicPanesReducer, createDefaultPaneLayout, loadPane
 export { DEFAULT_PANES, PANE_LAYOUT_STORAGE_KEY, PANE_MAX_VISIBLE } from "./types/pane-descriptor";
 export { isDefaultPaneId } from "./types/pane-descriptor";
 export type { PaneDescriptor, SeriesConfig, SeriesTypeId, TooltipMode, YAxisSide } from "./types/pane-descriptor";
+export { INDICATOR_SETS_STORAGE_KEY } from "./types/indicator-set";
+export type { IndicatorSet, IndicatorSetsStorage, IndicatorSetStorageLike } from "./types/indicator-set";
 export type { BarReplayState, ReplayBarLike, ReplaySpeed } from "./replay/BarReplayController";
 export { getSeries, listRegistered, registerSeries } from "./registry/SeriesRegistry";
 export type { SeriesSettingField, IndicatorCatalogEntry, IndicatorCategory, RepaintPolicy, PanePolicy, ScalePolicy } from "./types/indicator-catalog";

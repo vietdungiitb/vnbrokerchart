@@ -1,6 +1,6 @@
 # Implementation Plan — IC-3: Saved Indicator Sets
 
-> **Trạng thái:** READY TO CODE  
+> **Trạng thái:** IMPLEMENTED  
 > **Phiên bản:** 1.0 · 2026-05-06  
 > **Phụ thuộc:** IC-1 ✅ DONE · IC-2 ✅ DONE  
 > **Phạm vi:** localStorage-only trước — không cần Django backend  
@@ -37,7 +37,7 @@ Người dùng lưu được "bộ làm việc" — tập hợp canonical indica
 |---|---|---|---|
 | IC3-01 | Định nghĩa `IndicatorSet` type | `src/lib/core/types/indicator-set.ts` *(new)* | type-check |
 | IC3-02 | Hook `useIndicatorSets` — CRUD + localStorage | `src/lib/core/hooks/useIndicatorSets.ts` *(new)* | type-check + unit tests |
-| IC3-03 | 3 built-in templates tĩnh | `src/lib/core/data/builtinTemplates.ts` *(new)* | type-check |
+| IC3-03 | 3 built-in templates tĩnh | `src/lib/core/sets/builtins.ts` + `src/lib/core/sets/builtins/*.json` | type-check |
 | IC3-04 | Tích hợp vào `LibraryShowcaseDemo.tsx` — apply set | `src/demo/LibraryShowcaseDemo.tsx` | browser smoke |
 | IC3-05 | UI panel "Bộ chỉ báo của tôi" trong settings modal | `src/demo/PaneSettingsModal.tsx` | browser smoke |
 | IC3-06 | Import/export `.vnsc-set` file | `src/lib/core/hooks/useIndicatorSets.ts` | round-trip test |
@@ -127,7 +127,7 @@ const STORAGE_KEY = "vnsc:indicator-sets:v1";
 
 ### IC3-03 — Built-in templates
 
-**File:** `src/lib/core/data/builtinTemplates.ts` *(new)*
+**File:** `src/lib/core/sets/builtins.ts` + `src/lib/core/sets/builtins/*.json`
 
 3 templates tĩnh (không cần backend):
 
@@ -362,7 +362,10 @@ IC3-01, IC3-03, IC3-07 có thể làm song song vì không có dependency với 
 |---|---|
 | `src/lib/core/types/indicator-set.ts` | NEW |
 | `src/lib/core/hooks/useIndicatorSets.ts` | NEW |
-| `src/lib/core/data/builtinTemplates.ts` | NEW |
+| `src/lib/core/sets/builtins.ts` | NEW |
+| `src/lib/core/sets/builtins/vn-swing-setup.json` | NEW |
+| `src/lib/core/sets/builtins/orderflow-suite.json` | NEW |
+| `src/lib/core/sets/builtins/crypto-standard.json` | NEW |
 | `src/lib/core/hooks/useIndicatorSets.test.ts` | NEW |
 | `src/lib/core/index.ts` | EXTEND — export new types + hook |
 | `src/lib/core/hooks/useDynamicPanes.ts` | EXTEND — thêm action `RESET_SERIES` |

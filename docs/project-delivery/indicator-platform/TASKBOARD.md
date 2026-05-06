@@ -45,16 +45,16 @@
 
 | ID | Trạng thái | Công việc | Đầu ra bắt buộc |
 | --- | --- | --- | --- |
-| IC3-01 | READY | Tạo `IndicatorSet` type + `IndicatorSetsStorage` | `src/lib/core/types/indicator-set.ts` mới, type-check PASS |
-| IC3-02 | TODO | Hook `useIndicatorSets` — CRUD + localStorage | `src/lib/core/hooks/useIndicatorSets.ts` mới, 6 unit tests PASS |
-| IC3-03 | TODO | 3 built-in templates tĩnh | `src/lib/core/data/builtinTemplates.ts` mới, shape validate PASS |
-| IC3-04 | TODO | Wire `applySet` vào `LibraryShowcaseDemo.tsx` + `useDynamicPanes` | Browser smoke: apply template → chart đúng |
-| IC3-05 | TODO | Tab "Bộ chỉ báo của tôi" trong `PaneSettingsModal.tsx` | Browser smoke: list + save + apply UI hoạt động |
-| IC3-06 | TODO | Import/export `.vnsc-set` file | Round-trip test: export → import → `deepEqual` PASS |
-| IC3-07 | TODO | i18n keys IC-3 (13 keys × 2 ngôn ngữ) | `src/demo/i18n.tsx` updated, type-check PASS |
-| IC3-08 | TODO | Audit ledger + module tree refresh + commit | `AUDIT_LEDGER.md` entry, `module_tree_full.md` updated, commit `dev` |
+| IC3-01 | DONE | Tạo `IndicatorSet` type + `IndicatorSetsStorage` | `src/lib/core/types/indicator-set.ts` mới, type-check PASS |
+| IC3-02 | DONE | Hook `useIndicatorSets` — CRUD + localStorage | `src/lib/core/hooks/useIndicatorSets.ts` mới, 8 unit tests PASS |
+| IC3-03 | DONE | 3 built-in templates tĩnh | `src/lib/core/sets/builtins.ts` + JSON templates, shape validate PASS |
+| IC3-04 | DONE | Wire `applySet` vào `LibraryShowcaseDemo.tsx` + `useDynamicPanes` | Browser smoke: apply template → chart đúng |
+| IC3-05 | DONE | Tab "Bộ chỉ báo" trong `PaneSettingsModal.tsx` | Browser smoke: list + save + apply UI hoạt động |
+| IC3-06 | DONE | Import/export `.vnsc-set` file | Round-trip test: export → import → `deepEqual` PASS |
+| IC3-07 | DONE | i18n keys IC-3 (13 keys × 2 ngôn ngữ) | `src/demo/i18n.tsx` updated, type-check PASS |
+| IC3-08 | DONE | Audit ledger + module tree refresh | `AUDIT_LEDGER.md` entry, `module_tree_full.md` updated |
 
-**Gate IC-3:** `npm run type-check` · `npm test` (≥ 111 tests PASS) · `npm run build:docs` · browser smoke đủ 6 kịch bản
+**Gate IC-3:** `npm run type-check` · `npm test` (114 tests PASS) · `npm run build:docs` · browser smoke đủ 6 kịch bản
 
 ---
 

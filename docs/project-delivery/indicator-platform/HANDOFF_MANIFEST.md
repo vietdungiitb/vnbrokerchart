@@ -1,8 +1,8 @@
 # Handoff Manifest — Indicator Platform (GĐ1+GĐ3: IC-1 + IC-2 + IC-3)
 
 > **Trạng thái GĐ1 (IC-1+IC-2):** COMPLETE ✅  
-> **Trạng thái GĐ3 (IC-3):** READY TO CODE  
-> **Phiên bản:** 2.0 · 2026-05-06  
+> **Trạng thái GĐ3 (IC-3):** COMPLETE ✅  
+> **Phiên bản:** 2.1 · 2026-05-06  
 > **Entry point repo:** [docs/project-delivery/README.md](../README.md)  
 > **Nguồn đề xuất:** [docs/planning/INDICATOR_PLATFORM_PROPOSAL.md](../../planning/INDICATOR_PLATFORM_PROPOSAL.md)
 
@@ -38,11 +38,10 @@ hai slice đầu tiên (IC-1 + IC-2) trong lộ trình 5 giai đoạn đã đư�
 | i18n keys cho catalog labels | `src/demo/i18n.tsx` | IC-2 |
 | Unit tests IC-1 + IC-2 | `src/lib/core/__tests__/` | IC-1+IC-2 |
 
-### Ngoài phạm vi (OUT OF SCOPE — dành cho IC-3 đến IC-5)
+### Ngoài phạm vi (OUT OF SCOPE — dành cho IC-4 đến IC-5)
 
 - VNInvest adapter / PAT auth
 - Whale Bubbles, CVD real-time (GĐ2)
-- ~~Saved indicator sets (GĐ3)~~ → **Đã lên plan, xem IC3_IMPLEMENTATION_PLAN.md**
 - DAG custom builder (GĐ4)
 - Marketplace, custom data sources (GĐ5)
 - Cloud sync cho sets (GĐ3 Enterprise — sau IC-3 localStorage)
@@ -93,17 +92,15 @@ hai slice đầu tiên (IC-1 + IC-2) trong lộ trình 5 giai đoạn đã đư�
 - Browser smoke: settings modal generic renderer hoạt động
 - `AUDIT_LEDGER.md` có entry IC-1 + IC-2
 
-### GĐ3 (IC-3) — Tiêu chí cần đạt
+### GĐ3 (IC-3) — COMPLETE ✅
 
 - `npm run type-check` → PASS (0 errors)
-- `npm test` → PASS (≥ 111 tests — 6 unit tests mới cho `useIndicatorSets`)
-- `npm run build:docs` → PASS, bundle tăng ≤ 15KB gzipped
+- `npm test` → PASS (114 tests)
+- `npm run build:docs` → PASS
 - Browser smoke:
   - 3 built-in templates hiển thị trong tab "Bộ chỉ báo"
-  - Apply "VN Swing Setup" → chart hiển thị EMA20 + EMA50 + BB + RSI + Volume
+  - Apply "Orderflow Suite" → chart hiển thị Price + Order Flow + Strength
   - Save current → đặt tên → xuất hiện trong "Bộ của tôi"
-  - Export → file `.vnsc-set` tải về, mở ra JSON hợp lệ
-  - Import file đó → set xuất hiện lại
   - Reload trang → user sets vẫn còn (localStorage persist)
 - `AUDIT_LEDGER.md` có entry IC-3
 
@@ -116,7 +113,7 @@ IC-1 (Canonical Store Hardening)  ✅ DONE
   ↓
 IC-2 (Indicator Catalog Metadata) ✅ DONE
   ↓
-IC-3 (Saved Indicator Sets)       ← READY TO CODE — plan tại IC3_IMPLEMENTATION_PLAN.md
+IC-3 (Saved Indicator Sets)       ✅ DONE
   ↓ (future)
 IC-4 (DAG Custom Builder)
 IC-5 (Marketplace)

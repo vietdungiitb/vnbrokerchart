@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-06 16:12:07`
+Generated at: `2026-05-06 17:43:57`
 
 ## Summary
 
-- Total modules: 672
+- Total modules: 677
 - Python modules: 1
-- JS/TS modules: 671
+- JS/TS modules: 676
 - Total classes: 351
-- Total functions: 3690
-- Total top-level variables: 7989
+- Total functions: 3722
+- Total top-level variables: 8045
 
 ## Python Modules
 
@@ -2177,9 +2177,9 @@ Generated at: `2026-05-06 16:12:07`
 ### `src/demo/PaneSettingsModal.tsx`
 
 - Functions:
-  - `PaneSettingsModal`, `describeSeries`, `handleAddSeries`, `handleBackdropMouseDown`, `handleDeletePane`, `handleKeyDown`, `handleSeriesParamChange`, `paneLabel`, `parseNumber`, `renderField`, `renderIndicatorsSection`, `renderLayoutSection`, `renderResetSection`, `renderSeriesParams`, `renderThemeSection`
+  - `PaneSettingsModal`, `describeSeries`, `getIndicatorSetLabel`, `handleAddSeries`, `handleApplyIndicatorSet`, `handleBackdropMouseDown`, `handleDeleteIndicatorSet`, `handleDeletePane`, `handleImportIndicatorSetChange`, `handleImportIndicatorSetClick`, `handleKeyDown`, `handleSaveCurrentIndicatorSet`, `handleSeriesParamChange`, `paneLabel`, `parseNumber`, `renderField`, `renderIndicatorSetsSection`, `renderIndicatorsSection`, `renderLayoutSection`, `renderResetSection`, `renderSeriesParams`, `renderSetCard`, `renderThemeSection`
 - Top-level variables:
-  - `availableSeriesTypes`, `canAddPane`, `canMoveDown`, `canMoveUp`, `composerEntry`, `currentValue`, `dialogRef`, `entry`, `fast`, `fields`, `gridClassName`, `hidden`, `isDefaultPane`, `isSelected`, `label`, `next`, `nextSelectedPaneId`, `overLimit`, `rawValue`, `resolvedComposerType`, `revealEnabled`, `sectionLabels`, `selectedPane`, `slow`, `visibleCount`, `visibleIndex`
+  - `availableSeriesTypes`, `builtinSets`, `canAddPane`, `canMoveDown`, `canMoveUp`, `composerEntry`, `currentValue`, `dialogRef`, `entry`, `fast`, `fields`, `file`, `gridClassName`, `hidden`, `importInputRef`, `imported`, `indicatorSets`, `isDefaultPane`, `isSelected`, `label`, `next`, `nextSelectedPaneId`, `overLimit`, `rawValue`, `resolvedComposerType`, `revealEnabled`, `saved`, `sectionLabels`, `selectedPane`, `set`, `slow`, `userSets`, `visibleCount`, `visibleIndex`
 
 ### `src/demo/usePaneLayout.ts`
 
@@ -2760,9 +2760,16 @@ Generated at: `2026-05-06 16:12:07`
 ### `src/lib/core/hooks/useDynamicPanes.ts`
 
 - Functions:
-  - `clonePane`, `clonePaneList`, `cloneSeries`, `createDefaultPaneLayout`, `createId`, `dynamicPanesReducer`, `getVisiblePanes`, `heightsToRatios`, `loadPaneLayout`, `makeDefaultLayout`, `mutateVisibleRatio`, `normalizeDefaultPane`, `normalizeLoadedPaneLayout`, `normalizeVisibleRatios`, `ratiosToHeights`, `readStoredPaneLayout`, `reorderVisiblePanes`, `resolveSeriesIndex`, `sanitizeLayout`, `savePaneLayout`, `syncSplitScale`, `useDynamicPanes`, `validatePane`, `visibleCount`, `visibleIndices`, `writeStoredPaneLayout`
+  - `clonePane`, `clonePaneList`, `cloneSeries`, `createDefaultPaneLayout`, `createId`, `dynamicPanesReducer`, `getVisiblePanes`, `heightsToRatios`, `loadPaneLayout`, `makeDefaultLayout`, `mutateVisibleRatio`, `normalizeDefaultPane`, `normalizeLoadedPaneLayout`, `normalizeVisibleRatios`, `ratiosToHeights`, `readStoredPaneLayout`, `reorderVisiblePanes`, `replacePaneLayout`, `resolveSeriesIndex`, `sanitizeLayout`, `savePaneLayout`, `syncSplitScale`, `useDynamicPanes`, `validatePane`, `visibleCount`, `visibleIndices`, `writeStoredPaneLayout`
 - Top-level variables:
-  - `FRAME_VERTICAL_MARGIN`, `MIN_PANE_HEIGHT`, `activeSeries`, `addPane`, `addSeries`, `allocated`, `anyVisible`, `applyDelta`, `available`, `bottomHeight`, `bottomPane`, `byId`, `cloned`, `cursor`, `customPanes`, `defaultPanes`, `deletePane`, `height`, `heights`, `indices`, `layout`, `maxVisiblePanes`, `minBottom`, `minTop`, `next`, `nextBottom`, `nextLabel`, `nextTop`, `orderedVisible`, `pairTotal`, `pane`, `parsed`, `ratio`, `raw`, `removePane`, `removeSeries`, `renamePane`, `reorderPanes`, `replacement`, `resetToDefault`, `restorePane`, `series`, `seriesIndex`, `stored`, `toggleSeriesVisible`, `toggleVisible`, `topHeight`, `topPane`, `total`, `updateSeriesParams`, `updateSeriesYAxis`, `updated`, `visible`, `visibleCursor`, `visiblePanes`, `visibleSlots`
+  - `FRAME_VERTICAL_MARGIN`, `MIN_PANE_HEIGHT`, `activeSeries`, `addPane`, `addSeries`, `allocated`, `anyVisible`, `applyDelta`, `available`, `bottomHeight`, `bottomPane`, `byId`, `cloned`, `cursor`, `customPanes`, `defaultPanes`, `deletePane`, `height`, `heights`, `indices`, `layout`, `maxVisiblePanes`, `minBottom`, `minTop`, `next`, `nextBottom`, `nextLabel`, `nextTop`, `orderedVisible`, `pairTotal`, `pane`, `parsed`, `ratio`, `raw`, `removePane`, `removeSeries`, `renamePane`, `reorderPanes`, `replaceLayout`, `replacement`, `resetToDefault`, `restorePane`, `series`, `seriesIndex`, `stored`, `toggleSeriesVisible`, `toggleVisible`, `topHeight`, `topPane`, `total`, `updateSeriesParams`, `updateSeriesYAxis`, `updated`, `visible`, `visibleCursor`, `visiblePanes`, `visibleSlots`
+
+### `src/lib/core/hooks/useIndicatorSets.ts`
+
+- Functions:
+  - `mergeSets`, `pickStorage`, `readFileAsText`, `useIndicatorSets`
+- Top-level variables:
+  - `allowedSeriesTypes`, `applySet`, `blob`, `builtinSets`, `deleteSet`, `exportSet`, `getSetById`, `importSet`, `imported`, `link`, `loaded`, `merged`, `nextSet`, `parsed`, `reader`, `removed`, `renameSet`, `renamed`, `saveCurrentAsSet`, `set`, `sets`, `storage`, `text`, `trimmed`, `url`
 
 ### `src/lib/core/hooks/usePaneManager.test.ts`
 
@@ -2876,6 +2883,25 @@ Generated at: `2026-05-06 16:12:07`
 - Top-level variables:
   - `fast`, `key`, `period`, `signal`, `slow`, `stdDev`, `threshold`, `value`, `whale`
 
+### `src/lib/core/sets/__tests__/indicatorSetCodec.test.ts`
+
+- Functions:
+  - `createMockStorage`
+- Top-level variables:
+  - `exported`, `imported`, `layout`, `loaded`, `next`, `original`, `payload`, `samplePane`, `savedSet`, `set`, `storage`, `value`
+
+### `src/lib/core/sets/builtins.ts`
+
+- Top-level variables:
+  - `BUILTIN_INDICATOR_SETS`
+
+### `src/lib/core/sets/indicatorSetCodec.ts`
+
+- Functions:
+  - `buildIndicatorSetFileName`, `cloneIndicatorSet`, `clonePane`, `cloneSeries`, `createId`, `createIndicatorSet`, `indicatorSetToPaneLayout`, `isPaneDescriptor`, `isPlainObject`, `isSeriesConfig`, `isSeriesTypeId`, `isTooltipMode`, `isYAxisSide`, `loadIndicatorSets`, `sanitizeIndicatorSet`, `sanitizeIndicatorSetsStorage`, `saveIndicatorSets`, `stringifyIndicatorSet`
+- Top-level variables:
+  - `allowed`, `byId`, `parsed`, `payload`, `raw`, `sanitized`, `slug`, `stamp`
+
 ### `src/lib/core/types/__tests__/pane-descriptor.test.ts`
 
 - Top-level variables:
@@ -2884,6 +2910,11 @@ Generated at: `2026-05-06 16:12:07`
 ### `src/lib/core/types/indicator-catalog.ts`
 
 - No parseable top-level symbols found
+
+### `src/lib/core/types/indicator-set.ts`
+
+- Top-level variables:
+  - `INDICATOR_SETS_STORAGE_KEY`
 
 ### `src/lib/core/types/pane-descriptor.ts`
 

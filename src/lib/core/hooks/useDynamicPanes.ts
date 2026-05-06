@@ -33,6 +33,7 @@ export type DynamicPaneAction =
 	| { type: "updateSeriesParams"; paneId: string; seriesType: SeriesTypeId; params: Record<string, unknown>; seriesIndex?: number }
 	| { type: "updateSeriesYAxis"; paneId: string; seriesType: SeriesTypeId; yAxis: YAxisSide; seriesIndex?: number }
 	| { type: "applyDelta"; splitterIndex: number; deltaY: number; available: number }
+	| { type: "replaceLayout"; panes: readonly PaneDescriptor[] }
 	| { type: "resetToDefault" }
 	| { type: "reorderPanes"; fromVisibleIndex: number; toVisibleIndex: number };
 
@@ -53,6 +54,7 @@ export interface UseDynamicPanesResult {
 	updateSeriesParams: (paneId: string, seriesType: SeriesTypeId, params: Record<string, unknown>, seriesIndex?: number) => void;
 	updateSeriesYAxis: (paneId: string, seriesType: SeriesTypeId, yAxis: YAxisSide, seriesIndex?: number) => void;
 	applyDelta: (splitterIndex: number, deltaY: number) => void;
+	replaceLayout: (panes: readonly PaneDescriptor[]) => void;
 	resetToDefault: () => void;
 	reorderPanes: (fromVisibleIndex: number, toVisibleIndex: number) => void;
 	canAddPane: boolean;
@@ -247,6 +249,15 @@ function writeStoredPaneLayout(panes: readonly PaneDescriptor[], storage?: PaneL
 
 function makeDefaultLayout(): PaneDescriptor[] {
 	return normalizeVisibleRatios(clonePaneList(DEFAULT_PANES));
+}
+
+function replacePaneLayout(panes: readonly PaneDescriptor[]): PaneDescriptor[] {
+	if (panes.length === 0) {
+		return makeDefaultLayout();
+	}
+	const next = normalizeVisibleRatios(clonePaneList(panes));
+	next.forEach(syncSplitScale);
+	return next;
 }
 
 function mutateVisibleRatio(panes: PaneDescriptor[], visiblePaneIndex: number, nextHeightRatio: number): PaneDescriptor[] {
@@ -464,6 +475,8 @@ export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: Dy
 		}
 		case "resetToDefault":
 			return makeDefaultLayout();
+		case "replaceLayout":
+			return replacePaneLayout(action.panes);
 		case "reorderPanes":
 			return reorderVisiblePanes(state, action.fromVisibleIndex, action.toVisibleIndex);
 		case "toggleSeriesVisible": {
@@ -582,6 +595,10 @@ export function useDynamicPanes(totalHeight: number, options: UseDynamicPanesOpt
 		dispatch({ type: "applyDelta", splitterIndex, deltaY, available });
 	}, [available]);
 
+	const replaceLayout = useCallback((panes: readonly PaneDescriptor[]) => {
+		dispatch({ type: "replaceLayout", panes });
+	}, []);
+
 	const resetToDefault = useCallback(() => {
 		try {
 			if (typeof localStorage !== "undefined") {
@@ -626,6 +643,7 @@ export function useDynamicPanes(totalHeight: number, options: UseDynamicPanesOpt
 		updateSeriesParams,
 		updateSeriesYAxis,
 		applyDelta,
+		replaceLayout,
 		resetToDefault,
 		reorderPanes,
 		canAddPane: visiblePanes.length < maxVisiblePanes,
