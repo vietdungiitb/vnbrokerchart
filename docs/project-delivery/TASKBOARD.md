@@ -14,6 +14,7 @@
 - `DONE`: đã có evidence trong `AUDIT_LEDGER.md`
 - `READY`: slice đã đủ context và có thể code ngay sau khi được duyệt
 - `TODO`: chưa nên triển khai trước khi slice trước đóng đủ evidence
+- Khi một task ở `READY` và đã khớp `docs/CHANGE_CONTROL_STANDARD.md` + `PROJECT_GOVERNANCE.md`, đội code có thể bắt đầu ngay mà không cần hỏi lại các quyết định đã chốt.
 
 ---
 

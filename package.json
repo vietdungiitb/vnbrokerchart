@@ -1,6 +1,6 @@
 {
-  "name": "react-stockcharts",
-  "version": "2.0.0",
+  "name": "vnstockcharts",
+  "version": "1.0.0",
   "description": "Highly customizable stock charts with ReactJS and d3 - Modernized",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -13,9 +13,10 @@
     }
   },
   "author": {
-    "name": "Ragu Ramaswamy"
+    "name": "Phạm Việt Dũng",
+    "email": "vietdung@edusuccess.vn"
   },
-  "homepage": "http://rrag.github.io/react-stockcharts/",
+  "homepage": "https://vninvest.edusuccess.vn",
   "license": "MIT",
   "scripts": {
     "clean": "rimraf -rf ./build ./dist",

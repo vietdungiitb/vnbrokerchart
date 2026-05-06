@@ -126,3 +126,10 @@ Components phức tạp nhất (event handling, drawing tools) và các file roo
 - Frame rate: > 60fps trong pan.
 - Initial load: < 200ms cho 10,000 điểm dữ liệu.
 - Bundle size không tăng > 5% so với baseline hiện tại.
+
+## 7. Code approval contract
+
+- Mọi migration slice chỉ được code khi plan, taskboard, và audit template đã chốt đủ để không cần hỏi lại những quyết định đã ghi.
+- Nếu một task đã nằm trong lane `Ready` hoặc đã được duyệt trong change-control standard, đội code có thể tiến hành trực tiếp theo slice.
+- Nếu task đụng API, data-source, hoặc repo-wide cleanup vượt scope hiện có, phải cập nhật tài liệu hiệu lực trước khi code.
+- Mọi source change trong `src/` vẫn phải đi kèm nghĩa vụ regenerate `module_tree_full.md` và cập nhật `AUDIT_LEDGER.md`.

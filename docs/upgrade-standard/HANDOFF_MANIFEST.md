@@ -4,6 +4,8 @@
 
 Tài liệu này là **entry point** cho chương trình chuyển đổi 100% source code `src/` từ JavaScript sang TypeScript nghiêm ngặt (strict mode), sử dụng React 19 + TypeScript 5.9 + D3 scoped packages.
 
+Nếu task không thuộc migration hoặc cleanup repo-wide, quay lại [../README.md](../README.md) để chọn luồng đúng.
+
 **Ngày bắt đầu chương trình v3.0**: 2026-05-03  
 **Hiện trạng tại thời điểm khởi đầu**: 168 file `.js` còn lại / 20 file `.ts/.tsx` đã có  
 **Mục tiêu kết thúc**: 0 file `.js` trong `src/`
@@ -52,6 +54,8 @@ Tài liệu này là **entry point** cho chương trình chuyển đổi 100% so
 4. **Theo dõi tiến độ**: `TASKBOARD.md` → kéo task từ Ready → In Progress → Done.
 5. **Ghi evidence**: `SLICE_AUDIT.md` → điền checklist sau mỗi slice.
 6. **Cập nhật ledger**: `AUDIT_LEDGER.md` → ghi tên file đã rename, output lệnh.
+
+Repo-wide docs hub: [../README.md](../README.md). Delivery/runtime docs: [../project-delivery/README.md](../project-delivery/README.md).
 
 ---
 
@@ -109,6 +113,8 @@ Tài liệu này là **entry point** cho chương trình chuyển đổi 100% so
 4. **Prove each slice**: Record command output and file-level proof in `SLICE_AUDIT.md`.
 5. **Ledger discipline**: Update `AUDIT_LEDGER.md` after every completed slice.
 6. **Demo**: Restore the demo last, with an offline-safe fallback so the app can be verified without asking for clarification.
+
+Nếu task thuộc feature delivery hoặc runtime UI thay vì migration, đọc thêm [docs/project-delivery/README.md](../project-delivery/README.md) trước để vào đúng luồng delivery.
 
 ## 5. Success Criteria
 - The library builds without errors.

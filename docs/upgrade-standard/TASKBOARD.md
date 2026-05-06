@@ -7,6 +7,7 @@
 - **Gate G1 phải pass trước khi bắt đầu Giai đoạn 2.**
 - **Gate G2 phải pass trước khi bắt đầu Giai đoạn 3.**
 - Mọi file được rename `.js → .ts/.tsx` phải được ghi vào AUDIT_LEDGER.
+- Task ở lane `READY` hoặc task đã được duyệt trong `docs/CHANGE_CONTROL_STANDARD.md` có thể code theo plan mà không cần hỏi lại quyết định đã chốt, miễn là không có xung đột với governance hoặc quality.
 
 ---
 

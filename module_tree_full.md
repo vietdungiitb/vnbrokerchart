@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-06 07:38:40`
+Generated at: `2026-05-06 12:48:44`
 
 ## Summary
 
-- Total modules: 669
+- Total modules: 670
 - Python modules: 1
-- JS/TS modules: 668
+- JS/TS modules: 669
 - Total classes: 351
-- Total functions: 3685
-- Total top-level variables: 7979
+- Total functions: 3686
+- Total top-level variables: 7991
 
 ## Python Modules
 
@@ -2623,6 +2623,13 @@ Generated at: `2026-05-06 07:38:40`
   - `helper`
 - Top-level variables:
   - `coordinate`, `coordinateProps`, `edgeAt`, `hideLine`, `props`, `show`, `type`, `x1`, `y`
+
+### `src/lib/core/__tests__/IndicatorLegend.test.tsx`
+
+- Functions:
+  - `createPane`
+- Top-level variables:
+  - `IndicatorLegend`, `act`, `chips`, `container`, `createRoot`, `eyeButtons`, `onRemoveSeries`, `onToggleSeries`, `originalConsoleError`, `reactActEnvironment`, `removeButtons`, `root`
 
 ### `src/lib/core/__tests__/seriesValueResolver.test.ts`
 

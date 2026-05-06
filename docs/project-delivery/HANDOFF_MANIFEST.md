@@ -2,7 +2,7 @@
 
 ## Mục tiêu
 
-Bộ tài liệu này là gói chuyển giao chuẩn cho `react-stockcharts-master` trong giai đoạn `demo-first`, với định hướng tiếp theo là tách thành widget nhúng được. Tài liệu phải đủ rõ để đội code tiếp tục mà không cần hỏi lại các quyết định nền tảng.
+Bộ tài liệu này là gói chuyển giao chuẩn cho `react-stockcharts-master` trong giai đoạn `demo-first`, với định hướng tiếp theo là tách thành widget nhúng được. Điểm vào của bundle này là [README.md](README.md); điểm vào cấp repo là [../README.md](../README.md).
 
 ## Phạm vi hiện tại
 
@@ -17,6 +17,7 @@ Bộ tài liệu này là gói chuyển giao chuẩn cho `react-stockcharts-mast
 
 | Tệp | Vai trò |
 | --- | --- |
+| `docs/project-delivery/README.md` | Entry point vận hành cho code team và auditor |
 | `docs/project-delivery/PROJECT_GOVERNANCE.md` | Luật phát triển không được phá vỡ |
 | `docs/project-delivery/TECH_SPEC.md` | Đặc tả kỹ thuật hiện trạng và ranh giới hệ thống |
 | `docs/project-delivery/IMPLEMENTATION_PLAN.md` | Lộ trình triển khai theo slice |

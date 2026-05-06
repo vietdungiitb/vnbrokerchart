@@ -26,6 +26,31 @@ Chuyển **100% file `.js`** trong `src/` sang TypeScript với `strict: true`, 
 6. **Dùng `any` có chú thích** — `// TODO(ts-migration): narrow type` — không dùng `@ts-ignore`.
 7. **Index file migrate sau cùng** trong mỗi thư mục.
 
+### 3.1 Mẫu slice chuẩn
+
+Mọi slice mới hoặc slice được chỉnh sửa phải điền theo đúng thứ tự trường dưới đây. Nếu một trường không áp dụng, ghi rõ `N/A` thay vì bỏ trống.
+
+| Trường | Cần điền | Ý nghĩa |
+| :--- | :--- | :--- |
+| Slice ID | Bắt buộc | Mã slice duy nhất, ví dụ `S17` |
+| Mục tiêu | Bắt buộc | Kết quả đầu ra đo được của slice |
+| Phạm vi | Bắt buộc | Directory, file, hoặc subsystem bị chạm |
+| Không làm | Bắt buộc | Các thay đổi bị loại trừ rõ ràng |
+| Phụ thuộc | Bắt buộc | Slice, gate, hoặc điều kiện phải xong trước |
+| Thay đổi chính | Bắt buộc | Behavior hoặc migration effect cần đạt |
+| Gate | Bắt buộc | Command / smoke / pass criteria |
+| Evidence | Bắt buộc | File list, validation output, module tree, ledger link |
+| Rủi ro | Bắt buộc | Residual risk cần theo dõi |
+| Trạng thái | Bắt buộc | `TODO`, `READY`, hoặc `DONE` |
+
+### 3.2 Quy ước điền
+
+- Một slice chỉ nên có một mục tiêu chính.
+- Gate phải đủ hẹp để falsify được giả thuyết local của slice.
+- Khi slice chạm source code, evidence phải nhắc tới `AUDIT_LEDGER.md` và `module_tree_full.md`.
+- Không trộn validation của slice này với slice khác trong cùng một entry.
+- Nếu scope mở rộng, ghi rõ phần mới và phần giữ nguyên để audit không phải suy luận.
+
 ## 4. Slice map — Chương trình v3.0
 
 | Slice | Giai đoạn | Mục tiêu | Phạm vi chính | Gate |
@@ -230,10 +255,13 @@ src/lib/algorithm/index.js  → .ts
 ## 6. Checklist audit mỗi slice
 
 - [ ] Danh sách file đã rename (tên cũ → tên mới)
+- [ ] Mô tả behavior mới hoặc behavior đã sửa
 - [ ] Output `npm run type-check` (pass / số lỗi còn lại)
 - [ ] Output `npm run build:docs` (pass / warnings)
 - [ ] File `module_tree_full.md` được regenerate
 - [ ] AUDIT_LEDGER cập nhật entry mới
+- [ ] Rủi ro còn lại được ghi rõ
+- [ ] Kết luận PASS / FAIL có thể đọc nhanh
 
 ## 2. Nguyên tắc bắt buộc
 

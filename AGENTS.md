@@ -6,11 +6,15 @@
 
 ## Read first
 
-1. `docs/project-delivery/HANDOFF_MANIFEST.md`
-2. `docs/project-delivery/PROJECT_GOVERNANCE.md`
-3. `docs/project-delivery/TECH_SPEC.md`
-4. `quality/QUALITY.md`
-5. `docs/planning/INDICATOR_SSOT_POLICY.md`
+1. `docs/README.md`
+2. `docs/CHANGE_CONTROL_STANDARD.md`
+3. `docs/project-delivery/README.md`
+4. `docs/upgrade-standard/README.md`
+5. `docs/project-delivery/HANDOFF_MANIFEST.md`
+6. `docs/project-delivery/PROJECT_GOVERNANCE.md`
+7. `docs/project-delivery/TECH_SPEC.md`
+8. `quality/QUALITY.md`
+9. `docs/planning/INDICATOR_SSOT_POLICY.md`
 
 ## Canonical commands
 

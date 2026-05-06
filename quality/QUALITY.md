@@ -4,6 +4,17 @@
 
 Chất lượng của repo này không được đo bằng “build pass” đơn thuần. Repo đạt chất lượng khi demo shell vận hành đúng với spec, indicator không drift khỏi SSOT, i18n không để lại trạng thái nửa Việt nửa Anh, và kiến trúc vẫn đủ sạch để tách widget ở bước sau.
 
+## 1.1 Quality standard
+
+Chất lượng trong repo này được đánh giá theo bốn trụ cột, theo thứ tự ưu tiên:
+
+1. Correctness: behavior phải khớp spec và dữ liệu phải đúng.
+2. Fidelity: UI không được giả vờ dữ liệu thật, theme thật, hoặc locale thật.
+3. Traceability: mọi thay đổi phải có evidence, ledger, và đường kiểm lại.
+4. Maintainability: code, docs, và runtime phải còn đủ sạch để mở rộng theo slice sau.
+
+Một change request chỉ được coi là sẵn sàng để triển khai khi `docs/CHANGE_CONTROL_STANDARD.md` ghi rõ trạng thái `Approved` hoặc một slice/board tương ứng đã chốt rõ phạm vi và evidence cần có.
+
 ## 2. Coverage targets
 
 | Subsystem | Mục tiêu | Lý do |
@@ -15,6 +26,17 @@ Chất lượng của repo này không được đo bằng “build pass” đơ
 | i18n runtime | 85% | Mixed locale là regression nhìn thấy ngay nhưng dễ bị bỏ sót |
 | Historical data fidelity và backfill | 90% | Range buttons và pan/scroll chỉ trung thực khi lịch sử upstream đủ dài |
 
+## 2.1 Minimum release bar
+
+Không coi một slice là hoàn tất nếu thiếu bất kỳ điều kiện nào sau đây:
+
+- `docs/upgrade-standard/AUDIT_LEDGER.md` có entry đúng scope.
+- Nếu chạm source, `module_tree_full.md` đã được regenerate.
+- Nếu chạm runtime/UI, có validation hẹp và smoke note có thể chạy lại.
+- Nếu chạm i18n, không còn text mới hardcoded ngoài key/dictionary.
+- Nếu chạm market data hoặc historical viewport, đã chứng minh được source fidelity và backfill/range math.
+- Nếu chạm core logic, không có import ngược từ `src/demo/**` vào `src/lib/**`.
+
 ## 3. Coverage theater cần tránh
 
 - Test chỉ assert component render được nhưng không kiểm tra locale đổi text.
@@ -22,6 +44,18 @@ Chất lượng của repo này không được đo bằng “build pass” đơ
 - Test chart chỉ kiểm tra có node SVG/canvas mà không kiểm tra mapped pane/series logic.
 - Test i18n chỉ kiểm tra hook trả về string, không kiểm tra `html lang` và persistence.
 - Test range/backfill chỉ kiểm tra `aria-pressed` hoặc state local mà không kiểm tra lịch sử upstream thật đã được nạp.
+
+## 3.1 Hard blockers
+
+Các tình huống sau chặn merge hoặc chặn đóng slice:
+
+- Mixed locale hoặc mixed theme trong cùng bề mặt.
+- Data source / ticker / timestamp / lịch sử không khớp nguồn.
+- SSOT indicator drift hoặc duplicated compute path.
+- `build pass` nhưng smoke runtime không khớp spec.
+- Thiếu audit ledger hoặc thiếu modified-file list.
+- Thiếu validation tối thiểu cho thay đổi runtime.
+- Thiếu modified-file list khi thay đổi governance hoặc plan.
 
 ## 4. Fitness-to-purpose scenarios
 
@@ -79,7 +113,29 @@ Nếu chart chỉ có 300 bar hoặc không backfill khi pan trái, các nút `1
 
 How to verify: load demo, pan/scroll trái đến mép dữ liệu, xác nhận older Binance bars được fetch và append; click `1M`/`3M`/`1Y`/`All` và kiểm tra window tương ứng với dữ liệu thật đã tải cho đúng symbol.
 
-## 5. AI session discipline
+## 5. Validation matrix theo loại thay đổi
+
+| Loại thay đổi | Validation tối thiểu | Ghi chú bắt buộc |
+| --- | --- | --- |
+| Docs-only | `npm run build:docs` | Nếu đổi policy/guidance, ghi entry ledger |
+| Runtime/UI narrow fix | Hẹp nhất có thể + `npm run build:docs` | Cần smoke note nếu behavior người dùng nhìn thấy |
+| Source code change | `npm run type-check`, `npm run build:docs`, smoke liên quan | Nếu chạm `src/`, regenerate `module_tree_full.md` |
+| Market data / backfill / range | type-check + build docs + browser smoke | Phải ghi rõ nguồn, ticker, window, và backfill/range math |
+| Migration / repo-wide cleanup | type-check + build docs + inventory regen | Không cho phép ledger thiếu file list |
+
+## 6. Evidence standard
+
+Một bằng chứng chất lượng tối thiểu phải nói rõ:
+
+- Scope nào đã thay đổi.
+- Behavior nào đã sửa.
+- Command nào đã chạy và kết quả ra sao.
+- Residual risk nào còn lại.
+- File nào là ledger canonical.
+
+Không chấp nhận mô tả chung chung như “đã test” hoặc “ổn rồi” nếu không có command, scope, và result.
+
+## 7. AI session discipline
 
 1. Đọc `AGENTS.md` và tài liệu trong `docs/project-delivery/` trước khi mở scope mới.
 2. Không thêm text UI mới nếu chưa có i18n key.
@@ -87,7 +143,7 @@ How to verify: load demo, pan/scroll trái đến mép dữ liệu, xác nhận 
 4. Sau edit đầu tiên phải có validation hẹp.
 5. Với dữ liệu thị trường, luôn phân biệt rõ between source history loading and viewport range math.
 
-## 6. Human gate
+## 8. Human gate
 
 Những thay đổi sau cần review người thật trước khi merge:
 

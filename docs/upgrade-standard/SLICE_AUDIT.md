@@ -4,18 +4,48 @@
 
 Sau mỗi slice, đội code phải điền đủ 4 lớp: phạm vi đã sửa, lệnh đã chạy, kết quả quan sát được, và kết luận pass/fail. **Không được chuyển slice nếu phần audit chưa có bằng chứng.**
 
+### 1.1 Mẫu audit chuẩn
+
+Mỗi entry audit phải đi theo đúng thứ tự trường dưới đây để reviewer và auditor có thể scan nhanh mà không phải tự đoán cấu trúc.
+
+| Trường | Bắt buộc | Nội dung cần điền |
+| :--- | :--- | :--- |
+| Người thực hiện | Bắt buộc | Tên người / agent thực hiện |
+| Ngày | Bắt buộc | Ngày bàn giao theo format repo |
+| Slice | Bắt buộc | Mã slice hoặc checkpoint |
+| Scope | Bắt buộc | Subsystem / file set đã thay đổi |
+| Files changed | Bắt buộc | Danh sách file chính xác, không viết chung chung |
+| Validation | Bắt buộc | Command, kết quả, warnings nếu có |
+| Evidence | Bắt buộc | Link/ghi chú tới ledger, module tree, smoke, test |
+| Kết quả quan sát | Bắt buộc | Behavior đã kiểm được hoặc đã sửa |
+| Rủi ro còn lại | Bắt buộc | Risk còn mở |
+| Kết luận | Bắt buộc | Chỉ dùng `PASS` hoặc `FAIL` |
+
+### 1.2 Quy ước điền
+
+- Nếu slice chạm source code, phải nêu rõ `AUDIT_LEDGER.md` entry nào là canonical evidence.
+- Nếu slice chạm runtime/UI, phải có smoke note đủ để người khác chạy lại.
+- Không dùng mô tả mơ hồ như “một vài file nhỏ” hoặc “có thay đổi nhẹ”.
+- Nếu validation có warnings, phải ghi rõ warnings đó có block hay không.
+- Kết luận chỉ được để `PASS` khi evidence và validation khớp cùng scope.
+
 ## 2. Template audit chung
 
 ```
 Người thực hiện:
 Ngày:
 Slice:
-Files renamed (js → ts/tsx):
+Scope:
+Files changed:
   - src/lib/foo/Bar.js → src/lib/foo/Bar.ts
+  - src/lib/foo/Baz.js → src/lib/foo/Baz.tsx
 Lệnh xác minh:
   - npm run type-check → [PASS / N lỗi còn lại trong scope khác]
   - npm run build:docs → [PASS / warnings]
+  - npm test → [PASS / fail summary]
   - python scripts/generate_module_tree.py → Modules: N
+Evidence:
+  - docs/upgrade-standard/AUDIT_LEDGER.md → [entry / line link]
 Kết quả quan sát:
 Rủi ro còn lại:
 Kết luận: [PASS / FAIL]

@@ -72,6 +72,13 @@ Repo đang đóng vai trò thư viện chart kèm demo tương tác giàu tính 
 2. Widget boundary extraction chưa bắt đầu.
 3. i18n mới phủ bề mặt demo chính; các surface mới trong tương lai vẫn phải đi vào cùng dictionary thay vì hardcode lại.
 
+## 7. Code approval contract
+
+- Nếu một thay đổi nằm trong slice hoặc task đã được duyệt, đội code có thể bắt đầu ngay theo tài liệu hiện có mà không cần hỏi lại từng bước nhỏ.
+- Nếu thay đổi đụng contract, data source, market fidelity, hoặc scope vượt plan, phải cập nhật hoặc xin duyệt lại trước khi code.
+- Khi task được coi là code-ready, phải có link tới `docs/CHANGE_CONTROL_STANDARD.md`, `docs/project-delivery/IMPLEMENTATION_PLAN.md`, `docs/project-delivery/TASKBOARD.md`, và `docs/project-delivery/AUDIT_PROTOCOL.md`.
+- Mọi runtime/UI change phải có validation path đủ hẹp để người khác kiểm lại nhanh.
+
 ## 6. Điều kiện cho widget extraction
 
 - Tách `shell controls` khỏi `chart rendering`

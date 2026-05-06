@@ -6,6 +6,10 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 
 | File | Mục đích | Trạng thái |
 | :--- | :--- | :--- |
+| [../CHANGE_CONTROL_STANDARD.md](../CHANGE_CONTROL_STANDARD.md) | Khung phê duyệt và kiểm soát thay đổi cấp repo | Created 2026-05-06 |
+| [../README.md](../README.md) | Cổng vào cấp repo cho delivery, migration, quality | Created 2026-05-06 |
+| [../project-delivery/README.md](../project-delivery/README.md) | Entry point vận hành cho code team và auditor | Created 2026-05-06 |
+| [README.md](README.md) | Entry point cho upgrade-standard bundle | Created 2026-05-06 |
 | [TECH_SPEC.md](TECH_SPEC.md) | Đặc tả kỹ thuật và target shape | Updated v3.0 |
 | [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) | Hướng dẫn chiến thuật cho developer | Updated v3.0 |
 | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Kế hoạch triển khai theo slice | Updated v3.0 |
@@ -20,6 +24,120 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 | [widget/IMPLEMENTATION_PLAN.md](../project-delivery/widget/IMPLEMENTATION_PLAN.md) | Tasks F-01→F-09 với dependency chain | Created 2026-05-05 |
 | [widget/TASKBOARD.md](../project-delivery/widget/TASKBOARD.md) | Bảng task chi tiết + DoD | Created 2026-05-05 |
 | [widget/AUDIT_PROTOCOL.md](../project-delivery/widget/AUDIT_PROTOCOL.md) | Test matrix W-01→W-18 + gate commands + evidence template | Created 2026-05-05 |
+
+### Documentation operating model — single entry point for delivery and audit
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: tạo một front door duy nhất cho bộ tài liệu delivery và nối lại luồng đọc cho code team / auditor
+- Files sửa:
+  - `AGENTS.md`
+  - `docs/project-delivery/README.md`
+  - `docs/project-delivery/HANDOFF_MANIFEST.md`
+  - `docs/upgrade-standard/HANDOFF_MANIFEST.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - `docs/project-delivery/README.md` trở thành entry point duy nhất cho bundle delivery, với hai đường đọc riêng cho code team và auditor.
+  - `AGENTS.md` đọc README này trước để các session mới có đúng cổng vào ngay từ bootstrap.
+  - Hai manifest delivery / migration đều trỏ về README khi cần vào đúng luồng.
+  - Audit ledger ghi nhận modified-file list của chính thay đổi tài liệu này.
+- Validation:
+  - `npm run build:docs` → PASS
+
+### Repository docs hub — canonical entry point for the whole docs system
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: tạo một cổng vào cấp repo để đội code và đội audit chọn đúng bundle trước khi vào slice
+- Files sửa:
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/README.md`
+  - `docs/upgrade-standard/README.md`
+  - `docs/project-delivery/README.md`
+  - `docs/project-delivery/HANDOFF_MANIFEST.md`
+  - `docs/upgrade-standard/HANDOFF_MANIFEST.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - `docs/README.md` trở thành cổng vào cấp repo cho delivery, migration, quality, và audit.
+  - `docs/upgrade-standard/README.md` tách rõ luồng migration so với luồng runtime/delivery.
+  - `AGENTS.md` và `README.md` ở root đều trỏ về docs hub để người mới không phải tự đoán đường đọc.
+  - Hai manifest bundle đã được nối lại để chỉ dẫn rõ khi task không thuộc bundle hiện tại.
+- Validation:
+  - `npm run build:docs` → PASS
+
+### Governance standard hardening — repo-wide rules, approval thresholds, and quality gates
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: nâng cấp các quy định cứng và chuẩn chất lượng để dự án có khung điều phối, ngưỡng hỏi lại, và tiêu chuẩn release thống nhất
+- Files sửa:
+  - `docs/project-delivery/PROJECT_GOVERNANCE.md`
+  - `quality/QUALITY.md`
+  - `docs/README.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - `PROJECT_GOVERNANCE.md` now defines a formal hierarchy of authority, change classes, hard rules, and the exact conditions under which the team may proceed without asking again.
+  - `QUALITY.md` now sets minimum release bars, hard blockers, validation matrices, and evidence standards for docs, runtime, source, and market-data changes.
+  - `docs/README.md` now states the repository-wide rule stack so new sessions know which document governs which kind of decision.
+  - The rule set is now explicit enough for slice execution, audit, and escalation without repeated clarification.
+- Validation:
+  - `npm run build:docs` → PASS
+
+### Change-control standard — approved-to-code workflow and escalation rules
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: tạo khung phê duyệt thay đổi để đội code có thể bắt đầu ngay sau khi tài liệu đã duyệt mà không cần hỏi lại từng bước nhỏ
+- Files sửa:
+  - `docs/CHANGE_CONTROL_STANDARD.md`
+  - `docs/README.md`
+  - `AGENTS.md`
+  - `docs/project-delivery/README.md`
+  - `docs/upgrade-standard/README.md`
+  - `docs/project-delivery/PROJECT_GOVERNANCE.md`
+  - `quality/QUALITY.md`
+  - `docs/project-delivery/TECH_SPEC.md`
+  - `docs/upgrade-standard/TECH_SPEC.md`
+  - `docs/project-delivery/TASKBOARD.md`
+  - `docs/upgrade-standard/TASKBOARD.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - `docs/CHANGE_CONTROL_STANDARD.md` defines the approval hierarchy, change classes, code-ready criteria, and the exact conditions under which the team may proceed without re-asking.
+  - Delivery and migration docs now point to the same approval gate so a user can say `code đi` after approval and the team can execute within the approved scope.
+  - Taskboards now state that READY or approved work may proceed directly if governance and quality do not conflict.
+- Validation:
+  - `npm run build:docs` → PASS
+
+### Documentation template hardening — canonical slice plan and audit form
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: chuẩn hóa form điền cho `IMPLEMENTATION_PLAN.md` và `SLICE_AUDIT.md` để mỗi slice có cùng schema ghi nhận
+- Files sửa:
+  - `docs/upgrade-standard/IMPLEMENTATION_PLAN.md`
+  - `docs/upgrade-standard/SLICE_AUDIT.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - `IMPLEMENTATION_PLAN.md` now has a canonical slice template with the same field order for goal, scope, non-goals, dependencies, gates, evidence, and risks.
+  - `SLICE_AUDIT.md` now mirrors that structure with a canonical audit form that demands exact files changed, validation, evidence, and residual risk.
+  - Both docs now guide the code team toward a single fill-in pattern and reduce ambiguity for auditors.
+- Validation:
+  - `npm run build:docs` → PASS
+
+### Indicator feature regression coverage — legend chips and series index wiring
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: bổ sung regression test cho indicator legend để khóa hành vi chip toggle/remove và đảm bảo pinned price pane không lộ chart-type chips
+- Files sửa:
+  - `src/lib/core/__tests__/IndicatorLegend.test.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Legend chips now have a direct regression test that checks hidden-state styling, toggle/remove callbacks, and series index wiring for duplicate series types.
+  - The pinned price pane is also covered so primary chart-type chips do not appear where chart-type selection is handled elsewhere.
+- Validation:
+  - `npm test -- --run src/lib/core/__tests__/IndicatorLegend.test.tsx` → PASS (2 tests)
 
 ## 2. Slice Status
 
@@ -2343,3 +2461,25 @@ Every completed slice must update this ledger with the exact files changed in th
     - `npm run build:docs` → PASS
     - Browser smoke on fresh `build/index.html` → PASS; `1M` and `3M` buttons switched to `pressed`/active state and the live BTCUSDT shell kept rendering without ChartCanvas errors
     - Browser smoke on fresh `build/index.html` → PASS; BTCUSDT / BINANCE labels render, topbar chỉ còn intraday chips, footer range presets hiện đúng, và page load không còn ChartCanvas pageError
+
+### Ad-hoc metadata + docs � version 1.0.0, t�c gi?, README, demo script
+
+- Ngu?i th?c hi?n: GitHub Copilot
+- Ng�y: 2026-05-06
+- Scope: C?p nh?t metadata d? �n, vi?t l?i README, t?o demo script
+- Files modified:
+  - `package.json`
+  - `src/index.ts`
+  - `README.md`
+  - `docs/DEMO_SCRIPT.md` (new)
+  - `module_tree_full.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- N?i dung b�n giao:
+  - `package.json`: name ? `vnstockcharts`, version ? `1.0.0`, author ? Ph?m Vi?t Dung (vietdung@edusuccess.vn), homepage ? https://vninvest.edusuccess.vn
+  - `src/index.ts`: `export const version = "1.0.0"`
+  - `README.md`: Vi?t l?i ho�n to�n � gi?i thi?u d? �n, t�c gi?, l� do c�ng ngh?, ki?n tr�c, l? tr�nh 5 giai do?n, tr?ng th�i v1.0.0, commands, index t�i li?u
+  - `docs/DEMO_SCRIPT.md`: K?ch b?n thuy?t minh 90 gi�y cho video demo � 6 ph?n theo m?c th?i gian, thao t�c + l?i d?c + ghi ch� k? thu?t quay
+- Validation:
+  - `npm run build:docs` ? PASS (webpack compiled successfully in 5280ms)
+  - Browser smoke ? topbar hi?n th? `v1.0.0`, bottombar hi?n th? `v1.0.0`
+  - `python scripts/generate_module_tree.py` ? PASS (Modules: 670)

@@ -93,4 +93,4 @@ export { VNStockChart, WidgetErrorBoundary, WidgetEmptyState, WidgetI18nContext,
 export { widgetMessagesEn, widgetMessagesVi } from "./widget";
 export type { VNStockChartProps, WidgetLocale, WidgetMessages, WidgetI18nContextValue, WidgetI18nProviderProps } from "./widget";
 
-export const version = "0.7.8";
+export const version = "1.0.0";
