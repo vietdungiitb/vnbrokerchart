@@ -23,6 +23,22 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 
 ## 2. Slice Status
 
+### Checkpoint code — Widget theme root sync fix
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: sync `VNStockChart` theme state to `document.documentElement` so body/background and shell-level CSS variables switch together
+- Files sửa:
+  - `src/widget/VNStockChart.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - The widget now writes `data-chart-theme` onto the document root in addition to its own wrapper, which activates the `html[data-chart-theme]` body rules and the `chart-theme.css` variable set at the page root.
+  - Dark/light switching now updates background, surface, border, and text layers together instead of only changing the text-adjacent pieces.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - Browser smoke on `build/index.html` → PASS (`html[data-chart-theme]` flips between `light` and `dark`, body/topbar/terminal computed colors change together)
+
 ### Checkpoint code — Custom pane settings guard
 
 - Người thực hiện: GitHub Copilot

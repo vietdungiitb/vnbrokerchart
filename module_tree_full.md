@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-06 00:22:03`
+Generated at: `2026-05-06 07:38:40`
 
 ## Summary
 
@@ -11,7 +11,7 @@ Generated at: `2026-05-06 00:22:03`
 - JS/TS modules: 668
 - Total classes: 351
 - Total functions: 3685
-- Total top-level variables: 7977
+- Total top-level variables: 7979
 
 ## Python Modules
 
@@ -4099,7 +4099,7 @@ Generated at: `2026-05-06 00:22:03`
 - Functions:
   - `VNStockChart`, `VNStockChartContent`, `lookbackDays`, `mergeBarsByDate`, `resolveFetchWindow`, `safeXAccessor`
 - Top-level variables:
-  - `activeSymbol`, `activeTimeframe`, `axisStroke`, `axisTickFill`, `candidatePanes`, `chartInnerHeight`, `computedXExtents`, `controller`, `dateFormat`, `disposed`, `enrichedData`, `existingIndex`, `firstBar`, `hasExternalData`, `isDark`, `lastBar`, `nextPanes`, `oneDay`, `paneHeights`, `plotData`, `priceFormat`, `ready`, `resolvedTheme`, `resolvedXExtents`, `themeState`, `to`, `unsubscribe`, `visiblePanes`, `volumeFormat`
+  - `activeSymbol`, `activeTimeframe`, `axisStroke`, `axisTickFill`, `candidatePanes`, `chartInnerHeight`, `computedXExtents`, `controller`, `dateFormat`, `disposed`, `enrichedData`, `existingIndex`, `firstBar`, `hasExternalData`, `isDark`, `lastBar`, `nextPanes`, `oneDay`, `paneHeights`, `plotData`, `previousTheme`, `priceFormat`, `ready`, `resolvedTheme`, `resolvedXExtents`, `root`, `themeState`, `to`, `unsubscribe`, `visiblePanes`, `volumeFormat`
 
 ### `src/widget/WidgetEmptyState.tsx`
 

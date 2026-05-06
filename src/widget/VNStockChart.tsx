@@ -100,6 +100,30 @@ function VNStockChartContent({
 	const themeState = useChartTheme("light");
 	const resolvedTheme = theme ?? themeState.theme;
 	const isDark = resolvedTheme === "dark";
+
+	useEffect(() => {
+		if (typeof document === "undefined") {
+			return undefined;
+		}
+
+		const root = document.documentElement;
+		const previousTheme = root.getAttribute("data-chart-theme");
+		root.setAttribute("data-chart-theme", resolvedTheme);
+
+		return () => {
+			if (previousTheme === null) {
+				if (root.getAttribute("data-chart-theme") === resolvedTheme) {
+					root.removeAttribute("data-chart-theme");
+				}
+				return;
+			}
+
+			if (root.getAttribute("data-chart-theme") === resolvedTheme) {
+				root.setAttribute("data-chart-theme", previousTheme);
+			}
+		};
+	}, [resolvedTheme]);
+
 	const hasExternalData = Array.isArray(data);
 	const [bars, setBars] = useState<readonly OHLCVBar[]>(data ?? []);
 	const [loading, setLoading] = useState(() => !hasExternalData);
