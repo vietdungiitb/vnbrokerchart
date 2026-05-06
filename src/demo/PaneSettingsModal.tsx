@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getSeries, listRegistered, type PaneDescriptor, type SeriesConfig, type SeriesTypeId, type YAxisSide } from "../lib/core";
+import { getSeries, listRegistered, type PaneDescriptor, type SeriesConfig, type SeriesSettingField, type SeriesTypeId, type YAxisSide } from "../lib/core";
 import type { UseDynamicPanesResult } from "../lib/core/hooks/useDynamicPanes";
 import { isDefaultPaneId } from "../lib/core/types/pane-descriptor";
 import { useDemoI18n } from "./i18n";
@@ -167,111 +167,46 @@ export function PaneSettingsModal({
 	};
 
 	const renderSeriesParams = (pane: PaneDescriptor, series: SeriesConfig, seriesIndex: number) => {
-		const currentPeriod = typeof series.params?.period === "number" ? series.params.period : undefined;
-		const currentFast = typeof series.params?.fast === "number" ? series.params.fast : undefined;
-		const currentSlow = typeof series.params?.slow === "number" ? series.params.slow : undefined;
-		const currentSignal = typeof series.params?.signal === "number" ? series.params.signal : undefined;
-		const currentStdDev = typeof series.params?.stdDev === "number" ? series.params.stdDev : undefined;
-		const currentThreshold = typeof series.params?.threshold === "number" ? series.params.threshold : undefined;
-
-		switch (series.type) {
-			case "EMA":
-			case "RSI":
-				return (
-					<label className="gc-settings-field">
-							<span>{t("settings.period")}</span>
-						<input
-							type="number"
-							className="gc-settings-input"
-							min={series.type === "RSI" ? 2 : 1}
-							step={1}
-							value={currentPeriod ?? (series.type === "EMA" ? 20 : 14)}
-							onChange={(event) => handleSeriesParamChange(pane, series, seriesIndex, { period: parseNumber(event.target.value, currentPeriod ?? (series.type === "EMA" ? 20 : 14)) })}
-						/>
-					</label>
-				);
-			case "BollingerBand":
-				return (
-					<div className="gc-settings-param-grid">
-						<label className="gc-settings-field">
-								<span>{t("settings.period")}</span>
-							<input
-								type="number"
-								className="gc-settings-input"
-								min={5}
-								step={1}
-								value={currentPeriod ?? 20}
-								onChange={(event) => handleSeriesParamChange(pane, series, seriesIndex, { period: parseNumber(event.target.value, currentPeriod ?? 20) })}
-							/>
-						</label>
-						<label className="gc-settings-field">
-								<span>{t("settings.stdDev")}</span>
-							<input
-								type="number"
-								className="gc-settings-input"
-								min={0.5}
-								step={0.5}
-								value={currentStdDev ?? 2}
-								onChange={(event) => handleSeriesParamChange(pane, series, seriesIndex, { stdDev: parseNumber(event.target.value, currentStdDev ?? 2) })}
-							/>
-						</label>
-					</div>
-				);
-			case "MACD":
-				return (
-					<div className="gc-settings-param-grid gc-settings-param-grid--three">
-						<label className="gc-settings-field">
-								<span>{t("settings.fast")}</span>
-							<input
-								type="number"
-								className="gc-settings-input"
-								min={1}
-								step={1}
-								value={currentFast ?? 12}
-								onChange={(event) => handleSeriesParamChange(pane, series, seriesIndex, { fast: parseNumber(event.target.value, currentFast ?? 12) })}
-							/>
-						</label>
-						<label className="gc-settings-field">
-								<span>{t("settings.slow")}</span>
-							<input
-								type="number"
-								className="gc-settings-input"
-								min={1}
-								step={1}
-								value={currentSlow ?? 26}
-								onChange={(event) => handleSeriesParamChange(pane, series, seriesIndex, { slow: parseNumber(event.target.value, currentSlow ?? 26) })}
-							/>
-						</label>
-						<label className="gc-settings-field">
-								<span>{t("settings.signal")}</span>
-							<input
-								type="number"
-								className="gc-settings-input"
-								min={1}
-								step={1}
-								value={currentSignal ?? 9}
-								onChange={(event) => handleSeriesParamChange(pane, series, seriesIndex, { signal: parseNumber(event.target.value, currentSignal ?? 9) })}
-							/>
-						</label>
-					</div>
-				);
-			case "Whale":
-				return (
-					<label className="gc-settings-field">
-							<span>{t("settings.thresholdUsd")}</span>
-						<input
-							type="number"
-							className="gc-settings-input"
-							min={1000}
-							step={1000}
-							value={currentThreshold ?? 50000}
-							onChange={(event) => handleSeriesParamChange(pane, series, seriesIndex, { threshold: parseNumber(event.target.value, currentThreshold ?? 50000) })}
-						/>
-					</label>
-				);
-			default:
-				return null;
+		let entry: ReturnType<typeof getSeries> | undefined;
+		try {
+			entry = getSeries(series.type);
+		} catch {
+			return null;
 		}
+
+		const fields = entry.settingsFields ?? [];
+		if (fields.length === 0) {
+			return null;
+		}
+
+		const renderField = (field: SeriesSettingField) => {
+			const rawValue = series.params?.[field.key];
+			const currentValue = typeof rawValue === "number" && Number.isFinite(rawValue) ? rawValue : field.defaultValue;
+			return (
+				<label key={field.key} className="gc-settings-field">
+					<span>{t(field.labelKey)}</span>
+					<input
+						type={field.type}
+						className="gc-settings-input"
+						min={field.min}
+						max={field.max}
+						step={field.step ?? 1}
+						value={currentValue}
+						onChange={(event) => handleSeriesParamChange(pane, series, seriesIndex, { [field.key]: parseNumber(event.target.value, currentValue) })}
+					/>
+				</label>
+			);
+		};
+
+		if (fields.length === 1) {
+			return renderField(fields[0]);
+		}
+
+		const gridClassName = fields.length === 3
+			? "gc-settings-param-grid gc-settings-param-grid--three"
+			: "gc-settings-param-grid";
+
+		return <div className={gridClassName}>{fields.map(renderField)}</div>;
 	};
 
 	const renderLayoutSection = () => (

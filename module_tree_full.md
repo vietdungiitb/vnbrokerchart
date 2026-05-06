@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-06 12:48:44`
+Generated at: `2026-05-06 16:12:07`
 
 ## Summary
 
-- Total modules: 670
+- Total modules: 672
 - Python modules: 1
-- JS/TS modules: 669
+- JS/TS modules: 671
 - Total classes: 351
-- Total functions: 3686
-- Total top-level variables: 7991
+- Total functions: 3690
+- Total top-level variables: 7989
 
 ## Python Modules
 
@@ -2177,9 +2177,9 @@ Generated at: `2026-05-06 12:48:44`
 ### `src/demo/PaneSettingsModal.tsx`
 
 - Functions:
-  - `PaneSettingsModal`, `describeSeries`, `handleAddSeries`, `handleBackdropMouseDown`, `handleDeletePane`, `handleKeyDown`, `handleSeriesParamChange`, `paneLabel`, `parseNumber`, `renderIndicatorsSection`, `renderLayoutSection`, `renderResetSection`, `renderSeriesParams`, `renderThemeSection`
+  - `PaneSettingsModal`, `describeSeries`, `handleAddSeries`, `handleBackdropMouseDown`, `handleDeletePane`, `handleKeyDown`, `handleSeriesParamChange`, `paneLabel`, `parseNumber`, `renderField`, `renderIndicatorsSection`, `renderLayoutSection`, `renderResetSection`, `renderSeriesParams`, `renderThemeSection`
 - Top-level variables:
-  - `availableSeriesTypes`, `canAddPane`, `canMoveDown`, `canMoveUp`, `composerEntry`, `currentFast`, `currentPeriod`, `currentSignal`, `currentSlow`, `currentStdDev`, `currentThreshold`, `dialogRef`, `fast`, `hidden`, `isDefaultPane`, `isSelected`, `label`, `next`, `nextSelectedPaneId`, `overLimit`, `resolvedComposerType`, `revealEnabled`, `sectionLabels`, `selectedPane`, `slow`, `visibleCount`, `visibleIndex`
+  - `availableSeriesTypes`, `canAddPane`, `canMoveDown`, `canMoveUp`, `composerEntry`, `currentValue`, `dialogRef`, `entry`, `fast`, `fields`, `gridClassName`, `hidden`, `isDefaultPane`, `isSelected`, `label`, `next`, `nextSelectedPaneId`, `overLimit`, `rawValue`, `resolvedComposerType`, `revealEnabled`, `sectionLabels`, `selectedPane`, `slow`, `visibleCount`, `visibleIndex`
 
 ### `src/demo/usePaneLayout.ts`
 
@@ -2667,14 +2667,21 @@ Generated at: `2026-05-06 12:48:44`
 ### `src/lib/core/calculators/enrichData.ts`
 
 - Functions:
-  - `blankUntil`, `defaultSeries`, `enrichData`, `indicatorKey`, `mergeBand`, `normalizeOptions`, `numberParam`
+  - `enrichData`, `normalizeOptions`
 - Top-level variables:
-  - `bollingerByKey`, `bollingerConfigs`, `closes`, `cvd`, `defaultBollingerKey`, `defaultBollingerSeries`, `defaultMacd`, `defaultMacdKey`, `defaultMacdSeries`, `defaultWhale`, `defaultWhaleKey`, `defaultWhaleSeries`, `ema13`, `emaByPeriod`, `emaPeriods`, `histogramLine`, `histogramValue`, `indicatorValues`, `key`, `macd`, `macdByKey`, `macdConfigs`, `macdLine`, `macdValue`, `options`, `rsiByPeriod`, `rsiPeriods`, `series`, `signalLine`, `signalValue`, `strength`, `strengthPoint`, `value`, `whaleByKey`, `whaleThresholds`
+  - `indicatorValues`, `options`, `plan`, `result`
 
 ### `src/lib/core/calculators/fixtures/mockData.ts`
 
 - Top-level variables:
   - `base`, `close`, `drift`, `high`, `low`, `mockOHLCV300`, `open`, `volume`
+
+### `src/lib/core/calculators/indicatorComputation.ts`
+
+- Functions:
+  - `blankUntil`, `buildIndicatorComputationPlan`, `computeIndicatorComputationResult`, `defaultSeries`, `indicatorKey`, `materializeIndicatorValues`, `mergeBand`, `numberParam`
+- Top-level variables:
+  - `bollingerByKey`, `bollingerConfigs`, `closes`, `cvd`, `defaultBollingerKey`, `defaultBollingerSeries`, `defaultMacdKey`, `defaultMacdSeries`, `defaultWhaleKey`, `defaultWhaleSeries`, `emaByPeriod`, `emaPeriods`, `histogramLine`, `histogramValue`, `indicatorValues`, `key`, `macd`, `macdByKey`, `macdConfigs`, `macdLine`, `macdValue`, `rsiByPeriod`, `rsiPeriods`, `series`, `signalLine`, `signalValue`, `strength`, `value`, `whaleByKey`, `whaleThresholds`
 
 ### `src/lib/core/calculators/types.ts`
 
@@ -2873,6 +2880,10 @@ Generated at: `2026-05-06 12:48:44`
 
 - Top-level variables:
   - `ids`, `sum`, `visible`
+
+### `src/lib/core/types/indicator-catalog.ts`
+
+- No parseable top-level symbols found
 
 ### `src/lib/core/types/pane-descriptor.ts`
 

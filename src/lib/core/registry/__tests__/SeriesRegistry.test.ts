@@ -44,4 +44,30 @@ describe("SeriesRegistry", () => {
 			expect(entry.yExtentsAccessors.length).toBeGreaterThan(0);
 		});
 	});
+
+	it("indicator entries expose settings field metadata for the modal", () => {
+		expect(getSeries("EMA").settingsFields).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ key: "period", labelKey: "settings.period" }),
+			]),
+		);
+		expect(getSeries("BollingerBand").settingsFields).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ key: "period", labelKey: "settings.period" }),
+				expect.objectContaining({ key: "stdDev", labelKey: "settings.stdDev" }),
+			]),
+		);
+		expect(getSeries("MACD").settingsFields).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ key: "fast", labelKey: "settings.fast" }),
+				expect.objectContaining({ key: "slow", labelKey: "settings.slow" }),
+				expect.objectContaining({ key: "signal", labelKey: "settings.signal" }),
+			]),
+		);
+		expect(getSeries("Whale").settingsFields).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ key: "threshold", labelKey: "settings.thresholdUsd" }),
+			]),
+		);
+	});
 });

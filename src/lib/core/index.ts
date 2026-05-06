@@ -23,6 +23,7 @@ export { isDefaultPaneId } from "./types/pane-descriptor";
 export type { PaneDescriptor, SeriesConfig, SeriesTypeId, TooltipMode, YAxisSide } from "./types/pane-descriptor";
 export type { BarReplayState, ReplayBarLike, ReplaySpeed } from "./replay/BarReplayController";
 export { getSeries, listRegistered, registerSeries } from "./registry/SeriesRegistry";
+export type { SeriesSettingField, IndicatorCatalogEntry, IndicatorCategory, RepaintPolicy, PanePolicy, ScalePolicy } from "./types/indicator-catalog";
 export { initRegistry } from "./registry/registerAll";
 
 export type { ChartSyncState } from "./ChartPane";

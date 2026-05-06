@@ -2462,11 +2462,11 @@ Every completed slice must update this ledger with the exact files changed in th
     - Browser smoke on fresh `build/index.html` → PASS; `1M` and `3M` buttons switched to `pressed`/active state and the live BTCUSDT shell kept rendering without ChartCanvas errors
     - Browser smoke on fresh `build/index.html` → PASS; BTCUSDT / BINANCE labels render, topbar chỉ còn intraday chips, footer range presets hiện đúng, và page load không còn ChartCanvas pageError
 
-### Ad-hoc metadata + docs � version 1.0.0, t�c gi?, README, demo script
+### Ad-hoc metadata + docs � version 1.0.0, t�c gi?, README, demo script
 
 - Ngu?i th?c hi?n: GitHub Copilot
-- Ng�y: 2026-05-06
-- Scope: C?p nh?t metadata d? �n, vi?t l?i README, t?o demo script
+- Ng�y: 2026-05-06
+- Scope: C?p nh?t metadata d? �n, vi?t l?i README, t?o demo script
 - Files modified:
   - `package.json`
   - `src/index.ts`
@@ -2474,12 +2474,105 @@ Every completed slice must update this ledger with the exact files changed in th
   - `docs/DEMO_SCRIPT.md` (new)
   - `module_tree_full.md`
   - `docs/upgrade-standard/AUDIT_LEDGER.md`
-- N?i dung b�n giao:
+- N?i dung b�n giao:
   - `package.json`: name ? `vnstockcharts`, version ? `1.0.0`, author ? Ph?m Vi?t Dung (vietdung@edusuccess.vn), homepage ? https://vninvest.edusuccess.vn
   - `src/index.ts`: `export const version = "1.0.0"`
-  - `README.md`: Vi?t l?i ho�n to�n � gi?i thi?u d? �n, t�c gi?, l� do c�ng ngh?, ki?n tr�c, l? tr�nh 5 giai do?n, tr?ng th�i v1.0.0, commands, index t�i li?u
-  - `docs/DEMO_SCRIPT.md`: K?ch b?n thuy?t minh 90 gi�y cho video demo � 6 ph?n theo m?c th?i gian, thao t�c + l?i d?c + ghi ch� k? thu?t quay
+  - `README.md`: Vi?t l?i ho�n to�n � gi?i thi?u d? �n, t�c gi?, l� do c�ng ngh?, ki?n tr�c, l? tr�nh 5 giai do?n, tr?ng th�i v1.0.0, commands, index t�i li?u
+  - `docs/DEMO_SCRIPT.md`: K?ch b?n thuy?t minh 90 gi�y cho video demo � 6 ph?n theo m?c th?i gian, thao t�c + l?i d?c + ghi ch� k? thu?t quay
 - Validation:
   - `npm run build:docs` ? PASS (webpack compiled successfully in 5280ms)
   - Browser smoke ? topbar hi?n th? `v1.0.0`, bottombar hi?n th? `v1.0.0`
   - `python scripts/generate_module_tree.py` ? PASS (Modules: 670)
+
+### Ad-hoc documentation sync — Indicator Platform GĐ1 package (2026-05-06)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: Tạo bộ tài liệu chuyển giao cho Indicator Platform GĐ1 (IC-1 + IC-2) và nối package đó vào tài liệu delivery cấp repo
+- Files modified:
+  - `docs/project-delivery/indicator-platform/HANDOFF_MANIFEST.md`
+  - `docs/project-delivery/indicator-platform/TECH_SPEC.md`
+  - `docs/project-delivery/indicator-platform/IMPLEMENTATION_PLAN.md`
+  - `docs/project-delivery/indicator-platform/TASKBOARD.md`
+  - `docs/project-delivery/indicator-platform/AUDIT_PROTOCOL.md`
+  - `docs/project-delivery/README.md`
+  - `docs/project-delivery/HANDOFF_MANIFEST.md`
+  - `docs/project-delivery/TASKBOARD.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung:
+  - Tạo package tài liệu riêng cho GĐ1 Indicator Platform với entry point, tech spec, implementation plan, taskboard, và audit protocol.
+  - Nối package mới vào delivery README, handoff manifest, và taskboard cấp repo để code team có đường vào duy nhất cho IC-1 → IC-2.
+  - Ghi rõ freeze scope: chỉ IC-1 và IC-2 trong package này; các giai đoạn sau được giữ ngoài phạm vi.
+- Validation:
+  - Documentation review trên các file vừa tạo và file nối link cấp repo → PASS
+  - `git status` / diff review ở workspace cho thấy package mới đã được thêm đúng scope
+- Residual risk:
+  - Chưa có source code thay đổi ở slice IC-1; ledger này chỉ là chuẩn bị bàn giao docs. Khi bắt đầu code, cần thêm entry riêng cho từng slice và regenerate `module_tree_full.md` nếu chạm `src/`.
+
+### IC-1 source slice — Canonical store refactor via computation helper (2026-05-06)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: Tách computation của canonical indicator store ra helper module riêng và giữ `enrichData` làm orchestrator, không đổi public API.
+- Files modified:
+  - `src/lib/core/calculators/indicatorComputation.ts`
+  - `src/lib/core/calculators/enrichData.ts`
+  - `module_tree_full.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung:
+  - Move toàn bộ planning/computation/materialization của EMA, RSI, MACD, Bollinger, Whale, CVD, Strength sang `indicatorComputation.ts`.
+  - `enrichData.ts` giữ signature cũ, chỉ normalize options rồi điều phối helper mới để materialize output cũ.
+  - Dọn nhánh tính toán cũ khỏi đường chạy chính của `enrichData` để giảm độ phức tạp của canonical store.
+- Validation:
+  - `npm test -- src/lib/core/calculators/__tests__/enrichData.test.ts` → PASS (9/9 tests)
+  - `npm run type-check` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (`module_tree_full.md` regenerated; Modules: 671)
+- Residual risk:
+  - `indicatorComputation.ts` hiện là helper orchestration chứ chưa chia thành registry plugin file riêng từng family. IC-2 và slice follow-up có thể tiếp tục phân nhỏ nếu cần stricter plugin boundaries.
+
+### IC-2 source slice — Registry metadata + schema-driven settings modal (2026-05-06)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: Thêm metadata schema vào registry indicator và dùng metadata đó để render form settings modal cho demo.
+- Files modified:
+  - `src/lib/core/registry/SeriesRegistry.ts`
+  - `src/lib/core/index.ts`
+  - `src/demo/PaneSettingsModal.tsx`
+  - `src/lib/core/registry/__tests__/SeriesRegistry.test.ts`
+  - `module_tree_full.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung:
+  - `RegistryEntry` có `settingsFields` để mô tả các tham số editable của từng indicator.
+  - `EMA`, `BollingerBand`, `RSI`, `MACD`, `Whale` khai báo schema fields rõ ràng với labelKey + min/step/defaultValue.
+  - `PaneSettingsModal.tsx` bỏ switch-case hardcode và render input controls từ schema metadata của registry.
+  - Thêm regression test để đảm bảo metadata settings field tồn tại cho modal.
+- Validation:
+  - `npm test -- src/lib/core/registry/__tests__/SeriesRegistry.test.ts` → PASS (5/5 tests)
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS (fresh bundle generated)
+  - Browser smoke on fresh `build/index.html` → PASS; settings modal opens on new bundle and renders metadata-driven controls (`Chu kỳ`, `Độ lệch chuẩn`, composer defaults) without runtime errors.
+  - `python scripts/generate_module_tree.py` → PASS (`module_tree_full.md` regenerated; Modules: 671)
+- Residual risk:
+  - Metadata hiện mới bao phủ nhóm indicator editable trong modal. Nếu sau này mở rộng catalog sâu hơn (displayName/description/category/repaintPolicy), cần một type catalog riêng để tách khỏi registry entry hiện tại.
+
+### IC-2 follow-up — Dedicated catalog type module + core export alignment (2026-05-06)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: Tách type catalog ra module riêng để khớp deliverable của IC-2 và re-export qua core barrel.
+- Files modified:
+  - `src/lib/core/types/indicator-catalog.ts`
+  - `src/lib/core/registry/SeriesRegistry.ts`
+  - `src/lib/core/index.ts`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung:
+  - Tạo `indicator-catalog.ts` với `IndicatorCategory`, `RepaintPolicy`, `PanePolicy`, `ScalePolicy`, `SeriesSettingField`, và `IndicatorCatalogEntry`.
+  - `SeriesRegistry.ts` dùng type `SeriesSettingField` từ type module riêng thay vì local interface.
+  - `src/lib/core/index.ts` re-export type catalog để `PaneSettingsModal` và các consumer khác có barrel entry ổn định.
+- Validation:
+  - `npm run type-check` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (`module_tree_full.md` regenerated; Modules: 672)
+- Residual risk:
+  - `IndicatorCatalogEntry` hiện là type foundation; nếu mở rộng catalog metadata sâu hơn trong các slice sau, có thể gắn thêm displayName/description/category vào registry entry hoặc tách registry-catalog mapping riêng.

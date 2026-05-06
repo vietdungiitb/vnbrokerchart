@@ -8,6 +8,7 @@
 | PD-04 | DONE | Bổ sung functional spec tests | i18n, pane restore, chart range helper, type-check/build PASS |
 | PD-05 | DONE | Khôi phục lịch sử Binance thật | Pagination/backfill, pan-left append, range `1D`/`5D`/`1M`/`3M`/`YTD`/`1Y`/`All` đúng lịch sử |
 | PD-06 | READY | Tách widget boundary — VNStockChart | Bộ tài liệu đầy đủ tại `docs/project-delivery/widget/`. Tasks F-01→F-09 đã định nghĩa. Chờ code. |
+| PD-07 | READY | Indicator Platform GĐ1 — IC-1 + IC-2 | Bộ tài liệu đầy đủ tại `docs/project-delivery/indicator-platform/`. Code theo thứ tự IC-1 → IC-2, có audit ledger và module tree mỗi slice. |
 
 ## Cách dùng bảng này
 

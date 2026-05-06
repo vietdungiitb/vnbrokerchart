@@ -40,6 +40,10 @@ Nếu bạn là AI session mới, hãy đọc `AGENTS.md` trước, sau đó qua
 
 Đọc thêm `../upgrade-standard/HANDOFF_MANIFEST.md` sau tài liệu này để vào đúng luồng `upgrade-standard`.
 
+### Khi task thuộc Indicator Platform GĐ1
+
+Đọc thêm [indicator-platform/HANDOFF_MANIFEST.md](indicator-platform/HANDOFF_MANIFEST.md) sau tài liệu này để vào đúng luồng IC-1 + IC-2 trước khi code.
+
 ## Nguồn sự thật canonical
 
 | Chủ đề | Nguồn canonical |
@@ -54,6 +58,7 @@ Nếu bạn là AI session mới, hãy đọc `AGENTS.md` trước, sau đó qua
 | Modified file list và ledger | `../upgrade-standard/AUDIT_LEDGER.md` |
 | Repo inventory | `../../module_tree_full.md` |
 | Indicator SSOT policy | `../planning/INDICATOR_SSOT_POLICY.md` |
+| `indicator-platform/HANDOFF_MANIFEST.md` | Entry point cho GĐ1 Indicator Platform (IC-1 + IC-2) |
 
 ## Luồng làm việc chuẩn
 

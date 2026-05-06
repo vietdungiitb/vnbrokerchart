@@ -30,6 +30,11 @@ Bộ tài liệu này là gói chuyển giao chuẩn cho `react-stockcharts-mast
 | `docs/project-delivery/widget/IMPLEMENTATION_PLAN.md` | Tasks F-01→F-09 với dependency chain |
 | `docs/project-delivery/widget/TASKBOARD.md` | Bảng task chi tiết + DoD từng task |
 | `docs/project-delivery/widget/AUDIT_PROTOCOL.md` | Ma trận test W-01→W-18, gate commands, evidence template |
+| `docs/project-delivery/indicator-platform/HANDOFF_MANIFEST.md` | **Entry point GĐ1 — Indicator Platform (IC-1 + IC-2)** |
+| `docs/project-delivery/indicator-platform/TECH_SPEC.md` | Đặc tả kỹ thuật GĐ1: canonical store hardening và catalog metadata |
+| `docs/project-delivery/indicator-platform/IMPLEMENTATION_PLAN.md` | Slice map IC-1→IC-2 với gate và evidence |
+| `docs/project-delivery/indicator-platform/TASKBOARD.md` | Taskboard tác chiến cho IC-1 + IC-2 |
+| `docs/project-delivery/indicator-platform/AUDIT_PROTOCOL.md` | Audit protocol riêng cho GĐ1 Indicator Platform |
 | `quality/QUALITY.md` | Hiến pháp chất lượng của repo |
 | `quality/RUN_CODE_REVIEW.md` | Quy trình review có guardrail |
 | `quality/RUN_INTEGRATION_TESTS.md` | Quy trình kiểm thử tích hợp và smoke |
@@ -47,6 +52,7 @@ Bộ tài liệu này là gói chuyển giao chuẩn cho `react-stockcharts-mast
 4. Indicators phải đi về SSOT; cùng tham số và cùng nguồn phải cho cùng một hình dạng ở mọi pane.
 5. Sau mọi thay đổi mã nguồn phải cập nhật `docs/upgrade-standard/AUDIT_LEDGER.md` và regenerate `module_tree_full.md`.
 6. Nếu bề mặt công bố dữ liệu thị trường thật, ticker label và lịch sử phải khớp nguồn; không dùng sample history ngắn để giả full history.
+7. GĐ1 Indicator Platform là package riêng đã chuẩn bị tài liệu; code team phải bám package `docs/project-delivery/indicator-platform/` và chạy IC-1 trước IC-2.
 
 ## Tiêu chí chấp nhận mỗi slice
 
@@ -64,3 +70,4 @@ Bộ tài liệu này là gói chuyển giao chuẩn cho `react-stockcharts-mast
 - Quality hardening: đã có functional tests cho i18n, pane orchestration, và chart range.
 - Historical market data fidelity / backfill: đã bàn giao (Slice E DONE).
 - Widget extraction: bộ tài liệu Slice F đã hoàn tất tại `docs/project-delivery/widget/`. Sẵn sàng code F-01.
+- Indicator Platform GĐ1: bộ tài liệu IC-1 + IC-2 đã hoàn tất tại `docs/project-delivery/indicator-platform/`. Sẵn sàng code IC-1.
