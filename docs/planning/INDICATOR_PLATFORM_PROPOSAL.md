@@ -1701,5 +1701,131 @@ PHASE 3 (nice to have):
 
 ---
 
+## 11. Bảo vệ bản quyền và chống vi phạm — Chiến lược thực tế
+
+> **Bối cảnh:** VNStockcharts là frontend TypeScript — bất kỳ code nào chạy được trong
+> browser đều có thể đọc được. Không có cách nào bảo vệ 100%. Tuy nhiên, kiến trúc hiện
+> tại đã tạo ra một moat tự nhiên, và có thể tăng cường thêm bằng 3 lớp sau.
+
+### 11.1 Tại sao moat thực sự không phải ở code — mà ở data
+
+Giả sử một đối thủ clone được toàn bộ frontend của VNStockcharts. Họ vẫn **không có**:
+
+- VNInvest PAT → không có whale data, CVD server-computed, SMFI
+- VNStock real-time VN quality data
+- Saved sets của user (account-bound, stored server-side)
+- VNInvest WebSocket stream
+
+Kết quả họ có được là một **generic chart shell** không khác gì TradingView Lightweight
+Charts. Không có lý do gì để người dùng chọn dùng. Đây là lý do Section 10 tập trung vào
+data integration — đó vừa là tính năng **vừa là barrier bảo vệ bản quyền tự nhiên**.
+
+```
+Người copy được code VNStockcharts      Người copy được toàn bộ VNInvest
+────────────────────────────────        ────────────────────────────────
+  Có: chart shell, indicator UI           Không có: chart shell (đây là repo này)
+  Không có: VNInvest signal data          Không có: VN OHLCV real-time quality
+  Không có: PAT auth engine               Không có: integration layer
+
+→ Không thể reproduce sản phẩm          → Không thể reproduce sản phẩm
+  vì thiếu data plane                      vì thiếu render plane
+```
+
+**Kết luận kiến trúc:** Tách biệt render plane (repo này) và data plane (VNInvest) là
+quyết định thiết kế đúng không chỉ về mặt kỹ thuật, mà còn là **chiến lược IP protection
+hiệu quả nhất**.
+
+---
+
+### 11.2 Ba lớp bảo vệ cụ thể — xếp theo hiệu quả/effort
+
+#### Lớp 1 — Data architecture (đã có, hiệu quả nhất)
+
+PAT validation nằm hoàn toàn server-side tại VNInvest backend. Frontend không thể giả
+mạo PAT. Người copy code frontend không có signal data → GĐ 2 indicators bị disable tự
+động → sản phẩm không hoàn chỉnh.
+
+**Đội code không cần làm thêm gì — kiến trúc này đã được thiết kế đúng.**
+
+#### Lớp 2 — Legal moat (cost thấp, hiệu quả dài hạn)
+
+Cần làm trước khi ra production:
+
+- **Commercial license** rõ ràng, không phải MIT/Apache. Ghi vào `LICENSE` file và
+  `package.json → license`. Người copy code bị ràng buộc pháp lý ngay từ file đầu tiên họ
+  mở.
+- **Copyright notice** embed vào webpack bundle header — một dòng comment được inject tự
+  động vào mọi build output. Khó xóa vô tình.
+- **EULA** cấm: reverse engineering, redistribution, commercial use without license,
+  sử dụng với nguồn dữ liệu thay thế VNInvest.
+- **Trademark** `VNStockcharts` + logo được đăng ký → người copy không thể đặt tên giống.
+
+**Thời điểm làm:** Trước khi IC-3 deploy ra production.
+
+#### Lớp 3 — Technical deterrents (làm khó, không ngăn được 100%)
+
+Hai biện pháp thực tế nhất:
+
+**A. Domain locking cho embedded widget use case:**
+```typescript
+// src/lib/core/auth/domainGuard.ts  — thêm khi làm IC widget embedding
+const LICENSED_DOMAINS = loadLicensedDomains(); // từ VNInvest PAT response
+if (!LICENSED_DOMAINS.includes(window.location.hostname)) {
+  // Disable toàn bộ GĐ 2 indicators + hiện license notice
+  // Không throw error — chỉ degrade gracefully
+}
+```
+Domain whitelist được VNInvest PAT server trả về khi issue PAT, không hardcode trong
+client code. Người copy code sang domain khác → GĐ 2 tự disable.
+
+**B. Build obfuscation cho production bundle:**
+Dùng `javascript-obfuscator` trong webpack config với `string encryption` + `control flow
+flattening`. Tăng thời gian đọc hiểu code từ ~1 giờ lên ~1 tuần cho đối thủ. Không ngăn
+được người đủ kiên nhẫn nhưng tạo friction đủ lớn cho đa số.
+
+Cấu hình khuyến nghị:
+```javascript
+// config/webpack.config.js — thêm cho production build
+new JavaScriptObfuscator({
+  rotateStringArray: true,
+  stringArray: true,
+  stringArrayEncoding: ['rc4'],
+  controlFlowFlattening: true,
+  controlFlowFlatteningThreshold: 0.4, // không dùng 1.0 vì tăng bundle size 3x
+  deadCodeInjection: false,             // tắt vì tăng bundle size nhiều
+}, [])
+```
+
+---
+
+### 11.3 Đánh giá rủi ro thực tế theo kịch bản
+
+| Kịch bản | Khả năng | Impact thực tế | Biện pháp xử lý |
+|---|---|---|---|
+| Competitor clone UI shell | Cao | **Thấp** — không có VNInvest data | Lớp 1 (đã có) |
+| Developer cá nhân tự dùng cho mục đích phi thương mại | Cao | Thấp — mất 1 potential user, không mất doanh thu | Chấp nhận, focus vào user experience |
+| Developer nối với vnstock community data (không qua VNInvest) | Trung bình | Trung bình — mất GĐ 2 killer features nhưng có GĐ 1 | Domain locking + License clause |
+| Competitor tái tạo hoàn chỉnh từ đầu | Thấp | Cao — nhưng họ đủ năng lực làm mà không cần copy | Moat của data integration vẫn giữ |
+| Internal enterprise dùng vượt license scope | Trung bình | Xử lý được | PAT quota billing tự enforce |
+
+**Kết luận:** Rủi ro vi phạm bản quyền có tồn tại, nhưng **không đáng để đầu tư nhiều effort
+vào technical deterrents**. Effort đó nên dồn vào làm GĐ 2 nhanh hơn — mỗi tuần có thêm
+whale data và CVD thật là một tuần competitor khó copy hơn, không phải thêm obfuscation.
+
+---
+
+### 11.4 Thứ tự triển khai cho đội code
+
+| Hạng mục | Thời điểm | Effort | Người chịu trách nhiệm |
+|---|---|---|---|
+| Thay `LICENSE` thành commercial license | Trước IC-3 deploy | 30 phút | Tech lead |
+| Thêm EULA vào onboarding flow | Khi làm auth UI | 1 sprint | Frontend + Legal |
+| Webpack copyright banner | Cùng lúc IC-3 | 1 giờ | Build engineer |
+| Domain locking trong PAT response | Khi làm PAT issue flow | 1 sprint | Backend VNInvest |
+| Build obfuscation | Trước public launch | 1 ngày | Build engineer |
+| Trademark registration | Ngay bây giờ nếu chưa có | Ngoài scope kỹ thuật | Business/Legal |
+
+---
+
 *Tài liệu này sẽ được cập nhật khi có feedback. Mọi thay đổi scope phải đi qua
 [docs/CHANGE_CONTROL_STANDARD.md](../CHANGE_CONTROL_STANDARD.md) trước khi code.*
