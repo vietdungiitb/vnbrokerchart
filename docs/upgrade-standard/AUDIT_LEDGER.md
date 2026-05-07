@@ -179,6 +179,30 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 
 ## 2. Slice Status
 
+### CE20 — DataAdapter Abstraction Layer
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-07
+- Scope: tách logic fetch dữ liệu demo ra khỏi component thành một `DataAdapter` interface có thể swap, với BinanceAdapter, LocalCacheAdapter, VNStocksAdapter stub, và UI chọn adapter trong Settings
+- Files sửa:
+  - `src/lib/adapters/DataAdapter.ts` — NEW: `KLineBar`, `GetBarsType`, `GetBarsParams`, `GetBarsResult`, `DataAdapter` interface
+  - `src/lib/adapters/BinanceAdapter.ts` — NEW: `BinanceAdapter` class + singleton `binanceAdapter`; OWASP symbol/interval validation
+  - `src/lib/adapters/LocalCacheAdapter.ts` — NEW: in-memory cache adapter with `loadBars()` + slice by timestamp
+  - `src/lib/adapters/VNStocksAdapter.ts` — NEW: stub that rejects with "chưa triển khai"
+  - `src/lib/adapters/index.ts` — Export 4 new classes/types
+  - `src/demo/LibraryShowcaseDemo.tsx` — Replace all `fetchHistoricalDemoBars` calls with `dataAdapter.getBars`; add `dataAdapterName` state + localStorage persist; wire PaneSettingsModal
+  - `src/demo/PaneSettingsModal.tsx` — Add `dataAdapterName?` + `onDataAdapterChange?` props; render adapter dropdown in theme section
+  - `src/demo/i18n.tsx` — Add `settings.dataAdapter*` keys (VI + EN)
+  - `src/lib/adapters/BinanceAdapter.test.ts` — NEW: 7 tests
+  - `src/lib/adapters/LocalCacheAdapter.test.ts` — NEW: 6 tests
+  - `module_tree_full.md` — Regenerated (739 modules)
+- Gates:
+  - `npm run type-check` → PASS
+  - `npm test` → 217 passed (46 files)
+  - `npm run build:docs` → compiled successfully in 3384ms
+  - `python scripts/generate_module_tree.py` → 739 modules
+- Commit: `feat(CE20): DataAdapter abstraction layer`
+
 ### CE19 — Drawing Overlay API (registerDrawingPlugin, groupId, magnet sensitivity, Y-axis highlight)
 
 - Người thực hiện: GitHub Copilot

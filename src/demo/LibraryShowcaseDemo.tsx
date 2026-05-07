@@ -44,7 +44,8 @@ import { cloneDrawingSnapshot, offsetDrawingByPixels } from "../lib/drawing/clip
 import { enrichData } from "../lib/core/calculators/enrichData";
 import type { EnrichedDatum, RawOHLCV } from "../lib/core/calculators/types";
 import { transformHeikinAshi } from "./heikinAshi";
-import { fetchHistoricalDemoBars, getOfflineDemoBars, mergeBarsByDate } from "./demoData";
+import { getOfflineDemoBars, mergeBarsByDate } from "./demoData";
+import { binanceAdapter, LocalCacheAdapter, VNStocksAdapter, type DataAdapter, type KLineBar } from "../lib/adapters";
 import { CHART_RANGE_LABEL_KEYS, CHART_RANGES, DEFAULT_CHART_RANGE, resolveChartRangeExtents, resolveChartRangeStart, type ChartRange } from "./chartRange";
 import DemoPageShell from "./DemoPageShell";
 import { useDemoI18n } from "./i18n";
@@ -103,6 +104,10 @@ function saveDemoSettings(settings: DemoSettings) {
 const priceFormat = format(".2f");
 const volumeFormat = format(".3s");
 const dateFormat = timeFormat("%d/%m/%Y %H:%M");
+
+function klineBarToRawOHLCV(bar: KLineBar): RawOHLCV {
+	return { date: new Date(bar.timestamp), open: bar.open, high: bar.high, low: bar.low, close: bar.close, volume: bar.volume };
+}
 
 const TIMEFRAMES = ["1m", "3m", "5m", "15m", "30m", "1h", "4h"] as const;
 type Timeframe = typeof TIMEFRAMES[number];
@@ -468,6 +473,13 @@ export default function LibraryShowcaseDemo() {
 			return "normal";
 		}
 	});
+	const [dataAdapterName, setDataAdapterName] = useState<string>(() => {
+		try {
+			return (typeof localStorage !== "undefined" && localStorage.getItem("vnsc_dataAdapter")) || "binance";
+		} catch {
+			return "binance";
+		}
+	});
 	const [selectedPaneId, setSelectedPaneId] = useState("price");
 
 	const [settingsSection, setSettingsSection] = useState<SettingsSection>("layout");
@@ -509,6 +521,21 @@ export default function LibraryShowcaseDemo() {
 	const mountedRef = useRef(true);
 	const BACKFILL_PAGE_LIMIT = 1000;
 	const BACKFILL_MAX_PAGES = 20;
+
+	const localCacheAdapter = useMemo(() => {
+		const adapter = new LocalCacheAdapter();
+		const bars = getOfflineDemoBars().map((b) => ({
+			timestamp: b.date.valueOf(), open: b.open, high: b.high, low: b.low, close: b.close, volume: b.volume,
+		}));
+		adapter.loadBars("BTCUSDT", timeframe, bars);
+		return adapter;
+	}, [timeframe]);
+
+	const dataAdapter = useMemo<DataAdapter>(() => {
+		if (dataAdapterName === "local") return localCacheAdapter;
+		if (dataAdapterName === "vnstocks") return new VNStocksAdapter();
+		return binanceAdapter;
+	}, [dataAdapterName, localCacheAdapter]);
 
 	useEffect(() => {
 		liveDataRef.current = liveData;
@@ -652,6 +679,16 @@ export default function LibraryShowcaseDemo() {
 		}
 	}, [magnetSensitivity]);
 
+	useEffect(() => {
+		try {
+			if (typeof localStorage !== "undefined") {
+				localStorage.setItem("vnsc_dataAdapter", dataAdapterName);
+			}
+		} catch {
+			// ignore storage errors
+		}
+	}, [dataAdapterName]);
+
 	const normalizeDomain = useCallback((domain: [Date | number, Date | number]) => {
 		return [normalizeDate(domain[0]), normalizeDate(domain[1])] as [Date, Date];
 	}, []);
@@ -670,12 +707,14 @@ export default function LibraryShowcaseDemo() {
 		setHistoryStatus("backfilling");
 
 		try {
-			const olderBars = await fetchHistoricalDemoBars({
+			const { bars: olderBarRaw } = await dataAdapter.getBars({
+				type: "backward",
+				symbol: "BTCUSDT",
 				interval: timeframe,
 				limit: BACKFILL_PAGE_LIMIT,
-				pages: 1,
-				endTime: earliestBar.date.valueOf() - 1,
+				timestamp: earliestBar.date.valueOf(),
 			});
+			const olderBars = olderBarRaw.map(klineBarToRawOHLCV);
 
 			if (!mountedRef.current || olderBars.length === 0) {
 				return;
@@ -694,7 +733,7 @@ export default function LibraryShowcaseDemo() {
 				setHistoryStatus("idle");
 			}
 		}
-	}, [timeframe]);
+	}, [dataAdapter, timeframe]);
 
 	const triggerBackfillDebounced = useCallback(() => {
 		if (backfillDebounceRef.current !== null) {
@@ -720,12 +759,14 @@ export default function LibraryShowcaseDemo() {
 			const targetStart = resolveChartRangeStart(currentBars[currentBars.length - 1].date, range);
 
 			while (currentBars[0].date.valueOf() > targetStart.valueOf() && pagesLoaded < BACKFILL_MAX_PAGES) {
-				const olderBars = await fetchHistoricalDemoBars({
+				const { bars: olderBarRaw } = await dataAdapter.getBars({
+					type: "backward",
+					symbol: "BTCUSDT",
 					interval: timeframe,
 					limit: BACKFILL_PAGE_LIMIT,
-					pages: 1,
-					endTime: currentBars[0].date.valueOf() - 1,
+					timestamp: currentBars[0].date.valueOf(),
 				});
+				const olderBars = olderBarRaw.map(klineBarToRawOHLCV);
 
 				if (!mountedRef.current || olderBars.length === 0) {
 					break;
@@ -751,7 +792,7 @@ export default function LibraryShowcaseDemo() {
 				setHistoryStatus("idle");
 			}
 		}
-	}, [timeframe]);
+	}, [dataAdapter, timeframe]);
 
 	const handleVisibleDomainChange = useCallback((domain: [Date | number, Date | number]) => {
 		setVisibleDomain(normalizeDomain(domain));
@@ -766,7 +807,7 @@ export default function LibraryShowcaseDemo() {
 		void ensureRangeHistory(range);
 	}, [ensureRangeHistory]);
 
-	// Fetch Binance history on mount and on timeframe change.
+	// Fetch history on mount and on timeframe/adapter change.
 	useEffect(() => {
 		const abortController = new AbortController();
 		setDataStatus("loading");
@@ -774,9 +815,10 @@ export default function LibraryShowcaseDemo() {
 		setHistoryStatus("idle");
 		setVisibleDomain(null);
 
-		fetchHistoricalDemoBars({ interval: timeframe, limit: BACKFILL_PAGE_LIMIT, pages: 1, signal: abortController.signal })
-			.then((bars) => {
+		dataAdapter.getBars({ type: "init", symbol: "BTCUSDT", interval: timeframe, limit: BACKFILL_PAGE_LIMIT, timestamp: null, signal: abortController.signal })
+			.then((result) => {
 				if (abortController.signal.aborted) return;
+				const bars = result.bars.map(klineBarToRawOHLCV);
 				setLiveData(bars);
 				setVisibleDomain(resolveChartRangeExtents(bars, chartRangeRef.current));
 				setDataStatus("live");
@@ -793,7 +835,7 @@ export default function LibraryShowcaseDemo() {
 			});
 
 		return () => abortController.abort();
-	}, [timeframe]);
+	}, [dataAdapter, timeframe]);
 
 	const data = useMemo<RawOHLCV[]>(
 		() => (liveData.length > 0 ? liveData : getOfflineDemoBars()),
@@ -810,8 +852,9 @@ export default function LibraryShowcaseDemo() {
 				return;
 			}
 
-			void fetchHistoricalDemoBars({ interval: timeframe, limit: BACKFILL_PAGE_LIMIT, pages: 1 })
-				.then((latestBars) => {
+			void dataAdapter.getBars({ type: "forward", symbol: "BTCUSDT", interval: timeframe, limit: BACKFILL_PAGE_LIMIT, timestamp: null })
+				.then((result) => {
+					const latestBars = result.bars.map(klineBarToRawOHLCV);
 					if (!mountedRef.current || latestBars.length === 0) {
 						return;
 					}
@@ -827,7 +870,7 @@ export default function LibraryShowcaseDemo() {
 		}, 30000);
 
 		return () => window.clearInterval(timer);
-	}, [dataStatus, timeframe]);
+	}, [dataAdapter, dataStatus, timeframe]);
 
 	useEffect(() => {
 		if (dataStatus !== "live" || historyStatus === "backfilling" || visibleDomain === null || liveData.length === 0) {
@@ -2217,6 +2260,8 @@ export default function LibraryShowcaseDemo() {
 						isDark={isDark}
 						toggleTheme={toggleTheme}
 						onClose={closeSettings}
+						dataAdapterName={dataAdapterName}
+						onDataAdapterChange={setDataAdapterName}
 					/>
 				) : null}
 			</div>

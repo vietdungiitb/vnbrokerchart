@@ -23,6 +23,9 @@ export interface PaneSettingsModalProps {
 	isDark: boolean;
 	toggleTheme: () => void;
 	onClose: () => void;
+	/** CE20: optional — when provided, shows adapter selector dropdown */
+	dataAdapterName?: string;
+	onDataAdapterChange?: (name: string) => void;
 }
 
 function describeSeries(series: SeriesConfig, index: number): string {
@@ -68,6 +71,8 @@ export function PaneSettingsModal({
 	isDark,
 	toggleTheme,
 	onClose,
+	dataAdapterName,
+	onDataAdapterChange,
 }: PaneSettingsModalProps) {
 	const { t, getPaneLabel } = useDemoI18n();
 	const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -632,6 +637,26 @@ export function PaneSettingsModal({
 					{showDrawingPriceMarkers ? t("settings.visible") : t("settings.hidden")}
 				</button>
 			</div>
+			{dataAdapterName !== undefined && onDataAdapterChange !== undefined && (
+				<div className="gc-settings-row gc-settings-row--split" style={{ marginTop: 16 }}>
+					<div>
+						<div className="gc-settings-kicker">{t("settings.dataAdapterKicker")}</div>
+						<div className="gc-settings-field" style={{ marginTop: 6 }}>
+							<span>{t("settings.dataAdapter")}</span>
+						</div>
+					</div>
+					<select
+						className="vnsc-candle-type-select"
+						value={dataAdapterName}
+						onChange={(e) => onDataAdapterChange(e.target.value)}
+						aria-label={t("settings.dataAdapter")}
+					>
+						<option value="binance">{t("settings.dataAdapter.binance")}</option>
+						<option value="local">{t("settings.dataAdapter.local")}</option>
+						<option value="vnstocks">{t("settings.dataAdapter.vnstocks")}</option>
+					</select>
+				</div>
+			)}
 		</div>
 	);
 
