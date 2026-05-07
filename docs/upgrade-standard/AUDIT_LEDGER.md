@@ -2901,7 +2901,201 @@ Every completed slice must update this ledger with the exact files changed in th
 
 ---
 
+## CE21 — Mobile/Touch Support
+
+**Date:** 2026-05-07  
+**Commit:** `4c201cd`  
+**Branch:** dev  
+
+### Completed
+
+- **CE21-01/02** `EventCapture.tsx` — thêm `touchAction: "none"` vào SVG rect để ngăn browser scroll-steal trên mobile; thêm `onPointerDown` với `setPointerCapture` để pin pointer events; thêm `handlePointerMoveLongPress`/`handlePointerUpLongPress` cho long-press detection. Cleanup timer trong `componentWillUnmount`.
+- **CE21-03** `hitTest.ts` — thêm `HIT_TOLERANCE` map (`mouse:6 touch:16 pen:8`) và `PointerDeviceType` type; `hitTestDrawing` nhận `toleranceOrPointerType: number | PointerDeviceType` (backward-compatible — numeric tolerance vẫn hoạt động).
+- **CE21-04** `demo.css` — thêm `@media (max-width: 767px)` block: `.gc-main` grid collapse về 1 cột, `.gc-tools` flip từ column sang row với horizontal scroll, `.gc-tool-btn` min 44×44px touch targets, `.rsc-toolbar-divider` flip sang vertical, `.rsc-drawing-storage-toolbar` repositioned.
+- **CE21-05** `useLongPress.ts` — hook mới: 500ms timer, cancel khi move >10px hoặc pointerUp/Cancel; skip `pointerType="mouse"`. Exported từ `drawing/index.ts`. Integrated vào EventCapture (class component) dưới dạng inline long-press logic gọi `onContextMenu(mouseXY, e)`.
+- **CE21-06** 21 unit tests: `useLongPress.test.ts` (7 tests) + `hitTestTolerance.test.ts` (14 tests).
+
+### Validation
+
+- `npm run type-check` → PASS (0 errors)
+- `npm test` → PASS (238 tests / 48 files)
+- `npm run build:docs` → PASS
+- `python scripts/generate_module_tree.py` → PASS (742 modules)
+
+### Files touched
+
+- [src/lib/EventCapture.tsx](../../src/lib/EventCapture.tsx)
+- [src/lib/drawing/hitTest.ts](../../src/lib/drawing/hitTest.ts)
+- [src/lib/drawing/useLongPress.ts](../../src/lib/drawing/useLongPress.ts) *(new)*
+- [src/lib/drawing/useLongPress.test.ts](../../src/lib/drawing/useLongPress.test.ts) *(new)*
+- [src/lib/drawing/hitTestTolerance.test.ts](../../src/lib/drawing/hitTestTolerance.test.ts) *(new)*
+- [src/lib/drawing/index.ts](../../src/lib/drawing/index.ts)
+- [src/lib/drawing/DrawingLayer.tsx](../../src/lib/drawing/DrawingLayer.tsx)
+- [src/demo/demo.css](../../src/demo/demo.css)
+- [module_tree_full.md](../../module_tree_full.md)
+
+### Residual risk / Giới hạn
+
+- Pan/pinch trên mobile đã có sẵn qua Touch Events API (legacy) và vẫn đúng. Pointer Events thêm `setPointerCapture` để cải thiện reliability khi pointer rời khỏi element.  
+- Long-press trong EventCapture gọi `onContextMenu(mouseXY, e)` — đây là cùng callback với right-click; DrawingLayer nhận và xử lý như usual.  
+- iOS 12 và cũ hơn không support Pointer Events; graceful fallback qua Touch Events vẫn hoạt động.
+
+---
+
 ## CE14 — Stability & Bug Fixes
+
+**Date:** Trước 2026-05-07 (audit hồi ký)  
+**Branch:** dev  
+
+### Completed
+
+- **CE14-01**: Left-scroll pagination trigger — `LibraryShowcaseDemo.tsx` có `backfillInFlightRef` (inflight guard), `backfillDebounceRef` (200ms debounce), `triggerBackfillDebounced()`, `requestOlderHistoryPage()`. Guards bằng `historyStatus !== "backfilling"` và domain bounds check.
+
+### Gap còn lại
+
+- **CE14-02**: Chưa có regression tests riêng cho CE14.
+- **CE14-03**: Audit ledger entry này là entry hồi ký — chưa có commit riêng với evidence đầy đủ.
+
+### Files touched
+
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx) — left-scroll debounce + inflight guard
+
+---
+
+## CE15 — Indicator Pack 1
+
+**Date:** Trước 2026-05-07 (audit hồi ký)  
+**Branch:** dev  
+
+### Completed
+
+- MA, BBI, SAR, OBV, WR, VR — 6 indicators trong `src/lib/indicators/builtin/`, registered qua `registerIndicator()` trong `src/lib/indicators/index.ts`.
+- `enrichData.ts` materialize tất cả fields.
+- Unit tests: `src/lib/indicators/builtin/__tests__/ce15.test.ts` — ≥1 test mỗi indicator.
+- i18n labels VI+EN trong `src/demo/i18n.tsx`.
+
+### Files touched
+
+- `src/lib/indicators/builtin/ma.ts`, `bbi.ts`, `sar.ts`, `obv.ts`, `wr.ts`, `vr.ts`
+- `src/lib/indicators/index.ts`
+- `src/lib/indicators/builtin/__tests__/ce15.test.ts`
+- `src/demo/i18n.tsx`
+
+---
+
+## CE16 — Indicator Pack 2
+
+**Date:** Trước 2026-05-07 (audit hồi ký)  
+**Branch:** dev  
+
+### Completed
+
+- 14 indicators: KDJ, CCI, DMI, BIAS, BRAR, MTM, EMV, AO, ROC, TRIX, DMA, PVT, PSY, CR — mỗi cái trong `src/lib/indicators/builtin/`.
+- Unit tests: `src/lib/indicators/builtin/__tests__/ce16.test.ts` — multiple tests per indicator.
+- i18n labels VI+EN trong `src/demo/i18n.tsx`.
+- Tổng indicators: 27+ (7 core + 6 CE15 + 14 CE16).
+
+### Files touched
+
+- `src/lib/indicators/builtin/{kdj,cci,dmi,bias,brar,mtm,emv,ao,roc,trix,dma,pvt,psy,cr}.ts`
+- `src/lib/indicators/builtin/__tests__/ce16.test.ts`
+- `src/demo/i18n.tsx`
+
+---
+
+## CE17 — Candle Types Switcher
+
+**Date:** Trước 2026-05-07 (audit hồi ký — TASKBOARD status: DONE)  
+**Branch:** dev  
+
+### Completed
+
+- `candleType` state + persist (`CANDLE_TYPE_STORAGE_KEY`) trong `LibraryShowcaseDemo.tsx`.
+- HeikinAshi transform trong `src/demo/heikinAshi.ts` với đúng formula: `close=(O+H+L+C)/4`, `open=(prev_open+prev_close)/2`.
+- Dropdown UI 6 options: candlestick/hollow/ohlc/heikinashi/line/area.
+- Map `candleType → SeriesConfig` via `CHART_TYPE_TO_SERIES`.
+- i18n keys VI+EN.
+
+### Files touched
+
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [src/demo/heikinAshi.ts](../../src/demo/heikinAshi.ts)
+- [src/demo/i18n.tsx](../../src/demo/i18n.tsx)
+
+---
+
+## CE18 — Style Override API
+
+**Date:** Trước 2026-05-07 (audit hồi ký — TASKBOARD status: DONE)  
+**Branch:** dev  
+
+### Completed
+
+- `overrideSeriesStyle()` exported từ `SeriesRegistry.ts` và `src/index.ts`.
+- `overrideDrawingStyle()` trong `drawingStyleRegistry.ts`.
+- `DrawingInspector.tsx` có color picker UI.
+- `styleOverridesPersistence.ts` (CE18-04): `STYLE_OVERRIDES_STORAGE_KEY`, `restorePersistedStyleOverrides()`, `saveCurrentStyleOverrides()` — persist qua reload.
+- Unit tests: `src/demo/__tests__/styleOverridesPersistence.test.ts` (2 tests).
+
+### Files touched
+
+- [src/lib/core/registry/SeriesRegistry.ts](../../src/lib/core/registry/SeriesRegistry.ts)
+- [src/lib/drawing/drawingStyleRegistry.ts](../../src/lib/drawing/drawingStyleRegistry.ts)
+- [src/lib/drawing/DrawingInspector.tsx](../../src/lib/drawing/DrawingInspector.tsx)
+- [src/demo/styleOverridesPersistence.ts](../../src/demo/styleOverridesPersistence.ts)
+- [src/demo/__tests__/styleOverridesPersistence.test.ts](../../src/demo/__tests__/styleOverridesPersistence.test.ts)
+
+---
+
+## CE19 — Drawing Overlay API
+
+**Date:** Trước 2026-05-07 (audit hồi ký — TASKBOARD status: DONE)  
+**Branch:** dev  
+
+### Completed
+
+- `registerDrawingTool()` và `registerDrawingPlugin()` exported từ `src/lib/drawing/registry.ts` và `src/lib/drawing/index.ts`.
+- `groupId` field trong `src/lib/drawing/types.ts`. Bulk ops supported.
+- Magnet 3 levels: `weak=5, normal=10, strong=20` trong `snap.ts`. Persist với `vnsc_magnet` storage key.
+- Axis highlight: `highlighted` property trong `priceLabel.tsx` mark selected drawing với accent fill.
+
+### Gap còn lại
+
+- CE19-05: Chưa có dedicated CE19 unit tests.
+
+### Files touched
+
+- [src/lib/drawing/registry.ts](../../src/lib/drawing/registry.ts)
+- [src/lib/drawing/types.ts](../../src/lib/drawing/types.ts)
+- [src/lib/drawing/snap.ts](../../src/lib/drawing/snap.ts)
+- [src/lib/drawing/priceLabel.tsx](../../src/lib/drawing/priceLabel.tsx)
+- [src/lib/drawing/index.ts](../../src/lib/drawing/index.ts)
+
+---
+
+## CE20 — Data Adapter Abstraction
+
+**Date:** Trước 2026-05-07 (audit hồi ký — TASKBOARD status: DONE)  
+**Branch:** dev  
+
+### Completed
+
+- `DataAdapter` interface trong `src/lib/adapters/DataAdapter.ts`: `name`, `getBars(params: GetBarsParams): Promise<GetBarsResult>`.
+- `BinanceAdapter`, `LocalCacheAdapter`, `VNStocksAdapter` implements interface.
+- `LibraryShowcaseDemo.tsx` dùng `dataAdapter.getBars()` — không còn direct Binance call.
+- Adapter selection UI trong `PaneSettingsModal.tsx` (dev mode).
+- Tests: `adapters.test.ts` + `BinanceAdapter.test.ts` + `LocalCacheAdapter.test.ts` = 16 tests pass.
+
+### Files touched
+
+- [src/lib/adapters/DataAdapter.ts](../../src/lib/adapters/DataAdapter.ts)
+- [src/lib/adapters/BinanceAdapter.ts](../../src/lib/adapters/BinanceAdapter.ts)
+- [src/lib/adapters/LocalCacheAdapter.ts](../../src/lib/adapters/LocalCacheAdapter.ts)
+- [src/lib/adapters/VNStocksAdapter.ts](../../src/lib/adapters/VNStocksAdapter.ts)
+- [src/lib/adapters/adapters.test.ts](../../src/lib/adapters/adapters.test.ts)
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [src/demo/PaneSettingsModal.tsx](../../src/demo/PaneSettingsModal.tsx)
+
 
 **Ngày hoàn tất:** 2026-05-07
 **Sprint:** CE14
