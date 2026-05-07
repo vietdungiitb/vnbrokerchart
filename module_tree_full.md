@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-07 14:58:38`
+Generated at: `2026-05-07 15:32:18`
 
 ## Summary
 
-- Total modules: 710
+- Total modules: 725
 - Python modules: 1
-- JS/TS modules: 709
+- JS/TS modules: 724
 - Total classes: 353
-- Total functions: 3853
-- Total top-level variables: 8503
+- Total functions: 3882
+- Total top-level variables: 8657
 
 ## Python Modules
 
@@ -2692,7 +2692,7 @@ Generated at: `2026-05-07 14:58:38`
 - Functions:
   - `enrichData`, `normalizeOptions`
 - Top-level variables:
-  - `indicatorValues`, `options`, `plan`, `result`
+  - `aoColors`, `firstBias`, `firstBrar`, `firstCci`, `firstCr`, `firstDma`, `firstDmi`, `firstEmv`, `firstKdj`, `firstMtm`, `firstPsy`, `firstRoc`, `firstTrix`, `indicatorValues`, `options`, `plan`, `result`
 
 ### `src/lib/core/calculators/fixtures/mockData.ts`
 
@@ -2704,7 +2704,7 @@ Generated at: `2026-05-07 14:58:38`
 - Functions:
   - `blankUntil`, `buildIndicatorComputationPlan`, `computeIndicatorComputationResult`, `defaultSeries`, `indicatorKey`, `materializeIndicatorValues`, `mergeBand`, `numberParam`
 - Top-level variables:
-  - `bbi`, `bbiEnabled`, `bollingerByKey`, `bollingerConfigs`, `closes`, `cvd`, `defaultBollingerKey`, `defaultBollingerSeries`, `defaultMacdKey`, `defaultMacdSeries`, `defaultWhaleKey`, `defaultWhaleSeries`, `emaByPeriod`, `emaPeriods`, `histogramLine`, `histogramValue`, `indicatorValues`, `key`, `macd`, `macdByKey`, `macdConfigs`, `macdLine`, `macdValue`, `obv`, `obvEnabled`, `rsiByPeriod`, `rsiPeriods`, `sarByKey`, `series`, `signalLine`, `signalValue`, `smaByPeriod`, `smaPeriods`, `strength`, `value`, `vrByPeriod`, `vrPeriods`, `whaleByKey`, `whaleThresholds`, `wrByPeriod`, `wrPeriods`
+  - `adx`, `ama`, `amaValues`, `ao`, `aoEnabled`, `aoKey`, `ar`, `bbi`, `bbiEnabled`, `biasByPeriod`, `biasPeriods`, `bollingerByKey`, `bollingerConfigs`, `br`, `brarByPeriod`, `brarPeriods`, `cciByPeriod`, `cciPeriods`, `closes`, `cr`, `crByKey`, `crConfigs`, `cvd`, `d`, `ddd`, `dddValues`, `defaultBollingerKey`, `defaultBollingerSeries`, `defaultMacdKey`, `defaultMacdSeries`, `defaultWhaleKey`, `defaultWhaleSeries`, `dmaByKey`, `dmaConfigs`, `dmiByPeriod`, `dmiPeriods`, `emaByPeriod`, `emaPeriods`, `emv`, `emvByPeriod`, `emvPeriods`, `histogramLine`, `histogramValue`, `indicatorValues`, `j`, `k`, `kdjByKey`, `kdjConfigs`, `key`, `ma1`, `ma2`, `ma3`, `ma4`, `macd`, `macdByKey`, `macdConfigs`, `macdLine`, `macdValue`, `minusDI`, `mtm`, `mtmByKey`, `mtmConfigs`, `obv`, `obvEnabled`, `plusDI`, `psy`, `psyByKey`, `psyConfigs`, `pvt`, `pvtEnabled`, `pvtKey`, `rocByPeriod`, `rocPeriods`, `rsiByPeriod`, `rsiPeriods`, `sarByKey`, `series`, `signal`, `signalLine`, `signalValue`, `signalValues`, `smaByPeriod`, `smaPeriods`, `strength`, `trix`, `trixByKey`, `trixConfigs`, `trixValues`, `value`, `vrByPeriod`, `vrPeriods`, `warmup`, `whaleByKey`, `whaleThresholds`, `wrByPeriod`, `wrPeriods`
 
 ### `src/lib/core/calculators/types.ts`
 
@@ -2769,7 +2769,7 @@ Generated at: `2026-05-07 14:58:38`
 ### `src/lib/core/DynamicChart.tsx`
 
 - Functions:
-  - `accessor`, `axisFormatForSeriesTypes`, `buildChartSlots`, `buildPriceTooltipEntries`, `buildTooltipEntriesForSeries`, `buildYExtents`, `candleBodyWidth`, `computeExtentsForIndex`, `finiteExtent`, `origin`, `renderDynamicChartChildren`, `renderSeries`
+  - `accessor`, `axisFormatForSeriesTypes`, `buildChartSlots`, `buildPriceTooltipEntries`, `buildTooltipEntriesForSeries`, `buildYExtents`, `candleBodyWidth`, `computeExtentsForIndex`, `fieldAccessor`, `finiteExtent`, `origin`, `renderDynamicChartChildren`, `renderSeries`, `structured`
 - Top-level variables:
   - `BAR_SERIES_TYPES`, `DynamicChartComponent`, `INNER_PANE_GAP`, `OSCILLATOR_SERIES`, `PRICE_SERIES`, `VOLUME_SERIES`, `accessors`, `activeSeries`, `barCount`, `canvas`, `chartCanvasRef`, `chartChildren`, `chartId`, `chartSlots`, `clampedIndex`, `downColor`, `end`, `endDate`, `entry`, `extents`, `fillColor`, `finiteValues`, `first`, `fullData`, `gap`, `half`, `handleVisibleRangeChange`, `hasBottomAxis`, `hasLeftAxis`, `hasRightAxis`, `index`, `isInnerPane`, `isLastSlot`, `leftSeries`, `lineColor`, `maxValue`, `minValue`, `paneHeight`, `paneIndex`, `paneSlotCounter`, `params`, `ratio`, `rightSeries`, `second`, `seriesTypes`, `slotInPane`, `slots`, `start`, `startDate`, `stepPx`, `tooltip`, `tooltipY`, `type`, `upColor`, `whale`, `yAxisFormat`, `yExtents`, `yScaleId`
 
@@ -2834,9 +2834,9 @@ Generated at: `2026-05-07 14:58:38`
 ### `src/lib/core/IndicatorLegend.tsx`
 
 - Functions:
-  - `IndicatorLegend`, `seriesLabel`
+  - `IndicatorLegend`, `paramNumber`, `seriesLabel`
 - Top-level variables:
-  - `PRIMARY_CHART_TYPES`, `SERIES_LABELS`, `base`, `chipStyle`, `chips`, `fast`, `hidden`, `seriesIndex`, `shortLabel`, `slow`
+  - `PRIMARY_CHART_TYPES`, `SERIES_LABELS`, `base`, `chipStyle`, `chips`, `fast`, `hidden`, `seriesIndex`, `shortLabel`, `slow`, `value`
 
 ### `src/lib/core/PaneHeader.tsx`
 
@@ -2918,7 +2918,7 @@ Generated at: `2026-05-07 14:58:38`
 - Functions:
   - `asNumber`, `buildIndicatorSeriesKey`, `exactLegacyValue`, `numberParam`, `resolveSeriesDatumValue`, `resolveSeriesStructuredValue`, `resolveSeriesValue`, `resolveSeriesValueAccessors`
 - Top-level variables:
-  - `fast`, `key`, `period`, `signal`, `slow`, `stdDev`, `threshold`, `value`, `whale`
+  - `fast`, `fastPeriod`, `key`, `m1`, `m2`, `m3`, `m4`, `period`, `signal`, `signalPeriod`, `slow`, `slowPeriod`, `stdDev`, `threshold`, `value`, `whale`
 
 ### `src/lib/core/sets/__tests__/indicatorSetCodec.test.ts`
 
@@ -3510,25 +3510,77 @@ Generated at: `2026-05-07 14:58:38`
 - Top-level variables:
   - `bars`, `result`
 
+### `src/lib/indicators/builtin/__tests__/ce16.test.ts`
+
+- Functions:
+  - `constantBars`, `makeBar`
+- Top-level variables:
+  - `bars`, `result`
+
+### `src/lib/indicators/builtin/ao.ts`
+
+- Top-level variables:
+  - `AO`
+
 ### `src/lib/indicators/builtin/bbi.ts`
 
 - Top-level variables:
   - `BBI`
+
+### `src/lib/indicators/builtin/bias.ts`
+
+- Top-level variables:
+  - `BIAS`
 
 ### `src/lib/indicators/builtin/bollinger.ts`
 
 - Top-level variables:
   - `BOLLINGER`
 
+### `src/lib/indicators/builtin/brar.ts`
+
+- Top-level variables:
+  - `BRAR`
+
+### `src/lib/indicators/builtin/cci.ts`
+
+- Top-level variables:
+  - `CCI`
+
+### `src/lib/indicators/builtin/cr.ts`
+
+- Top-level variables:
+  - `CR`
+
 ### `src/lib/indicators/builtin/cvd.ts`
 
 - Top-level variables:
   - `CVD`, `cumulative`, `delta`
 
+### `src/lib/indicators/builtin/dma.ts`
+
+- Top-level variables:
+  - `DMA`
+
+### `src/lib/indicators/builtin/dmi.ts`
+
+- Top-level variables:
+  - `DMI`
+
 ### `src/lib/indicators/builtin/ema.ts`
 
 - Top-level variables:
   - `EMA`
+
+### `src/lib/indicators/builtin/emv.ts`
+
+- Top-level variables:
+  - `EMV`
+
+### `src/lib/indicators/builtin/kdj.ts`
+
+- Top-level variables:
+  - `KDJ`
 
 ### `src/lib/indicators/builtin/ma.ts`
 
@@ -3540,10 +3592,30 @@ Generated at: `2026-05-07 14:58:38`
 - Top-level variables:
   - `MACD`
 
+### `src/lib/indicators/builtin/mtm.ts`
+
+- Top-level variables:
+  - `MTM`
+
 ### `src/lib/indicators/builtin/obv.ts`
 
 - Top-level variables:
   - `OBV`
+
+### `src/lib/indicators/builtin/psy.ts`
+
+- Top-level variables:
+  - `PSY`
+
+### `src/lib/indicators/builtin/pvt.ts`
+
+- Top-level variables:
+  - `PVT`
+
+### `src/lib/indicators/builtin/roc.ts`
+
+- Top-level variables:
+  - `ROC`
 
 ### `src/lib/indicators/builtin/rsi.ts`
 
@@ -3559,6 +3631,11 @@ Generated at: `2026-05-07 14:58:38`
 
 - Top-level variables:
   - `SMA`
+
+### `src/lib/indicators/builtin/trix.ts`
+
+- Top-level variables:
+  - `TRIX`
 
 ### `src/lib/indicators/builtin/volume.ts`
 
@@ -3605,9 +3682,9 @@ Generated at: `2026-05-07 14:58:38`
 ### `src/lib/indicators/utils.ts`
 
 - Functions:
-  - `bbiSeries`, `bollingerSeries`, `collectNumbers`, `emaSeries`, `macdSeries`, `numericExtent`, `obvSeries`, `rollingStandardDeviation`, `rsiSeries`, `sarSeries`, `smaSeries`, `vrSeries`, `wrSeries`
+  - `aoColorSeries`, `aoSeries`, `bbiSeries`, `biasSeries`, `bollingerSeries`, `brarSeries`, `cciSeries`, `collectNumbers`, `crSeries`, `dmaSeries`, `dmiSeries`, `emaSeries`, `emaSeriesSkipNaN`, `emvSeries`, `isFiniteNumber`, `kdjSeries`, `macdSeries`, `meanAbsoluteDeviationSeries`, `midpointSeries`, `mtmSeries`, `numericExtent`, `obvSeries`, `psySeries`, `pvtSeries`, `risingVolumeColor`, `rocSeries`, `rollingStandardDeviation`, `rsiSeries`, `sarSeries`, `smaSeries`, `smaSeriesSkipNaN`, `trixSeries`, `typicalPriceSeries`, `vrSeries`, `wilderSeries`, `wilderSeriesSkipNaN`, `wrSeries`
 - Top-level variables:
-  - `af`, `averageGain`, `averageLoss`, `bar`, `change`, `close`, `current`, `delta`, `denom`, `deviation`, `divisor`, `ep`, `fastEma`, `finiteValues`, `gain`, `gainAverage`, `hh`, `histogram`, `isUpTrend`, `ll`, `loss`, `lossAverage`, `lower`, `ma12`, `ma24`, `ma3`, `ma6`, `macd`, `maxValue`, `mean`, `middle`, `minValue`, `prevSar`, `previousEma`, `relativeStrength`, `result`, `rollingSum`, `sar`, `series`, `signal`, `slice`, `slowEma`, `smoothing`, `startIndex`, `up`, `upper`, `variance`, `window`
+  - `adx`, `af`, `ar`, `arDenominator`, `arNumerator`, `average`, `averageGain`, `averageLoss`, `bar`, `boxRatio`, `br`, `brDenominator`, `brNumerator`, `change`, `close`, `closes`, `cr`, `cumulative`, `current`, `currentIndex`, `currentMid`, `d`, `dValue`, `ddd`, `delta`, `denom`, `denominator`, `deviation`, `divisor`, `downMove`, `dx`, `ema1`, `ema2`, `ema3`, `emv`, `ep`, `fast`, `fastEma`, `finiteCount`, `finiteValues`, `gain`, `gainAverage`, `hh`, `highestHigh`, `histogram`, `hm`, `isUpTrend`, `j`, `k`, `ll`, `loss`, `lossAverage`, `lower`, `lowestLow`, `ma12`, `ma24`, `ma3`, `ma6`, `macd`, `mad`, `maxValue`, `mean`, `meanDeviation`, `middle`, `midpoints`, `minValue`, `minus`, `minusDI`, `minusDm`, `movingAverage`, `mtm`, `numerator`, `open`, `plusDI`, `plusDm`, `prevSar`, `previous`, `previousEma`, `previousMid`, `psy`, `queue`, `range`, `relativeStrength`, `removed`, `result`, `rollingSum`, `rsv`, `sar`, `series`, `signal`, `slice`, `slow`, `slowEma`, `sma`, `sma34`, `sma5`, `smoothMinus`, `smoothPlus`, `smoothTr`, `smoothing`, `startIndex`, `tp`, `tr`, `trix`, `up`, `upCount`, `upMove`, `upper`, `variance`, `window`
 
 ### `src/lib/interactive/Brush.tsx`
 

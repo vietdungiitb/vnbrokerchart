@@ -22,7 +22,22 @@ export type SeriesTypeId =
 	| "SAR"
 	| "OBV"
 	| "WR"
-	| "VR";
+	| "VR"
+	// CE16 additions
+	| "KDJ"
+	| "CCI"
+	| "DMI"
+	| "BIAS"
+	| "BRAR"
+	| "MTM"
+	| "EMV"
+	| "AO"
+	| "ROC"
+	| "TRIX"
+	| "DMA"
+	| "PVT"
+	| "PSY"
+	| "CR";
 
 export type YAxisSide = "left" | "right";
 

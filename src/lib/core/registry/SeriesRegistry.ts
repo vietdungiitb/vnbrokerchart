@@ -410,4 +410,253 @@ export function registerPhaseOneSeries() {
 			accessor: (d) => d.vr,
 		}),
 	});
+
+	// ── CE16 indicators ───────────────────────────────────────────────────────
+
+	registerLineSeries("KDJ", {
+		component: LineSeries,
+		defaultParams: { period: 9, m1: 3, m2: 3 },
+		defaultYAxis: "left",
+		yExtentsAccessors: [
+			(d) => d.kdj?.k,
+			(d) => d.kdj?.d,
+			(d) => d.kdj?.j,
+		],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 9, min: 2, step: 1 },
+			{ key: "m1", labelKey: "settings.m1", type: "number", defaultValue: 3, min: 1, step: 1 },
+			{ key: "m2", labelKey: "settings.m2", type: "number", defaultValue: 3, min: 1, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `KDJ(${periodFromConfig(config, 9)},${typeof config.params?.m1 === "number" ? config.params.m1 : 3},${typeof config.params?.m2 === "number" ? config.params.m2 : 3})`,
+			format: format(".2f"),
+			accessor: (d) => d.kdj?.j,
+		}),
+	});
+
+	registerLineSeries("CCI", {
+		component: LineSeries,
+		defaultParams: { period: 20 },
+		defaultYAxis: "left",
+		yExtentsAccessors: [(d) => d.cci],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 20, min: 2, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `CCI(${periodFromConfig(config, 20)})`,
+			format: format(".2f"),
+			accessor: (d) => d.cci,
+		}),
+	});
+
+	registerLineSeries("DMI", {
+		component: LineSeries,
+		defaultParams: { period: 14 },
+		defaultYAxis: "left",
+		yExtentsAccessors: [
+			(d) => d.dmi?.plusDI,
+			(d) => d.dmi?.minusDI,
+			(d) => d.dmi?.adx,
+		],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 14, min: 2, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `DMI(${periodFromConfig(config, 14)})`,
+			format: format(".2f"),
+			accessor: (d) => d.dmi?.adx,
+		}),
+	});
+
+	registerLineSeries("BIAS", {
+		component: LineSeries,
+		defaultParams: { period: 6 },
+		defaultYAxis: "right",
+		yExtentsAccessors: [(d) => d.bias],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 6, min: 1, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `BIAS(${periodFromConfig(config, 6)})`,
+			format: format(".2f"),
+			accessor: (d) => d.bias,
+		}),
+	});
+
+	registerLineSeries("BRAR", {
+		component: LineSeries,
+		defaultParams: { period: 26 },
+		defaultYAxis: "right",
+		yExtentsAccessors: [
+			(d) => d.brar?.ar,
+			(d) => d.brar?.br,
+		],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 26, min: 2, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `BRAR(${periodFromConfig(config, 26)})`,
+			format: format(".2f"),
+			accessor: (d) => d.brar?.br,
+		}),
+	});
+
+	registerLineSeries("MTM", {
+		component: LineSeries,
+		defaultParams: { period: 6, signalPeriod: 6 },
+		defaultYAxis: "right",
+		yExtentsAccessors: [
+			(d) => d.mtm?.mtm,
+			(d) => d.mtm?.signal,
+		],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 6, min: 1, step: 1 },
+			{ key: "signalPeriod", labelKey: "settings.signalPeriod", type: "number", defaultValue: 6, min: 1, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `MTM(${periodFromConfig(config, 6)})`,
+			format: format(".2f"),
+			accessor: (d) => d.mtm?.mtm,
+		}),
+	});
+
+	registerLineSeries("EMV", {
+		component: LineSeries,
+		defaultParams: { period: 14 },
+		defaultYAxis: "right",
+		yExtentsAccessors: [
+			(d) => d.emv?.emv,
+			(d) => d.emv?.signal,
+		],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 14, min: 1, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `EMV(${periodFromConfig(config, 14)})`,
+			format: format(".2f"),
+			accessor: (d) => d.emv?.emv,
+		}),
+	});
+
+	registerSeries("AO", {
+		component: BarSeries,
+		defaultParams: {},
+		defaultYAxis: "right",
+		yExtentsAccessors: [(d) => d.ao],
+		tooltipEntry: () => ({
+			label: "AO",
+			format: format(".2f"),
+			accessor: (d) => d.ao,
+		}),
+	});
+
+	registerLineSeries("ROC", {
+		component: LineSeries,
+		defaultParams: { period: 12 },
+		defaultYAxis: "right",
+		yExtentsAccessors: [(d) => d.roc],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 12, min: 1, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `ROC(${periodFromConfig(config, 12)})`,
+			format: format(".2f"),
+			accessor: (d) => d.roc,
+		}),
+	});
+
+	registerLineSeries("TRIX", {
+		component: LineSeries,
+		defaultParams: { period: 12, signalPeriod: 9 },
+		defaultYAxis: "right",
+		yExtentsAccessors: [
+			(d) => d.trix?.trix,
+			(d) => d.trix?.signal,
+		],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 12, min: 1, step: 1 },
+			{ key: "signalPeriod", labelKey: "settings.signalPeriod", type: "number", defaultValue: 9, min: 1, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `TRIX(${periodFromConfig(config, 12)})`,
+			format: format(".2f"),
+			accessor: (d) => d.trix?.trix,
+		}),
+	});
+
+	registerLineSeries("DMA", {
+		component: LineSeries,
+		defaultParams: { fastPeriod: 10, slowPeriod: 50, signalPeriod: 10 },
+		defaultYAxis: "right",
+		yExtentsAccessors: [
+			(d) => d.dma?.ddd,
+			(d) => d.dma?.ama,
+		],
+		settingsFields: [
+			{ key: "fastPeriod", labelKey: "settings.fastPeriod", type: "number", defaultValue: 10, min: 1, step: 1 },
+			{ key: "slowPeriod", labelKey: "settings.slowPeriod", type: "number", defaultValue: 50, min: 1, step: 1 },
+			{ key: "signalPeriod", labelKey: "settings.signalPeriod", type: "number", defaultValue: 10, min: 1, step: 1 },
+		],
+		tooltipEntry: () => ({
+			label: "DMA",
+			format: format(".2f"),
+			accessor: (d) => d.dma?.ddd,
+		}),
+	});
+
+	registerLineSeries("PVT", {
+		component: LineSeries,
+		defaultParams: {},
+		defaultYAxis: "right",
+		yExtentsAccessors: [(d) => d.pvt],
+		tooltipEntry: () => ({
+			label: "PVT",
+			format: format(".2f"),
+			accessor: (d) => d.pvt,
+		}),
+	});
+
+	registerLineSeries("PSY", {
+		component: LineSeries,
+		defaultParams: { period: 12, signalPeriod: 6 },
+		defaultYAxis: "left",
+		yExtentsAccessors: [
+			(d) => d.psy?.psy,
+			(d) => d.psy?.signal,
+		],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 12, min: 1, step: 1 },
+			{ key: "signalPeriod", labelKey: "settings.signalPeriod", type: "number", defaultValue: 6, min: 1, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `PSY(${periodFromConfig(config, 12)})`,
+			format: format(".2f"),
+			accessor: (d) => d.psy?.psy,
+		}),
+	});
+
+	registerLineSeries("CR", {
+		component: LineSeries,
+		defaultParams: { period: 26, m1: 10, m2: 20, m3: 40, m4: 60 },
+		defaultYAxis: "right",
+		yExtentsAccessors: [
+			(d) => d.cr?.cr,
+			(d) => d.cr?.ma1,
+			(d) => d.cr?.ma2,
+			(d) => d.cr?.ma3,
+			(d) => d.cr?.ma4,
+		],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 26, min: 1, step: 1 },
+			{ key: "m1", labelKey: "settings.m1", type: "number", defaultValue: 10, min: 1, step: 1 },
+			{ key: "m2", labelKey: "settings.m2", type: "number", defaultValue: 20, min: 1, step: 1 },
+			{ key: "m3", labelKey: "settings.m3", type: "number", defaultValue: 40, min: 1, step: 1 },
+			{ key: "m4", labelKey: "settings.m4", type: "number", defaultValue: 60, min: 1, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `CR(${periodFromConfig(config, 26)})`,
+			format: format(".2f"),
+			accessor: (d) => d.cr?.cr,
+		}),
+	});
 }

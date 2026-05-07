@@ -1,8 +1,17 @@
 import type {
 	EnrichedDatum,
 	IndicatorBandValue,
+	IndicatorBrarValue,
+	IndicatorCrValue,
+	IndicatorDmaValue,
+	IndicatorDmiValue,
+	IndicatorEmvValue,
 	IndicatorDatumValue,
+	IndicatorKdjValue,
 	IndicatorMacdValue,
+	IndicatorMtmValue,
+	IndicatorPsyValue,
+	IndicatorTrixValue,
 	IndicatorWhaleValue,
 } from "./calculators/types";
 import type { SeriesConfig } from "./types/pane-descriptor";
@@ -42,6 +51,69 @@ function exactLegacyValue(datum: EnrichedDatum, series: SeriesConfig): Indicator
 				? { whaleBuyVol: datum.whaleBuyVol, whaleSellVol: datum.whaleSellVol }
 				: undefined;
 		}
+		case "KDJ": {
+			const period = numberParam(series, "period", 9);
+			const m1 = numberParam(series, "m1", 3);
+			const m2 = numberParam(series, "m2", 3);
+			return period === 9 && m1 === 3 && m2 === 3 ? datum.kdj : undefined;
+		}
+		case "CCI": {
+			const period = numberParam(series, "period", 20);
+			return period === 20 ? datum.cci : undefined;
+		}
+		case "DMI": {
+			const period = numberParam(series, "period", 14);
+			return period === 14 ? datum.dmi : undefined;
+		}
+		case "BIAS": {
+			const period = numberParam(series, "period", 6);
+			return period === 6 ? datum.bias : undefined;
+		}
+		case "BRAR": {
+			const period = numberParam(series, "period", 26);
+			return period === 26 ? datum.brar : undefined;
+		}
+		case "MTM": {
+			const period = numberParam(series, "period", 6);
+			const signalPeriod = numberParam(series, "signalPeriod", 6);
+			return period === 6 && signalPeriod === 6 ? datum.mtm : undefined;
+		}
+		case "EMV": {
+			const period = numberParam(series, "period", 14);
+			return period === 14 ? datum.emv : undefined;
+		}
+		case "AO":
+			return datum.ao;
+		case "ROC": {
+			const period = numberParam(series, "period", 12);
+			return period === 12 ? datum.roc : undefined;
+		}
+		case "TRIX": {
+			const period = numberParam(series, "period", 12);
+			const signalPeriod = numberParam(series, "signalPeriod", 9);
+			return period === 12 && signalPeriod === 9 ? datum.trix : undefined;
+		}
+		case "DMA": {
+			const fastPeriod = numberParam(series, "fastPeriod", 10);
+			const slowPeriod = numberParam(series, "slowPeriod", 50);
+			const signalPeriod = numberParam(series, "signalPeriod", 10);
+			return fastPeriod === 10 && slowPeriod === 50 && signalPeriod === 10 ? datum.dma : undefined;
+		}
+		case "PVT":
+			return datum.pvt;
+		case "PSY": {
+			const period = numberParam(series, "period", 12);
+			const signalPeriod = numberParam(series, "signalPeriod", 6);
+			return period === 12 && signalPeriod === 6 ? datum.psy : undefined;
+		}
+		case "CR": {
+			const period = numberParam(series, "period", 26);
+			const m1 = numberParam(series, "m1", 10);
+			const m2 = numberParam(series, "m2", 20);
+			const m3 = numberParam(series, "m3", 40);
+			const m4 = numberParam(series, "m4", 60);
+			return period === 26 && m1 === 10 && m2 === 20 && m3 === 40 && m4 === 60 ? datum.cr : undefined;
+		}
 		default:
 			return undefined;
 	}
@@ -77,6 +149,34 @@ export function buildIndicatorSeriesKey(series: SeriesConfig): string | undefine
 			return `WR:period=${numberParam(series, "period", 14)}`;
 		case "VR":
 			return `VR:period=${numberParam(series, "period", 26)}`;
+		case "KDJ":
+			return `KDJ:period=${numberParam(series, "period", 9)}:m1=${numberParam(series, "m1", 3)}:m2=${numberParam(series, "m2", 3)}`;
+		case "CCI":
+			return `CCI:period=${numberParam(series, "period", 20)}`;
+		case "DMI":
+			return `DMI:period=${numberParam(series, "period", 14)}`;
+		case "BIAS":
+			return `BIAS:period=${numberParam(series, "period", 6)}`;
+		case "BRAR":
+			return `BRAR:period=${numberParam(series, "period", 26)}`;
+		case "MTM":
+			return `MTM:period=${numberParam(series, "period", 6)}:signalPeriod=${numberParam(series, "signalPeriod", 6)}`;
+		case "EMV":
+			return `EMV:period=${numberParam(series, "period", 14)}`;
+		case "AO":
+			return "AO";
+		case "ROC":
+			return `ROC:period=${numberParam(series, "period", 12)}`;
+		case "TRIX":
+			return `TRIX:period=${numberParam(series, "period", 12)}:signalPeriod=${numberParam(series, "signalPeriod", 9)}`;
+		case "DMA":
+			return `DMA:fastPeriod=${numberParam(series, "fastPeriod", 10)}:slowPeriod=${numberParam(series, "slowPeriod", 50)}:signalPeriod=${numberParam(series, "signalPeriod", 10)}`;
+		case "PVT":
+			return "PVT";
+		case "PSY":
+			return `PSY:period=${numberParam(series, "period", 12)}:signalPeriod=${numberParam(series, "signalPeriod", 6)}`;
+		case "CR":
+			return `CR:period=${numberParam(series, "period", 26)}:m1=${numberParam(series, "m1", 10)}:m2=${numberParam(series, "m2", 20)}:m3=${numberParam(series, "m3", 40)}:m4=${numberParam(series, "m4", 60)}`;
 		default:
 			return undefined;
 	}
@@ -112,15 +212,30 @@ export function resolveSeriesValue(datum: EnrichedDatum, series: SeriesConfig): 
 		case "CVDApprox":
 		case "CVDRealtime":
 		case "StrengthRelative":
+		case "CCI":
+		case "BIAS":
+		case "AO":
+		case "ROC":
+		case "PVT":
 		case "WR":
 		case "VR":
 			return asNumber(resolveSeriesDatumValue(datum, series));
+		case "KDJ":
+			return asNumber(resolveSeriesDatumValue(datum, series), (value) => (value as IndicatorKdjValue).j);
+		case "DMI":
+			return asNumber(resolveSeriesDatumValue(datum, series), (value) => (value as IndicatorDmiValue).adx);
 		case "BBI":
 			return datum.bbi;
 		case "SAR":
 			return datum.sar ?? asNumber(resolveSeriesDatumValue(datum, series));
 		case "OBV":
 			return datum.obv;
+		case "BRAR":
+			return asNumber(resolveSeriesDatumValue(datum, series), (value) => (value as IndicatorBrarValue).br);
+		case "MTM":
+			return asNumber(resolveSeriesDatumValue(datum, series), (value) => (value as IndicatorMtmValue).mtm);
+		case "EMV":
+			return asNumber(resolveSeriesDatumValue(datum, series), (value) => (value as IndicatorEmvValue).emv);
 		case "MACD":
 			return asNumber(resolveSeriesDatumValue(datum, series), (value) => (value as IndicatorMacdValue).macd);
 		case "BollingerBand":
@@ -130,6 +245,14 @@ export function resolveSeriesValue(datum: EnrichedDatum, series: SeriesConfig): 
 				const whale = value as IndicatorWhaleValue;
 				return whale.whaleBuyVol ?? whale.whaleSellVol;
 			});
+		case "TRIX":
+			return asNumber(resolveSeriesDatumValue(datum, series), (value) => (value as IndicatorTrixValue).trix);
+		case "DMA":
+			return asNumber(resolveSeriesDatumValue(datum, series), (value) => (value as IndicatorDmaValue).ddd);
+		case "PSY":
+			return asNumber(resolveSeriesDatumValue(datum, series), (value) => (value as IndicatorPsyValue).psy);
+		case "CR":
+			return asNumber(resolveSeriesDatumValue(datum, series), (value) => (value as IndicatorCrValue).cr);
 		case "StrengthElder":
 			return datum.bullPower;
 		default:
@@ -146,6 +269,24 @@ export function resolveSeriesStructuredValue(datum: EnrichedDatum, series: Serie
 		case "Whale":
 			return (resolveSeriesDatumValue(datum, series) as IndicatorWhaleValue | undefined)
 				?? { whaleBuyVol: datum.whaleBuyVol, whaleSellVol: datum.whaleSellVol };
+			case "KDJ":
+				return (resolveSeriesDatumValue(datum, series) as IndicatorKdjValue | undefined) ?? datum.kdj;
+			case "DMI":
+				return (resolveSeriesDatumValue(datum, series) as IndicatorDmiValue | undefined) ?? datum.dmi;
+			case "BRAR":
+				return (resolveSeriesDatumValue(datum, series) as IndicatorBrarValue | undefined) ?? datum.brar;
+			case "MTM":
+				return (resolveSeriesDatumValue(datum, series) as IndicatorMtmValue | undefined) ?? datum.mtm;
+			case "EMV":
+				return (resolveSeriesDatumValue(datum, series) as IndicatorEmvValue | undefined) ?? datum.emv;
+			case "TRIX":
+				return (resolveSeriesDatumValue(datum, series) as IndicatorTrixValue | undefined) ?? datum.trix;
+			case "DMA":
+				return (resolveSeriesDatumValue(datum, series) as IndicatorDmaValue | undefined) ?? datum.dma;
+			case "PSY":
+				return (resolveSeriesDatumValue(datum, series) as IndicatorPsyValue | undefined) ?? datum.psy;
+			case "CR":
+				return (resolveSeriesDatumValue(datum, series) as IndicatorCrValue | undefined) ?? datum.cr;
 		case "StrengthElder":
 			return { bullPower: datum.bullPower, bearPower: datum.bearPower };
 		default:
@@ -170,7 +311,39 @@ export function resolveSeriesValueAccessors(series: SeriesConfig): Array<(datum:
 		case "Line":
 		case "Area":
 		case "Bar":
+		case "CCI":
+		case "BIAS":
+		case "AO":
+		case "ROC":
+		case "PVT":
 			return [(datum) => resolveSeriesValue(datum, series)];
+		case "KDJ":
+			return [
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorKdjValue | undefined)?.k,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorKdjValue | undefined)?.d,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorKdjValue | undefined)?.j,
+			];
+		case "DMI":
+			return [
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorDmiValue | undefined)?.plusDI,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorDmiValue | undefined)?.minusDI,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorDmiValue | undefined)?.adx,
+			];
+		case "BRAR":
+			return [
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorBrarValue | undefined)?.ar,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorBrarValue | undefined)?.br,
+			];
+		case "MTM":
+			return [
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorMtmValue | undefined)?.mtm,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorMtmValue | undefined)?.signal,
+			];
+		case "EMV":
+			return [
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorEmvValue | undefined)?.emv,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorEmvValue | undefined)?.signal,
+			];
 		case "BollingerBand":
 			return [
 				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorBandValue | undefined)?.top,
@@ -182,6 +355,29 @@ export function resolveSeriesValueAccessors(series: SeriesConfig): Array<(datum:
 				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorMacdValue | undefined)?.macd,
 				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorMacdValue | undefined)?.signal,
 				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorMacdValue | undefined)?.divergence,
+			];
+		case "TRIX":
+			return [
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorTrixValue | undefined)?.trix,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorTrixValue | undefined)?.signal,
+			];
+		case "DMA":
+			return [
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorDmaValue | undefined)?.ddd,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorDmaValue | undefined)?.ama,
+			];
+		case "PSY":
+			return [
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorPsyValue | undefined)?.psy,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorPsyValue | undefined)?.signal,
+			];
+		case "CR":
+			return [
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorCrValue | undefined)?.cr,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorCrValue | undefined)?.ma1,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorCrValue | undefined)?.ma2,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorCrValue | undefined)?.ma3,
+				(datum) => (resolveSeriesStructuredValue(datum, series) as IndicatorCrValue | undefined)?.ma4,
 			];
 		case "StrengthElder":
 			return [(datum) => datum.bullPower, (datum) => datum.bearPower];

@@ -30,6 +30,26 @@ describe("SeriesRegistry", () => {
 			"CVDApprox",
 			"StrengthElder",
 			"Whale",
+			"MA",
+			"BBI",
+			"SAR",
+			"OBV",
+			"WR",
+			"VR",
+			"KDJ",
+			"CCI",
+			"DMI",
+			"BIAS",
+			"BRAR",
+			"MTM",
+			"EMV",
+			"AO",
+			"ROC",
+			"TRIX",
+			"DMA",
+			"PVT",
+			"PSY",
+			"CR",
 		];
 
 		phaseOneTypes.forEach((type) => {
@@ -67,6 +87,26 @@ describe("SeriesRegistry", () => {
 		expect(getSeries("Whale").settingsFields).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ key: "threshold", labelKey: "settings.thresholdUsd" }),
+			]),
+		);
+		expect(getSeries("KDJ").settingsFields).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ key: "period", labelKey: "settings.period" }),
+				expect.objectContaining({ key: "m1", labelKey: "settings.m1" }),
+				expect.objectContaining({ key: "m2", labelKey: "settings.m2" }),
+			]),
+		);
+		expect(getSeries("DMA").settingsFields).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ key: "fastPeriod", labelKey: "settings.fastPeriod" }),
+				expect.objectContaining({ key: "slowPeriod", labelKey: "settings.slowPeriod" }),
+				expect.objectContaining({ key: "signalPeriod", labelKey: "settings.signalPeriod" }),
+			]),
+		);
+		expect(getSeries("CR").settingsFields).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ key: "m1", labelKey: "settings.m1" }),
+				expect.objectContaining({ key: "m4", labelKey: "settings.m4" }),
 			]),
 		);
 	});

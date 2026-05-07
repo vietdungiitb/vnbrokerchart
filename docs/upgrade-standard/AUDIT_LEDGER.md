@@ -2719,6 +2719,51 @@ Every completed slice must update this ledger with the exact files changed in th
 
 ---
 
+## CE16 — Advanced Oscillator Pack: KDJ, CCI, DMI, BIAS, BRAR, MTM, EMV, AO, ROC, TRIX, DMA, PVT, PSY, CR
+
+**Ngày hoàn tất:** 2026-05-09
+**Sprint:** CE16
+
+### Thay đổi
+- `src/lib/indicators/utils.ts` — export PriceBar.open; thêm smoothing utils (emaSeriesSkipNaN, smaSeriesSkipNaN, wilderSeries, wilderSeriesSkipNaN, aoColorSeries); 14 compute functions: kdjSeries, cciSeries, dmiSeries, biasSeries, brarSeries, mtmSeries, emvSeries, aoSeries, rocSeries, trixSeries, dmaSeries, pvtSeries, psySeries, crSeries; 9 result interfaces
+- `src/lib/core/calculators/types.ts` — IndicatorDatumValue union +9 structs; EnrichedDatum +14 CE16 fields
+- `src/lib/core/types/pane-descriptor.ts` — SeriesTypeId union +14
+- `src/lib/core/seriesValueResolver.ts` — resolve all 14 CE16 types (single-value and structured)
+- `src/lib/core/calculators/indicatorComputation.ts` — plan/result/materialize for 14 new indicators
+- `src/lib/core/calculators/enrichData.ts` — map all 14 CE16 fields; AO color array
+- `src/lib/core/registry/SeriesRegistry.ts` — register 14 CE16 entries; AO as BarSeries
+- `src/lib/core/DynamicChart.tsx` — OSCILLATOR_SERIES +14; BAR_SERIES_TYPES +AO; renderSeries switch +14 cases; StraightLine for CCI/KDJ reference lines
+- `src/lib/core/IndicatorLegend.tsx` — SERIES_LABELS +14; seriesLabel() param-aware for all 14
+- `src/demo/i18n.tsx` — i18n VI+EN: 14 indicators + settings keys (signalPeriod, fastPeriod, slowPeriod, m1-m4)
+- `src/lib/indicators/builtin/kdj.ts` — plugin KDJ
+- `src/lib/indicators/builtin/cci.ts` — plugin CCI
+- `src/lib/indicators/builtin/dmi.ts` — plugin DMI
+- `src/lib/indicators/builtin/bias.ts` — plugin BIAS
+- `src/lib/indicators/builtin/brar.ts` — plugin BRAR
+- `src/lib/indicators/builtin/mtm.ts` — plugin MTM
+- `src/lib/indicators/builtin/emv.ts` — plugin EMV
+- `src/lib/indicators/builtin/ao.ts` — plugin AO
+- `src/lib/indicators/builtin/roc.ts` — plugin ROC
+- `src/lib/indicators/builtin/trix.ts` — plugin TRIX
+- `src/lib/indicators/builtin/dma.ts` — plugin DMA
+- `src/lib/indicators/builtin/pvt.ts` — plugin PVT
+- `src/lib/indicators/builtin/psy.ts` — plugin PSY
+- `src/lib/indicators/builtin/cr.ts` — plugin CR
+- `src/lib/indicators/index.ts` — register 14 new indicators
+- `src/lib/indicators/builtin/__tests__/ce16.test.ts` — unit tests (15 tests)
+- `src/lib/core/registry/__tests__/SeriesRegistry.test.ts` — extended with 14 CE16 type assertions
+- `module_tree_full.md` — regenerated (725 modules)
+
+### Gate evidence
+| Gate | Kết quả |
+|---|---|
+| type-check | 0 errors |
+| npm test | 186 tests / 39 files PASS |
+| build:docs | OK (webpack 3427ms) |
+| module_tree | 725 modules |
+
+---
+
 ## CE15 — Indicator Pack: MA, BBI, SAR, OBV, WR, VR
 
 **Ngày hoàn tất:** 2026-05-08

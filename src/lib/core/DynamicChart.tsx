@@ -14,6 +14,7 @@ import LineSeries from "../series/LineSeries";
 import MACDSeries from "../series/MACDSeries";
 import OHLCSeries from "../series/OHLCSeries";
 import RSISeries from "../series/RSISeries";
+import StraightLine from "../series/StraightLine";
 import type { EnrichedDatum, IndicatorBandValue, IndicatorMacdValue, IndicatorWhaleValue } from "./calculators/types";
 import { getSeries } from "./registry/SeriesRegistry";
 import "./registry/registerAll";
@@ -86,12 +87,28 @@ function finiteExtent(values: readonly number[]): [number, number] {
 const INNER_PANE_GAP = 10;
 
 const PRICE_SERIES: SeriesTypeId[] = ["Candlestick", "HollowCandle", "OHLC", "HeikinAshi", "Line", "Area", "Bar"];
-const VOLUME_SERIES: SeriesTypeId[] = ["Volume", "Whale", "CVDApprox", "CVDRealtime"];
-const OSCILLATOR_SERIES: SeriesTypeId[] = ["RSI", "StrengthRelative"];
+const VOLUME_SERIES: SeriesTypeId[] = ["Volume", "Whale", "CVDApprox", "CVDRealtime", "PVT"];
+const OSCILLATOR_SERIES: SeriesTypeId[] = [
+	"RSI",
+	"StrengthRelative",
+	"KDJ",
+	"CCI",
+	"DMI",
+	"BIAS",
+	"BRAR",
+	"MTM",
+	"EMV",
+	"AO",
+	"ROC",
+	"TRIX",
+	"DMA",
+	"PSY",
+	"CR",
+];
 
 function axisFormatForSeriesTypes(types: SeriesTypeId[]): (v: number) => string {
 	if (types.some((t) => VOLUME_SERIES.includes(t))) return d3Format(".3s");
-	if (types.some((t) => OSCILLATOR_SERIES.includes(t))) return d3Format(".0f");
+	if (types.some((t) => OSCILLATOR_SERIES.includes(t))) return d3Format(".1f");
 	if (types.some((t) => t === "MACD" || t === "StrengthElder")) return d3Format(".1f");
 	if (types.some((t) => PRICE_SERIES.includes(t))) return d3Format(",.0f");
 	return d3Format(".4s");
@@ -218,7 +235,7 @@ export function buildChartSlots(pane: PaneDescriptor): ChartSlot[] {
 // Only true histogram-from-zero series need 0 anchored in the y-domain.
 // "Bar" (price bar chart) uses close price and must NOT be included here —
 // anchoring to 0 causes y-axis 0→80k and full-height bars on the price pane.
-const BAR_SERIES_TYPES: SeriesTypeId[] = ["Volume", "Whale"];
+const BAR_SERIES_TYPES: SeriesTypeId[] = ["Volume", "Whale", "AO"];
 
 function buildYExtents(slot: ChartSlot) {
 	const accessors = slot.accessors.length > 0 ? slot.accessors : [(_: EnrichedDatum) => _.close as number | undefined];
@@ -259,6 +276,8 @@ function renderSeries(series: SeriesConfig) {
 	const downColor = String(params.downColor ?? "#f23645");
 
 	const accessor = (datum: EnrichedDatum) => resolveSeriesValue(datum, series);
+	const structured = (datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as Record<string, number | undefined> | number | undefined;
+	const fieldAccessor = (field: string) => (datum: EnrichedDatum) => (structured(datum) as Record<string, number | undefined> | undefined)?.[field];
 
 	switch (type) {
 		case "Candlestick":
@@ -340,6 +359,102 @@ function renderSeries(series: SeriesConfig) {
 			return <RSISeries key={type} yAccessor={(datum: EnrichedDatum) => resolveSeriesValue(datum, series)} />;
 		case "MACD":
 			return <MACDSeries key={type} yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as IndicatorMacdValue | undefined} />;
+		case "KDJ":
+			return (
+				<g key={type}>
+					<LineSeries key={`${type}-k`} yAccessor={fieldAccessor("k") as any} stroke={lineColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-d`} yAccessor={fieldAccessor("d") as any} stroke={fillColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-j`} yAccessor={fieldAccessor("j") as any} stroke={upColor} strokeWidth={1.2} />
+					<StraightLine stroke={lineColor} opacity={0.35} yValue={80} strokeDasharray="ShortDash" />
+					<StraightLine stroke={lineColor} opacity={0.35} yValue={50} strokeDasharray="ShortDash" />
+					<StraightLine stroke={lineColor} opacity={0.35} yValue={20} strokeDasharray="ShortDash" />
+				</g>
+			);
+		case "CCI":
+			return (
+				<g key={type}>
+					<LineSeries key={`${type}-line`} yAccessor={accessor as any} stroke={lineColor} strokeWidth={1.2} />
+					<StraightLine stroke={lineColor} opacity={0.35} yValue={100} strokeDasharray="ShortDash" />
+					<StraightLine stroke={lineColor} opacity={0.35} yValue={0} strokeDasharray="ShortDash" />
+					<StraightLine stroke={lineColor} opacity={0.35} yValue={-100} strokeDasharray="ShortDash" />
+				</g>
+			);
+		case "DMI":
+			return (
+				<g key={type}>
+					<LineSeries key={`${type}-plus`} yAccessor={fieldAccessor("plusDI") as any} stroke={upColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-minus`} yAccessor={fieldAccessor("minusDI") as any} stroke={downColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-adx`} yAccessor={fieldAccessor("adx") as any} stroke={lineColor} strokeWidth={1.2} />
+				</g>
+			);
+		case "BIAS":
+			return <LineSeries key={type} yAccessor={accessor as any} stroke={lineColor} strokeWidth={1.2} />;
+		case "BRAR":
+			return (
+				<g key={type}>
+					<LineSeries key={`${type}-ar`} yAccessor={fieldAccessor("ar") as any} stroke={lineColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-br`} yAccessor={fieldAccessor("br") as any} stroke={upColor} strokeWidth={1.2} />
+				</g>
+			);
+		case "MTM":
+			return (
+				<g key={type}>
+					<LineSeries key={`${type}-mtm`} yAccessor={fieldAccessor("mtm") as any} stroke={lineColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
+				</g>
+			);
+		case "EMV":
+			return (
+				<g key={type}>
+					<LineSeries key={`${type}-emv`} yAccessor={fieldAccessor("emv") as any} stroke={lineColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
+				</g>
+			);
+		case "AO":
+			return (
+				<BarSeries
+					key={type}
+					width={candleBodyWidth}
+					yAccessor={accessor as any}
+					fill={(datum: EnrichedDatum) => datum.aoColor ?? lineColor}
+					opacity={0.85}
+				/>
+			);
+		case "ROC":
+			return <LineSeries key={type} yAccessor={accessor as any} stroke={lineColor} strokeWidth={1.2} />;
+		case "TRIX":
+			return (
+				<g key={type}>
+					<LineSeries key={`${type}-trix`} yAccessor={fieldAccessor("trix") as any} stroke={lineColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
+				</g>
+			);
+		case "DMA":
+			return (
+				<g key={type}>
+					<LineSeries key={`${type}-ddd`} yAccessor={fieldAccessor("ddd") as any} stroke={lineColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-ama`} yAccessor={fieldAccessor("ama") as any} stroke={fillColor} strokeWidth={1.2} />
+				</g>
+			);
+		case "PVT":
+			return <LineSeries key={type} yAccessor={accessor as any} stroke={lineColor} strokeWidth={1.2} />;
+		case "PSY":
+			return (
+				<g key={type}>
+					<LineSeries key={`${type}-psy`} yAccessor={fieldAccessor("psy") as any} stroke={lineColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
+				</g>
+			);
+		case "CR":
+			return (
+				<g key={type}>
+					<LineSeries key={`${type}-cr`} yAccessor={fieldAccessor("cr") as any} stroke={lineColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-ma1`} yAccessor={fieldAccessor("ma1") as any} stroke={fillColor} strokeWidth={1.1} />
+					<LineSeries key={`${type}-ma2`} yAccessor={fieldAccessor("ma2") as any} stroke={upColor} strokeWidth={1.1} />
+					<LineSeries key={`${type}-ma3`} yAccessor={fieldAccessor("ma3") as any} stroke={downColor} strokeWidth={1.1} />
+					<LineSeries key={`${type}-ma4`} yAccessor={fieldAccessor("ma4") as any} stroke="#9ca3af" strokeWidth={1.1} />
+				</g>
+			);
 		case "StrengthElder":
 			return <ElderRaySeries key={type} yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as { bullPower?: number; bearPower?: number }} />;
 		default:

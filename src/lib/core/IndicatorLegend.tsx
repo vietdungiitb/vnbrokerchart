@@ -35,7 +35,26 @@ const SERIES_LABELS: Partial<Record<SeriesTypeId, string>> = {
 	MACD: "MACD",
 	StrengthElder: "Elder",
 	StrengthRelative: "RS",
+	KDJ: "KDJ",
+	CCI: "CCI",
+	DMI: "DMI",
+	BIAS: "BIAS",
+	BRAR: "BRAR",
+	MTM: "MTM",
+	EMV: "EMV",
+	AO: "AO",
+	ROC: "ROC",
+	TRIX: "TRIX",
+	DMA: "DMA",
+	PVT: "PVT",
+	PSY: "PSY",
+	CR: "CR",
 };
+
+function paramNumber(params: Record<string, unknown> | undefined, key: string, fallback: number): number {
+	const value = params?.[key];
+	return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
 
 function seriesLabel(type: SeriesTypeId, params?: Record<string, unknown>): string {
 	const base = SERIES_LABELS[type] ?? type;
@@ -47,6 +66,18 @@ function seriesLabel(type: SeriesTypeId, params?: Record<string, unknown>): stri
 		const slow = typeof params?.slow === "number" ? params.slow : 26;
 		return `MACD(${fast},${slow})`;
 	}
+	if (type === "KDJ") return `KDJ(${paramNumber(params, "period", 9)},${paramNumber(params, "m1", 3)},${paramNumber(params, "m2", 3)})`;
+	if (type === "CCI") return `CCI(${paramNumber(params, "period", 20)})`;
+	if (type === "DMI") return `DMI(${paramNumber(params, "period", 14)})`;
+	if (type === "BIAS") return `BIAS(${paramNumber(params, "period", 6)})`;
+	if (type === "BRAR") return `BRAR(${paramNumber(params, "period", 26)})`;
+	if (type === "MTM") return `MTM(${paramNumber(params, "period", 6)})`;
+	if (type === "EMV") return `EMV(${paramNumber(params, "period", 14)})`;
+	if (type === "ROC") return `ROC(${paramNumber(params, "period", 12)})`;
+	if (type === "TRIX") return `TRIX(${paramNumber(params, "period", 12)})`;
+	if (type === "DMA") return `DMA(${paramNumber(params, "fastPeriod", 10)},${paramNumber(params, "slowPeriod", 50)})`;
+	if (type === "PSY") return `PSY(${paramNumber(params, "period", 12)})`;
+	if (type === "CR") return `CR(${paramNumber(params, "period", 26)})`;
 	return base;
 }
 
