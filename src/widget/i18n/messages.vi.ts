@@ -7,4 +7,7 @@ export const widgetMessagesVi: WidgetMessages = {
 	"widget.title": "Biểu đồ VNStock",
 	"widget.symbol": "Mã",
 	"widget.timeframe": "Khung thời gian",
+	"measurement.title": "Đo lường",
+	"measurement.bars": "Số nến",
+	"measurement.price": "Δ giá",
 };

@@ -7,6 +7,7 @@ import {
 	last,
 	isDefined,
 	isNotDefined,
+	getClosestItemIndexes,
 	clearCanvas,
 	shallowEqual,
 	identity,
@@ -26,6 +27,8 @@ import CanvasContainer from "./CanvasContainer";
 import evaluator from "./scale/evaluator";
 import { StockChartProvider } from "./StockChartContext";
 import type { AnyRecord } from "./types";
+import { ChartRenderContext } from "./core/canvas/ChartRenderContext";
+import type { VisibleRange } from "./core/types/chart";
 
 type MouseXY = [number, number];
 
@@ -58,6 +61,7 @@ function getCursorStyle() {
 	const tooltipStyle = `
 	.react-stockcharts-grabbing-cursor { pointer-events: all; cursor: grabbing; }
 	.react-stockcharts-crosshair-cursor { pointer-events: all; cursor: crosshair; }
+	.react-stockcharts-magnet-cursor { pointer-events: all; cursor: crosshair; }
 	.react-stockcharts-tooltip-hover { pointer-events: all; cursor: pointer; }
 	.react-stockcharts-avoid-interaction { pointer-events: none; }
 	.react-stockcharts-enable-interaction { pointer-events: all; }
@@ -208,6 +212,7 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 	declare lastSubscriptionId: number;
 	declare mutableState: AnyRecord;
 	declare fullData: any[];
+	declare pendingChartRedraw: boolean;
 	declare prevMouseXY: MouseXY | undefined;
 	declare waitingForMouseMoveAnimationFrame: boolean | undefined;
 	declare waitingForPanAnimationFrame: boolean | undefined;
@@ -245,30 +250,54 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		this.setCursorClass = this.setCursorClass.bind(this);
 		this.getMutableState = this.getMutableState.bind(this);
 		this.notifyVisibleDomainChange = this.notifyVisibleDomainChange.bind(this);
+		this.getVisibleRange = this.getVisibleRange.bind(this);
+		this.setXExtents = this.setXExtents.bind(this);
+		this.getFullData = this.getFullData.bind(this);
+		this.getCurrentViewportBarCount = this.getCurrentViewportBarCount.bind(this);
 
 		this.subscriptions = [];
 		this.interactiveState = [];
 		this.panInProgress = false;
 		this.lastSubscriptionId = 0;
 		this.mutableState = {};
+		this.pendingChartRedraw = false;
 
 		const { fullData, ...state } = resetChart(props);
 		this.state = state;
 		this.fullData = fullData;
 	}
 
-	componentDidUpdate(prevProps: Readonly<AnyRecord>) {
+	componentDidUpdate(prevProps: Readonly<AnyRecord>, prevState: Readonly<ChartCanvasState>) {
 		const reset = shouldResetChart(prevProps, this.props);
 		const sizeChanged = prevProps.width !== this.props.width || prevProps.height !== this.props.height;
 		if (reset || prevProps.data !== this.props.data || sizeChanged) {
 			const { fullData, ...state } = resetChart(this.props);
 			this.fullData = fullData;
-			this.setState(state, () => {
-				this.syncStateToSubscriptions();
-				this.clearThreeCanvas();
-				this.draw({ force: true });
-				this.notifyVisibleDomainChange();
-			});
+			this.pendingChartRedraw = true;
+			this.setState(state);
+			return;
+		}
+
+		if (!this.pendingChartRedraw) {
+			return;
+		}
+
+		this.pendingChartRedraw = false;
+		this.syncStateToSubscriptions();
+		this.clearThreeCanvas();
+		this.draw({ force: true });
+
+		const previousVisibleRange = this.getVisibleRange(prevState.plotData, prevProps.data as any[], prevState.xAccessor);
+		const nextVisibleRange = this.getVisibleRange(this.state.plotData, this.fullData, this.state.xAccessor);
+		if (nextVisibleRange) {
+			if (
+				!previousVisibleRange
+				|| previousVisibleRange.startIndex !== nextVisibleRange.startIndex
+				|| previousVisibleRange.endIndex !== nextVisibleRange.endIndex
+			) {
+				this.props.onVisibleRangeChange?.(nextVisibleRange);
+				this.notifyVisibleDomainChange(this.state.xScale);
+			}
 		}
 	}
 
@@ -278,9 +307,39 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 	notifyVisibleDomainChange(xScale = this.state.xScale) {
 		this.props.onVisibleDomainChange?.(xScale.domain());
 	}
+	getVisibleRange(plotData: any[] = this.state.plotData, fullData: any[] = this.fullData, xAccessor: any = this.state.xAccessor): VisibleRange | null {
+		if (!plotData || plotData.length === 0 || !fullData || fullData.length === 0) {
+			return null;
+		}
+
+		const firstItem = head(plotData);
+		const lastItem = last(plotData);
+		if (isNotDefined(firstItem) || isNotDefined(lastItem)) {
+			return null;
+		}
+
+		const startValue = xAccessor(firstItem);
+		const endValue = xAccessor(lastItem);
+		const startIndex = getClosestItemIndexes(fullData, startValue, xAccessor, undefined).left;
+		const endIndex = getClosestItemIndexes(fullData, endValue, xAccessor, undefined).right;
+
+		return {
+			startIndex,
+			endIndex,
+			startDate: startValue,
+			endDate: endValue,
+			barCount: plotData.length,
+		};
+	}
 	getDataInfo() { return { ...this.state, fullData: this.fullData }; }
 	getCanvasContexts() { return this.canvasContainerNode?.getCanvasContexts(); }
 	generateSubscriptionId() { return ++this.lastSubscriptionId; }
+	setXExtents(extents: [Date, Date]) {
+		this.pendingChartRedraw = true;
+		this.xAxisZoom(extents);
+	}
+	getFullData() { return this.fullData; }
+	getCurrentViewportBarCount() { return this.state.plotData.length; }
 	
 	clearBothCanvas() {
 		const canvases = this.getCanvasContexts();
@@ -369,24 +428,14 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		const c = zoomDirection > 0 ? 1 * zoomMultiplier : 1 / zoomMultiplier;
 		const newDomain = initialXScale.range().map((x: number) => cx + (x - cx) * c).map(initialXScale.invert);
 		const { xScale, plotData, chartConfig } = this.calculateStateForDomain(newDomain);
-		// Pre-sync moreProps BEFORE React re-renders so componentDidUpdate draws
-		// with the correct zoom scale instead of stale pan scale.
-		this.syncStateToSubscriptions({ xScale, plotData, chartConfig });
-		this.setState({ xScale, plotData, chartConfig }, () => {
-			this.clearThreeCanvas();
-			this.draw({ force: true });
-			this.notifyVisibleDomainChange(xScale);
-		});
+		this.pendingChartRedraw = true;
+		this.setState({ xScale, plotData, chartConfig });
 	}
 
 	xAxisZoom(newDomain: any[]) {
 		const { xScale, plotData, chartConfig } = this.calculateStateForDomain(newDomain);
-		this.syncStateToSubscriptions({ xScale, plotData, chartConfig });
-		this.setState({ xScale, plotData, chartConfig }, () => {
-			this.clearThreeCanvas();
-			this.draw({ force: true });
-			this.notifyVisibleDomainChange(xScale);
-		});
+		this.pendingChartRedraw = true;
+		this.setState({ xScale, plotData, chartConfig });
 	}
 
 	yAxisZoom(chartId: string | number, newDomain: any[]) {
@@ -397,10 +446,8 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 			}
 			return each;
 		});
-		this.setState({ chartConfig }, () => {
-			this.clearThreeCanvas();
-			this.draw({ force: true });
-		});
+		this.pendingChartRedraw = true;
+		this.setState({ chartConfig });
 	}
 
 	panHelper(mouseXY: MouseXY, initialXScale: any, { dx, dy }: { dx: number; dy: number }, chartsToPan: any) {
@@ -433,13 +480,8 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 	handlePanEnd(mousePosition: MouseXY, panStartXScale: any, dxdy: { dx: number; dy: number }, chartsToPan: any, e: unknown) {
 		const state = this.panHelper(mousePosition, panStartXScale, dxdy, chartsToPan);
 		this.panInProgress = false;
-		// Pre-sync moreProps with final pan state so componentDidUpdate draws correctly.
-		this.syncStateToSubscriptions({ xScale: state.xScale, plotData: state.plotData, chartConfig: state.chartConfig });
-		this.setState(state, () => {
-			this.clearThreeCanvas();
-			this.draw({ force: true });
-			this.notifyVisibleDomainChange(state.xScale);
-		});
+		this.pendingChartRedraw = true;
+		this.setState(state);
 	}
 
 	handleMouseMove(mouseXY: MouseXY, inputType: string, e: unknown) {
@@ -494,6 +536,10 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		const interaction = !isNaN(xScale(xAccessor(head(plotData)))) && isDefined(xScale.invert);
 		const cursorStyle = useCrossHairStyleCursor && interaction;
 		const cursor = getCursorStyle();
+		const visibleRange = this.getVisibleRange(plotData, this.fullData, xAccessor);
+		const candleWidth = plotData.length < 2
+			? 6
+			: Math.max(3, Math.abs(xScale(xAccessor(plotData[1])) - xScale(xAccessor(plotData[0]))) * 0.8);
 
 		const contextValue = {
 			fullData: this.fullData,
@@ -519,9 +565,21 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 			setCursorClass: this.setCursorClass,
 		};
 
+		const renderContextValue = {
+			xScale: this.state.xScale,
+			yScale: chartConfig[0]?.yScale ?? identity,
+			plotData: this.state.plotData,
+			candleWidth: Number.isFinite(candleWidth) ? candleWidth : 6,
+			devicePixelRatio: ratio,
+			visibleRange,
+			width: dimensions.width,
+			height: dimensions.height,
+		};
+
 		return (
 			<StockChartProvider value={contextValue}>
-				<div style={{ position: "relative", width, height }} className={className} onClick={onSelect}>
+				<ChartRenderContext.Provider value={renderContextValue}>
+					<div style={{ position: "relative", width, height }} className={className} onClick={onSelect}>
 					<CanvasContainer ref={this.saveCanvasContainerNode} type={type} ratio={ratio} width={width} height={height} zIndex={zIndex}/>
 					<svg className={className} width={width} height={height} style={{ position: "absolute", zIndex: (zIndex + 5) }}>
 						{cursor}
@@ -567,7 +625,8 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 							</g>
 						</g>
 					</svg>
-				</div>
+					</div>
+				</ChartRenderContext.Provider>
 			</StockChartProvider>
 		);
 	}
@@ -603,6 +662,7 @@ ChartCanvas.propTypes = {
 	onSelect: PropTypes.func,
 	onClick: PropTypes.func,
 	onVisibleDomainChange: PropTypes.func,
+	onVisibleRangeChange: PropTypes.func,
 	maintainPointsPerPixelOnResize: PropTypes.bool,
 	disableInteraction: PropTypes.bool,
 };
@@ -623,6 +683,7 @@ ChartCanvas.defaultProps = {
 	onSelect: noop,
 	onClick: noop,
 	onVisibleDomainChange: noop,
+	onVisibleRangeChange: noop,
 	mouseMoveEvent: true,
 	panEvent: true,
 	zoomEvent: true,

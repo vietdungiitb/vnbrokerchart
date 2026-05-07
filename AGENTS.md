@@ -44,6 +44,7 @@ python scripts/generate_module_tree.py
 4. Sau thay đổi mã nguồn phải update `docs/upgrade-standard/AUDIT_LEDGER.md` và `module_tree_full.md`.
 5. Không coi build pass là đủ nếu spec/runtime behavior chưa đúng.
 6. Toàn bộ ứng dụng phải dùng chung một bộ template giao diện với web root; không tạo template hoặc layout riêng cho từng surface nếu cùng chức năng.
+7. Khi chốt hoàn thành một slice, phải commit riêng và push ngay lên branch `dev` để theo dõi và lưu trữ code.
 
 ## Known active gap
 

@@ -8,7 +8,7 @@ export function createDrawingId() {
 }
 
 export const defaultDrawingStyle: DrawingStyle = {
-	stroke: "#111827",
+	stroke: "#2962ff",
 	strokeWidth: 1,
 	strokeDasharray: "solid",
 	fill: "transparent",
@@ -26,6 +26,8 @@ export function createDrawingObject(type: DrawingToolType, points: Point[], patc
 		type,
 		points: points.map(clonePoint),
 		style: { ...defaultDrawingStyle, ...patch.style },
+		paneId: patch.paneId,
+		yScaleId: patch.yScaleId,
 		text: patch.text,
 		fibLevels: patch.fibLevels ? [...patch.fibLevels] : undefined,
 		label: patch.label,

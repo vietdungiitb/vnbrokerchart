@@ -18,6 +18,9 @@ export { SeriesPicker } from "./SeriesPicker";
 export { IndicatorLegend } from "./IndicatorLegend";
 export type { IndicatorLegendProps } from "./IndicatorLegend";
 export { BarReplayController } from "./replay/BarReplayController";
+export { ChartRenderContext, useChartRenderContext } from "./canvas/ChartRenderContext";
+export { OverlayCanvas } from "./canvas/OverlayCanvas";
+export type { OverlayDrawContext, OverlayCanvasProps } from "./canvas/OverlayCanvas";
 export { useDynamicPanes, dynamicPanesReducer, createDefaultPaneLayout, loadPaneLayout, savePaneLayout } from "./hooks/useDynamicPanes";
 export { DEFAULT_PANES, PANE_LAYOUT_STORAGE_KEY, PANE_MAX_VISIBLE } from "./types/pane-descriptor";
 export { isDefaultPaneId } from "./types/pane-descriptor";
@@ -27,6 +30,7 @@ export type { IndicatorSet, IndicatorSetsStorage, IndicatorSetStorageLike } from
 export type { BarReplayState, ReplayBarLike, ReplaySpeed } from "./replay/BarReplayController";
 export { getSeries, listRegistered, registerSeries } from "./registry/SeriesRegistry";
 export type { SeriesSettingField, IndicatorCatalogEntry, IndicatorCategory, RepaintPolicy, PanePolicy, ScalePolicy } from "./types/indicator-catalog";
+export type { ChartHandle, VisibleRange } from "./types/chart";
 export { initRegistry } from "./registry/registerAll";
 
 export type { ChartSyncState } from "./ChartPane";

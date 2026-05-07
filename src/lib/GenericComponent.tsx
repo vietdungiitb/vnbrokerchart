@@ -23,6 +23,7 @@ export interface GenericComponentProps {
 	enableDragOnHover?: boolean;
 	disablePan?: boolean;
 	canvasToDraw?: (contexts: CanvasContexts | undefined) => CanvasRenderingContext2D | undefined;
+	allowAnyChart?: boolean;
 	isHover?: (moreProps: AnyRecord, e?: unknown) => boolean;
 	onClick?: (moreProps: AnyRecord, e?: unknown) => void;
 	onClickWhenHover?: (moreProps: AnyRecord, e?: unknown) => void;

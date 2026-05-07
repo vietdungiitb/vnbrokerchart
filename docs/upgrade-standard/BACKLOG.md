@@ -88,6 +88,19 @@ Mỗi item: priority, slice, scope, phụ thuộc, tiêu chí nghiệm thu.
 
 ---
 
+## 3c. Canvas DrawTools Next — Workstream mới (CE-11/CE-12/CE-13)
+
+*Tham chiếu đầy đủ: `docs/upgrade-standard/canvas-drawtools-next/HANDOFF_MANIFEST.md`*
+
+| ID | Priority | Milestone | Task | Scope | Depends on | Acceptance criteria | Est. | Status |
+| :--- | :---: | :--- | :--- | :--- | :--- | :--- | :---: | :--- |
+| B-140 | P0 | CE-11 | Object editing core | Move/resize/delete/copy-paste/z-order | CE-10 | Drag object và handle resize pass smoke | XL | Open |
+| B-141 | P0 | CE-12 | Trading UX layer | Axis price labels, measuring tool, shortcuts, context menu | CE-11 | Shortcut/context menu/labels pass smoke | L | Open |
+| B-142 | P1 | CE-13 | Indicator pane workflow | Pane-aware render/hit test/persist | CE-11, CE-12 | Vẽ trên RSI/MACD pane đúng scale | XL | Open |
+| B-143 | P1 | CE-NEXT | Audit + closeout | Audit ledger + module tree + package closeout | CE-11–CE-13 | Evidence đủ, inventory cập nhật | S | Open |
+
+---
+
 ## 4. Ghi chú cho team
 
 - **Không bắt đầu Giai đoạn 2 trước khi Gate G1 pass**.

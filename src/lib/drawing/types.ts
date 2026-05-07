@@ -42,6 +42,8 @@ export interface DrawingObject {
 	type: DrawingToolType;
 	points: Point[];
 	style: DrawingStyle;
+	paneId?: string;
+	yScaleId?: string;
 	text?: string;
 	fibLevels?: number[];
 	label?: string;

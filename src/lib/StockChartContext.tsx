@@ -3,6 +3,8 @@ import type { AnyRecord, CanvasContexts } from "./types";
 
 export interface ChartConfig {
 	id: number | string;
+	paneId?: string;
+	yScaleId?: string;
 	origin: [number, number];
 	padding: number | { top: number; bottom: number };
 	yScale: any;

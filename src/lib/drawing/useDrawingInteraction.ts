@@ -2,9 +2,10 @@ import { useCallback, useMemo, useReducer } from "react";
 import type { Dispatch } from "react";
 import type { DrawingHistory, DrawingHistoryAction } from "./history";
 import { createDrawingHistory, historyReducer } from "./history";
-import type { DrawingObject } from "./types";
+import type { DrawingObject, Point } from "./types";
 import type { DrawingAction, DrawingState } from "./stateMachine";
 import { drawingReducer } from "./stateMachine";
+import { clonePoint } from "./shared";
 
 export type DrawingInteractionAction = DrawingAction | DrawingHistoryAction;
 
@@ -17,6 +18,13 @@ export interface UseDrawingInteractionReturn {
 	drawingState: DrawingState;
 	history: DrawingHistory;
 	dispatch: Dispatch<DrawingInteractionAction>;
+	selectObject: (objectId: string) => void;
+	setSelectedObjects: (objectIds: readonly string[]) => void;
+	startMoving: (objectId: string, startPoint: Point, currentPoint: Point) => void;
+	startResizing: (objectId: string, handle: string) => void;
+	startEditing: (objectId: string, text?: string) => void;
+	replaceDrawings: (drawings: readonly DrawingObject[]) => void;
+	updateDrawing: (objectId: string, patch: Partial<DrawingObject>) => void;
 	undo: () => void;
 	redo: () => void;
 	deleteSelected: () => void;
@@ -43,6 +51,36 @@ function getSelectedObjectIds(state: DrawingState): string[] {
 		default:
 			return [];
 	}
+}
+
+function cloneDrawingPoints(points: readonly Point[]) {
+	return points.map(clonePoint);
+}
+
+function patchDrawing(drawing: DrawingObject, patch: Partial<DrawingObject>): DrawingObject {
+	return {
+		...drawing,
+		...patch,
+		points: patch.points ? cloneDrawingPoints(patch.points) : cloneDrawingPoints(drawing.points),
+		style: patch.style ? { ...drawing.style, ...patch.style } : { ...drawing.style },
+		fibLevels: patch.fibLevels ? [...patch.fibLevels] : drawing.fibLevels ? [...drawing.fibLevels] : undefined,
+		riskReward: patch.riskReward ? { ...patch.riskReward } : drawing.riskReward ? { ...drawing.riskReward } : undefined,
+		updatedAt: Date.now(),
+	};
+}
+
+function replaceDrawingById(drawings: readonly DrawingObject[], objectId: string, patch: Partial<DrawingObject>) {
+	let didChange = false;
+	const nextDrawings = drawings.map((drawing) => {
+		if (drawing.id !== objectId) {
+			return drawing;
+		}
+
+		didChange = true;
+		return patchDrawing(drawing, patch);
+	});
+
+	return didChange ? nextDrawings : null;
 }
 
 export function createDrawingInteractionState(initialDrawings: readonly DrawingObject[] = []): DrawingInteractionState {
@@ -94,6 +132,39 @@ export function deleteSelectedInteractionState(state: DrawingInteractionState): 
 export function useDrawingInteraction(initialDrawings: readonly DrawingObject[] = []): UseDrawingInteractionReturn {
 	const [state, dispatch] = useReducer(drawingInteractionReducer, initialDrawings, createDrawingInteractionState);
 
+	const selectObject = useCallback((objectId: string) => {
+		dispatch({ type: "SELECT_OBJECT", objectId });
+	}, [dispatch]);
+
+	const setSelectedObjects = useCallback((objectIds: readonly string[]) => {
+		dispatch({ type: "SET_SELECTED_OBJECTS", objectIds: [...objectIds] });
+	}, [dispatch]);
+
+	const startMoving = useCallback((objectId: string, startPoint: Point, currentPoint: Point) => {
+		dispatch({ type: "START_MOVING", objectId, startPoint, currentPoint });
+	}, [dispatch]);
+
+	const startResizing = useCallback((objectId: string, handle: string) => {
+		dispatch({ type: "START_RESIZING", objectId, handle });
+	}, [dispatch]);
+
+	const startEditing = useCallback((objectId: string, text?: string) => {
+		dispatch({ type: "START_EDITING", objectId, text });
+	}, [dispatch]);
+
+	const replaceDrawings = useCallback((drawings: readonly DrawingObject[]) => {
+		dispatch({ type: "REPLACE", drawings: [...drawings] });
+	}, [dispatch]);
+
+	const updateDrawing = useCallback((objectId: string, patch: Partial<DrawingObject>) => {
+		const nextDrawings = replaceDrawingById(state.history.present, objectId, patch);
+		if (!nextDrawings) {
+			return;
+		}
+
+		dispatch({ type: "REPLACE", drawings: nextDrawings });
+	}, [dispatch, state.history.present]);
+
 	const undo = useCallback(() => {
 		dispatch({ type: "UNDO" });
 	}, [dispatch]);
@@ -128,6 +199,13 @@ export function useDrawingInteraction(initialDrawings: readonly DrawingObject[] 
 		drawingState: state.drawingState,
 		history: state.history,
 		dispatch,
+		selectObject,
+		setSelectedObjects,
+		startMoving,
+		startResizing,
+		startEditing,
+		replaceDrawings,
+		updateDrawing,
 		undo,
 		redo,
 		deleteSelected,
@@ -135,5 +213,5 @@ export function useDrawingInteraction(initialDrawings: readonly DrawingObject[] 
 		canUndo: state.history.past.length > 0,
 		canRedo: state.history.future.length > 0,
 		allDrawings: state.history.present,
-	}), [cancelDrawing, deleteSelected, dispatch, redo, state.drawingState, state.history, undo]);
+	}), [cancelDrawing, deleteSelected, dispatch, redo, replaceDrawings, selectObject, setSelectedObjects, startEditing, startMoving, startResizing, state.drawingState, state.history, undo, updateDrawing]);
 }

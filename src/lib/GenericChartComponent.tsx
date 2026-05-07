@@ -49,6 +49,7 @@ class GenericChartComponent extends GenericComponent {
 
 		if (chartConfigList && Array.isArray(chartConfigList)) {
 			const { chartId } = this.props;
+			this.moreProps.chartConfigList = chartConfigList;
 			const chartConfig = find(chartConfigList, (each: ChartConfig) => each.id === chartId) || chartConfigList[0];
 			if (chartConfig) {
 				this.moreProps.chartConfig = chartConfig;
@@ -72,7 +73,14 @@ class GenericChartComponent extends GenericComponent {
 	}
 
 	shouldTypeProceed(type: string, moreProps: AnyRecord) {
+		if (this.props.allowAnyChart) {
+			return true;
+		}
+
 		if ((type === "mousemove" || type === "click") && this.props.disablePan) {
+			return true;
+		}
+		if (type === "mousedown" && this.props.disablePan) {
 			return true;
 		}
 		if (ALWAYS_TRUE_TYPES.indexOf(type) === -1 && isDefined(moreProps) && isDefined(moreProps.currentCharts)) {

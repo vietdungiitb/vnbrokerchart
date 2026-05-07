@@ -1,6 +1,8 @@
+import { forwardRef, useCallback, useImperativeHandle, useRef, type ReactNode } from "react";
 import { format as d3Format } from "d3-format";
 import { timeFormat } from "d3-time-format";
 import Chart from "../Chart";
+import ChartCanvas from "../ChartCanvas";
 import { XAxis, YAxis } from "../axes";
 import { CrossHairCursor, MouseCoordinateX, MouseCoordinateY } from "../coordinates";
 import AreaSeries from "../series/AreaSeries";
@@ -14,14 +16,34 @@ import OHLCSeries from "../series/OHLCSeries";
 import RSISeries from "../series/RSISeries";
 import type { EnrichedDatum, IndicatorBandValue, IndicatorMacdValue, IndicatorWhaleValue } from "./calculators/types";
 import { getSeries } from "./registry/SeriesRegistry";
+import "./registry/registerAll";
 import { resolveSeriesStructuredValue, resolveSeriesValue, resolveSeriesValueAccessors } from "./seriesValueResolver";
 import { PaneTooltip, type PaneTooltipEntry } from "./PaneTooltip";
 import type { PaneDescriptor, SeriesConfig, SeriesTypeId } from "./types/pane-descriptor";
+import type { ChartHandle, VisibleRange } from "./types/chart";
+
+type ChartCanvasHandle = InstanceType<typeof ChartCanvas>;
 
 export interface DynamicChartProps {
 	panes: readonly PaneDescriptor[];
 	heights: readonly number[];
 	data: readonly EnrichedDatum[];
+	width: number;
+	height: number;
+	margin: { left: number; right: number; top: number; bottom: number };
+	type?: "svg" | "hybrid";
+	seriesName: string;
+	xScale: any;
+	xAccessor: (datum: EnrichedDatum) => Date | number;
+	displayXAccessor?: (datum: EnrichedDatum) => Date | number;
+	xExtents?: readonly [Date | number, Date | number] | ((data: readonly EnrichedDatum[]) => readonly [Date | number, Date | number]);
+	ratio: number;
+	mouseMoveEvent?: boolean;
+	panEvent?: boolean;
+	zoomEvent?: boolean;
+	useCrossHairStyleCursor?: boolean;
+	defaultFocus?: boolean;
+	disableInteraction?: boolean;
 	axisStroke: string;
 	axisTickFill: string;
 	isDark: boolean;
@@ -29,7 +51,11 @@ export interface DynamicChartProps {
 	priceFormat?: (value: number) => string;
 	volumeFormat?: (value: number) => string;
 	className?: string;
+	children?: ReactNode;
+	onClick?: (moreProps: { currentItem?: EnrichedDatum; currentCharts?: number[]; mouseXY?: [number, number] }, e: unknown) => void;
 	onContextMenu?: (moreProps: { currentItem?: EnrichedDatum; currentCharts?: number[]; mouseXY?: [number, number] }, e: unknown) => void;
+	onVisibleDomainChange?: (domain: [Date | number, Date | number]) => void;
+	onVisibleRangeChange?: (range: VisibleRange) => void;
 }
 
 interface ChartSlot {
@@ -92,6 +118,46 @@ function buildPriceTooltipEntries(priceFormat: (value: number) => string, volume
 		{ label: "C", format: priceFormat, value: (d) => d.close },
 		{ label: "Vol", format: volumeFormat, value: (d) => d.volume },
 	];
+}
+
+function computeExtentsForIndex(
+	index: number,
+	align: "left" | "center" | "right",
+	currentBarCount: number,
+	fullData: readonly EnrichedDatum[],
+): [Date, Date] | null {
+	if (fullData.length === 0 || index < 0) {
+		return null;
+	}
+
+	const clampedIndex = Math.min(index, fullData.length - 1);
+	const half = Math.floor(currentBarCount / 2);
+	let start: number;
+	let end: number;
+
+	switch (align) {
+		case "left":
+			start = clampedIndex;
+			end = Math.min(clampedIndex + currentBarCount - 1, fullData.length - 1);
+			break;
+		case "right":
+			end = clampedIndex;
+			start = Math.max(clampedIndex - currentBarCount + 1, 0);
+			break;
+		case "center":
+		default:
+			start = Math.max(clampedIndex - half, 0);
+			end = Math.min(clampedIndex + half, fullData.length - 1);
+			break;
+	}
+
+	const startDate = fullData[start]?.date;
+	const endDate = fullData[end]?.date;
+	if (!startDate || !endDate) {
+		return null;
+	}
+
+	return [startDate, endDate];
 }
 
 export function buildChartSlots(pane: PaneDescriptor): ChartSlot[] {
@@ -281,7 +347,7 @@ function renderSeries(series: SeriesConfig) {
 	}
 }
 
-export function DynamicChart({
+function renderDynamicChartChildren({
 	panes,
 	heights,
 	data,
@@ -316,6 +382,11 @@ export function DynamicChart({
 		const isLastSlot = index === chartSlots.length - 1;
 		const yExtents = buildYExtents(slot);
 		const yAxisFormat = slot.axisFormat;
+		const yScaleId = slot.hasLeftAxis && !slot.hasRightAxis
+			? "left"
+			: slot.hasRightAxis && !slot.hasLeftAxis
+				? "right"
+				: undefined;
 		// Tooltip: first slot of each pane sits just below the gap/splitter (y=4).
 		// Subsequent slots in the same pane (splitScale) are staggered down 20px each
 		// so their labels don't overlap.
@@ -328,6 +399,8 @@ export function DynamicChart({
 					id={chartId++}
 					height={paneHeight}
 					origin={origin}
+					paneId={pane.id}
+					yScaleId={yScaleId}
 					yExtents={yExtents}
 					className={className}
 					onContextMenu={onContextMenu}
@@ -371,3 +444,84 @@ export function DynamicChart({
 		];
 	}).concat(<CrossHairCursor key="crosshair-cursor" />);
 }
+
+const DynamicChartComponent = forwardRef<ChartHandle, DynamicChartProps>(function DynamicChart(props, ref) {
+	const { onVisibleRangeChange, ...rest } = props;
+	const chartCanvasRef = useRef<ChartCanvasHandle | null>(null);
+	const chartChildren = renderDynamicChartChildren(props);
+
+	useImperativeHandle(ref, () => ({
+		scrollToIndex(index: number, align: "left" | "center" | "right" = "center") {
+			const canvas = chartCanvasRef.current;
+			if (!canvas) return;
+			const fullData = canvas.getFullData() as readonly EnrichedDatum[];
+			const barCount = canvas.getCurrentViewportBarCount();
+			const extents = computeExtentsForIndex(index, align, barCount, fullData);
+			if (extents) {
+				canvas.setXExtents(extents);
+			}
+		},
+		zoomToRange(startIndex: number, endIndex: number) {
+			const canvas = chartCanvasRef.current;
+			if (!canvas || startIndex < 0 || endIndex < 0 || startIndex > endIndex) return;
+			const fullData = canvas.getFullData() as readonly EnrichedDatum[];
+			if (endIndex >= fullData.length) return;
+			const startDate = fullData[startIndex]?.date;
+			const endDate = fullData[endIndex]?.date;
+			if (startDate && endDate) {
+				canvas.setXExtents([startDate, endDate]);
+			}
+		},
+		scrollToDate(date: Date, align: "left" | "center" | "right" = "center") {
+			const canvas = chartCanvasRef.current;
+			if (!canvas) return;
+			const fullData = canvas.getFullData() as readonly EnrichedDatum[];
+			const index = fullData.findIndex((datum) => datum.date.getTime() >= date.getTime());
+			if (index < 0) return;
+			const barCount = canvas.getCurrentViewportBarCount();
+			const extents = computeExtentsForIndex(index, align, barCount, fullData);
+			if (extents) {
+				canvas.setXExtents(extents);
+			}
+		},
+	}), []);
+
+	const handleVisibleRangeChange = useCallback((range: VisibleRange) => {
+		onVisibleRangeChange?.(range);
+	}, [onVisibleRangeChange]);
+
+	return (
+		<ChartCanvas
+			ref={chartCanvasRef}
+			height={props.height}
+			width={props.width}
+			margin={props.margin}
+			type={props.type ?? "hybrid"}
+			seriesName={props.seriesName}
+			data={props.data}
+			xScale={props.xScale}
+			xAccessor={props.xAccessor}
+			displayXAccessor={props.displayXAccessor ?? props.xAccessor}
+			xExtents={props.xExtents}
+			ratio={props.ratio}
+			mouseMoveEvent={props.mouseMoveEvent}
+			panEvent={props.panEvent}
+			zoomEvent={props.zoomEvent}
+			useCrossHairStyleCursor={props.useCrossHairStyleCursor}
+			defaultFocus={props.defaultFocus}
+			disableInteraction={props.disableInteraction}
+			className={props.className}
+			onClick={props.onClick}
+			onContextMenu={props.onContextMenu}
+			onVisibleDomainChange={props.onVisibleDomainChange}
+			onVisibleRangeChange={handleVisibleRangeChange}
+		>
+			{chartChildren}
+			{props.children}
+		</ChartCanvas>
+	);
+});
+
+DynamicChartComponent.displayName = "DynamicChart";
+
+export { DynamicChartComponent as DynamicChart };

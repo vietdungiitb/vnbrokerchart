@@ -58,9 +58,37 @@
 
 ---
 
-## 4. Cách đọc bảng này
+## 4. IC-GAP — Technical Gap Remediation
+
+> **Phụ thuộc:** IC-1 ✅ · IC-2 ✅ · IC-3 ✅  
+> **Trạng thái:** APPROVED — sẵn sàng code  
+> **Chi tiết kỹ thuật:** [IC_GAP_IMPLEMENTATION_PLAN.md](./IC_GAP_IMPLEMENTATION_PLAN.md)  
+> **Taskboard chi tiết:** [IC_GAP_TASKBOARD.md](./IC_GAP_TASKBOARD.md)
+
+| ID | Trạng thái | Công việc | Đầu ra bắt buộc |
+|----|-----------|-----------|------------------|
+| GAP1-01 | READY | Tạo `VisibleRange` + `ChartHandle` types | `src/lib/core/types/chart.ts` mới, export từ indexes |
+| GAP1-02 | TODO | `onVisibleRangeChange` vào `ChartCanvas` | emit trong `componentDidUpdate`, guard index chưa đổi |
+| GAP1-03 | TODO | Forward prop qua `DynamicChart` | `useCallback` stable, type-check PASS |
+| GAP1-04 | TODO | 5 unit tests Gap 1 | `gap1-viewport-event.test.ts` PASS |
+| GAP3-02 | TODO | 3 public methods vào `ChartCanvas` | `setXExtents`, `getFullData`, `getCurrentViewportBarCount` |
+| GAP3-03 | TODO | `forwardRef + useImperativeHandle` trong `DynamicChart` | backward compat no-ref |
+| GAP3-04 | TODO | 7 unit tests Gap 3 | `gap3-scroll-zoom-api.test.ts` PASS |
+| GAP2-01 | TODO | `ChartRenderContext` + wire Provider | hook throw ngoài Provider |
+| GAP2-02 | TODO | `OverlayCanvas` component | `pointerEvents: none`, HiDPI, exception guard |
+| GAP2-03 | TODO | `WhaleBubbleOverlay` minh họa | bubble đúng tọa độ, radius tỷ lệ |
+| GAP2-04 | TODO | 7 unit tests Gap 2 | `gap2-canvas-overlay.test.ts` PASS |
+| GAP-FINAL | TODO | Audit, ledger, module tree, build | `npm test` ≥127 · ledger entry · `module_tree_full.md` updated |
+
+**Gate IC-GAP:** `npm run type-check` exit 0 · `npm test` ≥127 PASS · `npm run build:docs` · browser smoke Gap 2 + Gap 3
+
+---
+
+## 5. Cách đọc bảng này
 
 - Làm theo thứ tự từ trên xuống dưới.
 - Không bắt đầu IC-2 cho đến khi IC-1 pass gate và có audit entry.
 - Không bắt đầu IC-3 cho đến khi IC-2 pass gate và có audit entry.
+- Không bắt đầu GAP2-01 cho đến khi GAP1-02 DONE.
+- Gap 1 và Gap 3 có thể làm song song (cùng bắt đầu từ GAP1-01 / GAP3-01).
 - Nếu task nào phát hiện scope mới ngoài plan, dừng lại và cập nhật tài liệu trước khi code tiếp.

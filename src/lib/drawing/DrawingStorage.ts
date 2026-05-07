@@ -17,6 +17,12 @@ const DRAWING_TOOL_TYPES: DrawingToolType[] = [
 	"longPosition",
 	"shortPosition",
 	"fibExtension",
+	"parallelChannel",
+	"pitchfork",
+	"abcdPattern",
+	"fibArc",
+	"fibTimeZone",
+	"regressionChannel",
 ];
 
 export class DrawingImportError extends Error {
@@ -115,6 +121,8 @@ function normalizeDrawingObject(value: unknown, index: number): DrawingObject {
 		type: value.type,
 		points: value.points.map((point) => ({ x: point.x, y: point.y })),
 		style,
+		paneId: typeof value.paneId === "string" && value.paneId.length > 0 ? value.paneId : undefined,
+		yScaleId: typeof value.yScaleId === "string" && value.yScaleId.length > 0 ? value.yScaleId : undefined,
 		text: typeof value.text === "string" ? value.text : undefined,
 		fibLevels: Array.isArray(value.fibLevels) ? value.fibLevels.filter((item): item is number => typeof item === "number" && Number.isFinite(item)) : undefined,
 		label: typeof value.label === "string" ? value.label : undefined,
@@ -160,7 +168,9 @@ export function createLocalStorageAdapter(): DrawingStorageAdapter {
 				return normalizeDrawings(deserializeDrawings(raw));
 			} catch (error) {
 				if (error instanceof DrawingImportError) {
-					throw error;
+					getStorage().removeItem(getStorageKey(symbol, timeframe));
+					console.warn(`Ignoring invalid drawing cache for ${symbol}/${timeframe}:`, error.message);
+					return [];
 				}
 				return [];
 			}

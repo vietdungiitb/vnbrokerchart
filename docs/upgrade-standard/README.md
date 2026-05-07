@@ -50,3 +50,8 @@ Khi cần biết một task đã đủ điều kiện code hay chưa, đọc th�
 - [../project-delivery/HANDOFF_MANIFEST.md](../project-delivery/HANDOFF_MANIFEST.md)
 - [../project-delivery/PROJECT_GOVERNANCE.md](../project-delivery/PROJECT_GOVERNANCE.md)
 - [../project-delivery/TECH_SPEC.md](../project-delivery/TECH_SPEC.md)
+
+## Canvas DrawTools workstreams
+
+- [Canvas DrawTools CE-series](canvas-drawtools/HANDOFF_MANIFEST.md) - nền canvas, hit test, snap và switch render path cho drawing tools.
+- [Canvas DrawTools Next (CE-NEXT, đề xuất)](canvas-drawtools-next/HANDOFF_MANIFEST.md) - phase chỉnh sửa object, trading UX và workflow theo pane.

@@ -107,6 +107,8 @@ export function getNewChartConfig(innerDimension: any, children: any, existingCh
 
 			return {
 				id,
+				paneId: chartProps.paneId,
+				yScaleId: chartProps.yScaleId,
 				origin: functor(origin)(width, availableHeight),
 				padding,
 				originalYExtentsProp: yExtentsProp,

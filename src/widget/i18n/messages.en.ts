@@ -7,4 +7,7 @@ export const widgetMessagesEn: WidgetMessages = {
 	"widget.title": "VNStock chart",
 	"widget.symbol": "Symbol",
 	"widget.timeframe": "Timeframe",
+	"measurement.title": "Measure",
+	"measurement.bars": "Bars",
+	"measurement.price": "Δ price",
 };

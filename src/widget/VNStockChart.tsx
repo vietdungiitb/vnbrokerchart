@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { format } from "d3-format";
 import { scaleTime } from "d3-scale";
 import { timeFormat } from "d3-time-format";
-import ChartCanvas from "../lib/ChartCanvas";
-import { DynamicChart, DEFAULT_PANES, type PaneDescriptor, type ChartTheme, useChartTheme } from "../lib/core";
+import { DynamicChart, DEFAULT_PANES, type PaneDescriptor, type ChartTheme, type VisibleRange, useChartTheme } from "../lib/core";
 import type { EnrichedDatum } from "../lib/core/calculators/types";
 import { enrichData } from "../lib/core/calculators/enrichData";
 import { useCanvasResize } from "../lib/core/hooks/useCanvasResize";
@@ -11,6 +10,7 @@ import type { StockDataAdapter, Timeframe } from "../lib/types/adapter";
 import type { OHLCVBar } from "../lib/types/ohlcv";
 import { WidgetErrorBoundary } from "./WidgetErrorBoundary";
 import { WidgetEmptyState } from "./WidgetEmptyState";
+import MeasurementOverlay from "./MeasurementOverlay";
 import { WidgetI18nProvider } from "./context/WidgetI18nContext";
 import type { WidgetLocale, WidgetMessages } from "./i18n/types";
 
@@ -27,9 +27,11 @@ export interface VNStockChartProps {
 	children?: ReactNode;
 	className?: string;
 	style?: CSSProperties;
+	measurementEnabled?: boolean;
 	onClick?: (moreProps: { currentItem?: EnrichedDatum; currentCharts?: number[]; mouseXY?: [number, number] }, event: unknown) => void;
 	onContextMenu?: (moreProps: { currentItem?: EnrichedDatum; currentCharts?: number[]; mouseXY?: [number, number] }, event: unknown) => void;
 	onVisibleDomainChange?: (domain: [Date | number, Date | number]) => void;
+	onVisibleRangeChange?: (range: VisibleRange) => void;
 	onError?: (error: Error) => void;
 }
 
@@ -91,9 +93,11 @@ function VNStockChartContent({
 	children,
 	className,
 	style,
+	measurementEnabled,
 	onClick,
 	onContextMenu,
 	onVisibleDomainChange,
+	onVisibleRangeChange,
 	onError,
 }: VNStockChartProps) {
 	const { ref, size } = useCanvasResize<HTMLDivElement>();
@@ -261,13 +265,15 @@ function VNStockChartContent({
 				...style,
 			}}
 		>
-			<ChartCanvas
-				height={size.height}
+			<DynamicChart
+				panes={visiblePanes}
+				heights={paneHeights}
+				data={plotData}
 				width={size.width}
+				height={size.height}
 				margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
 				type="hybrid"
 				seriesName={`vnstock-${activeSymbol}-${activeTimeframe}`}
-				data={plotData}
 				xScale={scaleTime()}
 				xAccessor={safeXAccessor}
 				displayXAccessor={safeXAccessor}
@@ -280,20 +286,22 @@ function VNStockChartContent({
 				onClick={onClick}
 				onContextMenu={onContextMenu}
 				onVisibleDomainChange={onVisibleDomainChange}
+				onVisibleRangeChange={onVisibleRangeChange}
+				axisStroke={axisStroke}
+				axisTickFill={axisTickFill}
+				isDark={isDark}
+				dateFormat={(date: Date) => dateFormat(date)}
+				priceFormat={(value: number) => priceFormat(value)}
+				volumeFormat={(value: number) => volumeFormat(value)}
+				className={className}
 			>
-				{DynamicChart({
-					panes: visiblePanes,
-					heights: paneHeights,
-					data: plotData,
-					axisStroke,
-					axisTickFill,
-					isDark,
-					dateFormat: (date: Date) => dateFormat(date),
-					priceFormat: (value: number) => priceFormat(value),
-					volumeFormat: (value: number) => volumeFormat(value),
-				})}
 				{children}
-			</ChartCanvas>
+				<MeasurementOverlay
+					enabled={measurementEnabled ?? false}
+					isDark={isDark}
+					priceFormat={priceFormat}
+				/>
+			</DynamicChart>
 		</div>
 	);
 }

@@ -171,7 +171,7 @@ class EventCapture extends Component<any, any> {
 		}
 	}
 	handleClick(e: any) {
-		const mouseXY = mousePosition(e);
+		const mouseXY = pointer(e, this.node);
 		const { onClick, onDoubleClick } = this.props;
 
 		if (!this.panHappened && !this.dragHappened) {

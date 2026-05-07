@@ -1,9 +1,10 @@
 # Đề xuất xây dựng Indicator Platform: Từ Runtime Demo đến TradingView-class System
 
-> **Trạng thái:** Đề xuất · Chờ phê duyệt  
-> **Phiên bản:** 2.0 · 2026-05-06  
+> **Trạng thái:** Đang thực hiện — GĐ 1 ✅ + GĐ 3 ✅ hoàn tất · GĐ 2 adapter ⚠️ một phần · GĐ 4–5 chưa bắt đầu  
+> **Phiên bản:** 2.1 · 2026-05-06  
 > **Tác giả:** GitHub Copilot  
-> **Mục tiêu đọc:** Người quyết định · Kỹ sư trưởng · Kiểm toán chất lượng
+> **Mục tiêu đọc:** Người quyết định · Kỹ sư trưởng · Kiểm toán chất lượng  
+> **Cập nhật lần cuối:** 2026-05-06 — Phản ánh IC-1/IC-2/IC-3 đã hoàn tất; bổ sung phân tích 3 gap kỹ thuật là prerequisite cho GĐ 2 real-time
 
 ---
 
@@ -102,17 +103,28 @@ lại sẽ gấp 3–4 lần so với làm đúng ngay từ 12–15 indicator hi
 
 ### 2.1 Những gì đã làm tốt và cần giữ nguyên
 
+> **Cập nhật 2026-05-06:** IC-1, IC-2, IC-3 đã hoàn tất và merge vào `dev`. Bảng dưới đây được mở rộng để phản ánh trạng thái thực tế.
+
 | Layer | File/component | Trạng thái | Ghi chú |
 |-------|---------------|------------|---------|
 | Canonical SSOT | `enrichData.ts` | ✅ Hoàn chỉnh | Tính một lần, lưu vào `indicatorValues[key]` |
 | Key normalization | `seriesValueResolver.ts → buildIndicatorSeriesKey()` | ✅ Hoàn chỉnh | EMA/RSI/MACD/BB/Whale đã có key pattern |
 | Series visibility | `useDynamicPanes.ts → toggleSeriesVisible` | ✅ Hoàn chỉnh | Reducer + auto-hide pane khi hết series |
 | Legend chips | `IndicatorLegend.tsx` | ✅ Hoàn chỉnh | Chip hidden-state, toggle/remove callback đúng index |
-| Settings modal | `PaneSettingsModal.tsx` | ✅ Hoàn chỉnh | Y-axis, params, maxVisiblePanes, i18n |
+| Settings modal | `PaneSettingsModal.tsx` | ✅ Hoàn chỉnh | Y-axis, params, maxVisiblePanes, i18n — có tab indicator sets |
 | Runtime filter | `DynamicChart.tsx → buildChartSlots` | ✅ Hoàn chỉnh | `visible !== false` filter trước khi render |
 | SSOT policy | `docs/planning/INDICATOR_SSOT_POLICY.md` | ✅ Approved | Canonical rule đã được ghi thành văn bản |
+| Catalog metadata | `src/lib/core/registry/SeriesRegistry.ts` | ✅ Hoàn chỉnh (IC-2) | `IndicatorCatalogEntry` với `inputSchema`, `outputSchema`, `panePolicy`, `repaintPolicy` |
+| Generic settings form | `PaneSettingsModal.tsx → renderIndicatorParams` | ✅ Hoàn chỉnh (IC-2) | Render đúng từ `inputSchema`, không cần biết từng indicator |
+| Saved indicator sets | `src/lib/core/sets/indicatorSetCodec.ts` | ✅ Hoàn chỉnh (IC-3) | Clone, sanitize, save, load, export, import round-trip |
+| Saved sets hook | `src/lib/core/hooks/useIndicatorSets.ts` | ✅ Hoàn chỉnh (IC-3) | CRUD + apply + export + import + builtins merge |
+| Built-in templates | `src/lib/core/sets/builtins/*.json` | ✅ Hoàn chỉnh (IC-3) | 3 templates: VN Swing Setup, Orderflow Suite, Crypto Standard |
+| IndicatorSet types | `src/lib/core/types/indicator-set.ts` | ✅ Hoàn chỉnh (IC-3) | `IndicatorSet`, `IndicatorSetsStorage`, storage key constant |
+| Pane replace action | `useDynamicPanes.ts → replaceLayout` | ✅ Hoàn chỉnh (IC-3) | Apply set 1-click → chart reset về layout của set |
 
 ### 2.2 Những gì còn thiếu — gap thực sự
+
+> **Cập nhật 2026-05-06:** Nhiều item đã được hoàn thành trong IC-1/IC-2/IC-3. Xem trạng thái từng item bên dưới.
 
 ```
 src/lib/indicators/registry.ts  (hiện tại)
@@ -127,35 +139,50 @@ src/lib/types/indicator.ts  (hiện tại)
      — Đây chỉ là một "compute registry", KHÔNG phải catalog
 ```
 
-**Những gì catalog thật cần có nhưng chưa có:**
+**Trạng thái từng item catalog:**
 
 ```
-❌ category          — "trend" | "momentum" | "volatility" | "orderflow" | "strength"
-❌ tags              — ["non-repaint", "MTF-safe", "overlay", "oscillator"]
-❌ inputSchema       — mô tả params: min/max/step/type/label/default
-❌ outputSchema      — mô tả output shape: { type: "band" | "macd" | "scalar" }
-❌ panePolicy        — "overlay" | "separate" | "either"
-❌ scalePolicy       — "percent" | "price" | "normalized" | "volume"
-❌ repaintPolicy     — "no-repaint" | "repaint-on-close" | "repaint-always"
-❌ dependencies      — ["EMA:period=13"] — indicator phụ thuộc indicator khác
-❌ displayName (vi)  — tên tiếng Việt
-❌ description (vi)  — mô tả ngắn
+✅ category          — "trend" | "momentum" | "volatility" | "orderflow" | "strength"   [IC-2]
+✅ tags              — ["non-repaint", "MTF-safe", "overlay", "oscillator"]              [IC-2]
+✅ inputSchema       — mô tả params: min/max/step/type/label/default                     [IC-2]
+✅ outputSchema      — mô tả output shape: { type: "band" | "macd" | "scalar" }         [IC-2]
+✅ panePolicy        — "overlay" | "separate" | "either"                                 [IC-2]
+✅ scalePolicy       — "percent" | "price" | "normalized" | "volume"                     [IC-2]
+✅ repaintPolicy     — "no-repaint" | "repaint-on-close" | "repaint-always"              [IC-2]
+⚠️ dependencies      — ["EMA:period=13"] — indicator phụ thuộc indicator khác            [IC-4 chưa cần]
+✅ displayName (vi)  — tên tiếng Việt                                                    [IC-2 + i18n]
+✅ description (vi)  — mô tả ngắn                                                        [IC-2]
 
-❌ Saved indicator sets  — bundle canonical keys + presentation overrides
-❌ Custom graph builder  — DAG node-based composition
-❌ Sharing layer         — templates, favorites, community packs
+✅ Saved indicator sets  — bundle canonical keys + presentation overrides               [IC-3]
+❌ Custom graph builder  — DAG node-based composition                                    [IC-4]
+❌ Sharing layer         — templates, favorites, community packs                         [IC-5]
 ```
+
+**Gap kỹ thuật mới phát hiện (không có trong đề xuất gốc):**
+
+```
+❌ Viewport change event   — onVisibleRangeChange callback khi user pan/zoom             [Xem Section 11]
+❌ Canvas overlay system   — heatmap band, whale marker cần canvas-native, không SVG     [Xem Section 11]
+❌ Scroll/zoom to index API — scrollToDataIndex / zoomToRange imperative API             [Xem Section 11]
+```
+
+> ⚠️ Ba gap này là **prerequisite thực tế** cho GĐ 2 real-time (Whale Bubbles, CVD chart-linked).
+> Xem phân tích chi tiết và lộ trình khắc phục tại **Section 11 — Technical Gap Remediation**.
+
+
 
 ### 2.3 Hệ quả thực tế của gap này
 
-| Vấn đề | Hậu quả hiện tại |
-|--------|-----------------|
-| Không có `category` | UI phải hardcode filter "RSI là oscillator" thay vì đọc từ catalog |
-| Không có `inputSchema` | Settings modal phải biết từng indicator có params gì, không thể generic |
-| Không có `repaintPolicy` | Người dùng không biết indicator nào paint lại history, dễ backtest sai |
-| Không có saved sets | Người dùng phải cài lại layout mỗi lần vào app |
-| Không có custom builder | Không thể tạo indicator từ indicator (EMA của RSI) |
-| Không có sharing | Không có cơ chế lan truyền strategy giữa users |
+| Vấn đề | Hậu quả hiện tại | Trạng thái |
+|--------|-----------------|------------|
+| Không có `category` | UI phải hardcode filter "RSI là oscillator" thay vì đọc từ catalog | ✅ Đã fix (IC-2) |
+| Không có `inputSchema` | Settings modal phải biết từng indicator có params gì, không thể generic | ✅ Đã fix (IC-2) |
+| Không có `repaintPolicy` | Người dùng không biết indicator nào paint lại history, dễ backtest sai | ✅ Đã fix (IC-2) |
+| Không có saved sets | Người dùng phải cài lại layout mỗi lần vào app | ✅ Đã fix (IC-3) |
+| Không có viewport event | Whale alert không biết nến nào đang hiển thị trên màn hình | ❌ Gap mới (Section 11) |
+| Không có canvas overlay | Heatmap band/whale marker phải dùng SVG → chậm, không scale | ❌ Gap mới (Section 11) |
+| Không có custom builder | Không thể tạo indicator từ indicator (EMA của RSI) | ❌ IC-4 chưa làm |
+| Không có sharing | Không có cơ chế lan truyền strategy giữa users | ❌ IC-5 chưa làm |
 
 ---
 
@@ -206,7 +233,7 @@ src/lib/types/indicator.ts  (hiện tại)
 
 ---
 
-### Giai đoạn 1 — Well-known Indicators *(Tuần 1–3 = IC-1 + IC-2)*
+### Giai đoạn 1 — Well-known Indicators *(Tuần 1–3 = IC-1 + IC-2)* ✅ HOÀN TẤT
 #### Tier: Tất cả người dùng (bao gồm free)
 
 **Mục tiêu kỹ thuật:** Catalog hoàn chỉnh cho ~25 indicator chuẩn của TradingView.
@@ -241,12 +268,11 @@ VN-specific (pane):  MA20, MA50 (mandatory theo quy định UBCKNN VN)
 - Settings modal thành generic form renderer từ `inputSchema`
 - 25 builtin indicator files với catalog metadata đầy đủ
 
-**Gate:** `npm test` pass. Thêm 1 indicator mới vào registry → settings modal render đúng
-params mà không cần chỉnh modal.
+**Gate:** ✅ `npm test` pass (114 tests). Thêm indicator mới vào registry → settings modal render đúng params mà không cần chỉnh modal. **Đã xác nhận 2026-05-06.**
 
 ---
 
-### Giai đoạn 2 — VN-exclusive Indicators *(Tuần 3–5 = IC-1 một phần + adapter layer)*
+### Giai đoạn 2 — VN-exclusive Indicators *(Tuần 3–5 = IC-1 một phần + adapter layer)* ⚠️ ADAPTER CHƯA CÓ
 #### Tier: Pro+ (cần PAT `signals:read` từ VNInvest)
 
 **Đây là giai đoạn tạo ra lý do độc nhất để dùng VNStockcharts thay vì TradingView.**
@@ -300,9 +326,11 @@ mọi thứ trong một màn hình.
 **Gate:** Chart VCB với PAT test → Whale bubbles xuất hiện real-time. Chart BTCUSDT →
 Binance CVD từ aggTrade. Swap symbol → adapter tự đổi đúng.
 
+> ⚠️ **Prerequisite chưa đủ:** Để whale bubbles real-time hoạt động, cần giải quyết 3 gap kỹ thuật trong engine chart trước (viewport event, canvas overlay, scroll API). Xem **Section 11** để biết lộ trình khắc phục.
+
 ---
 
-### Giai đoạn 3 — Saved Sets & Templates *(Tuần 5–7 = IC-3)*
+### Giai đoạn 3 — Saved Sets & Templates *(Tuần 5–7 = IC-3)* ✅ HOÀN TẤT
 #### Tier: Pro+ (lưu local) · Enterprise (sync multi-device + share với team)
 
 **Mục tiêu:** Người dùng lưu được "bộ làm việc" của mình — không phải cài lại mỗi lần.
@@ -340,12 +368,13 @@ Enterprise trader còn hơn: team leader publish "chuẩn phân tích" cho cả 
 chart theo cùng framework → thảo luận không bị lệch nhau.
 
 **Công việc kỹ thuật:**
-- `IndicatorSet` type + `useIndicatorSets` hook
-- Settings modal thêm tab "Bộ chỉ báo của tôi"
-- Cloud sync endpoint cần Django backend (VNInvest workspace API)
-- Built-in 3 templates dưới dạng static JSON trong repo
+- ✅ `IndicatorSet` type + `useIndicatorSets` hook (`src/lib/core/types/indicator-set.ts`, `src/lib/core/hooks/useIndicatorSets.ts`)
+- ✅ Settings modal thêm tab "Bộ chỉ báo của tôi" (`PaneSettingsModal.tsx → renderIndicatorSetsSection`)
+- ✅ Built-in 3 templates dưới dạng static JSON trong repo (`src/lib/core/sets/builtins/`)
+- ✅ `indicatorSetCodec.ts` — clone, sanitize, save, load, export, import
+- ⏳ Cloud sync endpoint cần Django backend (VNInvest workspace API) — chưa làm, IC-5 scope
 
-**Gate:** Lưu set → reload trang → apply set → chart đúng. Import/export round-trip không mất data.
+**Gate:** ✅ Lưu set → reload trang → apply set → chart đúng. Import/export round-trip không mất data. **Xác nhận bằng 114 tests pass + browser smoke 2026-05-06.**
 
 ---
 
@@ -528,9 +557,11 @@ REST endpoint cấu hình → chart refresh đúng interval. DAG graph dùng cus
 | **Tên** | Well-known | VN-exclusive | Saved Sets | Custom Builder | Custom Data + Marketplace |
 | **Tier** | Tất cả | Pro+ | Pro+ / Enterprise | Pro+ / Enterprise | Enterprise + Marketplace |
 | **Tuần** | 1–3 | 3–5 | 5–7 | 7–12 | 12–20 |
+| **Trạng thái** | ✅ **DONE** (IC-1+IC-2) | ⚠️ Adapter chưa có | ✅ **DONE** (IC-3) | ❌ Chưa bắt đầu | ❌ Chưa bắt đầu |
 | **Lý do nâng tier** | — | Whale/CVD thật | Không cài lại | Indicator độc quyền | Data riêng + bán được |
 | **Barrier to exit** | Thấp | Trung bình | Trung bình | **Cao** (DAG library) | **Rất cao** (custom data bound) |
 | **Doanh thu model** | Freemium | Subscription Pro+ | Subscription Pro+/Ent | Subscription Ent | Revenue share Marketplace |
+| **Prerequisite** | — | 3 Gap kỹ thuật (Section 14) | — | IC-2 catalog | IC-4 serialization |
 
 
 
@@ -1824,6 +1855,351 @@ whale data và CVD thật là một tuần competitor khó copy hơn, không ph�
 | Domain locking trong PAT response | Khi làm PAT issue flow | 1 sprint | Backend VNInvest |
 | Build obfuscation | Trước public launch | 1 ngày | Build engineer |
 | Trademark registration | Ngay bây giờ nếu chưa có | Ngoài scope kỹ thuật | Business/Legal |
+
+---
+
+## 14. Technical Gap Remediation — 3 Gap Kỹ Thuật Cần Giải Quyết Trước GĐ 2
+
+> **Ngữ cảnh:** Audit code thực tế ngày 2026-05-06 phát hiện 3 gap kỹ thuật trong engine chart
+> (không có trong đề xuất gốc). Ba gap này là **prerequisite bắt buộc** cho Giai đoạn 2
+> real-time: không thể hiển thị Whale Bubbles live hay CVD linked với viewport nếu thiếu chúng.
+
+---
+
+### 14.1 Gap 1 — Không có Viewport Change Event
+
+#### Vấn đề
+`ChartCanvas.tsx` và `EventCapture.tsx` không emit bất kỳ callback nào khi người dùng pan/zoom.
+Hệ quả:
+- Whale alert real-time không biết nến nào đang nhìn thấy → không thể render marker đúng vị trí
+- CVD time range không thể sync với viewport hiện tại
+- Không có `subscribeAction(OnVisibleRangeChange)` tương đương KLineCharts
+
+#### Phân tích kỹ thuật hiện trạng
+
+```
+EventCapture.tsx      — class component, xử lý mouse/touch/wheel
+  componentDidMount   — attach DOM event listeners
+  componentWillUnmount— remove listeners
+  → Không có callback ra ngoài khi visible range thay đổi
+
+ChartCanvas.tsx       — class component, quản lý plotData + xScale
+  filterData()        — tính toán plotData từ xExtents
+  setState()          — update khi zoom/pan
+  → plotData thay đổi nhưng không ai được notify
+```
+
+#### Giải pháp đề xuất
+
+**Bước 1:** Thêm prop `onVisibleRangeChange` vào `ChartCanvas`:
+
+```typescript
+// src/lib/ChartCanvas.tsx
+interface ChartCanvasProps {
+  // ... existing props ...
+  onVisibleRangeChange?: (range: {
+    startIndex: number;
+    endIndex: number;
+    startDate: Date;
+    endDate: Date;
+  }) => void;
+}
+```
+
+**Bước 2:** Gọi callback trong `componentDidUpdate` khi `plotData` thay đổi:
+
+```typescript
+componentDidUpdate(prevProps: ChartCanvasProps, prevState: ChartCanvasState) {
+  const { onVisibleRangeChange } = this.props;
+  if (onVisibleRangeChange && this.state.plotData !== prevState.plotData) {
+    const plotData = this.state.plotData;
+    if (plotData.length > 0) {
+      onVisibleRangeChange({
+        startIndex: plotData[0].idx,
+        endIndex: plotData[plotData.length - 1].idx,
+        startDate: plotData[0].date,
+        endDate: plotData[plotData.length - 1].date,
+      });
+    }
+  }
+}
+```
+
+**Bước 3:** `DynamicChart.tsx` nhận và forward callback lên consumer:
+
+```typescript
+// src/lib/core/DynamicChart.tsx
+function DynamicChart({ onVisibleRangeChange, ...rest }: DynamicChartProps) {
+  const handleVisibleRangeChange = useCallback(
+    (range: VisibleRange) => onVisibleRangeChange?.(range),
+    [onVisibleRangeChange]
+  );
+  return <ChartCanvas ... onVisibleRangeChange={handleVisibleRangeChange} />;
+}
+```
+
+**Không cần thay đổi `EventCapture.tsx`** — logic nằm hoàn toàn trong `ChartCanvas`.
+
+| Metric | Value |
+|--------|-------|
+| Files cần thay đổi | `ChartCanvas.tsx`, `DynamicChart.tsx`, `src/lib/core/types/chart.ts` |
+| Breaking change | Không (prop optional) |
+| Effort ước tính | **1–2 ngày** |
+| Gate | Unit test: onVisibleRangeChange fires sau pan/zoom simulation |
+
+---
+
+### 14.2 Gap 2 — Không có Canvas Overlay System
+
+#### Vấn đề
+Drawing tools hiện tại dùng SVG (`DrawingLayer.tsx`). SVG phù hợp với drawing tools (đường
+trend, fibonacci) nhưng không thể làm:
+- **Heatmap band per-candle** — cần paint từng pixel theo density matrix
+- **Whale bubble overlay** — cần render hình tròn size-proportional trên canvas của chart
+- **Liquidation heatmap** — gradient color theo price level × time
+
+Khi thêm nhiều whale marker lên SVG, performance giảm đáng kể (SVG re-render toàn bộ DOM cây).
+
+#### Phân tích kỹ thuật hiện trạng
+
+```
+CanvasContainer.tsx   — quản lý multi-layer canvas
+  layer "main"        — bars, volume, indicators
+  layer "axes"        — trục X, trục Y
+  layer "interactive" — crosshair, tooltip
+  → Không có layer riêng cho overlay custom consumer
+
+DrawingLayer.tsx      — SVG-based, z-index trên canvas
+  → Dùng được cho drawing tools (ít element)
+  → Không phù hợp cho heatmap (10k+ data points)
+```
+
+#### Giải pháp đề xuất
+
+Thêm một `OverlayCanvas` layer vào `CanvasContainer`, với API callback-based cho consumer:
+
+```typescript
+// src/lib/core/canvas/OverlayCanvas.tsx — NEW FILE
+
+export interface OverlayRenderContext {
+  ctx: CanvasRenderingContext2D;
+  xScale: (value: number | Date) => number;
+  yScale: (value: number) => number;
+  plotData: EnrichedDatum[];
+  candleWidth: number;
+  devicePixelRatio: number;
+}
+
+export interface OverlayCanvasProps {
+  draw: (context: OverlayRenderContext) => void;
+  zIndex?: number;   // default: trên main, dưới crosshair
+}
+
+export function OverlayCanvas({ draw, zIndex = 5 }: OverlayCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const renderCtx = useChartRenderContext(); // context từ ChartCanvas
+
+  useEffect(() => {
+    if (!canvasRef.current || !renderCtx) return;
+    const ctx = canvasRef.current.getContext("2d")!;
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    draw({ ctx, ...renderCtx });
+  }, [draw, renderCtx]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ position: "absolute", zIndex, pointerEvents: "none" }}
+    />
+  );
+}
+```
+
+**Consumer — ví dụ WhaleBubbleOverlay:**
+
+```typescript
+// src/lib/indicators/overlays/WhaleBubbleOverlay.tsx
+function WhaleBubbleOverlay({ events, threshold }: WhaleBubbleProps) {
+  const draw = useCallback(({ ctx, xScale, yScale, plotData, candleWidth }: OverlayRenderContext) => {
+    for (const event of events) {
+      const bar = plotData.find(d => d.date.getTime() === event.ts);
+      if (!bar) continue;
+      const x = xScale(bar.date);
+      const y = yScale(event.price);
+      const radius = Math.sqrt(event.matchedValueVnd / threshold) * 4;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = event.side === "BUY" ? "rgba(0,200,100,0.7)" : "rgba(220,50,50,0.7)";
+      ctx.fill();
+    }
+  }, [events, threshold]);
+
+  return <OverlayCanvas draw={draw} zIndex={6} />;
+}
+```
+
+**Nguyên tắc quan trọng:** `OverlayCanvas` là **render-only** — không nhận mouse event. Drawing tools (interactive) vẫn dùng SVG. Đây là phân tách đúng: canvas cho performance-critical visual, SVG cho interactive tools.
+
+| Metric | Value |
+|--------|-------|
+| Files cần tạo mới | `OverlayCanvas.tsx`, `useChartRenderContext.ts`, `WhaleBubbleOverlay.tsx` (mẫu) |
+| Files cần thay đổi | `CanvasContainer.tsx`, `ChartCanvas.tsx` (thêm ChartRenderContext provider) |
+| Breaking change | Không |
+| Effort ước tính | **3–5 ngày** (API + 1 overlay mẫu đầy đủ) |
+| Gate | WhaleBubbleOverlay render đúng bubble tại đúng tọa độ giá × thời gian |
+
+---
+
+### 14.3 Gap 3 — Không có Scroll/Zoom to Index API
+
+#### Vấn đề
+Không có API imperative để di chuyển viewport đến một nến cụ thể theo chương trình.
+Hệ quả:
+- Nhận WebSocket whale alert mới → không thể highlight và scroll đến nến đó
+- "Đi đến ngày" (date picker) không thực hiện được
+- Link deep-link `?symbol=VCB&date=2026-05-06` không thể restore viewport đúng
+
+#### Phân tích kỹ thuật hiện trạng
+
+```
+ChartCanvas.tsx       — quản lý xExtents state
+  this.state.xExtents — [startDomain, endDomain] hiện tại
+  → Không có method public để thay đổi từ ngoài
+
+DynamicChart.tsx      — wrapper React function component
+  → Không expose bất kỳ imperative ref API nào
+```
+
+#### Giải pháp đề xuất
+
+Thêm `useImperativeHandle` handle trên `DynamicChart`, với `scrollToIndex` và `zoomToRange`:
+
+```typescript
+// src/lib/core/DynamicChart.tsx
+
+export interface ChartHandle {
+  scrollToIndex: (index: number, align?: "left" | "center" | "right") => void;
+  zoomToRange: (startIndex: number, endIndex: number) => void;
+  scrollToDate: (date: Date, align?: "left" | "center" | "right") => void;
+}
+
+// Thêm forwardRef wrapper:
+const DynamicChart = forwardRef<ChartHandle, DynamicChartProps>(
+  function DynamicChart({ ...props }, ref) {
+    const canvasRef = useRef<ChartCanvas>(null);
+
+    useImperativeHandle(ref, () => ({
+      scrollToIndex(index, align = "center") {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const data = canvas.getFullData();
+        const item = data[index];
+        if (!item) return;
+        // Tính xExtents mới từ index + align + current zoom level
+        const newExtents = computeExtentsForIndex(index, align, canvas.getCurrentZoomLevel(), data);
+        canvas.setXExtents(newExtents);
+      },
+      zoomToRange(startIndex, endIndex) {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const data = canvas.getFullData();
+        canvas.setXExtents([data[startIndex]?.date, data[endIndex]?.date]);
+      },
+      scrollToDate(date, align = "center") {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const data = canvas.getFullData();
+        const index = data.findIndex(d => d.date >= date);
+        if (index < 0) return;
+        this.scrollToIndex(index, align);
+      },
+    }), []);
+
+    return <ChartCanvas ref={canvasRef} {...props} />;
+  }
+);
+```
+
+**Consumer — ví dụ whale alert click-to-navigate:**
+
+```typescript
+// Trong LibraryShowcaseDemo.tsx
+const chartRef = useRef<ChartHandle>(null);
+
+function handleWhaleAlertClick(alert: WhaleEvent) {
+  const index = data.findIndex(d => d.date >= alert.ts);
+  chartRef.current?.scrollToIndex(index, "center");
+}
+
+return (
+  <>
+    <DynamicChart ref={chartRef} data={data} ... />
+    <WhaleAlertFeed events={whaleEvents} onAlertClick={handleWhaleAlertClick} />
+  </>
+);
+```
+
+**Cần thêm vào `ChartCanvas.tsx`:**
+
+```typescript
+// Hai method public cần thêm vào class ChartCanvas:
+setXExtents(extents: [Date, Date]): void {
+  this.setState({ xExtents: extents });
+}
+getFullData(): EnrichedDatum[] {
+  return this.props.data;
+}
+getCurrentZoomLevel(): number {
+  return this.state.plotData.length;
+}
+```
+
+| Metric | Value |
+|--------|-------|
+| Files cần thay đổi | `DynamicChart.tsx` (forwardRef + useImperativeHandle), `ChartCanvas.tsx` (3 public methods) |
+| Files cần cập nhật type | `src/lib/core/types/chart.ts` (thêm `ChartHandle` export) |
+| Breaking change | Không (additive) |
+| Effort ước tính | **2–3 ngày** |
+| Gate | Test: `chartRef.current.scrollToDate(new Date("2026-03-01"))` → viewport di chuyển đúng |
+
+---
+
+### 14.4 Thứ tự triển khai và dependency
+
+```
+Gap 1 (Viewport Event)      ← KHÔNG phụ thuộc Gap khác
+  │  Effort: 1–2 ngày
+  │  Unlock: CVD time-range sync, analytics viewport
+  ▼
+Gap 3 (Scroll/Zoom API)     ← KHÔNG phụ thuộc Gap khác
+  │  Effort: 2–3 ngày
+  │  Unlock: Whale alert click-to-navigate, date picker, deep-link
+  ▼
+Gap 2 (Canvas Overlay)      ← Cần Gap 1 hoàn thành (cần OverlayRenderContext có xScale)
+     Effort: 3–5 ngày
+     Unlock: Whale Bubbles real-time, heatmap, liquidation overlay
+```
+
+Gap 1 và Gap 3 có thể làm song song (không phụ thuộc nhau).
+Gap 2 nên bắt đầu sau khi Gap 1 xong để dùng `VisibleRange` trong `OverlayRenderContext`.
+
+**Tổng effort: 6–10 ngày kỹ thuật (1–2 sprint nhỏ)**
+
+Sau khi đóng cả 3 gap, `VNInvestSignalAdapter` có đủ hooks để:
+- Nhận WebSocket whale event → `OverlayCanvas` render bubble ngay trên đúng nến
+- CVD pane chỉ compute data trong viewport → tiết kiệm bandwidth
+- User click alert trong feed → `scrollToIndex` đưa chart về đúng nến đó
+
+---
+
+### 14.5 Bảng tổng hợp 3 Gap
+
+| Gap | Mô tả | Files chính | Effort | Unlock |
+|-----|-------|-------------|--------|--------|
+| **Gap 1** — Viewport Event | `onVisibleRangeChange` callback khi pan/zoom | `ChartCanvas.tsx`, `DynamicChart.tsx` | 1–2 ngày | CVD sync, analytics |
+| **Gap 2** — Canvas Overlay | `OverlayCanvas` layer cho heatmap/whale marker | `OverlayCanvas.tsx` (new), `CanvasContainer.tsx` | 3–5 ngày | Whale Bubbles, heatmap |
+| **Gap 3** — Scroll/Zoom API | `ChartHandle.scrollToIndex` / `zoomToRange` | `DynamicChart.tsx` (forwardRef), `ChartCanvas.tsx` | 2–3 ngày | Whale alert navigate, date picker |
+| **Tổng** | | | **6–10 ngày** | GĐ 2 real-time fully enabled |
 
 ---
 

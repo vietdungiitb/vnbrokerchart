@@ -9,10 +9,15 @@ export { default as ZoomButtons } from "./lib/ZoomButtons";
 
 export { ChartTerminal, ChartPane, PaneSplitter, usePaneManager, BarReplayController } from "./lib/core";
 export { ChartSplitter, usePaneSizes, useChartTheme, useIndicatorSets, DynamicChart, PaneHeader, PaneLabel, PaneTooltip, SeriesPicker, IndicatorLegend, useDynamicPanes, DEFAULT_PANES, PANE_LAYOUT_STORAGE_KEY, PANE_MAX_VISIBLE, INDICATOR_SETS_STORAGE_KEY } from "./lib/core";
+export { OverlayCanvas } from "./lib/core";
+
+export { WhaleBubbleOverlay } from "./lib/indicators/overlays/WhaleBubbleOverlay";
+export type { WhaleEvent, WhaleBubbleOverlayProps } from "./lib/indicators/overlays/WhaleBubbleOverlay";
 
 export type { ChartSplitterProps } from "./lib/core";
 export type { UsePaneSizesOptions, UsePaneSizesResult } from "./lib/core";
 export type { UseChartThemeResult, ChartTheme } from "./lib/core";
+export type { ChartHandle, VisibleRange } from "./lib/core";
 export type { IndicatorSet, IndicatorSetsStorage, IndicatorSetStorageLike } from "./lib/core";
 export type { PaneDescriptor, SeriesConfig, SeriesTypeId, TooltipMode, YAxisSide } from "./lib/core";
 export type { BarReplayState, ReplayBarLike, ReplaySpeed } from "./lib/core";
@@ -32,20 +37,26 @@ export {
 	drawingInteractionReducer,
 	drawingReducer,
 	chartPointToPixel,
+	measurementPointToPixel,
 	historyReducer,
 	isDrawingToolName,
 	listDrawingTools,
+	resolveMeasurementPoint,
 	pixelToChartPoint,
 	registerDrawingTool,
 	renderDrawingToSvg,
+	summarizeMeasurement,
 	serializeDrawingHistory,
 	serializeDrawingObject,
 	serializeDrawings,
 	useDrawingStorage,
 	useDrawingInteraction,
 	DrawingLayer,
+		DrawingContextMenu,
 	DrawingInspector,
 	DrawingListPanel,
+		DRAWING_SHORTCUTS,
+		resolveDrawingShortcut,
 	Rectangle,
 	Arrow,
 	Ray,
@@ -67,6 +78,15 @@ export type {
 	ChartScales,
 	DrawingInteractionAction,
 	DrawingInteractionState,
+	DrawingShortcutAction,
+	DrawingShortcutCommand,
+	DrawingShortcutDefinition,
+	DrawingShortcutTool,
+	DrawingContextMenuItem,
+	DrawingContextMenuProps,
+	MeasurementPoint,
+	MeasurementSelection,
+	MeasurementSummary,
 	PlotDatum,
 	UseDrawingInteractionReturn,
 } from "./lib/drawing";
@@ -90,7 +110,7 @@ export type {
 	YAxisConfig,
 } from "./lib/types/index";
 
-export { VNStockChart, WidgetErrorBoundary, WidgetEmptyState, WidgetI18nContext, WidgetI18nProvider, useWidgetI18n } from "./widget";
+export { MeasurementOverlay, VNStockChart, WidgetErrorBoundary, WidgetEmptyState, WidgetI18nContext, WidgetI18nProvider, useWidgetI18n } from "./widget";
 export { widgetMessagesEn, widgetMessagesVi } from "./widget";
 export type { VNStockChartProps, WidgetLocale, WidgetMessages, WidgetI18nContextValue, WidgetI18nProviderProps } from "./widget";
 

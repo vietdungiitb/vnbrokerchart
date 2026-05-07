@@ -16,6 +16,8 @@ export interface PaneSettingsModalProps {
 	paneState: UseDynamicPanesResult;
 	maxVisiblePanes: number;
 	onMaxVisiblePanesChange: (next: number) => void;
+	showDrawingPriceMarkers: boolean;
+	onShowDrawingPriceMarkersChange: (next: boolean) => void;
 	onAddPane: () => void;
 	onReset: () => void;
 	isDark: boolean;
@@ -59,6 +61,8 @@ export function PaneSettingsModal({
 	paneState,
 	maxVisiblePanes,
 	onMaxVisiblePanesChange,
+	showDrawingPriceMarkers,
+	onShowDrawingPriceMarkersChange,
 	onAddPane,
 	onReset,
 	isDark,
@@ -610,6 +614,23 @@ export function PaneSettingsModal({
 			</div>
 			<div className="gc-settings-note">
 				{t("theme.shellMode", { mode: isDark ? t("theme.mode.dark") : t("theme.mode.light") })}
+			</div>
+			<div className="gc-settings-row gc-settings-row--split" style={{ marginTop: 16 }}>
+				<div>
+					<div className="gc-settings-kicker">{t("settings.priceMarkersKicker")}</div>
+					<div className="gc-settings-field" style={{ marginTop: 6 }}>
+						<span>{t("settings.priceMarkers")}</span>
+						<div className="gc-settings-note gc-settings-note--tight">{t("settings.priceMarkersNote")}</div>
+					</div>
+				</div>
+				<button
+					type="button"
+					className={`gc-btn${showDrawingPriceMarkers ? " gc-btn--accent" : ""}`}
+					aria-pressed={showDrawingPriceMarkers}
+					onClick={() => onShowDrawingPriceMarkersChange(!showDrawingPriceMarkers)}
+				>
+					{showDrawingPriceMarkers ? t("settings.visible") : t("settings.hidden")}
+				</button>
 			</div>
 		</div>
 	);

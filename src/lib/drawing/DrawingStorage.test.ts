@@ -22,7 +22,7 @@ describe("DrawingStorage adapter", () => {
 	const drawing = createDrawingObject("trendLine", [
 		{ x: 100_000, y: 20 },
 		{ x: 160_000, y: 40 },
-	], { id: "drawing-1" });
+	], { id: "drawing-1", paneId: "momentum", yScaleId: "right" });
 
 	beforeEach(() => {
 		vi.stubGlobal("localStorage", createStorageMock());
@@ -52,5 +52,20 @@ describe("DrawingStorage adapter", () => {
 	it("rejects invalid payloads", () => {
 		const adapter = createLocalStorageAdapter();
 		expect(() => adapter.importJSON("{}" )).toThrow(DrawingImportError);
+	});
+
+	it("ignores and clears invalid cached drawings on load", () => {
+		const adapter = createLocalStorageAdapter();
+		globalThis.localStorage.setItem("rsc-drawings-v1-BTCUSD-1h", JSON.stringify([
+			{
+				id: "drawing-legacy",
+				type: "legacyTool",
+				points: [{ x: 100_000, y: 20 }],
+				style: { stroke: "#fff", strokeWidth: 1 },
+			},
+		]));
+
+		expect(adapter.load("BTCUSD", "1h")).toEqual([]);
+		expect(globalThis.localStorage.getItem("rsc-drawings-v1-BTCUSD-1h")).toBeNull();
 	});
 });

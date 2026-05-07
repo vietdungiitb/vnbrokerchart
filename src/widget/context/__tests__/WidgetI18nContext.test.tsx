@@ -30,6 +30,9 @@ function WidgetI18nProbe() {
 			data-locale={locale}
 			data-loading-label={t("widget.loading")}
 			data-no-data-label={t("widget.noData")}
+			data-measurement-title={t("measurement.title")}
+			data-measurement-bars={t("measurement.bars")}
+			data-measurement-price={t("measurement.price")}
 		>
 			{locale}
 		</div>
@@ -75,6 +78,7 @@ describe("WidgetI18nProvider", () => {
 		const probe = container.querySelector("div");
 		expect(probe?.getAttribute("data-locale")).toBe("en");
 		expect(probe?.getAttribute("data-loading-label")).toBe("Loading chart…");
+		expect(probe?.getAttribute("data-measurement-title")).toBe("Measure");
 		expect(document.documentElement.lang).toBe("en");
 
 		await act(async () => {
@@ -122,6 +126,8 @@ describe("WidgetI18nProvider", () => {
 
 		const probe = container.querySelector("div");
 		expect(probe?.getAttribute("data-locale")).toBe("vi");
+		expect(probe?.getAttribute("data-measurement-bars")).toBe("Số nến");
+		expect(probe?.getAttribute("data-measurement-price")).toBe("Δ giá");
 		expect(document.documentElement.lang).toBe("vi");
 	});
 });

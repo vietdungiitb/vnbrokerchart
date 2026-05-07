@@ -1,4 +1,5 @@
 export { VNStockChart } from "./VNStockChart";
+export { default as MeasurementOverlay } from "./MeasurementOverlay";
 export { WidgetErrorBoundary } from "./WidgetErrorBoundary";
 export { WidgetEmptyState } from "./WidgetEmptyState";
 export { WidgetI18nContext, WidgetI18nProvider, useWidgetI18n } from "./context/WidgetI18nContext";

@@ -1,4 +1,4 @@
-# Handoff Manifest — Indicator Platform (GĐ1+GĐ3: IC-1 + IC-2 + IC-3)
+# Handoff Manifest — Indicator Platform (GĐ1+GĐ3: IC-1 + IC-2 + IC-3 + IC-GAP)
 
 > **Trạng thái GĐ1 (IC-1+IC-2):** COMPLETE ✅  
 > **Trạng thái GĐ3 (IC-3):** COMPLETE ✅  
@@ -71,9 +71,14 @@ hai slice đầu tiên (IC-1 + IC-2) trong lộ trình 5 giai đoạn đã đư�
 | `HANDOFF_MANIFEST.md` *(file này)* | Entry point, scope và quyết định đã chốt |
 | `TECH_SPEC.md` | Đặc tả kỹ thuật target architecture IC-1 + IC-2 |
 | `IMPLEMENTATION_PLAN.md` | Slice definition IC-1 + IC-2 với DoD từng task |
-| `IC3_IMPLEMENTATION_PLAN.md` | **[MỚI]** Slice definition IC-3 với DoD từng task |
+| `IC3_IMPLEMENTATION_PLAN.md` | Slice definition IC-3 với DoD từng task |
 | `TASKBOARD.md` | Bảng task tác chiến hằng ngày, trạng thái ticket |
 | `AUDIT_PROTOCOL.md` | Gate commands, evidence template, smoke checklist |
+| `IC_GAP_HANDOFF_MANIFEST.md` | **[MỚI]** Entry point package IC-GAP (Gap 1+2+3) |
+| `IC_GAP_TECH_SPEC.md` | **[MỚI]** Đặc tả kỹ thuật chi tiết 3 gap kỹ thuật |
+| `IC_GAP_IMPLEMENTATION_PLAN.md` | **[MỚI]** 13 slices với DoD, lịch 5 ngày |
+| `IC_GAP_TASKBOARD.md` | **[MỚI]** Taskboard tác chiến IC-GAP |
+| `IC_GAP_AUDIT_PROTOCOL.md` | **[MỚI]** Gate commands + smoke checklist IC-GAP |
 | `[docs/project-delivery/PROJECT_GOVERNANCE.md](../PROJECT_GOVERNANCE.md)` | Luật bắt buộc |
 | `[docs/project-delivery/AUDIT_PROTOCOL.md](../AUDIT_PROTOCOL.md)` | Evidence format chung |
 | `[quality/QUALITY.md](../../../quality/QUALITY.md)` | Hiến pháp chất lượng |
@@ -114,6 +119,11 @@ IC-1 (Canonical Store Hardening)  ✅ DONE
 IC-2 (Indicator Catalog Metadata) ✅ DONE
   ↓
 IC-3 (Saved Indicator Sets)       ✅ DONE
+  ↓
+IC-GAP (Technical Gap Remediation) ⏳ APPROVED — chờ code
+  ├── Gap 1: Viewport Change Event
+  ├── Gap 2: Canvas Overlay System
+  └── Gap 3: Scroll/Zoom Imperative API
   ↓ (future)
 IC-4 (DAG Custom Builder)
 IC-5 (Marketplace)

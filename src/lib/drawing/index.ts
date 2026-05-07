@@ -5,6 +5,7 @@ import type { DrawingHistory } from "./history";
 import { createDrawingHistory, historyReducer } from "./history";
 import type { ChartScales, PlotDatum } from "./coordinateUtils";
 import { chartPointToPixel, pixelToChartPoint } from "./coordinateUtils";
+import { measurementPointToPixel, resolveMeasurementPoint, summarizeMeasurement } from "./measuring";
 import { createLocalStorageAdapter, DrawingImportError } from "./DrawingStorage";
 import {
 	deserializeDrawingHistory,
@@ -41,6 +42,10 @@ import type { DrawingInteractionAction, DrawingInteractionState, UseDrawingInter
 import { createDrawingInteractionState, deleteSelectedInteractionState, drawingInteractionReducer, useDrawingInteraction } from "./useDrawingInteraction";
 import { renderDrawingToSvg } from "./renderSvg";
 import DrawingLayer from "./DrawingLayer";
+export { DRAWING_SHORTCUTS, resolveDrawingShortcut } from "./shortcutMap";
+export type { DrawingShortcutAction, DrawingShortcutCommand, DrawingShortcutDefinition, DrawingShortcutTool } from "./shortcutMap";
+export { DrawingContextMenu } from "./contextMenu";
+export type { DrawingContextMenuItem, DrawingContextMenuProps } from "./contextMenu";
 import { useDrawingStorage } from "./useDrawingStorage";
 
 registerDrawingTool(TrendLine);
@@ -83,6 +88,9 @@ export {
 	serializeDrawings,
 	chartPointToPixel,
 	pixelToChartPoint,
+	measurementPointToPixel,
+	resolveMeasurementPoint,
+	summarizeMeasurement,
 	createDrawingInteractionState,
 	deleteSelectedInteractionState,
 	drawingInteractionReducer,
@@ -120,6 +128,12 @@ export type {
 	ChartScales,
 	PlotDatum,
 } from "./coordinateUtils";
+
+export type {
+	MeasurementPoint,
+	MeasurementSelection,
+	MeasurementSummary,
+} from "./measuring";
 
 export {
 	TrendLine,

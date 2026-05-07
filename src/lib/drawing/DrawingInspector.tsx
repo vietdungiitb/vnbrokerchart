@@ -1,5 +1,25 @@
 import type { DrawingObject, DrawingStyle } from "./types";
 
+export interface DrawingInspectorTextEditorLabels {
+	title: string;
+	label: string;
+	placeholder: string;
+	edit: string;
+	save: string;
+	cancel: string;
+	empty: string;
+}
+
+export interface DrawingInspectorTextEditorProps {
+	active: boolean;
+	value: string;
+	labels: DrawingInspectorTextEditorLabels;
+	onChange: (value: string) => void;
+	onStartEdit: () => void;
+	onCommit: () => void;
+	onCancel: () => void;
+}
+
 export interface DrawingInspectorLabels {
 	title: string;
 	stroke: string;
@@ -24,6 +44,7 @@ export interface DrawingInspectorLabels {
 export interface DrawingInspectorProps {
 	drawing: DrawingObject | null;
 	labels: DrawingInspectorLabels;
+	textEditor?: DrawingInspectorTextEditorProps;
 	position?: { x: number; y: number };
 	onUpdate: (patch: Partial<DrawingObject>) => void;
 	onDelete: () => void;
@@ -51,6 +72,7 @@ function updateStyle(drawing: DrawingObject, patch: Partial<DrawingStyle>): Part
 export default function DrawingInspector({
 	drawing,
 	labels,
+	textEditor,
 	position,
 	onUpdate,
 	onDelete,
@@ -175,6 +197,63 @@ export default function DrawingInspector({
 					{labels.delete}
 				</button>
 			</div>
+
+			{drawing.type === "text" && textEditor && (
+				<div className="rsc-drawing-inspector__field">
+					<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+						<strong>{textEditor.labels.title}</strong>
+						{!textEditor.active && (
+							<button type="button" className="rsc-drawing-inspector__button" onClick={textEditor.onStartEdit} disabled={locked}>
+								{textEditor.labels.edit}
+							</button>
+						)}
+					</div>
+					<span>{textEditor.labels.label}</span>
+					{textEditor.active ? (
+						<>
+							<textarea
+								value={textEditor.value}
+								placeholder={textEditor.labels.placeholder}
+								onChange={(event) => textEditor.onChange(event.target.value)}
+								onKeyDown={(event) => {
+									if (event.key === "Escape") {
+										event.preventDefault();
+										textEditor.onCancel();
+										return;
+									}
+									if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+										event.preventDefault();
+										textEditor.onCommit();
+									}
+								}}
+								rows={4}
+								style={{
+									width: "100%",
+									resize: "vertical",
+									borderRadius: 10,
+									border: "1px solid rgba(148, 163, 184, 0.36)",
+									padding: "10px 12px",
+									font: "inherit",
+									background: "rgba(15, 23, 42, 0.04)",
+									color: "inherit",
+								}}
+							/>
+							<div className="rsc-drawing-inspector__actions">
+								<button type="button" className="rsc-drawing-inspector__button" onClick={textEditor.onCommit}>
+									{textEditor.labels.save}
+								</button>
+								<button type="button" className="rsc-drawing-inspector__button" onClick={textEditor.onCancel}>
+									{textEditor.labels.cancel}
+								</button>
+							</div>
+						</>
+					) : (
+						<div style={{ whiteSpace: "pre-wrap", lineHeight: 1.5, opacity: 0.92, marginTop: 6 }}>
+							{drawing.text?.trim().length ? drawing.text : textEditor.labels.empty}
+						</div>
+					)}
+				</div>
+			)}
 		</div>
 	);
 }

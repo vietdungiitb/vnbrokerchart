@@ -4,7 +4,7 @@ fork or clone the repo
 
 ```sh
 $ git clone <git url>
-$ cd react-stockcharts
+$ cd vnstockcharts
 $ npm install
 $ npm run watch
 ```
@@ -27,5 +27,3 @@ see the `docs/documentation.js` file to understand how the different pages are o
 To update the source update files under `src`
 
 #### Help needed
-
-Look for issues with the [enhancement](https://github.com/rrag/react-stockcharts/labels/enhancement), [help_wanted](https://github.com/rrag/react-stockcharts/labels/help_wanted)
