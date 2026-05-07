@@ -128,14 +128,27 @@ function getSeriesStyleOverrideForSeries(series: SeriesConfig) {
 	return series.id ? getSeriesStyleOverride(series.id) : undefined;
 }
 
+/**
+ * Resolves the display color for a series in the same priority order as renderSeries:
+ * runtime styleOverride → user-set series.color → params.color → undefined (falls back to textFill in tooltip).
+ */
+function resolveSeriesDisplayColor(item: SeriesConfig): string | undefined {
+	const styleOverride = getSeriesStyleOverrideForSeries(item);
+	if (styleOverride?.color) return styleOverride.color;
+	if (item.color) return item.color;
+	const entry = getSeries(item.type);
+	const params: Record<string, unknown> = { ...entry.defaultParams, ...item.params };
+	const paramColor = params.color;
+	return typeof paramColor === "string" && paramColor.length > 0 ? paramColor : undefined;
+}
+
 function buildTooltipEntriesForSeries(series: SeriesConfig[]): PaneTooltipEntry[] {
 	return series.flatMap((item) => {
 		const entry = getSeries(item.type);
 		const tooltip = entry.tooltipEntry(item);
-		const styleOverride = getSeriesStyleOverrideForSeries(item);
 		return {
 			label: tooltip.label,
-			color: styleOverride?.color ?? tooltip.color,
+			color: resolveSeriesDisplayColor(item) ?? tooltip.color,
 			format: tooltip.format,
 			value: (datum) => resolveSeriesValue(datum, item),
 		} satisfies PaneTooltipEntry;

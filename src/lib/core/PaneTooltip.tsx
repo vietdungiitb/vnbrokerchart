@@ -83,7 +83,7 @@ export function PaneTooltip({
 						<tspan fill={textFill} key="value-date">{defaultDateValue(currentItem?.date, xDisplayFormat)}</tspan>
 						{lines.map((line) => (
 							<Fragment key={line.label}>
-								<ToolTipTSpanLabel fill={labelFill}>{` ${line.label}: `}</ToolTipTSpanLabel>
+								<ToolTipTSpanLabel fill={line.color}>{` ${line.label}: `}</ToolTipTSpanLabel>
 								<tspan fill={line.color}>{line.value}</tspan>
 							</Fragment>
 						))}
