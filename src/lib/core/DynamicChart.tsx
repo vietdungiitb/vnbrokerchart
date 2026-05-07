@@ -413,29 +413,34 @@ function renderSeries(series: SeriesConfig) {
 				/>
 			);
 		}
-		case "RSI":
+		case "RSI": {
+			const rsiLine  = sc("line",       lineColor);
+			const rsiOB    = sc("overbought", "#f23645");
+			const rsiMid   = sc("middle",     "#9ca3af");
+			const rsiOS    = sc("oversold",   "#089981");
 			return (
 				<RSISeries
 					key={seriesKey}
 					yAccessor={(datum: EnrichedDatum) => resolveSeriesValue(datum, series)}
 					stroke={{
-						top: lineColor,
-						middle: lineColor,
-						bottom: lineColor,
-						outsideThreshold: lineColor,
-						insideThreshold: lineColor,
+						top: rsiOB,
+						middle: rsiMid,
+						bottom: rsiOS,
+						outsideThreshold: rsiLine,
+						insideThreshold: rsiLine,
 					}}
-					opacity={{ top: strokeOpacity, middle: strokeOpacity, bottom: strokeOpacity }}
-					strokeDasharray={{ line: dashArray, top: dashArray, middle: dashArray, bottom: dashArray }}
+					opacity={{ top: 0.5, middle: 0.4, bottom: 0.5 }}
+					strokeDasharray={{ line: dashArray, top: "ShortDash", middle: "ShortDash", bottom: "ShortDash" }}
 					strokeWidth={{
 						outsideThreshold: lineWidth,
 						insideThreshold: lineWidth,
-						top: lineWidth,
-						middle: lineWidth,
-						bottom: lineWidth,
+						top: 1,
+						middle: 1,
+						bottom: 1,
 					}}
 				/>
 			);
+		}
 		case "MACD": {
 			const macdColor   = sc("macd",    lineColor);
 			const signalColor = sc("signal",  "#ff6d00");

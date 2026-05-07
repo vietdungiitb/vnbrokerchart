@@ -575,7 +575,7 @@ export function savePaneLayout(panes: readonly PaneDescriptor[], storage?: PaneL
 }
 
 export function useDynamicPanes(totalHeight: number, options: UseDynamicPanesOptions = {}): UseDynamicPanesResult {
-	const [panes, dispatch] = useReducer(dynamicPanesReducer, undefined, () => loadPaneLayout());
+	const [panes, dispatch] = useReducer(dynamicPanesReducer, undefined, () => loadPaneLayout(typeof localStorage !== "undefined" ? localStorage : undefined));
 	const maxVisiblePanes = Math.max(1, options.maxVisiblePanes ?? PANE_MAX_VISIBLE);
 
 	const available = useMemo(() => {

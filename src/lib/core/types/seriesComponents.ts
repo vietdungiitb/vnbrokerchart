@@ -15,6 +15,12 @@ export interface SeriesSubComponent {
  * PaneSettingsModal to render per-component color pickers.
  */
 export const SERIES_SUB_COMPONENTS: Partial<Record<SeriesTypeId, SeriesSubComponent[]>> = {
+	RSI: [
+		{ key: "line",       labelKey: "settings.sub.rsiLine",       defaultColor: "#2962ff" },
+		{ key: "overbought", labelKey: "settings.sub.rsiOverbought", defaultColor: "#f23645" },
+		{ key: "middle",     labelKey: "settings.sub.rsiMiddle",     defaultColor: "#9ca3af" },
+		{ key: "oversold",   labelKey: "settings.sub.rsiOversold",   defaultColor: "#089981" },
+	],
 	MACD: [
 		{ key: "macd",    labelKey: "settings.sub.macd",    defaultColor: "#2962ff" },
 		{ key: "signal",  labelKey: "settings.sub.signal",  defaultColor: "#ff6d00" },
