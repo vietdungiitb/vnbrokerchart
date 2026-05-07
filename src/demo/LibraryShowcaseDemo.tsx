@@ -460,7 +460,13 @@ export default function LibraryShowcaseDemo() {
 	const shellRef = useRef<HTMLDivElement | null>(null);
 	const [chartWidth, setChartWidth] = useState(0);
 	const [chartHeight, setChartHeight] = useState(0);
-	const [timeframe, setTimeframe] = useState<Timeframe>("1h");
+	const [timeframe, setTimeframe] = useState<Timeframe>(() => {
+		try {
+			const stored = typeof localStorage !== "undefined" && localStorage.getItem("vnsc_timeframe");
+			if (stored && (TIMEFRAMES as readonly string[]).includes(stored)) return stored as Timeframe;
+		} catch { /* ignore */ }
+		return "1h";
+	});
 	const [chartRange, setChartRange] = useState<ChartRange>(DEFAULT_CHART_RANGE);
 	const [chartType, setChartType] = useState<ChartTypeId>(() => loadChartType());
 	const [showPanesMenu, setShowPanesMenu] = useState(false);
@@ -557,6 +563,16 @@ export default function LibraryShowcaseDemo() {
 			// ignore storage errors
 		}
 	}, [chartType]);
+
+	useEffect(() => {
+		try {
+			if (typeof localStorage !== "undefined") {
+				localStorage.setItem("vnsc_timeframe", timeframe);
+			}
+		} catch {
+			// ignore storage errors
+		}
+	}, [timeframe]);
 
 	useEffect(() => () => {
 		mountedRef.current = false;
