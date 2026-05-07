@@ -9,6 +9,7 @@ import {
 	IndicatorLegend,
 	useDynamicPanes,
 	DrawingLayer,
+	DrawingContextMenu,
 	DrawingInspector,
 	DrawingListPanel,
 	useDrawingInteraction,
@@ -18,19 +19,23 @@ import {
 	type BarReplayState,
 	type SeriesConfig,
 	type SeriesTypeId,
+	type YAxisSide,
 	type ReplaySpeed,
 		type StockDataAdapter,
 	ChartSplitter,
 	useChartTheme,
 	VNStockChart,
+		resolveDrawingShortcut,
 	widgetMessagesEn,
 	widgetMessagesVi,
 	version,
 } from "../index";
+import { DrawingPriceLabels } from "../lib/drawing/priceLabel";
 import type { OHLCVBar } from "../lib/types/ohlcv";
 import type { DrawingObject } from "../lib/drawing/types";
 import type { DrawingInspectorLabels } from "../lib/drawing/DrawingInspector";
 import type { DrawingListPanelLabels } from "../lib/drawing/DrawingListPanel";
+import { cloneDrawingSnapshot, offsetDrawingByPixels } from "../lib/drawing/clipboard";
 import { enrichData } from "../lib/core/calculators/enrichData";
 import type { EnrichedDatum, RawOHLCV } from "../lib/core/calculators/types";
 import { heikinAshi } from "../lib/calculator";
@@ -45,31 +50,46 @@ import "../lib/styles/pane-overlays.css";
 const DEMO_SETTINGS_STORAGE_KEY = "rsc-demo-settings-v1";
 const DEFAULT_MAX_VISIBLE_PANES = 5;
 
-function loadDemoSettings() {
+interface DemoSettings {
+	maxVisiblePanes: number;
+	showDrawingPriceMarkers: boolean;
+}
+
+const DEFAULT_DEMO_SETTINGS: DemoSettings = {
+	maxVisiblePanes: DEFAULT_MAX_VISIBLE_PANES,
+	showDrawingPriceMarkers: true,
+};
+
+function loadDemoSettings(): DemoSettings {
 	if (typeof localStorage === "undefined") {
-		return { maxVisiblePanes: DEFAULT_MAX_VISIBLE_PANES };
+		return DEFAULT_DEMO_SETTINGS;
 	}
 	try {
 		const raw = localStorage.getItem(DEMO_SETTINGS_STORAGE_KEY);
 		if (!raw) {
-			return { maxVisiblePanes: DEFAULT_MAX_VISIBLE_PANES };
+			return DEFAULT_DEMO_SETTINGS;
 		}
-		const parsed = JSON.parse(raw) as Partial<{ maxVisiblePanes: number }>;
-		if (typeof parsed.maxVisiblePanes === "number" && Number.isFinite(parsed.maxVisiblePanes)) {
-			return { maxVisiblePanes: Math.max(1, Math.floor(parsed.maxVisiblePanes)) };
-		}
+		const parsed = JSON.parse(raw) as Partial<DemoSettings>;
+		return {
+			maxVisiblePanes: typeof parsed.maxVisiblePanes === "number" && Number.isFinite(parsed.maxVisiblePanes)
+				? Math.max(1, Math.floor(parsed.maxVisiblePanes))
+				: DEFAULT_MAX_VISIBLE_PANES,
+			showDrawingPriceMarkers: typeof parsed.showDrawingPriceMarkers === "boolean"
+				? parsed.showDrawingPriceMarkers
+				: DEFAULT_DEMO_SETTINGS.showDrawingPriceMarkers,
+		};
 	} catch {
 		// ignore malformed settings payloads
 	}
-	return { maxVisiblePanes: DEFAULT_MAX_VISIBLE_PANES };
+	return DEFAULT_DEMO_SETTINGS;
 }
 
-function saveDemoSettings(maxVisiblePanes: number) {
+function saveDemoSettings(settings: DemoSettings) {
 	if (typeof localStorage === "undefined") {
 		return;
 	}
 	try {
-		localStorage.setItem(DEMO_SETTINGS_STORAGE_KEY, JSON.stringify({ maxVisiblePanes }));
+		localStorage.setItem(DEMO_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
 	} catch {
 		// ignore storage errors
 	}
@@ -108,6 +128,37 @@ const DRAWING_PANEL_WIDTH = 360;
 const REPLAY_SPEEDS: ReplaySpeed[] = [0.5, 1, 2, 5, 10, "max"];
 const PERCENT_FORMAT = format(".1%");
 
+function isYAxisSide(value: string | undefined): value is YAxisSide {
+	return value === "left" || value === "right";
+}
+
+function resolveDrawingPlacementForPane(sourceDrawing: DrawingObject, targetPane: PaneDescriptor | undefined) {
+	if (!targetPane || targetPane.id === sourceDrawing.paneId) {
+		return {
+			paneId: sourceDrawing.paneId,
+			yScaleId: sourceDrawing.yScaleId,
+		};
+	}
+
+	const targetSides: YAxisSide[] = [];
+	for (const series of targetPane.series) {
+		if (!targetSides.includes(series.yAxis)) {
+			targetSides.push(series.yAxis);
+		}
+	}
+
+	const preferredSide = isYAxisSide(sourceDrawing.yScaleId) && targetSides.includes(sourceDrawing.yScaleId)
+		? sourceDrawing.yScaleId
+		: targetSides.includes("right")
+			? "right"
+			: targetSides[0];
+
+	return {
+		paneId: targetPane.id,
+		yScaleId: preferredSide,
+	};
+}
+
 
 interface PaperTradePosition {
 	entryDate: Date | number;
@@ -141,16 +192,6 @@ function clonePoint(point: { x: number; y: number }) {
 	return { x: point.x, y: point.y };
 }
 
-function mergeDrawingPatch(drawing: DrawingObject, patch: Partial<DrawingObject>): DrawingObject {
-	return {
-		...drawing,
-		...patch,
-		points: patch.points ? patch.points.map(clonePoint) : drawing.points.map(clonePoint),
-		style: patch.style ? { ...drawing.style, ...patch.style } : { ...drawing.style },
-		updatedAt: Date.now(),
-	};
-}
-
 function sortDrawings(drawings: readonly DrawingObject[]) {
 	return [...drawings].sort((left, right) => {
 		const leftZ = left.zIndex ?? 0;
@@ -162,19 +203,13 @@ function sortDrawings(drawings: readonly DrawingObject[]) {
 	});
 }
 
-function offsetDrawingByPixels(drawing: DrawingObject, xOffset: number, yOffset: number): DrawingObject {
-	return {
-		...drawing,
-		id: `${drawing.id}-clone-${Date.now()}`,
-		points: drawing.points.map((point) => ({ x: point.x + xOffset, y: point.y + yOffset })),
-		style: { ...drawing.style },
-		locked: false,
-		visible: true,
-		clonedFrom: drawing.id,
-		zIndex: (drawing.zIndex ?? 0) + 1,
-		createdAt: Date.now(),
-		updatedAt: Date.now(),
-	};
+function isEditableTarget(target: EventTarget | null) {
+	if (!(target instanceof HTMLElement)) {
+		return false;
+	}
+
+	const tagName = target.tagName.toLowerCase();
+	return target.isContentEditable || tagName === "input" || tagName === "textarea" || tagName === "select";
 }
 
 function normalizeDate(value: Date | number) {
@@ -393,6 +428,7 @@ function ToolIcon({ id }: { id: string }) {
 
 export default function LibraryShowcaseDemo() {
 	const { language, setLanguage, t, getPaneLabel } = useDemoI18n();
+	const initialDemoSettings = useMemo(() => loadDemoSettings(), []);
 	const shellRef = useRef<HTMLDivElement | null>(null);
 	const chartMenuRef = useRef<HTMLDivElement | null>(null);
 	const [chartWidth, setChartWidth] = useState(0);
@@ -408,10 +444,13 @@ export default function LibraryShowcaseDemo() {
 
 	const [settingsSection, setSettingsSection] = useState<SettingsSection>("layout");
 	const [settingsPaneId, setSettingsPaneId] = useState("price");
-	const [maxVisiblePanes, setMaxVisiblePanes] = useState(() => loadDemoSettings().maxVisiblePanes);
+	const [maxVisiblePanes, setMaxVisiblePanes] = useState(initialDemoSettings.maxVisiblePanes);
+	const [showDrawingPriceMarkers, setShowDrawingPriceMarkers] = useState(initialDemoSettings.showDrawingPriceMarkers);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [showReplayBar, setShowReplayBar] = useState(false);
 	const [showDrawingList, setShowDrawingList] = useState(false);
+	const [drawingContextMenu, setDrawingContextMenu] = useState<{ x: number; y: number; drawingId: string } | null>(null);
+	const [drawingTextDraft, setDrawingTextDraft] = useState("");
 	const [paperTradePosition, setPaperTradePosition] = useState<PaperTradePosition | null>(null);
 	const [paperTradeHistory, setPaperTradeHistory] = useState<ClosedPaperTrade[]>([]);
 	const chartRangeRef = useRef(chartRange);
@@ -419,7 +458,8 @@ export default function LibraryShowcaseDemo() {
 	const lastPaperTradeClickRef = useRef<{ timestamp: number; index: number } | null>(null);
 	const lastPaperTradeSignatureRef = useRef<string | null>(null);
 	const drawingInteraction = useDrawingInteraction();
-	const { undo, redo, deleteSelected, cancelDrawing } = drawingInteraction;
+	const { undo, redo, deleteSelected, cancelDrawing, selectObject, replaceDrawings, updateDrawing } = drawingInteraction;
+	const drawingClipboardRef = useRef<DrawingObject | null>(null);
 	const importInputRef = useRef<HTMLInputElement | null>(null);
 	const handleLoadDrawings = useCallback((drawings: DrawingObject[]) => {
 		drawingInteraction.dispatch({ type: "REPLACE", drawings });
@@ -427,6 +467,7 @@ export default function LibraryShowcaseDemo() {
 	const drawingStorage = useDrawingStorage("BTCUSDT", timeframe, drawingInteraction.allDrawings, handleLoadDrawings);
 	const { theme, toggleTheme, isDark } = useChartTheme("light");
 	const canvasBg = "var(--gc-surface)";
+	const closeDrawingContextMenu = useCallback(() => setDrawingContextMenu(null), []);
 
 	// Live Binance data state
 	const [liveData, setLiveData] = useState<RawOHLCV[]>([]);
@@ -436,6 +477,7 @@ export default function LibraryShowcaseDemo() {
 	const [visibleDomain, setVisibleDomain] = useState<[Date, Date] | null>(null);
 	const liveDataRef = useRef<RawOHLCV[]>([]);
 	const backfillInFlightRef = useRef(false);
+	const backfillDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const mountedRef = useRef(true);
 	const BACKFILL_PAGE_LIMIT = 1000;
 	const BACKFILL_MAX_PAGES = 20;
@@ -450,6 +492,10 @@ export default function LibraryShowcaseDemo() {
 
 	useEffect(() => () => {
 		mountedRef.current = false;
+		if (backfillDebounceRef.current !== null) {
+			clearTimeout(backfillDebounceRef.current);
+			backfillDebounceRef.current = null;
+		}
 	}, []);
 
 	const paneState = useDynamicPanes(chartHeight, { maxVisiblePanes });
@@ -517,26 +563,27 @@ export default function LibraryShowcaseDemo() {
 		});
 	}, [addPane, paneState.panes.length, t]);
 	const selectDrawingById = useCallback((id: string) => {
-		drawingInteraction.dispatch({ type: "SELECT_OBJECT", objectId: id });
+		selectObject(id);
 		setActiveTool("cursor");
-	}, [drawingInteraction.dispatch]);
+	}, [selectObject]);
 	const toggleDrawingVisibleById = useCallback((id: string) => {
-		const nextDrawings = drawingInteraction.allDrawings.map((drawing) => (
-			drawing.id === id ? { ...drawing, visible: drawing.visible === false ? true : false } : drawing
-		));
-		drawingInteraction.dispatch({ type: "REPLACE", drawings: nextDrawings });
-	}, [drawingInteraction.allDrawings, drawingInteraction.dispatch]);
+		const target = drawingInteraction.allDrawings.find((drawing) => drawing.id === id);
+		if (!target) {
+			return;
+		}
+		updateDrawing(id, { visible: target.visible === false });
+	}, [drawingInteraction.allDrawings, updateDrawing]);
 	const deleteDrawingById = useCallback((id: string) => {
 		const nextDrawings = drawingInteraction.allDrawings.filter((drawing) => drawing.id !== id);
-		drawingInteraction.dispatch({ type: "REPLACE", drawings: nextDrawings });
+		replaceDrawings(nextDrawings);
 		if (getSelectedDrawingId(drawingInteraction.drawingState) === id) {
-			drawingInteraction.dispatch({ type: "CANCEL" });
+			cancelDrawing();
 		}
-	}, [drawingInteraction.allDrawings, drawingInteraction.drawingState, drawingInteraction.dispatch]);
+	}, [cancelDrawing, drawingInteraction.allDrawings, drawingInteraction.drawingState, replaceDrawings]);
 
 	useEffect(() => {
-		saveDemoSettings(maxVisiblePanes);
-	}, [maxVisiblePanes]);
+		saveDemoSettings({ maxVisiblePanes, showDrawingPriceMarkers });
+	}, [maxVisiblePanes, showDrawingPriceMarkers]);
 
 	const normalizeDomain = useCallback((domain: [Date | number, Date | number]) => {
 		return [normalizeDate(domain[0]), normalizeDate(domain[1])] as [Date, Date];
@@ -581,6 +628,16 @@ export default function LibraryShowcaseDemo() {
 			}
 		}
 	}, [timeframe]);
+
+	const triggerBackfillDebounced = useCallback(() => {
+		if (backfillDebounceRef.current !== null) {
+			return; // already pending
+		}
+		backfillDebounceRef.current = setTimeout(() => {
+			backfillDebounceRef.current = null;
+			void requestOlderHistoryPage();
+		}, 200);
+	}, [requestOlderHistoryPage]);
 
 	const ensureRangeHistory = useCallback(async (range: ChartRange) => {
 		if (backfillInFlightRef.current || liveDataRef.current.length === 0) {
@@ -715,10 +772,10 @@ export default function LibraryShowcaseDemo() {
 			return;
 		}
 
-		if (normalizeDate(visibleDomain[0]).valueOf() <= earliestBar.date.valueOf()) {
-			void requestOlderHistoryPage();
+		if (!backfillInFlightRef.current && normalizeDate(visibleDomain[0]).valueOf() <= earliestBar.date.valueOf()) {
+			triggerBackfillDebounced();
 		}
-	}, [dataStatus, historyStatus, liveData, requestOlderHistoryPage, visibleDomain]);
+	}, [dataStatus, historyStatus, liveData, triggerBackfillDebounced, visibleDomain]);
 
 	const replayControllerRef = useRef<BarReplayController<RawOHLCV> | null>(null);
 	if (replayControllerRef.current === null) {
@@ -823,10 +880,29 @@ export default function LibraryShowcaseDemo() {
 	const selectedDrawingId = useMemo(() => getSelectedDrawingId(drawingInteraction.drawingState), [drawingInteraction.drawingState]);
 	const sortedDrawings = useMemo(() => sortDrawings(drawingInteraction.allDrawings), [drawingInteraction.allDrawings]);
 	const selectedDrawing = useMemo(() => sortedDrawings.find((drawing) => drawing.id === selectedDrawingId) ?? null, [selectedDrawingId, sortedDrawings]);
+	const isEditingText = drawingInteraction.drawingState.type === "editing"
+		&& selectedDrawing?.type === "text"
+		&& drawingInteraction.drawingState.objectId === selectedDrawing.id;
+	const drawingContextMenuDrawing = useMemo(() => {
+		if (!drawingContextMenu) {
+			return null;
+		}
+
+		return sortedDrawings.find((drawing) => drawing.id === drawingContextMenu.drawingId) ?? selectedDrawing;
+	}, [drawingContextMenu, selectedDrawing, sortedDrawings]);
 	const drawingPanelX = useMemo(() => Math.max(16, chartWidth - DRAWING_PANEL_WIDTH - 16), [chartWidth]);
 	const drawingInspectorPosition = useMemo(() => ({ x: drawingPanelX, y: 16 }), [drawingPanelX]);
 	const drawingListPosition = useMemo(() => ({ x: drawingPanelX, y: 286 }), [drawingPanelX]);
 	const storageToolbarPosition = useMemo(() => ({ x: 16, y: 16 }), []);
+	const drawingTextEditorLabels = useMemo(() => ({
+		title: t("drawing.textEditorTitle"),
+		label: t("drawing.textEditorLabel"),
+		placeholder: t("drawing.textEditorPlaceholder"),
+		edit: t("drawing.textEditorEdit"),
+		save: t("drawing.textEditorSave"),
+		cancel: t("drawing.textEditorCancel"),
+		empty: t("drawing.textEditorEmpty"),
+	}), [t]);
 	const replayFinished = replayState.allData.length > 0 && replayState.currentIndex >= replayState.allData.length && !replayState.isPlaying;
 	const paperTradePanelVisible = showReplayBar || paperTradePosition !== null || paperTradeHistory.length > 0;
 	const paperTradeReportVisible = replayFinished || paperTradeHistory.length > 0;
@@ -1196,11 +1272,8 @@ export default function LibraryShowcaseDemo() {
 			return;
 		}
 
-		const nextDrawings = drawingInteraction.allDrawings.map((drawing) => (
-			drawing.id === selectedDrawing.id ? mergeDrawingPatch(drawing, patch) : drawing
-		));
-		drawingInteraction.dispatch({ type: "REPLACE", drawings: nextDrawings });
-	}, [drawingInteraction.allDrawings, drawingInteraction.dispatch, selectedDrawing]);
+		updateDrawing(selectedDrawing.id, patch);
+	}, [selectedDrawing, updateDrawing]);
 
 	const toggleSelectedLock = useCallback(() => {
 		if (!selectedDrawing) {
@@ -1221,16 +1294,16 @@ export default function LibraryShowcaseDemo() {
 			return;
 		}
 		const maxZ = drawingInteraction.allDrawings.reduce((currentMax, drawing) => Math.max(currentMax, drawing.zIndex ?? 0), 0);
-		updateSelectedDrawing({ zIndex: maxZ + 1 });
-	}, [drawingInteraction.allDrawings, selectedDrawing, updateSelectedDrawing]);
+		updateDrawing(selectedDrawing.id, { zIndex: maxZ + 1 });
+	}, [drawingInteraction.allDrawings, selectedDrawing, updateDrawing]);
 
 	const sendSelectedToBack = useCallback(() => {
 		if (!selectedDrawing) {
 			return;
 		}
 		const minZ = drawingInteraction.allDrawings.reduce((currentMin, drawing) => Math.min(currentMin, drawing.zIndex ?? 0), 0);
-		updateSelectedDrawing({ zIndex: minZ - 1 });
-	}, [drawingInteraction.allDrawings, selectedDrawing, updateSelectedDrawing]);
+		updateDrawing(selectedDrawing.id, { zIndex: minZ - 1 });
+	}, [drawingInteraction.allDrawings, selectedDrawing, updateDrawing]);
 
 	const cloneSelectedDrawing = useCallback(() => {
 		if (!selectedDrawing || chartWidth <= 0 || chartHeight <= 0 || plotData.length < 2) {
@@ -1246,11 +1319,162 @@ export default function LibraryShowcaseDemo() {
 		const innerHeight = Math.max(1, chartHeight - 56);
 		const timeOffset = ((new Date(lastVisibleBar.date).getTime() - new Date(firstBar.date).getTime()) / innerWidth) * 20;
 		const priceOffset = -((maxPrice - minPrice) / innerHeight) * 20;
-		const nextClone = offsetDrawingByPixels(selectedDrawing, timeOffset, priceOffset);
-		drawingInteraction.dispatch({ type: "REPLACE", drawings: [...drawingInteraction.allDrawings, nextClone] });
-		drawingInteraction.dispatch({ type: "SELECT_OBJECT", objectId: nextClone.id });
+		const nextClone = offsetDrawingByPixels(selectedDrawing, timeOffset, priceOffset, resolveDrawingPlacementForPane(selectedDrawing, selectedPane));
+		replaceDrawings([...drawingInteraction.allDrawings, nextClone]);
+		selectObject(nextClone.id);
 		setActiveTool("cursor");
-	}, [chartHeight, chartWidth, drawingInteraction.allDrawings, drawingInteraction.dispatch, plotData, selectedDrawing]);
+	}, [chartHeight, chartWidth, drawingInteraction.allDrawings, plotData, replaceDrawings, selectObject, selectedDrawing, selectedPane]);
+	const copySelectedDrawing = useCallback(() => {
+		if (!selectedDrawing) {
+			return;
+		}
+
+		drawingClipboardRef.current = cloneDrawingSnapshot(selectedDrawing);
+	}, [selectedDrawing]);
+	const pasteCopiedDrawing = useCallback(() => {
+		const clipboardDrawing = drawingClipboardRef.current;
+		if (!clipboardDrawing || chartWidth <= 0 || chartHeight <= 0 || plotData.length < 2) {
+			return;
+		}
+
+		const firstBar = plotData[0];
+		const lastVisibleBar = plotData[plotData.length - 1];
+		const allPrices = plotData.flatMap((bar) => [bar.open, bar.high, bar.low, bar.close]);
+		const minPrice = Math.min(...allPrices);
+		const maxPrice = Math.max(...allPrices);
+		const innerWidth = Math.max(1, chartWidth - 128);
+		const innerHeight = Math.max(1, chartHeight - 56);
+		const timeOffset = ((new Date(lastVisibleBar.date).getTime() - new Date(firstBar.date).getTime()) / innerWidth) * 20;
+		const priceOffset = -((maxPrice - minPrice) / innerHeight) * 20;
+		const nextPaste = offsetDrawingByPixels(clipboardDrawing, timeOffset, priceOffset, resolveDrawingPlacementForPane(clipboardDrawing, selectedPane));
+		replaceDrawings([...drawingInteraction.allDrawings, nextPaste]);
+		selectObject(nextPaste.id);
+		setActiveTool("cursor");
+	}, [chartHeight, chartWidth, drawingInteraction.allDrawings, plotData, replaceDrawings, selectObject, selectedPane]);
+
+	const handleDrawingContextMenu = useCallback((moreProps: { hitDrawing?: DrawingObject | null }, event: unknown) => {
+		const targetDrawing = moreProps.hitDrawing;
+		if (!targetDrawing) {
+			closeDrawingContextMenu();
+			return;
+		}
+
+		const shellNode = shellRef.current;
+		if (!shellNode) {
+			return;
+		}
+
+		const nativeEvent = event as MouseEvent | undefined;
+		const rect = shellNode.getBoundingClientRect();
+		const x = Math.min(
+			Math.max(12, (nativeEvent?.clientX ?? rect.left) - rect.left + 8),
+			Math.max(12, rect.width - 260),
+		);
+		const y = Math.min(
+			Math.max(12, (nativeEvent?.clientY ?? rect.top) - rect.top + 8),
+			Math.max(12, rect.height - 320),
+		);
+
+		selectObject(targetDrawing.id);
+		setDrawingContextMenu({ x, y, drawingId: targetDrawing.id });
+	}, [closeDrawingContextMenu, selectObject]);
+
+	useEffect(() => {
+		if (drawingInteraction.drawingState.type === "editing") {
+			setDrawingTextDraft(drawingInteraction.drawingState.text);
+			return;
+		}
+
+		setDrawingTextDraft("");
+	}, [drawingInteraction.drawingState]);
+
+	const handleStartTextEdit = useCallback(() => {
+		if (!selectedDrawing || selectedDrawing.type !== "text") {
+			return;
+		}
+
+		drawingInteraction.startEditing(selectedDrawing.id, selectedDrawing.text ?? "");
+		setDrawingTextDraft(selectedDrawing.text ?? "");
+	}, [drawingInteraction, selectedDrawing]);
+
+	const handleCommitTextEdit = useCallback(() => {
+		if (!selectedDrawing || selectedDrawing.type !== "text") {
+			return;
+		}
+
+		updateDrawing(selectedDrawing.id, { text: drawingTextDraft });
+		cancelDrawing();
+		selectObject(selectedDrawing.id);
+		setActiveTool("cursor");
+	}, [cancelDrawing, drawingTextDraft, selectObject, selectedDrawing, updateDrawing]);
+
+	const handleCancelTextEdit = useCallback(() => {
+		if (selectedDrawing && selectedDrawing.type === "text") {
+			setDrawingTextDraft(selectedDrawing.text ?? "");
+		}
+
+		cancelDrawing();
+		if (selectedDrawing) {
+			selectObject(selectedDrawing.id);
+		}
+		setActiveTool("cursor");
+	}, [cancelDrawing, selectObject, selectedDrawing]);
+
+	useEffect(() => {
+		const handleDrawingShortcuts = (event: KeyboardEvent) => {
+			if (isEditableTarget(event.target)) {
+				return;
+			}
+
+			const shortcut = resolveDrawingShortcut(event);
+			if (!shortcut) {
+				return;
+			}
+
+			event.preventDefault();
+			closeDrawingContextMenu();
+
+			if (shortcut.type === "tool") {
+				cancelDrawing();
+				setActiveTool(shortcut.tool);
+				return;
+			}
+
+			switch (shortcut.command) {
+				case "delete":
+					deleteSelected();
+					return;
+				case "copy":
+					copySelectedDrawing();
+					return;
+				case "paste":
+					pasteCopiedDrawing();
+					return;
+				case "clone":
+					cloneSelectedDrawing();
+					return;
+				case "undo":
+					undo();
+					return;
+				case "redo":
+					redo();
+					return;
+				case "escape":
+					cancelDrawing();
+					setActiveTool("cursor");
+					return;
+			}
+		};
+
+		window.addEventListener("keydown", handleDrawingShortcuts);
+		return () => window.removeEventListener("keydown", handleDrawingShortcuts);
+	}, [cancelDrawing, closeDrawingContextMenu, cloneSelectedDrawing, copySelectedDrawing, deleteSelected, pasteCopiedDrawing, redo, undo]);
+
+	const handleCloseDrawingInspector = useCallback(() => {
+		closeDrawingContextMenu();
+		cancelDrawing();
+		setActiveTool("cursor");
+	}, [cancelDrawing, closeDrawingContextMenu]);
 
 	const paneHeaderLabels = useMemo(() => ({
 		dragAriaLabel: (label: string) => t("library.dragPane", { pane: label }),
@@ -1287,7 +1511,7 @@ export default function LibraryShowcaseDemo() {
 	const handleResetSettings = useCallback(() => {
 		paneState.resetToDefault();
 		setMaxVisiblePanes(DEFAULT_MAX_VISIBLE_PANES);
-		saveDemoSettings(DEFAULT_MAX_VISIBLE_PANES);
+		setShowDrawingPriceMarkers(DEFAULT_DEMO_SETTINGS.showDrawingPriceMarkers);
 		setSettingsSection("layout");
 		setSettingsPaneId("price");
 		setSettingsOpen(false);
@@ -1635,14 +1859,17 @@ export default function LibraryShowcaseDemo() {
 								messages={widgetMessages}
 								theme={theme}
 								xExtents={xExtents}
+								measurementEnabled={activeTool === "crosshair"}
 								onClick={handlePaperTradeClick}
 								onContextMenu={handleReplayContextMenu}
 								onVisibleDomainChange={handleVisibleDomainChange}
 							>
+								<DrawingPriceLabels drawing={selectedDrawing} displayFormat={priceFormat} enabled={showDrawingPriceMarkers} />
 								<DrawingLayer
 									activeTool={activeTool}
 									interaction={drawingInteraction}
 									onToolUsed={handleDrawingToolUsed}
+									onContextMenu={handleDrawingContextMenu}
 								/>
 							</VNStockChart>
 						)}
@@ -1659,9 +1886,46 @@ export default function LibraryShowcaseDemo() {
 							</>
 						)}
 
+						{drawingContextMenu && drawingContextMenuDrawing && (
+							<DrawingContextMenu
+								ariaLabel={t("drawing.contextMenuTitle")}
+								title={t("drawing.contextMenuTitle")}
+								isDark={isDark}
+								position={{ x: drawingContextMenu.x, y: drawingContextMenu.y }}
+								onClose={closeDrawingContextMenu}
+								items={[
+									{ key: "copy", label: t("drawing.copy"), onSelect: copySelectedDrawing },
+									{ key: "paste", label: t("drawing.paste"), onSelect: pasteCopiedDrawing, disabled: drawingClipboardRef.current === null },
+									{ key: "clone", label: t("drawing.clone"), onSelect: cloneSelectedDrawing },
+									{
+										key: "lock",
+										label: t(drawingContextMenuDrawing.locked ? "drawing.unlock" : "drawing.lock"),
+										onSelect: toggleSelectedLock,
+									},
+									{
+										key: "visibility",
+										label: t(drawingContextMenuDrawing.visible === false ? "drawing.show" : "drawing.hide"),
+										onSelect: toggleSelectedVisible,
+									},
+									{ key: "front", label: t("drawing.bringToFront"), onSelect: bringSelectedToFront },
+									{ key: "back", label: t("drawing.sendToBack"), onSelect: sendSelectedToBack },
+									{ key: "delete", label: t("drawing.delete"), onSelect: deleteSelected, danger: true },
+								]}
+							/>
+						)}
+
 						<DrawingInspector
 							drawing={selectedDrawing}
 							labels={drawingInspectorLabels}
+							textEditor={selectedDrawing?.type === "text" ? {
+								active: isEditingText,
+								value: drawingTextDraft,
+								labels: drawingTextEditorLabels,
+								onChange: setDrawingTextDraft,
+								onStartEdit: handleStartTextEdit,
+								onCommit: handleCommitTextEdit,
+								onCancel: handleCancelTextEdit,
+							} : undefined}
 							position={drawingInspectorPosition}
 							onUpdate={updateSelectedDrawing}
 							onDelete={deleteSelected}
@@ -1670,7 +1934,7 @@ export default function LibraryShowcaseDemo() {
 							onToggleVisible={toggleSelectedVisible}
 							onBringToFront={bringSelectedToFront}
 							onSendToBack={sendSelectedToBack}
-							onClose={() => setActiveTool("cursor")}
+							onClose={handleCloseDrawingInspector}
 						/>
 						{showDrawingList && (
 							<DrawingListPanel
@@ -1880,6 +2144,8 @@ export default function LibraryShowcaseDemo() {
 						paneState={paneState}
 						maxVisiblePanes={maxVisiblePanes}
 						onMaxVisiblePanesChange={setMaxVisiblePanes}
+							showDrawingPriceMarkers={showDrawingPriceMarkers}
+							onShowDrawingPriceMarkersChange={setShowDrawingPriceMarkers}
 						onAddPane={handleAddPane}
 						onReset={handleResetSettings}
 						isDark={isDark}

@@ -66,6 +66,20 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 - Validation:
   - `npm run build:docs` → PASS
 
+### Canvas DrawTools Next registration — hub/backlog link-up
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: nối CE-NEXT package vào luồng đọc chuẩn và delivery register của upgrade-standard
+- Files sửa:
+  - `docs/upgrade-standard/README.md`
+  - `docs/upgrade-standard/BACKLOG.md`
+- Nội dung bàn giao:
+  - `docs/upgrade-standard/README.md` now links both `canvas-drawtools/` and `canvas-drawtools-next/` from the canonical upgrade-standard hub.
+  - `docs/upgrade-standard/BACKLOG.md` now contains a CE-11/CE-12/CE-13 workstream register so the next drawtools phase is visible in the delivery backlog.
+- Validation:
+  - manual readback of updated hub and backlog sections
+
 ### Governance standard hardening — repo-wide rules, approval thresholds, and quality gates
 
 - Người thực hiện: GitHub Copilot
@@ -139,7 +153,152 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 - Validation:
   - `npm test -- --run src/lib/core/__tests__/IndicatorLegend.test.tsx` → PASS (2 tests)
 
+### Canvas drawtools command surface centralization — CE11-01 slice
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: centralize drawing interaction commands cho selection, multi-select, edit-state transitions, và mutation helpers; đồng thời route demo shell và drawing layer qua hook helpers mới
+- Files sửa:
+  - `src/lib/drawing/useDrawingInteraction.ts`
+  - `src/lib/drawing/DrawingLayer.tsx`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/lib/drawing/useDrawingInteraction.test.ts`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - `useDrawingInteraction` now exposes command helpers for `selectObject`, `setSelectedObjects`, `startMoving`, `startResizing`, `startEditing`, `replaceDrawings`, and `updateDrawing` so demo shell no longer patches drawings locally.
+  - `DrawingLayer` uses the new command helpers for cursor selection flow instead of dispatching selection actions directly.
+  - `LibraryShowcaseDemo` routes selected-drawing mutations through the hook helpers and keeps close/clone/delete flows centralized.
+  - Hook coverage now verifies the command surface and mutation helper behavior on the existing Vitest harness.
+- Validation:
+  - `npm test -- src/lib/drawing/useDrawingInteraction.test.ts` → PASS (5 tests)
+  - `npm test` → PASS (28 files, 135 tests)
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (688 modules)
+
 ## 2. Slice Status
+
+### CE13-01 — Pane-aware drawing model
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-07
+- Scope: add pane metadata to drawing objects and preserve it through creation and local storage normalization
+- Files sửa:
+  - `src/lib/drawing/types.ts`
+  - `src/lib/drawing/shared.ts`
+  - `src/lib/drawing/DrawingStorage.ts`
+  - `src/lib/drawing/DrawingStorage.test.ts`
+  - `docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - `DrawingObject` now carries optional `paneId` and `yScaleId` fields.
+  - `createDrawingObject` preserves pane metadata when callers supply it.
+  - Local storage import/export now normalizes pane metadata instead of discarding it.
+  - Storage regression coverage round-trips a pane-aware drawing fixture.
+  - Taskboard status was synced to mark CE13-01 as done.
+- Validation:
+  - `npm test -- src/lib/drawing/DrawingStorage.test.ts` → PASS (4 tests)
+  - `npm run type-check` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (703 modules)
+
+### CE13-02 — Pane-aware render/hit-testing
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-07
+- Scope: route drawing render, hit-test, snap, and draft-start paths through the active pane / y-scale metadata instead of the base chart only
+- Files sửa:
+  - `src/lib/GenericChartComponent.tsx`
+  - `src/lib/StockChartContext.tsx`
+  - `src/lib/core/DynamicChart.tsx`
+  - `src/lib/utils/ChartDataUtil.ts`
+  - `src/lib/drawing/DrawingLayer.tsx`
+  - `src/lib/drawing/DrawingLayer.hover.test.tsx`
+  - `docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md`
+- Nội dung bàn giao:
+  - Chart configs now carry `paneId` and `yScaleId`, and `DynamicChart` threads that metadata into each chart slot.
+  - `GenericChartComponent` exposes the full chart-config list to overlays so the drawing layer can resolve pane-specific targets.
+  - `DrawingLayer` now renders, snaps, and hit-tests drawings in the pane that owns them, while new drafts inherit the active pane metadata.
+  - Regression coverage proves both secondary-pane hit-testing and secondary-pane draft creation.
+- Validation:
+  - `npm test -- src/lib/drawing/DrawingLayer.hover.test.tsx` → PASS (3 tests)
+  - `npm test -- src/lib/drawing/DrawingLayer.test.ts` → PASS (3 tests)
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (703 modules)
+
+### CE13-03 — Copy/paste/persist across panes
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-07
+- Scope: rebind duplicate/paste flows to the currently selected pane while keeping same-pane snapshots source-faithful and persistence intact
+- Files sửa:
+  - `src/lib/drawing/clipboard.ts`
+  - `src/lib/drawing/clipboard.test.ts`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - `cloneDrawingSnapshot` now supports optional placement rebinding, and `offsetDrawingByPixels` can clone a drawing onto a target pane/y-scale without losing geometry or style.
+  - Duplicate and paste flows in the demo shell now target the selected pane when rebinding is needed, while same-pane operations keep the original placement.
+  - Clipboard regression coverage verifies immutable cloning, offset duplication, and cross-pane rebinding.
+  - Taskboard status was synced to mark CE13-03 as done.
+- Validation:
+  - `npm test -- src/lib/drawing/clipboard.test.ts` → PASS (3 tests)
+  - `npm run type-check` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (703 modules)
+
+### CE13-04 — Final audit và module tree
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-07
+- Scope: close Sprint 3 (CE13-01 → CE13-04) với full validation gate và cập nhật tài liệu audit cuối
+- Files sửa:
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Toàn bộ test suite chạy sạch (37 test files, 159 tests PASS).
+  - Type-check PASS — không có TypeScript error nào.
+  - Build:docs compiled successfully (webpack 5, 0 errors).
+  - Module inventory tái sinh với 703 modules (stable, không thay đổi so với CE13-03).
+  - Audit ledger xác nhận CE13-01 → CE13-03 đều có evidence đầy đủ.
+  - TASKBOARD.md đánh dấu CE13-04 DONE, toàn bộ Sprint 3 hoàn tất.
+- Sprint 3 Summary (CE13-xx):
+  - CE13-01: Pane metadata (`paneId`/`yScaleId`) được thêm vào `DrawingObject` và lưu trữ qua storage adapter.
+  - CE13-02: `DrawingLayer.tsx` và chart infrastructure render/hit-test theo đúng pane và y-scale.
+  - CE13-03: `clipboard.ts` hỗ trợ rebind pane khi duplicate/paste; demo shell wires selected pane làm target.
+  - CE13-04: Full audit close-out — validation PASS, docs synced.
+- Validation:
+  - `npm test -- --run` → PASS (37 test files, 159 tests)
+  - `npm run type-check` → PASS
+  - `npm run build:docs` → compiled successfully
+  - `python scripts/generate_module_tree.py` → PASS (703 modules)
+
+### Checkpoint code — Canvas DrawTools in-place engine
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Scope: replace the SVG drawing path with an in-place canvas engine under `src/lib/drawing/`
+- Files sửa:
+  - `src/lib/drawing/renderCanvas.ts`
+  - `src/lib/drawing/hitTest.ts`
+  - `src/lib/drawing/snap.ts`
+  - `src/lib/drawing/DrawingLayer.tsx`
+  - `src/demo/demo.css`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - `DrawingLayer` now uses `canvasDraw={drawToCanvas}` and `canvasToDraw={getMouseCanvas}` while keeping `svgDraw={() => null}` as the required no-op prop.
+  - The canvas renderer covers all 21 drawing tools, and hit testing plus snap are wired into the existing drawing interaction flow.
+  - Demo CSS now provides the snap cursor cue and fallback zone fills for the canvas path.
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm test` → PASS (28 files, 133 tests)
+  - `npm run build:docs` → PASS
+  - `python scripts/generate_module_tree.py` → PASS (688 modules)
 
 ### Checkpoint code — Widget theme root sync fix
 
@@ -2558,6 +2717,32 @@ Every completed slice must update this ledger with the exact files changed in th
 
 ### IC-2 follow-up — Dedicated catalog type module + core export alignment (2026-05-06)
 
+---
+
+## CE14 — Stability & Bug Fixes
+
+**Ngày hoàn tất:** 2026-05-07
+**Sprint:** CE14
+
+### Thay đổi
+- `src/demo/LibraryShowcaseDemo.tsx` — debounce + inflight guard cho left-scroll pagination trigger
+- CE14-01 (removeChild crash): đã kiểm tra — không tồn tại trong project này, không cần sửa
+
+### Gate evidence
+| Gate | Kết quả |
+|---|---|
+| type-check | 0 errors |
+| npm test | 159 tests / 37 files PASS |
+| build:docs | OK |
+| module_tree | 703 modules |
+
+### Files touched
+- `src/demo/LibraryShowcaseDemo.tsx`
+- `docs/upgrade-standard/AUDIT_LEDGER.md`
+- `module_tree_full.md`
+
+---
+
 ## 24. IC-3 Saved Indicator Sets — localStorage templates + settings modal tab
 
 ### Completed
@@ -2614,3 +2799,506 @@ Every completed slice must update this ledger with the exact files changed in th
   - `python scripts/generate_module_tree.py` → PASS (`module_tree_full.md` regenerated; Modules: 672)
 - Residual risk:
   - `IndicatorCatalogEntry` hiện là type foundation; nếu mở rộng catalog metadata sâu hơn trong các slice sau, có thể gắn thêm displayName/description/category vào registry entry hoặc tách registry-catalog mapping riêng.
+
+---
+
+## 25. IC-GAP — Documentation package: Technical Gap Remediation (Gap 1 + Gap 2 + Gap 3)
+
+### Completed
+
+- Phân tích 3 gap kỹ thuật chặn GĐ2 (VN-exclusive indicators): Viewport Change Event, Canvas Overlay System, Scroll/Zoom Imperative API.
+- Cập nhật `INDICATOR_PLATFORM_PROPOSAL.md` lên v2.1 với Section 14 (Technical Gap Remediation).
+- Tạo đầy đủ bộ tài liệu bàn giao IC-GAP theo governance standard (5 doc).
+- Cập nhật `HANDOFF_MANIFEST.md` và `TASKBOARD.md` tổng để tham chiếu IC-GAP.
+
+### Validation (docs-only, không có source change)
+
+- Tất cả file tài liệu tạo thành công và verify bằng read_file.
+- Không có source change trong slice này — baseline test count vẫn 114.
+- Source change sẽ được ledger trong slice IC-GAP coding (GAP1 → GAP2 → GAP3).
+
+### Files touched trong slice này (tài liệu)
+
+- [docs/planning/INDICATOR_PLATFORM_PROPOSAL.md](../../docs/planning/INDICATOR_PLATFORM_PROPOSAL.md) *(updated v2.1 — Section 14 mới)*
+- [docs/project-delivery/indicator-platform/IC_GAP_HANDOFF_MANIFEST.md](../../docs/project-delivery/indicator-platform/IC_GAP_HANDOFF_MANIFEST.md) *(new)*
+- [docs/project-delivery/indicator-platform/IC_GAP_TECH_SPEC.md](../../docs/project-delivery/indicator-platform/IC_GAP_TECH_SPEC.md) *(new)*
+- [docs/project-delivery/indicator-platform/IC_GAP_IMPLEMENTATION_PLAN.md](../../docs/project-delivery/indicator-platform/IC_GAP_IMPLEMENTATION_PLAN.md) *(new)*
+- [docs/project-delivery/indicator-platform/IC_GAP_TASKBOARD.md](../../docs/project-delivery/indicator-platform/IC_GAP_TASKBOARD.md) *(new)*
+- [docs/project-delivery/indicator-platform/IC_GAP_AUDIT_PROTOCOL.md](../../docs/project-delivery/indicator-platform/IC_GAP_AUDIT_PROTOCOL.md) *(new)*
+- [docs/project-delivery/indicator-platform/HANDOFF_MANIFEST.md](../../docs/project-delivery/indicator-platform/HANDOFF_MANIFEST.md) *(updated — IC-GAP refs)*
+- [docs/project-delivery/indicator-platform/TASKBOARD.md](../../docs/project-delivery/indicator-platform/TASKBOARD.md) *(updated — Section 4 IC-GAP)*
+
+### Gap overview
+
+| Gap | Vấn đề | Giải pháp | File chính |
+|-----|--------|-----------|------------|
+| Gap 1 | Không có event khi viewport thay đổi | `onVisibleRangeChange` prop + emit từ `componentDidUpdate` | `ChartCanvas.tsx`, `DynamicChart.tsx` |
+| Gap 2 | Không có canvas layer native cho whale/heatmap | `ChartRenderContext` + `OverlayCanvas` + `WhaleBubbleOverlay` | 3 files mới |
+| Gap 3 | Không có API scroll/zoom imperative | `ChartHandle` + `forwardRef<ChartHandle>` + `useImperativeHandle` | `DynamicChart.tsx`, `ChartCanvas.tsx` |
+
+### Target (khi coding xong)
+
+- Source files mới: 7 (types, context, overlay, tests ×3)
+- Source files sửa: 4 (ChartCanvas, DynamicChart, core/index, src/index)
+- Test count: 114 → ≥127 (+5 Gap1, +7 Gap2, +7 Gap3)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Trạng thái: DOCUMENTATION COMPLETE — coding chưa bắt đầu
+
+---
+
+## 26. EventCapture click-coordinate regression lock
+
+### Completed
+
+- Thêm regression test để khóa hành vi click selection dùng pointer coordinates từ capture node.
+- Test bao phủ đường click của `EventCapture` sau hotfix coordinate basis, để không tái phát lệch chọn object.
+
+### Validation
+
+- `npm test -- src/lib/EventCapture.test.tsx` → PASS
+
+### Files touched trong slice này
+
+- [src/lib/EventCapture.test.tsx](../../src/lib/EventCapture.test.tsx) *(new)*
+
+### Related runtime path
+
+- [src/lib/EventCapture.tsx](../../src/lib/EventCapture.tsx) *(hotfix đã có từ slice trước; entry này chỉ khóa regression bằng test)*
+
+### Residual risk
+
+- Test hiện tại khóa đúng basis tọa độ cho click. Nếu các đường mouse/touch khác trong `EventCapture` đổi lại sang basis khác, cần một smoke bổ sung riêng để giữ consistency toàn bộ interaction layer.
+
+---
+
+## 26. IC-GAP — Source implementation + final validation (Gap 1 + Gap 2 + Gap 3)
+
+### Completed
+
+- Gap 1: thêm `VisibleRange`, emit `onVisibleRangeChange`, forward qua `DynamicChart`, và 5 unit tests viewport.
+- Gap 2: thêm `ChartRenderContext`, `OverlayCanvas`, `WhaleBubbleOverlay`, và 7 unit tests overlay.
+- Gap 3: thêm `ChartHandle`, public methods trên `ChartCanvas`, `forwardRef + useImperativeHandle` trên `DynamicChart`, và 7 unit tests scroll/zoom.
+- Regenerate `module_tree_full.md` sau khi source tree thay đổi.
+
+### Validation
+
+- `npm run type-check` → PASS
+- `npm test` → PASS (133 tests)
+- `npm run build:docs` → PASS (webpack 5.106.2, 8.83 MiB, 2 builds confirmed)
+- `python scripts/generate_module_tree.py` → PASS (`module_tree_full.md` regenerated; Modules: 685)
+- **Browser smoke Gap 2:** `ChartRenderContext.Provider` confirmed live via React fiber với đầy đủ 8 fields: `xScale` (function), `yScale` (function), `plotData` (20 bars), `candleWidth` (37.3px), `width` (886px), `height` (388px), `devicePixelRatio` (1), `visibleRange` ({ startIndex: 980, endIndex: 999, barCount: 20 })
+- **Browser smoke Gap 3:** `ChartCanvas.setXExtents([dateStart, dateEnd])` gọi runtime thành công, viewport zoom từ 121 nến → 20 nến, `visibleRange.barCount === 20` xác nhận qua React fiber — `setXExtents`, `getFullData`, `getCurrentViewportBarCount`, `getVisibleRange`, `notifyVisibleDomainChange` đều confirmed là `function` trên live instance
+
+### Files touched trong slice này (source + finalization)
+
+- [src/lib/ChartCanvas.tsx](../../src/lib/ChartCanvas.tsx)
+- [src/lib/core/DynamicChart.tsx](../../src/lib/core/DynamicChart.tsx)
+- [src/lib/core/index.ts](../../src/lib/core/index.ts)
+- [src/index.ts](../../src/index.ts)
+- [src/lib/core/types/chart.ts](../../src/lib/core/types/chart.ts)
+- [src/lib/core/types/index.ts](../../src/lib/core/types/index.ts)
+- [src/lib/core/canvas/ChartRenderContext.ts](../../src/lib/core/canvas/ChartRenderContext.ts)
+- [src/lib/core/canvas/OverlayCanvas.tsx](../../src/lib/core/canvas/OverlayCanvas.tsx)
+- [src/lib/indicators/overlays/WhaleBubbleOverlay.tsx](../../src/lib/indicators/overlays/WhaleBubbleOverlay.tsx)
+- [src/lib/core/__tests__/gap1-viewport-event.test.tsx](../../src/lib/core/__tests__/gap1-viewport-event.test.tsx)
+- [src/lib/core/__tests__/gap2-canvas-overlay.test.tsx](../../src/lib/core/__tests__/gap2-canvas-overlay.test.tsx)
+- [src/lib/core/__tests__/gap3-scroll-zoom-api.test.tsx](../../src/lib/core/__tests__/gap3-scroll-zoom-api.test.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)
+
+### Gap overview
+
+| Gap | Vấn đề | Giải pháp đã triển khai | File chính |
+|-----|--------|-------------------------|------------|
+| Gap 1 | Không có event khi viewport thay đổi | `VisibleRange` + `onVisibleRangeChange` emit từ `ChartCanvas` | `ChartCanvas.tsx`, `DynamicChart.tsx` |
+| Gap 2 | Không có canvas layer native cho whale/heatmap | `ChartRenderContext` + `OverlayCanvas` + `WhaleBubbleOverlay` | 3 files mới |
+| Gap 3 | Không có API scroll/zoom imperative | `ChartHandle` + `forwardRef<ChartHandle>` + `useImperativeHandle` | `DynamicChart.tsx`, `ChartCanvas.tsx` |
+
+### Residual risk
+
+- `ChartRenderContext` hiện dùng primary pane `yScale`; nếu GĐ2 cần overlay nhiều pane, sẽ cần mở rộng context theo pane.
+- `WhaleBubbleOverlay` là renderer mẫu; adapter dữ liệu thật của GĐ2 vẫn cần nối sau.
+- `OverlayCanvas` hiện được verify bằng unit test và docs build, chưa có browser smoke riêng trong workspace này.
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-06
+- Trạng thái: **FULLY COMPLETE** — source, tests, build, browser smoke Gap 2 + Gap 3 đều PASS
+
+---
+
+## 27. Hotfix — Drawing inspector close button behavior
+
+### Completed
+
+- `DrawingInspector` close action trong [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx) đã được đổi từ chỉ `setActiveTool("cursor")` sang `drawingInteraction.cancelDrawing()` + `setActiveTool("cursor")`.
+- Mục tiêu: nút close phải ẩn hẳn bảng điều khiển nét vẽ bằng cách clear selection state, không chỉ đổi tool.
+
+### Validation
+
+- `npm run build:docs` → PASS sau hotfix.
+- Browser smoke trên [build/index.html](../../build/index.html): tạo `Trend Line`, mở `DrawingInspector`, click nút `Đóng` → `beforeClose = 1`, `afterClose = 0`, `cursorPressed = true`.
+
+### Files touched
+
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+
+### CE11-02 — Drag-move body slice
+
+### Completed
+
+- `DrawingLayer` now translates the selected drawing geometry during drag and commits the final geometry on drag complete.
+- The move path uses preview/commit semantics so the history stack is not spammed on every pointer move.
+- `translateDrawingsByIds(...)` now has focused regression coverage to ensure only the selected drawing moves by the provided chart delta.
+
+### Validation
+
+- `npm run type-check` → PASS
+- `npm test -- src/lib/drawing/DrawingLayer.test.ts` → PASS (1 test)
+- `npm test` → PASS (29 files, 136 tests)
+- `npm run build:docs` → PASS
+- `python scripts/generate_module_tree.py` → PASS (`module_tree_full.md` regenerated; Modules: 689)
+- Browser smoke on [build/index.html](../../build/index.html): draw `Trend Line`, select it, drag the body, and confirm the chart readout changes after move.
+
+### Files touched
+
+- [src/lib/drawing/DrawingLayer.tsx](../../src/lib/drawing/DrawingLayer.tsx)
+- [src/lib/drawing/DrawingLayer.test.ts](../../src/lib/drawing/DrawingLayer.test.ts)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)
+
+### Residual risk
+
+- The move path was verified on the trend-line flow in browser smoke; the translation helper is generic, but resize/delete/lock flows still need their own CE11 follow-up slices.
+
+## 28. CE11-03 — Resize handles theo tool semantics
+
+### Completed
+
+- `DrawingLayer` now detects resize-handle hits for the selected drawing in cursor mode and switches the drag lifecycle into resize mode when a handle is grabbed.
+- `resizeDrawingsByIds(...)` updates endpoint/corner geometry with tool-specific constraints, including axis-preserving `hLine` / `vLine` resizing and `longPosition` / `shortPosition` risk-reward recalculation.
+- The resize path is covered by focused regression tests for hLine geometry and long-position derived state.
+
+### Validation
+
+- `npm test -- src/lib/drawing/DrawingLayer.test.ts` → PASS (3 tests)
+- `npm run type-check` → PASS
+- `npm test` → PASS (29 files, 138 tests)
+- `npm run build:docs` → PASS
+- `python scripts/generate_module_tree.py` → PASS (`module_tree_full.md` regenerated; Modules: 689)
+- Browser smoke on [build/index.html](../../build/index.html): a selected line handle drag changed the visible geometry/value in the chart and updated the on-chart readout from `80,476` to `79,348`.
+
+### Files touched
+
+- [src/lib/drawing/DrawingLayer.tsx](../../src/lib/drawing/DrawingLayer.tsx)
+- [src/lib/drawing/DrawingLayer.test.ts](../../src/lib/drawing/DrawingLayer.test.ts)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md](../../docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md)
+- [module_tree_full.md](../../module_tree_full.md)
+
+### Residual risk
+
+- The resize path is live and smoke-tested, but the cursor feedback remains the generic move cursor; a dedicated resize-cursor mapping can be tightened in a follow-up slice.
+- Browser smoke verified one live line-handle path; the more specialized shapes in CE11 still deserve focused smoke once CE11-04/CE11-05 land.
+
+## 29. CE11-04 — Delete / duplicate / copy / paste / undo-redo
+
+### Completed
+
+- Added the shared drawing clipboard helper in [src/lib/drawing/clipboard.ts](../../src/lib/drawing/clipboard.ts) so duplicate and paste flows reuse the same snapshot-clone logic.
+- Added focused regression coverage in [src/lib/drawing/clipboard.test.ts](../../src/lib/drawing/clipboard.test.ts) for immutable cloning and pixel-offset duplication.
+- Wired the live demo in [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx) to handle `Ctrl+D`, `Ctrl+C`, `Ctrl+V`, `Delete`, `Ctrl+Z`, and `Ctrl+Y` against the selected drawing.
+- Browser smoke on the built demo verified the real command flow on a selected trend line, including duplicate, copy/paste, delete, undo, and redo.
+
+### Validation
+
+- `npm test -- src/lib/drawing/clipboard.test.ts` → PASS (2 tests)
+- `npm run type-check` → PASS
+- `npm test` → PASS (30 files, 140 tests)
+- `npm run build:docs` → PASS
+- `python scripts/generate_module_tree.py` → PASS (`module_tree_full.md` regenerated; Modules: 691)
+- Browser smoke on [build/index.html](../../build/index.html): `Ctrl+D`, `Ctrl+C` + `Ctrl+V`, `Delete`, `Ctrl+Z`, and `Ctrl+Y` all behaved correctly on a selected trend line; drawing count moved 9 → 10 → 11 → 10 → 11 → 10.
+
+### Files touched
+
+- [src/lib/drawing/clipboard.ts](../../src/lib/drawing/clipboard.ts)
+- [src/lib/drawing/clipboard.test.ts](../../src/lib/drawing/clipboard.test.ts)
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)
+
+### Residual risk
+
+- The clipboard path was verified on the trend-line flow in browser smoke; other drawing types still rely on the shared clone/offset helper and should be re-smoked during CE11-05 if selection behavior changes.
+
+## 30. CE11-05 — Z-order / lock / multi-select refinements
+
+### Completed
+
+- `DrawingLayer` already preserves shift-click multi-select through `selectedMultiple` and selection-set toggling.
+- `LibraryShowcaseDemo` already exposes bring-to-front, send-to-back, lock, unlock, and selection reset actions through the inspector and drawing list wiring.
+- Existing interaction coverage already guards multi-select reducer flow and locked-drawing deletion behavior, so this slice did not need a source delta.
+- Browser smoke on the built demo verified the bring-to-front path against the live drawing list ordering.
+
+### Validation
+
+- `npm test -- src/lib/drawing/m3.test.ts src/lib/drawing/useDrawingInteraction.test.ts` → PASS (10 tests)
+- Browser smoke on [build/index.html](../../build/index.html): bring-to-front on a selected trend line reshuffled the visible list ordering on the live drawing panel; lock/delete behavior remains guarded by the reducer and interaction tests.
+
+### Files touched
+
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md](../../docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md)
+
+### Residual risk
+
+- The multi-select and lock flows are covered by reducer and interaction tests rather than a dedicated browser path; if the list or inspector layout changes later, CE12 should smoke them again.
+
+## 31. CE12-01 — Price label trên Y-axis
+
+### Completed
+
+- Added a reusable drawing price-label helper that resolves axis price markers from the selected drawing model instead of hardcoding a single indicator-specific value.
+- Wired the demo shell to render the selected drawing’s price markers through `PriceCoordinate`, so the label sits on the Y-axis without changing the chart engine API.
+- Covered the resolver with focused unit tests for trend-like tools, risk/reward tools, Fibonacci extension levels, and vertical-line exclusion.
+
+### Validation
+
+- `npm test -- src/lib/drawing/priceLabel.test.ts` → PASS (4 tests)
+- Browser smoke on [build/index.html](../../build/index.html): opened the offline fallback demo, drew a trend line, and confirmed the chart remained interactive with the selected drawing inspector open while the price-label path stayed wired in the live shell.
+
+### Files touched
+
+- [src/lib/drawing/priceLabel.tsx](../../src/lib/drawing/priceLabel.tsx)
+- [src/lib/drawing/priceLabel.test.ts](../../src/lib/drawing/priceLabel.test.ts)
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+
+### Residual risk
+
+- The label resolver covers the current drawing families and defaults to point-based prices for generic shapes; if CE12 expands to more geometry-aware tools, the resolver will need an additional price strategy branch.
+
+## 32. CE12-02 — Magnet cursor / measuring tool
+
+### Completed
+
+- Added a reusable measurement helper in `src/lib/drawing/measuring.ts` that resolves snapped chart points, converts measurement points back to pixels, and summarizes bar/price deltas.
+- Added a reusable widget overlay in `src/widget/MeasurementOverlay.tsx` and surfaced it through `VNStockChart` so embedders can enable the measuring mode without owning demo-only logic.
+- Added localized measurement labels to the widget i18n packs and a magnet cursor class so the active measuring tool has a visible hover cue.
+- Wired the demo holder to enable the measurement overlay only while the crosshair tool is active.
+
+### Validation
+
+- `npm test -- src/lib/drawing/measuring.test.ts src/widget/context/__tests__/WidgetI18nContext.test.tsx` → PASS (5 tests)
+- `get_errors` on all touched source files → PASS (no errors)
+
+### Files touched
+
+- [src/lib/ChartCanvas.tsx](../../src/lib/ChartCanvas.tsx)
+- [src/lib/drawing/measuring.ts](../../src/lib/drawing/measuring.ts)
+- [src/lib/drawing/measuring.test.ts](../../src/lib/drawing/measuring.test.ts)
+- [src/lib/drawing/index.ts](../../src/lib/drawing/index.ts)
+- [src/widget/MeasurementOverlay.tsx](../../src/widget/MeasurementOverlay.tsx)
+- [src/widget/VNStockChart.tsx](../../src/widget/VNStockChart.tsx)
+- [src/widget/index.ts](../../src/widget/index.ts)
+- [src/widget/i18n/messages.en.ts](../../src/widget/i18n/messages.en.ts)
+- [src/widget/i18n/messages.vi.ts](../../src/widget/i18n/messages.vi.ts)
+- [src/widget/context/__tests__/WidgetI18nContext.test.tsx](../../src/widget/context/__tests__/WidgetI18nContext.test.tsx)
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [src/demo/demo.css](../../src/demo/demo.css)
+- [src/index.ts](../../src/index.ts)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md](../../docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md)
+
+### Residual risk
+
+- The measurement overlay currently anchors to the default chart pane; if a downstream embedder wants a different measuring surface, the overlay will need a chart-id-aware attachment path.
+
+## 33. CE12-03 — Keyboard shortcuts / context menu
+
+### Completed
+
+- Added a shared drawing shortcut resolver in `src/lib/drawing/shortcutMap.ts` for tool toggles and object actions, including delete, copy, paste, clone, undo, redo, and escape.
+- Added a reusable drawing context menu component in `src/lib/drawing/contextMenu.tsx` and kept the visible labels localized through the demo i18n bundle.
+- Wired `DrawingLayer` to surface right-click hits back to the demo holder, and connected `LibraryShowcaseDemo.tsx` so the reusable menu can open on the selected drawing without hardcoding the logic into the canvas core.
+- Re-exported the new helpers through the drawing package and root entry surface so embedders can consume the same shortcut and menu primitives.
+
+### Validation
+
+- `npm test -- src/lib/drawing/shortcutMap.test.ts src/lib/drawing/contextMenu.test.tsx` → PASS (4 tests)
+- `npm run type-check` → PASS
+
+### Files touched
+
+- [src/lib/drawing/shortcutMap.ts](../../src/lib/drawing/shortcutMap.ts)
+- [src/lib/drawing/contextMenu.tsx](../../src/lib/drawing/contextMenu.tsx)
+- [src/lib/drawing/shortcutMap.test.ts](../../src/lib/drawing/shortcutMap.test.ts)
+- [src/lib/drawing/contextMenu.test.tsx](../../src/lib/drawing/contextMenu.test.tsx)
+- [src/lib/drawing/DrawingLayer.tsx](../../src/lib/drawing/DrawingLayer.tsx)
+- [src/lib/drawing/index.ts](../../src/lib/drawing/index.ts)
+- [src/index.ts](../../src/index.ts)
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [src/demo/i18n.tsx](../../src/demo/i18n.tsx)
+- [module_tree_full.md](../../module_tree_full.md)
+- [docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md](../../docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+
+### Residual risk
+
+- The menu is anchored from the demo shell and reuses the selected drawing state there; if a downstream embedder wants its own attachment surface, it can reuse the exported menu component but may need a different positioning strategy.
+
+## 34. CE12-04 — Inline text editing
+
+### Completed
+
+- Extended `DrawingInspector.tsx` with an inline text editing section for text drawings, including edit mode, textarea input, and commit/cancel controls.
+- Wired `DrawingLayer.tsx` to enter `START_EDITING` on text-drawing double-click, reusing the existing drawing state machine instead of adding a separate text editor controller.
+- Connected `LibraryShowcaseDemo.tsx` to preserve the draft text, commit updates back into the drawing object, and restore the cursor flow after save or cancel.
+- Added localized text-editing labels to the demo i18n packs and covered the new inspector behavior with a focused DOM test.
+
+### Validation
+
+- `npm test -- src/lib/drawing/shortcutMap.test.ts src/lib/drawing/contextMenu.test.tsx src/lib/drawing/DrawingInspector.test.tsx` → PASS (6 tests)
+- `npm run type-check` → PASS
+- `npm run build:docs` → PASS
+
+### Files touched
+
+- [src/lib/drawing/DrawingInspector.tsx](../../src/lib/drawing/DrawingInspector.tsx)
+- [src/lib/drawing/DrawingLayer.tsx](../../src/lib/drawing/DrawingLayer.tsx)
+- [src/lib/drawing/DrawingInspector.test.tsx](../../src/lib/drawing/DrawingInspector.test.tsx)
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [src/demo/i18n.tsx](../../src/demo/i18n.tsx)
+- [module_tree_full.md](../../module_tree_full.md)
+- [docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md](../../docs/upgrade-standard/canvas-drawtools-next/TASKBOARD.md)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+
+### Residual risk
+
+- The editor lives in the inspector instead of directly over the chart anchor, so it is inline in workflow but not pixel-anchored to the text glyph itself; if a future embedder wants chart-relative editing chrome, it can build on the same `START_EDITING` state and inspector props.
+
+## 35. Hotfix — drawing cache recovery + selection click alignment
+
+### Completed
+
+- Expanded the drawing storage whitelist so all current drawing tool types can load from localStorage, and invalid legacy cache payloads are now treated as recoverable: they are cleared and ignored instead of crashing the demo on startup.
+- Aligned SVG click coordinates in `EventCapture.tsx` with the same SVG-local pointer path used by mousemove/drag, which removes the vertical mismatch that made drawing selection feel offset in the chart.
+- Verified in-browser that a newly created text drawing can be deselected and then re-selected by clicking its exact placed position without needing to shift the pointer downward.
+
+### Validation
+
+- `npm test -- src/lib/drawing/DrawingStorage.test.ts` → PASS (4 tests)
+- `npm run type-check` → PASS
+- Browser smoke on `http://127.0.0.1:4173/index.html` → PASS (create text drawing, Esc deselects, exact click on the text re-selects it)
+
+### Files touched
+
+- [src/lib/drawing/DrawingStorage.ts](../../src/lib/drawing/DrawingStorage.ts)
+- [src/lib/drawing/DrawingStorage.test.ts](../../src/lib/drawing/DrawingStorage.test.ts)
+- [src/lib/EventCapture.tsx](../../src/lib/EventCapture.tsx)
+- [module_tree_full.md](../../module_tree_full.md)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+
+### Residual risk
+
+- None known for the selection path covered here; if other embeds implement custom event layers, they should keep click and drag coordinate extraction on the same SVG-local basis to avoid reintroducing the offset.
+
+## 36. DrawingLayer hover cursor feedback
+
+### Completed
+
+- Broadened `DrawingLayer` hover detection in cursor mode so any hit-selectable drawing returns a hover signal, which allows the chart shell to switch the pointer cursor when the user moves over selectable drawing geometry.
+- Added a focused regression test that renders `DrawingLayer` with a mocked `GenericComponent` and asserts hover detection is enabled for a selectable drawing hit in cursor mode.
+
+### Validation
+
+- `npm test -- src/lib/drawing/DrawingLayer.hover.test.tsx` → PASS
+- `npm run build:docs` → PASS
+- `python scripts/generate_module_tree.py` → PASS (`module_tree_full.md` regenerated; Modules: 703)
+
+### Files touched
+
+- [src/lib/drawing/DrawingLayer.tsx](../../src/lib/drawing/DrawingLayer.tsx)
+- [src/lib/drawing/DrawingLayer.hover.test.tsx](../../src/lib/drawing/DrawingLayer.hover.test.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)
+
+### Residual risk
+
+- The hover feedback now lights up for any selectable drawing hit in cursor mode, which improves discoverability, but the per-object cursor still follows the shared `GenericComponent` hover model; if a later slice needs different cursors for selected vs. unselected hits, that will need a finer-grained hover state.
+
+## 37. DrawingLayer chart-aware canvas translation
+
+### Completed
+
+- Switched `DrawingLayer.tsx` from the generic canvas wrapper to the chart-aware wrapper so canvas rendering and hover/click coordinates are translated through `chartConfig.origin` and the chart margin before drawing selected drawings.
+- Kept the existing hover regression in place and updated it to mock the chart-aware wrapper path, so the interaction layer still verifies selectable drawing hover state after the wrapper swap.
+
+### Validation
+
+- `npm test -- src/lib/drawing/DrawingLayer.hover.test.tsx` → PASS
+
+### Files touched
+
+- [src/lib/drawing/DrawingLayer.tsx](../../src/lib/drawing/DrawingLayer.tsx)
+- [src/lib/drawing/DrawingLayer.hover.test.tsx](../../src/lib/drawing/DrawingLayer.hover.test.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+
+### Residual risk
+
+- The fix assumes `DrawingLayer` is mounted inside the normal `ChartCanvas` / chart-context tree; if an embedder bypasses that tree, the chart-aware wrapper will fall back to the first chart config and should be reviewed in that custom integration.
+
+## 38. Drawing price markers settings toggle
+
+### Completed
+
+- Added a demo-settings-backed toggle for drawing price markers so selected drawings can hide their axis marker/price line from the settings modal.
+- Wired the toggle into the existing theme section of `PaneSettingsModal.tsx` and persisted it together with the other demo shell preferences.
+- Extended `DrawingPriceLabels` with an `enabled` gate so disabling the setting removes the `PriceCoordinate` path entirely instead of only masking the label visually.
+
+### Validation
+
+- `npm test -- src/lib/drawing/priceLabel.test.ts` → PASS (5 tests)
+- `get_errors` on touched files → PASS (no errors)
+- `npm run build:docs` → PASS
+- `python scripts/generate_module_tree.py` → PASS (703 modules)
+- `npm run type-check` → PASS
+
+### Files touched
+
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [src/demo/PaneSettingsModal.tsx](../../src/demo/PaneSettingsModal.tsx)
+- [src/demo/i18n.tsx](../../src/demo/i18n.tsx)
+- [src/lib/drawing/priceLabel.tsx](../../src/lib/drawing/priceLabel.tsx)
+- [src/lib/drawing/priceLabel.test.ts](../../src/lib/drawing/priceLabel.test.ts)
+- [module_tree_full.md](../../module_tree_full.md)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+
+### Residual risk
+
+- The toggle is persisted in the demo shell only; external embedders that want the same behavior will need to wire their own preference storage and pass the `enabled` prop (or equivalent) into the shared label helper.
+
+## 39. Drawing default stroke color refresh
+
+### Completed
+
+- Changed the shared default drawing stroke to a blue accent so newly created drawings no longer start with the dark near-black tone.
+- Kept the change centralized in `defaultDrawingStyle`, so every drawing tool that relies on the shared factory inherits the blue default automatically.
+
+### Validation
+
+- `get_errors` on [src/lib/drawing/shared.ts](../../src/lib/drawing/shared.ts) → PASS (no errors)
+- `npm run build:docs` → PASS
+- `python scripts/generate_module_tree.py` → PASS (703 modules)
+
+### Files touched
+
+- [src/lib/drawing/shared.ts](../../src/lib/drawing/shared.ts)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)
+
+### Residual risk
+
+- Existing drawings keep their stored stroke color; this only changes the default for newly created drawings.
