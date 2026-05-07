@@ -41,5 +41,11 @@ export interface EnrichedDatum extends RawOHLCV {
 	whaleSellVol?: number;
 	cvdRealtime?: number;
 	strengthRelative?: number;
+	// CE15
+	bbi?: number;
+	sar?: number;
+	obv?: number;
+	wr?: number;
+	vr?: number;
 	indicatorValues?: Record<string, IndicatorDatumValue | undefined>;
 }

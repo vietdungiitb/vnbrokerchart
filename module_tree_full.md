@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-07 14:17:30`
+Generated at: `2026-05-07 14:58:38`
 
 ## Summary
 
-- Total modules: 703
+- Total modules: 710
 - Python modules: 1
-- JS/TS modules: 702
+- JS/TS modules: 709
 - Total classes: 353
-- Total functions: 3847
-- Total top-level variables: 8468
+- Total functions: 3853
+- Total top-level variables: 8503
 
 ## Python Modules
 
@@ -2704,7 +2704,7 @@ Generated at: `2026-05-07 14:17:30`
 - Functions:
   - `blankUntil`, `buildIndicatorComputationPlan`, `computeIndicatorComputationResult`, `defaultSeries`, `indicatorKey`, `materializeIndicatorValues`, `mergeBand`, `numberParam`
 - Top-level variables:
-  - `bollingerByKey`, `bollingerConfigs`, `closes`, `cvd`, `defaultBollingerKey`, `defaultBollingerSeries`, `defaultMacdKey`, `defaultMacdSeries`, `defaultWhaleKey`, `defaultWhaleSeries`, `emaByPeriod`, `emaPeriods`, `histogramLine`, `histogramValue`, `indicatorValues`, `key`, `macd`, `macdByKey`, `macdConfigs`, `macdLine`, `macdValue`, `rsiByPeriod`, `rsiPeriods`, `series`, `signalLine`, `signalValue`, `strength`, `value`, `whaleByKey`, `whaleThresholds`
+  - `bbi`, `bbiEnabled`, `bollingerByKey`, `bollingerConfigs`, `closes`, `cvd`, `defaultBollingerKey`, `defaultBollingerSeries`, `defaultMacdKey`, `defaultMacdSeries`, `defaultWhaleKey`, `defaultWhaleSeries`, `emaByPeriod`, `emaPeriods`, `histogramLine`, `histogramValue`, `indicatorValues`, `key`, `macd`, `macdByKey`, `macdConfigs`, `macdLine`, `macdValue`, `obv`, `obvEnabled`, `rsiByPeriod`, `rsiPeriods`, `sarByKey`, `series`, `signalLine`, `signalValue`, `smaByPeriod`, `smaPeriods`, `strength`, `value`, `vrByPeriod`, `vrPeriods`, `whaleByKey`, `whaleThresholds`, `wrByPeriod`, `wrPeriods`
 
 ### `src/lib/core/calculators/types.ts`
 
@@ -3503,6 +3503,18 @@ Generated at: `2026-05-07 14:17:30`
 - Top-level variables:
   - `ALGORITHM_TYPE`, `base`, `indicator`, `mergedAlgorithm`, `underlyingAlgorithm`
 
+### `src/lib/indicators/builtin/__tests__/ce15.test.ts`
+
+- Functions:
+  - `makeBar`
+- Top-level variables:
+  - `bars`, `result`
+
+### `src/lib/indicators/builtin/bbi.ts`
+
+- Top-level variables:
+  - `BBI`
+
 ### `src/lib/indicators/builtin/bollinger.ts`
 
 - Top-level variables:
@@ -3518,15 +3530,30 @@ Generated at: `2026-05-07 14:17:30`
 - Top-level variables:
   - `EMA`
 
+### `src/lib/indicators/builtin/ma.ts`
+
+- Top-level variables:
+  - `MA`
+
 ### `src/lib/indicators/builtin/macd.ts`
 
 - Top-level variables:
   - `MACD`
 
+### `src/lib/indicators/builtin/obv.ts`
+
+- Top-level variables:
+  - `OBV`
+
 ### `src/lib/indicators/builtin/rsi.ts`
 
 - Top-level variables:
   - `RSI`
+
+### `src/lib/indicators/builtin/sar.ts`
+
+- Top-level variables:
+  - `SAR`
 
 ### `src/lib/indicators/builtin/sma.ts`
 
@@ -3537,6 +3564,16 @@ Generated at: `2026-05-07 14:17:30`
 
 - Top-level variables:
   - `VOLUME`
+
+### `src/lib/indicators/builtin/vr.ts`
+
+- Top-level variables:
+  - `VR`
+
+### `src/lib/indicators/builtin/wr.ts`
+
+- Top-level variables:
+  - `WR`
 
 ### `src/lib/indicators/index.ts`
 
@@ -3568,9 +3605,9 @@ Generated at: `2026-05-07 14:17:30`
 ### `src/lib/indicators/utils.ts`
 
 - Functions:
-  - `bollingerSeries`, `collectNumbers`, `emaSeries`, `macdSeries`, `numericExtent`, `rollingStandardDeviation`, `rsiSeries`, `smaSeries`
+  - `bbiSeries`, `bollingerSeries`, `collectNumbers`, `emaSeries`, `macdSeries`, `numericExtent`, `obvSeries`, `rollingStandardDeviation`, `rsiSeries`, `sarSeries`, `smaSeries`, `vrSeries`, `wrSeries`
 - Top-level variables:
-  - `averageGain`, `averageLoss`, `change`, `current`, `delta`, `deviation`, `divisor`, `fastEma`, `finiteValues`, `gain`, `gainAverage`, `histogram`, `loss`, `lossAverage`, `lower`, `macd`, `maxValue`, `mean`, `middle`, `minValue`, `previousEma`, `relativeStrength`, `rollingSum`, `series`, `signal`, `slice`, `slowEma`, `smoothing`, `startIndex`, `upper`, `variance`, `window`
+  - `af`, `averageGain`, `averageLoss`, `bar`, `change`, `close`, `current`, `delta`, `denom`, `deviation`, `divisor`, `ep`, `fastEma`, `finiteValues`, `gain`, `gainAverage`, `hh`, `histogram`, `isUpTrend`, `ll`, `loss`, `lossAverage`, `lower`, `ma12`, `ma24`, `ma3`, `ma6`, `macd`, `maxValue`, `mean`, `middle`, `minValue`, `prevSar`, `previousEma`, `relativeStrength`, `result`, `rollingSum`, `sar`, `series`, `signal`, `slice`, `slowEma`, `smoothing`, `startIndex`, `up`, `upper`, `variance`, `window`
 
 ### `src/lib/interactive/Brush.tsx`
 

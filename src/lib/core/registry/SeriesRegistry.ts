@@ -9,6 +9,7 @@ import LineSeries from "../../series/LineSeries";
 import MACDSeries from "../../series/MACDSeries";
 import OHLCSeries from "../../series/OHLCSeries";
 import RSISeries from "../../series/RSISeries";
+import SARSeries from "../../series/SARSeries";
 import type { EnrichedDatum } from "../calculators/types";
 import type { SeriesSettingField } from "../types/indicator-catalog";
 import type { SeriesConfig, SeriesTypeId, YAxisSide } from "../types/pane-descriptor";
@@ -321,6 +322,92 @@ export function registerPhaseOneSeries() {
 			label: "Whale",
 			format: format(".3s"),
 			accessor: (d) => d.whaleBuyVol ?? d.whaleSellVol,
+		}),
+	});
+
+	// ── CE15 indicators ───────────────────────────────────────────────────────
+
+	registerLineSeries("MA", {
+		component: LineSeries,
+		defaultParams: { period: 20 },
+		yExtentsAccessors: [(d) => d.close],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 20, min: 1, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `MA(${periodFromConfig(config, 20)})`,
+			format: format(".2f"),
+			accessor: (d) => d.close,
+		}),
+	});
+
+	registerLineSeries("BBI", {
+		component: LineSeries,
+		defaultParams: {},
+		defaultYAxis: "right",
+		yExtentsAccessors: [(d) => d.bbi],
+		tooltipEntry: () => ({
+			label: "BBI",
+			format: format(".2f"),
+			accessor: (d) => d.bbi,
+		}),
+	});
+
+	registerSeries("SAR", {
+		component: SARSeries,
+		defaultParams: { afStep: 0.02, afMax: 0.2 },
+		defaultYAxis: "right",
+		yExtentsAccessors: [(d) => d.sar],
+		settingsFields: [
+			{ key: "afStep", labelKey: "settings.afStep", type: "number", defaultValue: 0.02, min: 0.001, step: 0.001 },
+			{ key: "afMax", labelKey: "settings.afMax", type: "number", defaultValue: 0.2, min: 0.01, step: 0.01 },
+		],
+		tooltipEntry: () => ({
+			label: "SAR",
+			format: format(".2f"),
+			accessor: (d) => d.sar,
+		}),
+	});
+
+	registerLineSeries("OBV", {
+		component: LineSeries,
+		defaultParams: {},
+		defaultYAxis: "right",
+		yExtentsAccessors: [(d) => d.obv],
+		tooltipEntry: () => ({
+			label: "OBV",
+			format: format(".3s"),
+			accessor: (d) => d.obv,
+		}),
+	});
+
+	registerLineSeries("WR", {
+		component: LineSeries,
+		defaultParams: { period: 14 },
+		defaultYAxis: "left",
+		yExtentsAccessors: [(d) => d.wr],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 14, min: 2, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `WR(${periodFromConfig(config, 14)})`,
+			format: format(".1f"),
+			accessor: (d) => d.wr,
+		}),
+	});
+
+	registerLineSeries("VR", {
+		component: LineSeries,
+		defaultParams: { period: 26 },
+		defaultYAxis: "right",
+		yExtentsAccessors: [(d) => d.vr],
+		settingsFields: [
+			{ key: "period", labelKey: "settings.period", type: "number", defaultValue: 26, min: 2, step: 1 },
+		],
+		tooltipEntry: (config) => ({
+			label: `VR(${periodFromConfig(config, 26)})`,
+			format: format(".1f"),
+			accessor: (d) => d.vr,
 		}),
 	});
 }

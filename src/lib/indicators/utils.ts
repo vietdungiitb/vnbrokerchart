@@ -80,6 +80,131 @@ export function smaSeries(values: readonly number[], period: number): number[] {
 	return series;
 }
 
+// ── CE15 compute functions ────────────────────────────────────────────────────
+
+interface PriceBar {
+	close: number;
+	high: number;
+	low: number;
+	volume: number;
+}
+
+export function bbiSeries(bars: readonly PriceBar[]): number[] {
+	const close = bars.map((b) => b.close);
+	const ma3 = smaSeries(close, 3);
+	const ma6 = smaSeries(close, 6);
+	const ma12 = smaSeries(close, 12);
+	const ma24 = smaSeries(close, 24);
+	return close.map((_, i) => (ma3[i]! + ma6[i]! + ma12[i]! + ma24[i]!) / 4);
+}
+
+export function sarSeries(
+	bars: readonly PriceBar[],
+	afStep = 0.02,
+	afMax = 0.2,
+): number[] {
+	if (bars.length < 2) {
+		return bars.map(() => NaN);
+	}
+
+	const result: number[] = new Array(bars.length).fill(NaN) as number[];
+	let isUpTrend = bars[1]!.close > bars[0]!.close;
+	let af = afStep;
+	let ep = isUpTrend ? bars[0]!.high : bars[0]!.low;
+	let sar = isUpTrend ? bars[0]!.low : bars[0]!.high;
+
+	result[0] = sar;
+
+	for (let i = 1; i < bars.length; i++) {
+		const bar = bars[i]!;
+		const prevSar = sar;
+
+		// Calculate new SAR
+		sar = prevSar + af * (ep - prevSar);
+
+		if (isUpTrend) {
+			// SAR must be below prior two lows
+			sar = Math.min(sar, bars[i - 1]!.low);
+			if (i >= 2) sar = Math.min(sar, bars[i - 2]!.low);
+
+			if (bar.low < sar) {
+				// Trend reversal: down
+				isUpTrend = false;
+				sar = ep;
+				ep = bar.low;
+				af = afStep;
+			} else {
+				if (bar.high > ep) {
+					ep = bar.high;
+					af = Math.min(af + afStep, afMax);
+				}
+			}
+		} else {
+			// SAR must be above prior two highs
+			sar = Math.max(sar, bars[i - 1]!.high);
+			if (i >= 2) sar = Math.max(sar, bars[i - 2]!.high);
+
+			if (bar.high > sar) {
+				// Trend reversal: up
+				isUpTrend = true;
+				sar = ep;
+				ep = bar.high;
+				af = afStep;
+			} else {
+				if (bar.low < ep) {
+					ep = bar.low;
+					af = Math.min(af + afStep, afMax);
+				}
+			}
+		}
+
+		result[i] = sar;
+	}
+
+	return result;
+}
+
+export function obvSeries(bars: readonly PriceBar[]): number[] {
+	const result: number[] = [0];
+	for (let i = 1; i < bars.length; i++) {
+		const delta =
+			bars[i]!.close > bars[i - 1]!.close
+				? bars[i]!.volume
+				: bars[i]!.close < bars[i - 1]!.close
+				? -bars[i]!.volume
+				: 0;
+		result.push(result[i - 1]! + delta);
+	}
+	return result;
+}
+
+export function wrSeries(bars: readonly PriceBar[], period = 14): number[] {
+	return bars.map((_, i) => {
+		if (i < period - 1) return NaN;
+		const slice = bars.slice(i - period + 1, i + 1);
+		const hh = Math.max(...slice.map((b) => b.high));
+		const ll = Math.min(...slice.map((b) => b.low));
+		if (hh === ll) return -50;
+		return ((hh - bars[i]!.close) / (hh - ll)) * -100;
+	});
+}
+
+export function vrSeries(bars: readonly PriceBar[], period = 26): number[] {
+	return bars.map((_, i) => {
+		if (i < period) return NaN;
+		const slice = bars.slice(i - period + 1, i + 1);
+		let up = 0, down = 0, flat = 0;
+		for (let j = 1; j < slice.length; j++) {
+			if (slice[j]!.close > slice[j - 1]!.close) up += slice[j]!.volume;
+			else if (slice[j]!.close < slice[j - 1]!.close) down += slice[j]!.volume;
+			else flat += slice[j]!.volume;
+		}
+		const denom = down + flat * 0.5;
+		if (denom === 0) return 100;
+		return ((up + flat * 0.5) / denom) * 100;
+	});
+}
+
 export function rsiSeries(values: readonly number[], period: number): number[] {
 	if (values.length === 0) {
 		return [];

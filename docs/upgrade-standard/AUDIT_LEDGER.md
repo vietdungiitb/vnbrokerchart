@@ -2719,6 +2719,40 @@ Every completed slice must update this ledger with the exact files changed in th
 
 ---
 
+## CE15 — Indicator Pack: MA, BBI, SAR, OBV, WR, VR
+
+**Ngày hoàn tất:** 2026-05-08
+**Sprint:** CE15
+
+### Thay đổi
+- `src/lib/indicators/utils.ts` — thêm `PriceBar` interface; compute functions: `bbiSeries`, `sarSeries`, `obvSeries`, `wrSeries`, `vrSeries`
+- `src/lib/indicators/builtin/ma.ts` — plugin MA (Moving Average)
+- `src/lib/indicators/builtin/bbi.ts` — plugin BBI
+- `src/lib/indicators/builtin/sar.ts` — plugin SAR (Parabolic)
+- `src/lib/indicators/builtin/obv.ts` — plugin OBV
+- `src/lib/indicators/builtin/wr.ts` — plugin Williams %R
+- `src/lib/indicators/builtin/vr.ts` — plugin VR (Volume Ratio)
+- `src/lib/indicators/index.ts` — register 6 new indicators
+- `src/lib/core/types/pane-descriptor.ts` — SeriesTypeId union +6
+- `src/lib/core/calculators/types.ts` — EnrichedDatum: bbi, sar, obv, wr, vr fields
+- `src/lib/core/calculators/indicatorComputation.ts` — plan/result/materialize for 6 new indicators
+- `src/lib/core/calculators/enrichData.ts` — map new fields
+- `src/lib/core/seriesValueResolver.ts` — resolve MA/BBI/SAR/OBV/WR/VR
+- `src/lib/core/registry/SeriesRegistry.ts` — register 6 entries incl. SARSeries
+- `src/demo/i18n.tsx` — i18n keys VI+EN for all 6 indicators
+- `src/lib/indicators/builtin/__tests__/ce15.test.ts` — unit tests (13 tests)
+- `module_tree_full.md` — regenerated
+
+### Gate evidence
+| Gate | Kết quả |
+|---|---|
+| type-check | 0 errors |
+| npm test | 172 tests / 38 files PASS |
+| build:docs | OK |
+| module_tree | 710 modules |
+
+---
+
 ## CE14 — Stability & Bug Fixes
 
 **Ngày hoàn tất:** 2026-05-07

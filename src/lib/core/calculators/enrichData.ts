@@ -40,6 +40,12 @@ export function enrichData(raw: readonly RawOHLCV[], optionsOrWhaleThreshold?: E
 			bearPower: result.strength[index]?.bearPower,
 			whaleBuyVol: result.whaleByKey.get(plan.defaultWhaleKey)?.[index]?.whaleBuyVol,
 			whaleSellVol: result.whaleByKey.get(plan.defaultWhaleKey)?.[index]?.whaleSellVol,
+			// CE15
+			bbi: plan.bbiEnabled ? result.bbi[index] : undefined,
+			sar: result.sarByKey.size > 0 ? [...result.sarByKey.values()][0]?.[index] : undefined,
+			obv: plan.obvEnabled ? result.obv[index] : undefined,
+			wr: result.wrByPeriod.size > 0 ? [...result.wrByPeriod.values()][0]?.[index] : undefined,
+			vr: result.vrByPeriod.size > 0 ? [...result.vrByPeriod.values()][0]?.[index] : undefined,
 			indicatorValues: Object.keys(indicatorValues).length > 0 ? indicatorValues : undefined,
 		};
 	});

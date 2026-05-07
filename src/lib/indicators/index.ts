@@ -6,6 +6,12 @@ import MACD from "./builtin/macd";
 import BOLLINGER from "./builtin/bollinger";
 import VOLUME from "./builtin/volume";
 import CVD from "./builtin/cvd";
+import MA from "./builtin/ma";
+import BBI from "./builtin/bbi";
+import SAR from "./builtin/sar";
+import OBV from "./builtin/obv";
+import WR from "./builtin/wr";
+import VR from "./builtin/vr";
 
 registerIndicator(EMA);
 registerIndicator(SMA);
@@ -14,7 +20,13 @@ registerIndicator(MACD);
 registerIndicator(BOLLINGER);
 registerIndicator(VOLUME);
 registerIndicator(CVD);
+registerIndicator(MA);
+registerIndicator(BBI);
+registerIndicator(SAR);
+registerIndicator(OBV);
+registerIndicator(WR);
+registerIndicator(VR);
 
 export { getIndicator, listIndicators, registerIndicator } from "./registry";
 export type { IndicatorName, IndicatorRegistry, RegisteredIndicator } from "./types";
-export { EMA, SMA, RSI, MACD, BOLLINGER, VOLUME, CVD };
+export { EMA, SMA, RSI, MACD, BOLLINGER, VOLUME, CVD, MA, BBI, SAR, OBV, WR, VR };

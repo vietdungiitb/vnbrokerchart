@@ -61,6 +61,8 @@ export function buildIndicatorSeriesKey(series: SeriesConfig): string | undefine
 	switch (series.type) {
 		case "EMA":
 			return `EMA:period=${numberParam(series, "period", 20)}`;
+		case "MA":
+			return `MA:period=${numberParam(series, "period", 20)}`;
 		case "BollingerBand":
 			return `BollingerBand:period=${numberParam(series, "period", 20)}:stdDev=${numberParam(series, "stdDev", 2)}`;
 		case "RSI":
@@ -69,6 +71,12 @@ export function buildIndicatorSeriesKey(series: SeriesConfig): string | undefine
 			return `MACD:fast=${numberParam(series, "fast", 12)}:slow=${numberParam(series, "slow", 26)}:signal=${numberParam(series, "signal", 9)}`;
 		case "Whale":
 			return `Whale:threshold=${numberParam(series, "threshold", 50_000)}`;
+		case "SAR":
+			return `SAR:afStep=${numberParam(series, "afStep", 0.02)}:afMax=${numberParam(series, "afMax", 0.2)}`;
+		case "WR":
+			return `WR:period=${numberParam(series, "period", 14)}`;
+		case "VR":
+			return `VR:period=${numberParam(series, "period", 26)}`;
 		default:
 			return undefined;
 	}
@@ -99,11 +107,20 @@ export function resolveSeriesValue(datum: EnrichedDatum, series: SeriesConfig): 
 		case "Volume":
 			return datum.volume;
 		case "EMA":
+		case "MA":
 		case "RSI":
 		case "CVDApprox":
 		case "CVDRealtime":
 		case "StrengthRelative":
+		case "WR":
+		case "VR":
 			return asNumber(resolveSeriesDatumValue(datum, series));
+		case "BBI":
+			return datum.bbi;
+		case "SAR":
+			return datum.sar ?? asNumber(resolveSeriesDatumValue(datum, series));
+		case "OBV":
+			return datum.obv;
 		case "MACD":
 			return asNumber(resolveSeriesDatumValue(datum, series), (value) => (value as IndicatorMacdValue).macd);
 		case "BollingerBand":

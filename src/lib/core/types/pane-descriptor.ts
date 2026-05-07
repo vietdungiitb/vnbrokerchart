@@ -15,7 +15,14 @@ export type SeriesTypeId =
 	| "CVDRealtime"
 	| "StrengthElder"
 	| "StrengthRelative"
-	| "Whale";
+	| "Whale"
+	// CE15 additions
+	| "MA"
+	| "BBI"
+	| "SAR"
+	| "OBV"
+	| "WR"
+	| "VR";
 
 export type YAxisSide = "left" | "right";
 
