@@ -361,13 +361,17 @@ html[data-chart-theme="light"] body::before {
 	padding: 12px 14px;
 	border-radius: 16px;
 	border: 1px solid var(--gc-border-mid);
-	background: rgba(15, 23, 42, 0.94);
-	box-shadow: 0 16px 38px rgba(2, 6, 23, 0.34);
-	backdrop-filter: blur(12px);
-	-webkit-backdrop-filter: blur(12px);
+	background: var(--gc-surface);
+	box-shadow: 0 16px 38px rgba(2, 6, 23, 0.18);
 	display: grid;
 	gap: 10px;
 	color: var(--gc-text);
+}
+
+html[data-chart-theme="dark"] .gc-paper-trade-panel {
+	background: rgba(var(--gc-surface, 30 33 48) / 0.96);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
 }
 
 .gc-paper-trade-panel__header {
@@ -2152,6 +2156,75 @@ html[data-chart-theme="light"] body::before {
 }
 
 /* =========================================================
+   Color picker for indicator settings
+   ========================================================= */
+.gc-settings-field--color {
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+}
+
+.gc-settings-field--color > span {
+	flex: 1;
+}
+
+.gc-settings-color-input {
+	width: 36px;
+	height: 28px;
+	padding: 2px 3px;
+	border: 1px solid var(--gc-border);
+	border-radius: 6px;
+	background: var(--gc-bg);
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.gc-settings-color-input:focus-visible {
+	outline: 2px solid var(--gc-accent);
+	outline-offset: 1px;
+}
+
+/* =========================================================
+   Drawing tools grouped flyout sub-menus
+   ========================================================= */
+.gc-tools-group-container {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.gc-tool-btn--group {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1px;
+}
+
+.gc-tools-chevron {
+	font-size: 7px;
+	line-height: 1;
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+.gc-tools-flyout {
+	position: absolute;
+	left: calc(100% + 6px);
+	top: 0;
+	z-index: 110;
+	background: var(--gc-surface);
+	border: 1px solid var(--gc-border-mid);
+	border-radius: var(--gc-radius);
+	box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.22);
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 4px;
+	min-width: 42px;
+}
+
+/* =========================================================
    CE21: Responsive / Mobile (≤767px)
    Toolbar collapses from vertical column to horizontal row
    with touch-friendly tap targets and scroll overflow.
@@ -2192,6 +2265,13 @@ html[data-chart-theme="light"] body::before {
 		width: 1px;
 		height: 20px;
 		margin: 0 4px;
+	}
+
+	/* Flyout opens downward on mobile (toolbar is horizontal) */
+	.gc-tools-flyout {
+		left: 0;
+		top: calc(100% + 6px);
+		flex-direction: row;
 	}
 
 	/* Ensure all tool buttons meet 44×44px touch target minimum */

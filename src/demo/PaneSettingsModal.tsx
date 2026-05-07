@@ -264,9 +264,6 @@ export function PaneSettingsModal({
 		}
 
 		const fields = entry.settingsFields ?? [];
-		if (fields.length === 0) {
-			return null;
-		}
 
 		const renderField = (field: SeriesSettingField) => {
 			const rawValue = series.params?.[field.key];
@@ -287,15 +284,32 @@ export function PaneSettingsModal({
 			);
 		};
 
-		if (fields.length === 1) {
-			return renderField(fields[0]);
+		const colorPicker = (
+			<label key="__color__" className="gc-settings-field gc-settings-field--color">
+				<span>{t("settings.seriesColor")}</span>
+				<input
+					type="color"
+					className="gc-settings-color-input"
+					value={series.color ?? "#2962ff"}
+					onChange={(event) => paneState.updateSeriesColor(pane.id, series.type, event.target.value, seriesIndex)}
+				/>
+			</label>
+		);
+
+		if (fields.length === 0) {
+			return colorPicker;
 		}
 
-		const gridClassName = fields.length === 3
+		const gridClassName = fields.length >= 3
 			? "gc-settings-param-grid gc-settings-param-grid--three"
 			: "gc-settings-param-grid";
 
-		return <div className={gridClassName}>{fields.map(renderField)}</div>;
+		return (
+			<div className={gridClassName}>
+				{fields.map(renderField)}
+				{colorPicker}
+			</div>
+		);
 	};
 
 	const renderLayoutSection = () => (
@@ -679,11 +693,9 @@ export function PaneSettingsModal({
 
 	return (
 		<div className="gc-settings-backdrop" onMouseDown={handleBackdropMouseDown}>
-			<div ref={dialogRef} className="gc-settings-modal" role="dialog" aria-modal="true" aria-labelledby="pane-settings-title">
+			<div ref={dialogRef} className="gc-settings-modal" role="dialog" aria-modal="true" aria-label={t("settings.dialogKicker")}>
 				<header className="gc-settings-modal__header">
 					<div className="gc-settings-modal__hero">
-						<div className="gc-settings-kicker">{t("settings.dialogKicker")}</div>
-						<h2 id="pane-settings-title">{t("settings.dialogTitle")}</h2>
 						<div className="gc-settings-modal__meta">
 							<span className="gc-settings-badge gc-settings-badge--accent">{sectionLabels[section]}</span>
 							<span className="gc-settings-badge">{`${t("common.panes")} ${visibleCount}/${maxVisiblePanes}`}</span>

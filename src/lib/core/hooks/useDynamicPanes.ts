@@ -32,6 +32,7 @@ export type DynamicPaneAction =
 	| { type: "toggleSeriesVisible"; paneId: string; seriesType: SeriesTypeId; seriesIndex?: number; maxVisiblePanes?: number }
 	| { type: "updateSeriesParams"; paneId: string; seriesType: SeriesTypeId; params: Record<string, unknown>; seriesIndex?: number }
 	| { type: "updateSeriesYAxis"; paneId: string; seriesType: SeriesTypeId; yAxis: YAxisSide; seriesIndex?: number }
+	| { type: "updateSeriesColor"; paneId: string; seriesType: SeriesTypeId; color: string; seriesIndex?: number }
 	| { type: "applyDelta"; splitterIndex: number; deltaY: number; available: number }
 	| { type: "replaceLayout"; panes: readonly PaneDescriptor[] }
 	| { type: "resetToDefault" }
@@ -53,6 +54,7 @@ export interface UseDynamicPanesResult {
 	toggleSeriesVisible: (paneId: string, seriesType: SeriesTypeId, seriesIndex?: number) => void;
 	updateSeriesParams: (paneId: string, seriesType: SeriesTypeId, params: Record<string, unknown>, seriesIndex?: number) => void;
 	updateSeriesYAxis: (paneId: string, seriesType: SeriesTypeId, yAxis: YAxisSide, seriesIndex?: number) => void;
+	updateSeriesColor: (paneId: string, seriesType: SeriesTypeId, color: string, seriesIndex?: number) => void;
 	applyDelta: (splitterIndex: number, deltaY: number) => void;
 	replaceLayout: (panes: readonly PaneDescriptor[]) => void;
 	resetToDefault: () => void;
@@ -532,6 +534,16 @@ export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: Dy
 			syncSplitScale(pane);
 			return normalizeVisibleRatios(next);
 		}
+		case "updateSeriesColor": {
+			const next = clonePaneList(state);
+			const pane = next.find((p) => p.id === action.paneId);
+			if (!pane) return next;
+			const seriesIndex = resolveSeriesIndex(pane.series, action.seriesType, action.seriesIndex);
+			const series = pane.series[seriesIndex];
+			if (!series) return next;
+			series.color = action.color || undefined;
+			return next;
+		}
 		default:
 			return clonePaneList(state);
 	}
@@ -632,6 +644,10 @@ export function useDynamicPanes(totalHeight: number, options: UseDynamicPanesOpt
 		dispatch({ type: "updateSeriesYAxis", paneId, seriesType, yAxis, seriesIndex });
 	}, []);
 
+	const updateSeriesColor = useCallback((paneId: string, seriesType: SeriesTypeId, color: string, seriesIndex?: number) => {
+		dispatch({ type: "updateSeriesColor", paneId, seriesType, color, seriesIndex });
+	}, []);
+
 	return {
 		panes,
 		visiblePanes,
@@ -648,6 +664,7 @@ export function useDynamicPanes(totalHeight: number, options: UseDynamicPanesOpt
 		toggleSeriesVisible,
 		updateSeriesParams,
 		updateSeriesYAxis,
+		updateSeriesColor,
 		applyDelta,
 		replaceLayout,
 		resetToDefault,

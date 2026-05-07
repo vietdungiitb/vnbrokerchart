@@ -466,6 +466,8 @@ export default function LibraryShowcaseDemo() {
 	const [showPanesMenu, setShowPanesMenu] = useState(false);
 	const panesMenuRef = useRef<HTMLDivElement | null>(null);
 	const [activeTool, setActiveTool] = useState<string>("cursor");
+	const [openGroupId, setOpenGroupId] = useState<string | null>(null);
+	const toolbarRef = useRef<HTMLElement | null>(null);
 	const [magnetSensitivity, setMagnetSensitivity] = useState<MagnetSensitivity>(() => {
 		try {
 			return (typeof localStorage !== "undefined" && (localStorage.getItem("vnsc_magnet") as MagnetSensitivity)) || "normal";
@@ -1360,6 +1362,18 @@ export default function LibraryShowcaseDemo() {
 		return () => document.removeEventListener("mousedown", handler);
 	}, [showPanesMenu]);
 
+	// Close drawing tool flyout when clicking outside toolbar
+	useEffect(() => {
+		if (!openGroupId) return;
+		const handler = (e: MouseEvent) => {
+			if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+				setOpenGroupId(null);
+			}
+		};
+		document.addEventListener("mousedown", handler);
+		return () => document.removeEventListener("mousedown", handler);
+	}, [openGroupId]);
+
 	const ratio = window.devicePixelRatio || 1;
 	const priceIsUp = (lastBar?.close ?? 0) >= (lastBar?.open ?? 0);
 	const handleDrawingToolUsed = useCallback(() => setActiveTool("cursor"), []);
@@ -1847,26 +1861,47 @@ export default function LibraryShowcaseDemo() {
 			)}
 
 			<div className="gc-main">
-				<aside className="gc-tools" aria-label={t("library.drawingTools")}>
-					{TOOL_GROUPS.map((group, groupIndex) => (
-						<Fragment key={group.id}>
-							<div className="gc-tools-group">
-								{group.tools.map((id) => (
+				<aside ref={toolbarRef} className="gc-tools" aria-label={t("library.drawingTools")}>
+					{TOOL_GROUPS.map((group, groupIndex) => {
+						const isOpen = openGroupId === group.id;
+						const activeInGroup = group.tools.find((id) => id === activeTool) ?? null;
+						const iconId = activeInGroup ?? group.tools[0];
+						return (
+							<Fragment key={group.id}>
+								<div className="gc-tools-group-container">
 									<button
-										key={id}
 										type="button"
-										title={toolLabel(id)}
-										aria-pressed={activeTool === id}
-										className={`gc-tool-btn${activeTool === id ? " gc-tool-btn--active" : ""}`}
-										onClick={() => setActiveTool(id)}
+										title={t(`tool.group.${group.id}`)}
+										aria-expanded={isOpen}
+										aria-haspopup="true"
+										className={`gc-tool-btn gc-tool-btn--group${activeInGroup ? " gc-tool-btn--active" : ""}`}
+										onClick={() => setOpenGroupId(isOpen ? null : group.id)}
 									>
-										<ToolIcon id={id} />
+										<ToolIcon id={iconId} />
+										<span className="gc-tools-chevron">▾</span>
 									</button>
-								))}
-							</div>
-							{groupIndex < TOOL_GROUPS.length - 1 && <span className="rsc-toolbar-divider" aria-hidden="true" />}
-						</Fragment>
-					))}
+									{isOpen && (
+										<div className="gc-tools-flyout" role="menu">
+											{group.tools.map((toolId) => (
+												<button
+													key={toolId}
+													type="button"
+													role="menuitem"
+													title={toolLabel(toolId)}
+													aria-pressed={activeTool === toolId}
+													className={`gc-tool-btn${activeTool === toolId ? " gc-tool-btn--active" : ""}`}
+													onClick={() => { setActiveTool(toolId); setOpenGroupId(null); }}
+												>
+													<ToolIcon id={toolId} />
+												</button>
+											))}
+										</div>
+									)}
+								</div>
+								{groupIndex < TOOL_GROUPS.length - 1 && <span className="rsc-toolbar-divider" aria-hidden="true" />}
+							</Fragment>
+						);
+					})}
 					<span className="rsc-toolbar-divider" aria-hidden="true" />
 					<button
 						type="button"

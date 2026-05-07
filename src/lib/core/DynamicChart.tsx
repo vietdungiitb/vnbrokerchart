@@ -382,16 +382,19 @@ function renderSeries(series: SeriesConfig) {
 					opacity={styleOverride?.opacity ?? (type === "Volume" ? 0.75 : 0.6)}
 				/>
 			);
-		case "BollingerBand":
+		case "BollingerBand": {
+			// Make top/bottom band lines semi-transparent so wide bands remain visually light
+			const bbBandColor = lineColor.match(/^#[0-9a-fA-F]{6}$/) ? lineColor + "88" : lineColor;
 			return (
 				<BollingerSeries
 					key={seriesKey}
 					yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as IndicatorBandValue | undefined}
-					stroke={{ top: lineColor, middle: lineColor, bottom: lineColor }}
+					stroke={{ top: bbBandColor, middle: lineColor, bottom: bbBandColor }}
 					fill={fillColor}
-					opacity={styleOverride?.opacity ?? 0.2}
+					opacity={styleOverride?.opacity ?? 0.12}
 				/>
 			);
+		}
 		case "RSI":
 			return (
 				<RSISeries
