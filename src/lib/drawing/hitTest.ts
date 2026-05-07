@@ -1,4 +1,5 @@
 import { chartPointToPixel, type ChartScales, type PlotDatum } from "./coordinateUtils";
+import { resolveDrawingStyle } from "./drawingStyleRegistry";
 import type { DrawingObject, DrawingToolType } from "./types";
 import { calculateParallelChannelGeometry } from "./builtin/parallelChannel";
 import { calculatePitchforkGeometry } from "./builtin/pitchfork";
@@ -310,36 +311,41 @@ export function hitTestDrawing(
 		return false;
 	}
 
-	switch (drawing.type as DrawingToolType) {
+	const effectiveDrawing = {
+		...drawing,
+		style: resolveDrawingStyle(drawing),
+	};
+
+	switch (effectiveDrawing.type as DrawingToolType) {
 		case "trendLine":
 		case "arrow":
-			return hitTestLineLike(drawing, mouseX, mouseY, scales, options.chartWidth, options.chartHeight, tolerance);
+			return hitTestLineLike(effectiveDrawing, mouseX, mouseY, scales, options.chartWidth, options.chartHeight, tolerance);
 		case "ray":
-			return hitTestRayLike(drawing, mouseX, mouseY, scales, options.chartWidth, options.chartHeight, tolerance, 10_000, true);
+			return hitTestRayLike(effectiveDrawing, mouseX, mouseY, scales, options.chartWidth, options.chartHeight, tolerance, 10_000, true);
 		case "extendedLine":
-			return hitTestRayLike(drawing, mouseX, mouseY, scales, options.chartWidth, options.chartHeight, tolerance, 10_000, false);
+			return hitTestRayLike(effectiveDrawing, mouseX, mouseY, scales, options.chartWidth, options.chartHeight, tolerance, 10_000, false);
 		case "hLine": {
-			const point = drawing.points[0];
+			const point = effectiveDrawing.points[0];
 			if (!point) {
 				return false;
 			}
 			return Math.abs(mouseY - toPixel(point, scales).y) <= tolerance;
 		}
 		case "vLine": {
-			const point = drawing.points[0];
+			const point = effectiveDrawing.points[0];
 			if (!point) {
 				return false;
 			}
 			return Math.abs(mouseX - toPixel(point, scales).x) <= tolerance;
 		}
 		case "fibonacci":
-			return hitTestFibonacciLike(drawing, mouseX, mouseY, scales, tolerance, drawing.fibLevels ?? DEFAULT_FIB_LEVELS);
+			return hitTestFibonacciLike(effectiveDrawing, mouseX, mouseY, scales, tolerance, effectiveDrawing.fibLevels ?? DEFAULT_FIB_LEVELS);
 		case "fibExtension":
-			return hitTestFibonacciLike(drawing, mouseX, mouseY, scales, tolerance, drawing.fibLevels ?? DEFAULT_FIB_EXTENSION_LEVELS);
+			return hitTestFibonacciLike(effectiveDrawing, mouseX, mouseY, scales, tolerance, effectiveDrawing.fibLevels ?? DEFAULT_FIB_EXTENSION_LEVELS);
 		case "channel":
-			return hitTestChannelLike(drawing, mouseX, mouseY, scales, tolerance);
+			return hitTestChannelLike(effectiveDrawing, mouseX, mouseY, scales, tolerance);
 		case "text": {
-			const bounds = getTextBounds(drawing, scales);
+			const bounds = getTextBounds(effectiveDrawing, scales);
 			if (!bounds) {
 				return false;
 			}
@@ -347,27 +353,27 @@ export function hitTestDrawing(
 		}
 		case "rectangle":
 		case "dateAndPriceRange":
-			return hitTestRectangleLike(drawing, mouseX, mouseY, scales, tolerance);
+			return hitTestRectangleLike(effectiveDrawing, mouseX, mouseY, scales, tolerance);
 		case "longPosition":
-			return hitTestPositionZones(drawing, mouseX, mouseY, scales, tolerance, "long");
+			return hitTestPositionZones(effectiveDrawing, mouseX, mouseY, scales, tolerance, "long");
 		case "shortPosition":
-			return hitTestPositionZones(drawing, mouseX, mouseY, scales, tolerance, "short");
+			return hitTestPositionZones(effectiveDrawing, mouseX, mouseY, scales, tolerance, "short");
 		case "parallelChannel":
-			return hitTestParallelChannel(drawing, mouseX, mouseY, scales, options.chartWidth, options.chartHeight, tolerance);
+			return hitTestParallelChannel(effectiveDrawing, mouseX, mouseY, scales, options.chartWidth, options.chartHeight, tolerance);
 		case "pitchfork":
-			return hitTestPitchfork(drawing, mouseX, mouseY, scales, options.chartWidth, options.chartHeight, tolerance);
+			return hitTestPitchfork(effectiveDrawing, mouseX, mouseY, scales, options.chartWidth, options.chartHeight, tolerance);
 		case "polyline": {
-			const pixels = drawing.points.map((point) => toPixel(point, scales));
+			const pixels = effectiveDrawing.points.map((point) => toPixel(point, scales));
 			return distanceToPolyline(pixels, mouseX, mouseY) <= tolerance;
 		}
 		case "abcdPattern":
-			return hitTestAbcdPattern(drawing, mouseX, mouseY, scales, tolerance);
+			return hitTestAbcdPattern(effectiveDrawing, mouseX, mouseY, scales, tolerance);
 		case "fibArc":
-			return hitTestFibArc(drawing, mouseX, mouseY, scales, tolerance);
+			return hitTestFibArc(effectiveDrawing, mouseX, mouseY, scales, tolerance);
 		case "fibTimeZone":
-			return hitTestFibTimeZone(drawing, mouseX, mouseY, scales, tolerance);
+			return hitTestFibTimeZone(effectiveDrawing, mouseX, mouseY, scales, tolerance);
 		case "regressionChannel":
-			return hitTestRegressionChannel(drawing, mouseX, mouseY, scales, options.plotData, tolerance);
+			return hitTestRegressionChannel(effectiveDrawing, mouseX, mouseY, scales, options.plotData, tolerance);
 		default:
 			return false;
 	}

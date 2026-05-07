@@ -67,9 +67,14 @@ function createId() {
 	return `pane-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function createSeriesId(type: SeriesTypeId) {
+	return `${type.toLowerCase()}-${createId()}`;
+}
+
 function cloneSeries(series: readonly SeriesConfig[]): SeriesConfig[] {
 	return series.map((item) => ({
 		...item,
+		id: item.id ?? createSeriesId(item.type),
 		params: item.params ? { ...item.params } : undefined,
 	}));
 }
@@ -416,6 +421,7 @@ export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: Dy
 			}
 			pane.series.push({
 				...action.series,
+				id: action.series.id ?? createSeriesId(action.series.type),
 				params: action.series.params ? { ...action.series.params } : undefined,
 			});
 			syncSplitScale(pane);

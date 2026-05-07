@@ -14,6 +14,14 @@ import type { EnrichedDatum } from "../calculators/types";
 import type { SeriesSettingField } from "../types/indicator-catalog";
 import type { SeriesConfig, SeriesTypeId, YAxisSide } from "../types/pane-descriptor";
 
+export interface SeriesStyleOverride {
+	color?: string;
+	lineWidth?: number;
+	visible?: boolean;
+	opacity?: number;
+	dashPattern?: number[];
+}
+
 export interface TooltipEntryDef {
 	label: string;
 	color?: string;
@@ -31,6 +39,9 @@ export interface RegistryEntry {
 }
 
 const registry = new Map<SeriesTypeId, RegistryEntry>();
+const seriesStyleOverrides = new Map<string, Partial<SeriesStyleOverride>>();
+const seriesStyleListeners = new Map<string, Set<() => void>>();
+const seriesStyleChangeListeners = new Set<() => void>();
 
 function periodFromConfig(config: SeriesConfig, fallback: number) {
 	const period = config.params?.period;
@@ -39,6 +50,61 @@ function periodFromConfig(config: SeriesConfig, fallback: number) {
 
 function colorFromConfig(config: SeriesConfig, fallback: string) {
 	return typeof config.color === "string" && config.color.length > 0 ? config.color : fallback;
+}
+
+function normalizeSeriesStyleOverride(partialStyle: Partial<SeriesStyleOverride>): Partial<SeriesStyleOverride> {
+	const normalized: Partial<SeriesStyleOverride> = {};
+	if (typeof partialStyle.color === "string" && partialStyle.color.length > 0) {
+		normalized.color = partialStyle.color;
+	}
+	if (typeof partialStyle.lineWidth === "number" && Number.isFinite(partialStyle.lineWidth)) {
+		normalized.lineWidth = partialStyle.lineWidth;
+	}
+	if (typeof partialStyle.visible === "boolean") {
+		normalized.visible = partialStyle.visible;
+	}
+	if (typeof partialStyle.opacity === "number" && Number.isFinite(partialStyle.opacity)) {
+		normalized.opacity = Math.min(1, Math.max(0, partialStyle.opacity));
+	}
+	if (Array.isArray(partialStyle.dashPattern)) {
+		const dashPattern = partialStyle.dashPattern.filter((value) => typeof value === "number" && Number.isFinite(value) && value > 0);
+		if (dashPattern.length > 0) {
+			normalized.dashPattern = dashPattern;
+		}
+	}
+	return normalized;
+}
+
+function cloneSeriesStyleOverride(style?: Partial<SeriesStyleOverride>): Partial<SeriesStyleOverride> | undefined {
+	if (!style) {
+		return undefined;
+	}
+	return {
+		...style,
+		dashPattern: style.dashPattern ? [...style.dashPattern] : undefined,
+	};
+}
+
+function notifySeriesStyleChange(instanceId: string) {
+	seriesStyleListeners.get(instanceId)?.forEach((callback) => callback());
+	seriesStyleChangeListeners.forEach((callback) => callback());
+}
+
+function notifyAllSeriesStyleChanges() {
+	for (const [instanceId, listeners] of seriesStyleListeners) {
+		listeners.forEach((callback) => callback());
+	}
+	seriesStyleChangeListeners.forEach((callback) => callback());
+}
+
+function dashPatternToStrokeDasharray(dashPattern?: number[]) {
+	if (!dashPattern || dashPattern.length === 0) {
+		return "Solid";
+	}
+	if (dashPattern.length === 1) {
+		return dashPattern[0] <= 2 ? "Dot" : "Dash";
+	}
+	return dashPattern[0] <= 2 ? "Dot" : "Dash";
 }
 
 function registerLineSeries(type: SeriesTypeId, options: Omit<RegistryEntry, "component" | "defaultParams" | "defaultYAxis" | "yExtentsAccessors" | "tooltipEntry"> & {
@@ -61,6 +127,56 @@ function registerLineSeries(type: SeriesTypeId, options: Omit<RegistryEntry, "co
 
 export function clearRegistry() {
 	registry.clear();
+}
+
+export function clearSeriesStyleOverrides() {
+	seriesStyleOverrides.clear();
+	notifyAllSeriesStyleChanges();
+}
+
+export function listSeriesStyleOverrides(): Record<string, Partial<SeriesStyleOverride>> {
+	return Object.fromEntries([...seriesStyleOverrides.entries()].map(([instanceId, style]) => [instanceId, cloneSeriesStyleOverride(style) ?? {}]));
+}
+
+export function overrideSeriesStyle(instanceId: string, partialStyle: Partial<SeriesStyleOverride>): void {
+	const normalized = normalizeSeriesStyleOverride(partialStyle);
+	const current = seriesStyleOverrides.get(instanceId) ?? {};
+	const next = { ...current, ...normalized };
+	seriesStyleOverrides.set(instanceId, next);
+	notifySeriesStyleChange(instanceId);
+}
+
+export function getSeriesStyleOverride(instanceId: string): Partial<SeriesStyleOverride> | undefined {
+	return cloneSeriesStyleOverride(seriesStyleOverrides.get(instanceId));
+}
+
+export function clearSeriesStyleOverride(instanceId: string): void {
+	seriesStyleOverrides.delete(instanceId);
+	notifySeriesStyleChange(instanceId);
+}
+
+export function subscribeSeriesStyle(instanceId: string, callback: () => void): () => void {
+	if (!seriesStyleListeners.has(instanceId)) {
+		seriesStyleListeners.set(instanceId, new Set());
+	}
+	seriesStyleListeners.get(instanceId)!.add(callback);
+	return () => {
+		const listeners = seriesStyleListeners.get(instanceId);
+		if (!listeners) {
+			return;
+		}
+		listeners.delete(callback);
+		if (listeners.size === 0) {
+			seriesStyleListeners.delete(instanceId);
+		}
+	};
+}
+
+export function subscribeSeriesStyleChanges(callback: () => void): () => void {
+	seriesStyleChangeListeners.add(callback);
+	return () => {
+		seriesStyleChangeListeners.delete(callback);
+	};
 }
 
 export function registerSeries(type: SeriesTypeId, entry: RegistryEntry): void {

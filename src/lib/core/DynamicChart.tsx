@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useImperativeHandle, useRef, type ReactNode } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from "react";
 import { format as d3Format } from "d3-format";
 import { timeFormat } from "d3-time-format";
 import Chart from "../Chart";
@@ -16,7 +16,7 @@ import OHLCSeries from "../series/OHLCSeries";
 import RSISeries from "../series/RSISeries";
 import StraightLine from "../series/StraightLine";
 import type { EnrichedDatum, IndicatorBandValue, IndicatorMacdValue, IndicatorWhaleValue } from "./calculators/types";
-import { getSeries } from "./registry/SeriesRegistry";
+import { getSeries, getSeriesStyleOverride, subscribeSeriesStyleChanges } from "./registry/SeriesRegistry";
 import "./registry/registerAll";
 import { resolveSeriesStructuredValue, resolveSeriesValue, resolveSeriesValueAccessors } from "./seriesValueResolver";
 import { PaneTooltip, type PaneTooltipEntry } from "./PaneTooltip";
@@ -114,13 +114,28 @@ function axisFormatForSeriesTypes(types: SeriesTypeId[]): (v: number) => string 
 	return d3Format(".4s");
 }
 
+function dashPatternToSeriesDasharray(dashPattern?: number[]) {
+	if (!dashPattern || dashPattern.length === 0) {
+		return "Solid";
+	}
+	if (dashPattern[0] <= 2) {
+		return "Dot";
+	}
+	return "Dash";
+}
+
+function getSeriesStyleOverrideForSeries(series: SeriesConfig) {
+	return series.id ? getSeriesStyleOverride(series.id) : undefined;
+}
+
 function buildTooltipEntriesForSeries(series: SeriesConfig[]): PaneTooltipEntry[] {
 	return series.flatMap((item) => {
 		const entry = getSeries(item.type);
 		const tooltip = entry.tooltipEntry(item);
+		const styleOverride = getSeriesStyleOverrideForSeries(item);
 		return {
 			label: tooltip.label,
-			color: tooltip.color,
+			color: styleOverride?.color ?? tooltip.color,
 			format: tooltip.format,
 			value: (datum) => resolveSeriesValue(datum, item),
 		} satisfies PaneTooltipEntry;
@@ -179,7 +194,10 @@ function computeExtentsForIndex(
 
 export function buildChartSlots(pane: PaneDescriptor): ChartSlot[] {
 	// Only render series that are not explicitly hidden (visible !== false)
-	const activeSeries = pane.series.filter((s) => s.visible !== false);
+	const activeSeries = pane.series.filter((s) => {
+		const styleOverride = getSeriesStyleOverrideForSeries(s);
+		return s.visible !== false && styleOverride?.visible !== false;
+	});
 
 	if (!pane.splitScale) {
 		const seriesTypes = activeSeries.map((series) => series.type);
@@ -269,11 +287,20 @@ function renderSeries(series: SeriesConfig) {
 	const type = series.type;
 	const entry = getSeries(type);
 	const params = { ...entry.defaultParams, ...series.params };
+	const styleOverride = getSeriesStyleOverrideForSeries(series);
+	if (series.visible === false || styleOverride?.visible === false) {
+		return null;
+	}
 
-	const lineColor = series.color ?? String(params.color ?? "#2962ff");
-	const fillColor = series.color ?? String(params.fill ?? lineColor);
-	const upColor = String(params.upColor ?? "#089981");
-	const downColor = String(params.downColor ?? "#f23645");
+	const lineColor = styleOverride?.color ?? series.color ?? String(params.color ?? "#2962ff");
+	const fillColor = styleOverride?.color ?? series.color ?? String(params.fill ?? lineColor);
+	const upColor = styleOverride?.color ?? String(params.upColor ?? "#089981");
+	const downColor = styleOverride?.color ?? String(params.downColor ?? "#f23645");
+	const lineWidth = styleOverride?.lineWidth ?? (series.overlay ? 1.5 : 1.2);
+	const strokeOpacity = styleOverride?.opacity ?? 1;
+	const fillOpacity = styleOverride?.opacity ?? 0.5;
+	const dashArray = dashPatternToSeriesDasharray(styleOverride?.dashPattern);
+	const seriesKey = series.id ?? type;
 
 	const accessor = (datum: EnrichedDatum) => resolveSeriesValue(datum, series);
 	const structured = (datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as Record<string, number | undefined> | number | undefined;
@@ -284,27 +311,31 @@ function renderSeries(series: SeriesConfig) {
 		case "HeikinAshi":
 			return (
 				<CandlestickSeries
-					key={type}
+					key={seriesKey}
 					width={candleBodyWidth}
 					yAccessor={(datum: EnrichedDatum) => datum as any}
-						fill={((datum: EnrichedDatum) => (datum.close >= datum.open ? upColor : downColor)) as any}
-						stroke={((datum: EnrichedDatum) => (datum.close >= datum.open ? upColor : downColor)) as any}
-						wickStroke={((datum: EnrichedDatum) => (datum.close >= datum.open ? upColor : downColor)) as any}
+					fill={((datum: EnrichedDatum) => (styleOverride?.color ? lineColor : datum.close >= datum.open ? upColor : downColor)) as any}
+					stroke={((datum: EnrichedDatum) => (styleOverride?.color ? lineColor : datum.close >= datum.open ? upColor : downColor)) as any}
+					wickStroke={((datum: EnrichedDatum) => (styleOverride?.color ? lineColor : datum.close >= datum.open ? upColor : downColor)) as any}
+					candleStrokeWidth={styleOverride?.lineWidth ?? 0.5}
+					opacity={styleOverride?.opacity ?? 0.5}
 				/>
 			);
 			case "HollowCandle":
 				return (
 					<CandlestickSeries
-						key={type}
+						key={seriesKey}
 						width={candleBodyWidth}
 						yAccessor={(datum: EnrichedDatum) => datum as any}
-						fill={((datum: EnrichedDatum) => (datum.close >= datum.open ? "transparent" : downColor)) as any}
-						stroke={((datum: EnrichedDatum) => (datum.close >= datum.open ? upColor : downColor)) as any}
-						wickStroke={((datum: EnrichedDatum) => (datum.close >= datum.open ? upColor : downColor)) as any}
+						fill={((datum: EnrichedDatum) => (styleOverride?.color ? lineColor : datum.close >= datum.open ? "transparent" : downColor)) as any}
+						stroke={((datum: EnrichedDatum) => (styleOverride?.color ? lineColor : datum.close >= datum.open ? upColor : downColor)) as any}
+						wickStroke={((datum: EnrichedDatum) => (styleOverride?.color ? lineColor : datum.close >= datum.open ? upColor : downColor)) as any}
+						candleStrokeWidth={styleOverride?.lineWidth ?? 0.5}
+						opacity={styleOverride?.opacity ?? 0.5}
 					/>
 				);
 		case "OHLC":
-				return <OHLCSeries key={type} stroke={(datum: EnrichedDatum) => (datum.close >= datum.open ? upColor : downColor)} />;
+				return <OHLCSeries key={seriesKey} stroke={(datum: EnrichedDatum) => (styleOverride?.color ? lineColor : datum.close >= datum.open ? upColor : downColor)} />;
 		case "Line":
 		case "EMA":
 		case "CVDApprox":
@@ -312,20 +343,25 @@ function renderSeries(series: SeriesConfig) {
 		case "StrengthRelative":
 			return (
 				<LineSeries
-					key={`${type}-${series.params?.period ?? ""}`}
+					key={seriesKey}
 					yAccessor={accessor as any}
 					stroke={lineColor}
-					strokeWidth={series.overlay ? 1.5 : 1.2}
+					strokeWidth={lineWidth}
+					strokeOpacity={strokeOpacity}
+					strokeDasharray={dashArray}
 				/>
 			);
 		case "Area":
 			return (
 				<AreaSeries
-					key={type}
+					key={seriesKey}
 					yAccessor={accessor as any}
 					stroke={lineColor}
 					fill={fillColor}
-					strokeWidth={1.2}
+					strokeWidth={lineWidth}
+					strokeOpacity={strokeOpacity}
+					opacity={fillOpacity}
+					strokeDasharray={dashArray}
 				/>
 			);
 		case "Bar":
@@ -333,7 +369,7 @@ function renderSeries(series: SeriesConfig) {
 		case "Whale":
 			return (
 				<BarSeries
-					key={type}
+					key={seriesKey}
 					width={candleBodyWidth}
 					yAccessor={(datum: EnrichedDatum) => {
 						if (type === "Whale") {
@@ -342,26 +378,48 @@ function renderSeries(series: SeriesConfig) {
 						}
 						return accessor(datum) as number | undefined;
 					}}
-					fill={(datum: EnrichedDatum) => (datum.close >= datum.open ? upColor : downColor)}
-					opacity={type === "Volume" ? 0.75 : 0.6}
+					fill={(datum: EnrichedDatum) => (styleOverride?.color ? lineColor : datum.close >= datum.open ? upColor : downColor)}
+					opacity={styleOverride?.opacity ?? (type === "Volume" ? 0.75 : 0.6)}
 				/>
 			);
 		case "BollingerBand":
 			return (
 				<BollingerSeries
-					key={type}
+					key={seriesKey}
 					yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as IndicatorBandValue | undefined}
-					stroke={{ top: lineColor, middle: fillColor, bottom: lineColor }}
+					stroke={{ top: lineColor, middle: lineColor, bottom: lineColor }}
 					fill={fillColor}
+					opacity={styleOverride?.opacity ?? 0.2}
 				/>
 			);
 		case "RSI":
-			return <RSISeries key={type} yAccessor={(datum: EnrichedDatum) => resolveSeriesValue(datum, series)} />;
+			return (
+				<RSISeries
+					key={seriesKey}
+					yAccessor={(datum: EnrichedDatum) => resolveSeriesValue(datum, series)}
+					stroke={{
+						top: lineColor,
+						middle: lineColor,
+						bottom: lineColor,
+						outsideThreshold: lineColor,
+						insideThreshold: lineColor,
+					}}
+					opacity={{ top: strokeOpacity, middle: strokeOpacity, bottom: strokeOpacity }}
+					strokeDasharray={{ line: dashArray, top: dashArray, middle: dashArray, bottom: dashArray }}
+					strokeWidth={{
+						outsideThreshold: lineWidth,
+						insideThreshold: lineWidth,
+						top: lineWidth,
+						middle: lineWidth,
+						bottom: lineWidth,
+					}}
+				/>
+			);
 		case "MACD":
-			return <MACDSeries key={type} yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as IndicatorMacdValue | undefined} />;
+			return <MACDSeries key={seriesKey} yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as IndicatorMacdValue | undefined} stroke={{ macd: lineColor, signal: lineColor }} fill={{ divergence: lineColor }} opacity={strokeOpacity} />;
 		case "KDJ":
 			return (
-				<g key={type}>
+				<g key={seriesKey}>
 					<LineSeries key={`${type}-k`} yAccessor={fieldAccessor("k") as any} stroke={lineColor} strokeWidth={1.2} />
 					<LineSeries key={`${type}-d`} yAccessor={fieldAccessor("d") as any} stroke={fillColor} strokeWidth={1.2} />
 					<LineSeries key={`${type}-j`} yAccessor={fieldAccessor("j") as any} stroke={upColor} strokeWidth={1.2} />
@@ -372,7 +430,7 @@ function renderSeries(series: SeriesConfig) {
 			);
 		case "CCI":
 			return (
-				<g key={type}>
+				<g key={seriesKey}>
 					<LineSeries key={`${type}-line`} yAccessor={accessor as any} stroke={lineColor} strokeWidth={1.2} />
 					<StraightLine stroke={lineColor} opacity={0.35} yValue={100} strokeDasharray="ShortDash" />
 					<StraightLine stroke={lineColor} opacity={0.35} yValue={0} strokeDasharray="ShortDash" />
@@ -381,7 +439,7 @@ function renderSeries(series: SeriesConfig) {
 			);
 		case "DMI":
 			return (
-				<g key={type}>
+				<g key={seriesKey}>
 					<LineSeries key={`${type}-plus`} yAccessor={fieldAccessor("plusDI") as any} stroke={upColor} strokeWidth={1.2} />
 					<LineSeries key={`${type}-minus`} yAccessor={fieldAccessor("minusDI") as any} stroke={downColor} strokeWidth={1.2} />
 					<LineSeries key={`${type}-adx`} yAccessor={fieldAccessor("adx") as any} stroke={lineColor} strokeWidth={1.2} />
@@ -391,21 +449,21 @@ function renderSeries(series: SeriesConfig) {
 			return <LineSeries key={type} yAccessor={accessor as any} stroke={lineColor} strokeWidth={1.2} />;
 		case "BRAR":
 			return (
-				<g key={type}>
+				<g key={seriesKey}>
 					<LineSeries key={`${type}-ar`} yAccessor={fieldAccessor("ar") as any} stroke={lineColor} strokeWidth={1.2} />
 					<LineSeries key={`${type}-br`} yAccessor={fieldAccessor("br") as any} stroke={upColor} strokeWidth={1.2} />
 				</g>
 			);
 		case "MTM":
 			return (
-				<g key={type}>
+				<g key={seriesKey}>
 					<LineSeries key={`${type}-mtm`} yAccessor={fieldAccessor("mtm") as any} stroke={lineColor} strokeWidth={1.2} />
 					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
 				</g>
 			);
 		case "EMV":
 			return (
-				<g key={type}>
+				<g key={seriesKey}>
 					<LineSeries key={`${type}-emv`} yAccessor={fieldAccessor("emv") as any} stroke={lineColor} strokeWidth={1.2} />
 					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
 				</g>
@@ -413,7 +471,7 @@ function renderSeries(series: SeriesConfig) {
 		case "AO":
 			return (
 				<BarSeries
-					key={type}
+					key={seriesKey}
 					width={candleBodyWidth}
 					yAccessor={accessor as any}
 					fill={(datum: EnrichedDatum) => datum.aoColor ?? lineColor}
@@ -424,14 +482,14 @@ function renderSeries(series: SeriesConfig) {
 			return <LineSeries key={type} yAccessor={accessor as any} stroke={lineColor} strokeWidth={1.2} />;
 		case "TRIX":
 			return (
-				<g key={type}>
+				<g key={seriesKey}>
 					<LineSeries key={`${type}-trix`} yAccessor={fieldAccessor("trix") as any} stroke={lineColor} strokeWidth={1.2} />
 					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
 				</g>
 			);
 		case "DMA":
 			return (
-				<g key={type}>
+				<g key={seriesKey}>
 					<LineSeries key={`${type}-ddd`} yAccessor={fieldAccessor("ddd") as any} stroke={lineColor} strokeWidth={1.2} />
 					<LineSeries key={`${type}-ama`} yAccessor={fieldAccessor("ama") as any} stroke={fillColor} strokeWidth={1.2} />
 				</g>
@@ -440,14 +498,14 @@ function renderSeries(series: SeriesConfig) {
 			return <LineSeries key={type} yAccessor={accessor as any} stroke={lineColor} strokeWidth={1.2} />;
 		case "PSY":
 			return (
-				<g key={type}>
+				<g key={seriesKey}>
 					<LineSeries key={`${type}-psy`} yAccessor={fieldAccessor("psy") as any} stroke={lineColor} strokeWidth={1.2} />
 					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
 				</g>
 			);
 		case "CR":
 			return (
-				<g key={type}>
+				<g key={seriesKey}>
 					<LineSeries key={`${type}-cr`} yAccessor={fieldAccessor("cr") as any} stroke={lineColor} strokeWidth={1.2} />
 					<LineSeries key={`${type}-ma1`} yAccessor={fieldAccessor("ma1") as any} stroke={fillColor} strokeWidth={1.1} />
 					<LineSeries key={`${type}-ma2`} yAccessor={fieldAccessor("ma2") as any} stroke={upColor} strokeWidth={1.1} />
@@ -456,9 +514,19 @@ function renderSeries(series: SeriesConfig) {
 				</g>
 			);
 		case "StrengthElder":
-			return <ElderRaySeries key={type} yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as { bullPower?: number; bearPower?: number }} />;
+			return (
+				<ElderRaySeries
+					key={seriesKey}
+					yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as { bullPower?: number; bearPower?: number }}
+					bullPowerFill={lineColor}
+					bearPowerFill={lineColor}
+					straightLineStroke={lineColor}
+					straightLineOpacity={strokeOpacity}
+					opacity={fillOpacity}
+				/>
+			);
 		default:
-			return <LineSeries key={type} yAccessor={accessor as any} stroke={lineColor} />;
+			return <LineSeries key={seriesKey} yAccessor={accessor as any} stroke={lineColor} strokeWidth={lineWidth} strokeOpacity={strokeOpacity} strokeDasharray={dashArray} />;
 	}
 }
 
@@ -563,6 +631,10 @@ function renderDynamicChartChildren({
 const DynamicChartComponent = forwardRef<ChartHandle, DynamicChartProps>(function DynamicChart(props, ref) {
 	const { onVisibleRangeChange, ...rest } = props;
 	const chartCanvasRef = useRef<ChartCanvasHandle | null>(null);
+	const [, setStyleRevision] = useState(0);
+	useEffect(() => subscribeSeriesStyleChanges(() => {
+		setStyleRevision((value) => value + 1);
+	}), []);
 	const chartChildren = renderDynamicChartChildren(props);
 
 	useImperativeHandle(ref, () => ({

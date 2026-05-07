@@ -26,11 +26,14 @@ import {
 	useChartTheme,
 	VNStockChart,
 		resolveDrawingShortcut,
+		subscribeDrawingStyleChanges,
+		subscribeSeriesStyleChanges,
 	widgetMessagesEn,
 	widgetMessagesVi,
 	version,
 } from "../index";
 import { DrawingPriceLabels } from "../lib/drawing/priceLabel";
+import { restorePersistedStyleOverrides, saveCurrentStyleOverrides } from "./styleOverridesPersistence";
 import type { OHLCVBar } from "../lib/types/ohlcv";
 import type { DrawingObject } from "../lib/drawing/types";
 import type { DrawingInspectorLabels } from "../lib/drawing/DrawingInspector";
@@ -607,6 +610,24 @@ export default function LibraryShowcaseDemo() {
 			cancelDrawing();
 		}
 	}, [cancelDrawing, drawingInteraction.allDrawings, drawingInteraction.drawingState, replaceDrawings]);
+
+	useEffect(() => {
+		restorePersistedStyleOverrides();
+	}, []);
+
+	useEffect(() => {
+		const persistStyleOverrides = () => {
+			saveCurrentStyleOverrides();
+		};
+
+		persistStyleOverrides();
+		const unsubscribeSeries = subscribeSeriesStyleChanges(persistStyleOverrides);
+		const unsubscribeDrawings = subscribeDrawingStyleChanges(persistStyleOverrides);
+		return () => {
+			unsubscribeSeries();
+			unsubscribeDrawings();
+		};
+	}, []);
 
 	useEffect(() => {
 		saveDemoSettings({ maxVisiblePanes, showDrawingPriceMarkers });

@@ -29,8 +29,10 @@ export { INDICATOR_SETS_STORAGE_KEY } from "./types/indicator-set";
 export type { IndicatorSet, IndicatorSetsStorage, IndicatorSetStorageLike } from "./types/indicator-set";
 export type { BarReplayState, ReplayBarLike, ReplaySpeed } from "./replay/BarReplayController";
 export { getSeries, listRegistered, registerSeries } from "./registry/SeriesRegistry";
+export { clearSeriesStyleOverride, clearSeriesStyleOverrides, getSeriesStyleOverride, listSeriesStyleOverrides, overrideSeriesStyle, subscribeSeriesStyle, subscribeSeriesStyleChanges } from "./registry/SeriesRegistry";
 export type { SeriesSettingField, IndicatorCatalogEntry, IndicatorCategory, RepaintPolicy, PanePolicy, ScalePolicy } from "./types/indicator-catalog";
 export type { ChartHandle, VisibleRange } from "./types/chart";
+export type { SeriesStyleOverride } from "./registry/SeriesRegistry";
 export { initRegistry } from "./registry/registerAll";
 
 export type { ChartSyncState } from "./ChartPane";

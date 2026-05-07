@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import type { ReactElement } from "react";
 import { chartPointToPixel, type ChartScales, type PlotDatum } from "./coordinateUtils";
+import { resolveDrawingStyle } from "./drawingStyleRegistry";
 import type { DrawingObject, DrawingStyle } from "./types";
 import { calculateParallelChannelGeometry } from "./builtin/parallelChannel";
 import { calculatePitchforkGeometry } from "./builtin/pitchfork";
@@ -1025,49 +1026,54 @@ export function renderDrawingToSvg(
 		return [];
 	}
 
-	switch (drawing.type as string) {
+	const effectiveDrawing = {
+		...drawing,
+		style: resolveDrawingStyle(drawing),
+	};
+
+	switch (effectiveDrawing.type as string) {
 		case "trendLine":
-				return renderTrendLine(drawing, scales, options);
+				return renderTrendLine(effectiveDrawing, scales, options);
 		case "ray":
-			return renderRay(drawing, scales, options);
+			return renderRay(effectiveDrawing, scales, options);
 		case "extendedLine":
-			return renderExtendedLine(drawing, scales, options);
+			return renderExtendedLine(effectiveDrawing, scales, options);
 		case "polyline":
-			return renderPolyline(drawing, scales, options);
+			return renderPolyline(effectiveDrawing, scales, options);
 		case "dateAndPriceRange":
-			return renderDateAndPriceRange(drawing, scales, options);
+			return renderDateAndPriceRange(effectiveDrawing, scales, options);
 		case "longPosition":
-			return renderLongPosition(drawing, scales, options);
+			return renderLongPosition(effectiveDrawing, scales, options);
 		case "shortPosition":
-			return renderShortPosition(drawing, scales, options);
+			return renderShortPosition(effectiveDrawing, scales, options);
 		case "fibExtension":
-			return renderFibExtension(drawing, scales, options);
+			return renderFibExtension(effectiveDrawing, scales, options);
 		case "hLine":
-			return renderHLine(drawing, scales, options);
+			return renderHLine(effectiveDrawing, scales, options);
 		case "vLine":
-			return renderVLine(drawing, scales, options);
+			return renderVLine(effectiveDrawing, scales, options);
 		case "fibonacci":
-			return renderFibonacci(drawing, scales, options);
+			return renderFibonacci(effectiveDrawing, scales, options);
 		case "channel":
-				return renderChannel(drawing, scales, options);
+				return renderChannel(effectiveDrawing, scales, options);
 		case "parallelChannel":
-			return renderParallelChannel(drawing, scales, options);
+			return renderParallelChannel(effectiveDrawing, scales, options);
 		case "pitchfork":
-			return renderPitchfork(drawing, scales, options);
+			return renderPitchfork(effectiveDrawing, scales, options);
 		case "abcdPattern":
-			return renderAbcdPattern(drawing, scales, options);
+			return renderAbcdPattern(effectiveDrawing, scales, options);
 		case "fibArc":
-			return renderFibArc(drawing, scales, options);
+			return renderFibArc(effectiveDrawing, scales, options);
 		case "fibTimeZone":
-			return renderFibTimeZone(drawing, scales, options);
+			return renderFibTimeZone(effectiveDrawing, scales, options);
 		case "regressionChannel":
-			return renderRegressionChannel(drawing, scales, options);
+			return renderRegressionChannel(effectiveDrawing, scales, options);
 		case "text":
-				return renderText(drawing, scales, options);
+				return renderText(effectiveDrawing, scales, options);
 		case "rectangle":
-				return renderRectangle(drawing, scales, options);
+				return renderRectangle(effectiveDrawing, scales, options);
 		case "arrow":
-				return renderArrow(drawing, scales, options);
+				return renderArrow(effectiveDrawing, scales, options);
 		default:
 			return [];
 	}

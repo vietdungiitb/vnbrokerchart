@@ -179,6 +179,28 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 
 ## 2. Slice Status
 
+### CE18-04 — Style override persistence and redraw wiring
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-07
+- Scope: persist series/drawing style overrides across reload, restore them in the demo shell, and repair the drawing hit-test/render paths that were left syntactically broken by the earlier override wiring pass
+- Files sửa:
+  - `src/demo/styleOverridesPersistence.ts`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/__tests__/styleOverridesPersistence.test.ts`
+  - `src/lib/drawing/hitTest.ts`
+  - `src/lib/drawing/renderCanvas.ts`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Demo shell now restores saved style overrides on mount and writes registry snapshots back to localStorage whenever series or drawing overrides change.
+  - The helper module snapshots the module-level registries and restores them without serializing non-JSON data.
+  - The broken hit-test and canvas-render blocks were cleaned up so the override plumbing compiles again.
+  - Regression coverage now verifies round-trip persistence and empty-storage cleanup.
+- Validation:
+  - `npm test -- src/demo/__tests__/styleOverridesPersistence.test.ts` → PASS (2 tests)
+  - `npm run type-check` → PASS
+
 ### CE13-01 — Pane-aware drawing model
 
 - Người thực hiện: GitHub Copilot

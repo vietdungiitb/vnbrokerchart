@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDrawingObject } from "./shared";
 import { cloneDrawingSnapshot, offsetDrawingByPixels } from "./clipboard";
+import { clearDrawingStyleOverrides, overrideDrawingStyle } from "./drawingStyleRegistry";
 
 afterEach(() => {
+	clearDrawingStyleOverrides();
 	vi.restoreAllMocks();
 });
 
@@ -36,6 +38,24 @@ describe("drawing clipboard helpers", () => {
 			{ x: 200, y: 40 },
 		]);
 		expect(drawing.style.stroke).toBe("#ff0000");
+	});
+
+	it("copies the effective style when an override is active", () => {
+		const drawing = createDrawingObject("trendLine", [
+			{ x: 100, y: 20 },
+			{ x: 200, y: 40 },
+		], {
+			id: "drawing-override",
+			style: { stroke: "#111111", strokeWidth: 1 },
+		});
+
+		overrideDrawingStyle(drawing.id, { color: "#ff00ff", lineWidth: 4 });
+
+		const snapshot = cloneDrawingSnapshot(drawing);
+		expect(snapshot.style).toMatchObject({
+			stroke: "#ff00ff",
+			strokeWidth: 4,
+		});
 	});
 
 	it("rebases duplicated drawings onto a target pane", () => {

@@ -9,6 +9,10 @@ function createId(): string {
 	return `indicator-set-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function createSeriesId(type: SeriesTypeId): string {
+	return `${type.toLowerCase()}-${createId()}`;
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -16,6 +20,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 function cloneSeries(series: readonly SeriesConfig[]): SeriesConfig[] {
 	return series.map((item) => ({
 		...item,
+		id: item.id ?? createSeriesId(item.type),
 		params: item.params ? { ...item.params } : undefined,
 	}));
 }
@@ -59,6 +64,9 @@ function isSeriesTypeId(value: unknown): value is SeriesTypeId {
 
 function isSeriesConfig(candidate: unknown): candidate is SeriesConfig {
 	if (!isPlainObject(candidate)) {
+		return false;
+	}
+	if (candidate.id !== undefined && typeof candidate.id !== "string") {
 		return false;
 	}
 	if (!isSeriesTypeId(candidate.type) || !isYAxisSide(candidate.yAxis)) {

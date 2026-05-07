@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getXValue } from "../utils/ChartDataUtil";
 import GenericChartComponent, { getMouseCanvas } from "../GenericChartComponent";
 import { createDraftFromTool, createTool, isDrawingToolName } from "./registry";
@@ -10,6 +10,7 @@ import { findSnapPoint, type SnapResult } from "./snap";
 import type { UseDrawingInteractionReturn } from "./useDrawingInteraction";
 import { getSelectedObjectIds } from "./stateMachine";
 import type { ChartConfig } from "../StockChartContext";
+import { subscribeDrawingStyleChanges } from "./drawingStyleRegistry";
 
 export interface DrawingLayerProps {
 	activeTool: string;
@@ -413,6 +414,11 @@ function hasRemainingPlaceholder(drawing: DrawingObject) {
 }
 
 export default function DrawingLayer({ activeTool, interaction, onToolUsed, onContextMenu }: DrawingLayerProps) {
+	const [, setStyleRevision] = useState(0);
+	useEffect(() => subscribeDrawingStyleChanges(() => {
+		setStyleRevision((value) => value + 1);
+	}), []);
+
 	const selectedObjectIds = useMemo(() => getSelectedObjectIds(interaction.drawingState), [interaction.drawingState]);
 	const selectedObjectIdSet = useMemo(() => new Set(selectedObjectIds), [selectedObjectIds]);
 	const selectedDrawingId = getSelectedDrawingId(interaction.drawingState);

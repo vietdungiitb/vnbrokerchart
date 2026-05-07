@@ -1,5 +1,6 @@
 import { PriceCoordinate } from "../coordinates";
 import { DEFAULT_FIB_EXTENSION_LEVELS, DEFAULT_FIB_LEVELS } from "./renderCanvas";
+import { resolveDrawingStyle } from "./drawingStyleRegistry";
 import type { DrawingObject } from "./types";
 
 export interface DrawingPriceMarker {
@@ -156,10 +157,15 @@ export function DrawingPriceLabels({
 		return null;
 	}
 
-	const labelFill = fill ?? (drawing.style.fill && drawing.style.fill !== "transparent" ? drawing.style.fill : "#BAB8B8");
-	const labelStroke = stroke ?? drawing.style.stroke;
+	const effectiveDrawing = {
+		...drawing,
+		style: resolveDrawingStyle(drawing),
+	};
+
+	const labelFill = fill ?? (effectiveDrawing.style.fill && effectiveDrawing.style.fill !== "transparent" ? effectiveDrawing.style.fill : "#BAB8B8");
+	const labelStroke = stroke ?? effectiveDrawing.style.stroke;
 	const labelTextFill = textFill ?? "#FFFFFF";
-	const labelStrokeWidth = strokeWidth ?? drawing.style.strokeWidth;
+	const labelStrokeWidth = strokeWidth ?? effectiveDrawing.style.strokeWidth;
 
 	return (
 		<>

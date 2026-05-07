@@ -4,6 +4,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { createDrawingObject } from "./shared";
 import DrawingInspector from "./DrawingInspector";
+import { clearDrawingStyleOverrides, overrideDrawingStyle } from "./drawingStyleRegistry";
 
 const reactActEnvironment = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };
 reactActEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
@@ -57,6 +58,7 @@ afterEach(() => {
 	root = null;
 	container?.remove();
 	container = null;
+	clearDrawingStyleOverrides();
 });
 
 describe("DrawingInspector text editing", () => {
@@ -140,5 +142,38 @@ describe("DrawingInspector text editing", () => {
 		});
 
 		expect(onStartEdit).toHaveBeenCalledTimes(1);
+	});
+
+	it("reflects registry updates through the override subscription", () => {
+		const drawing = createDrawingObject("trendLine", [{ x: 120, y: 40 }, { x: 160, y: 60 }], {
+			id: "drawing-override",
+			style: { stroke: "#111111", strokeWidth: 1 },
+		});
+
+		act(() => {
+			root?.render(createElement(DrawingInspector, {
+				drawing,
+				labels,
+				textEditor: undefined,
+				position: undefined,
+				onUpdate: vi.fn(),
+				onDelete: vi.fn(),
+				onClone: vi.fn(),
+				onToggleLock: vi.fn(),
+				onToggleVisible: vi.fn(),
+				onBringToFront: vi.fn(),
+				onSendToBack: vi.fn(),
+				onClose: vi.fn(),
+			}));
+		});
+
+		const strokeInput = container?.querySelector<HTMLInputElement>('input[type="color"]');
+		expect(strokeInput?.value).toBe("#111111");
+
+		act(() => {
+			overrideDrawingStyle("drawing-override", { color: "#ff00ff" });
+		});
+
+		expect(strokeInput?.value).toBe("#ff00ff");
 	});
 });

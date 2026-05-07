@@ -46,6 +46,7 @@ export { DRAWING_SHORTCUTS, resolveDrawingShortcut } from "./shortcutMap";
 export type { DrawingShortcutAction, DrawingShortcutCommand, DrawingShortcutDefinition, DrawingShortcutTool } from "./shortcutMap";
 export { DrawingContextMenu } from "./contextMenu";
 export type { DrawingContextMenuItem, DrawingContextMenuProps } from "./contextMenu";
+export { clearDrawingStyleOverride, clearDrawingStyleOverrides, getDrawingStyleOverride, listDrawingStyleOverrides, overrideDrawingStyle, resolveDrawingStyle, subscribeDrawingStyle, subscribeDrawingStyleChanges } from "./drawingStyleRegistry";
 import { useDrawingStorage } from "./useDrawingStorage";
 
 registerDrawingTool(TrendLine);
@@ -117,6 +118,8 @@ export type {
 	DrawingToolType,
 	Point,
 } from "./types";
+
+export type { DrawingStyleOverride } from "./drawingStyleRegistry";
 
 export type {
 	DrawingInteractionAction,

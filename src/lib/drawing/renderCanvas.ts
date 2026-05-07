@@ -1,4 +1,5 @@
 import { chartPointToPixel, type ChartScales, type PlotDatum } from "./coordinateUtils";
+import { resolveDrawingStyle } from "./drawingStyleRegistry";
 import type { DrawingObject, DrawingStyle } from "./types";
 import { calculateParallelChannelGeometry } from "./builtin/parallelChannel";
 import { calculatePitchforkGeometry } from "./builtin/pitchfork";
@@ -778,93 +779,97 @@ export function renderDrawingToCanvas(
 		return;
 	}
 
-	switch (drawing.type as string) {
+	const effectiveDrawing = {
+		...drawing,
+		style: resolveDrawingStyle(drawing),
+	};
+
+	switch (effectiveDrawing.type as string) {
 		case "trendLine":
-			drawTrendLine(drawing, scales, ctx, options.isSelected);
+			drawTrendLine(effectiveDrawing, scales, ctx, options.isSelected);
 			return;
 		case "hLine":
-			drawHLine(drawing, scales, options.chartWidth, ctx, options.isSelected);
+			drawHLine(effectiveDrawing, scales, options.chartWidth, ctx, options.isSelected);
 			return;
 		case "vLine":
-			drawVLine(drawing, scales, options.chartHeight, ctx, options.isSelected);
+			drawVLine(effectiveDrawing, scales, options.chartHeight, ctx, options.isSelected);
 			return;
 		case "fibonacci":
-			drawFibonacci(drawing, scales, options.chartWidth, ctx, options.isSelected);
+			drawFibonacci(effectiveDrawing, scales, options.chartWidth, ctx, options.isSelected);
 			return;
 		case "channel":
-			drawChannel(drawing, scales, ctx, options.isSelected);
+			drawChannel(effectiveDrawing, scales, ctx, options.isSelected);
 			return;
 		case "text":
-			drawText(drawing, scales, ctx, options.isSelected);
+			drawText(effectiveDrawing, scales, ctx, options.isSelected);
 			return;
 		case "rectangle":
-			drawRectangle(drawing, scales, ctx, options.isSelected);
+			drawRectangle(effectiveDrawing, scales, ctx, options.isSelected);
 			return;
 		case "arrow":
-			drawArrow(drawing, scales, ctx, options.isSelected);
+			drawArrow(effectiveDrawing, scales, ctx, options.isSelected);
 			return;
 		case "ray":
-			drawRay(drawing, scales, options.chartWidth, options.chartHeight, ctx, options.isSelected);
+			drawRay(effectiveDrawing, scales, options.chartWidth, options.chartHeight, ctx, options.isSelected);
 			return;
 		case "extendedLine":
-			drawExtendedLine(drawing, scales, options.chartWidth, options.chartHeight, ctx, options.isSelected);
+			drawExtendedLine(effectiveDrawing, scales, options.chartWidth, options.chartHeight, ctx, options.isSelected);
 			return;
 		case "polyline":
-			drawPolylineTool(drawing, scales, ctx, options.isSelected);
+			drawPolylineTool(effectiveDrawing, scales, ctx, options.isSelected);
 			return;
 		case "dateAndPriceRange":
-			drawDateAndPriceRange(drawing, scales, ctx, options.isSelected);
+			drawDateAndPriceRange(effectiveDrawing, scales, ctx, options.isSelected);
 			return;
 		case "longPosition":
-			drawLongPosition(drawing, scales, ctx, options.isSelected);
+			drawLongPosition(effectiveDrawing, scales, ctx, options.isSelected);
 			return;
 		case "shortPosition":
-			drawShortPosition(drawing, scales, ctx, options.isSelected);
+			drawShortPosition(effectiveDrawing, scales, ctx, options.isSelected);
 			return;
-		case "fibExtension":
-			{
-				const [startPoint, endPoint] = drawing.points;
-				if (!startPoint || !endPoint) {
-					return;
-				}
-
-				const start = toPixel(startPoint, scales);
-				const end = toPixel(endPoint, scales);
-				const levels = drawing.fibLevels ?? DEFAULT_FIB_EXTENSION_LEVELS;
-				const priceDelta = endPoint.y - startPoint.y;
-				levels.forEach((level) => {
-					const extensionPrice = endPoint.y + priceDelta * level;
-					const y = toPixel({ x: endPoint.x, y: extensionPrice }, scales).y;
-					drawLine(ctx, { x: 0, y }, { x: options.chartWidth, y }, drawing.style);
-					drawTextLabel(ctx, `${(level * 100).toFixed(1)}% — ${numberFormatter(extensionPrice)}`, { x: options.chartWidth - 6, y: y - 4 }, drawing.style, {
-						align: "right",
-						baseline: "alphabetic",
-						fontSize: drawing.style.fontSize ?? 11,
-					});
-				});
-
-				if (options.isSelected) {
-					drawSelectionHandles(ctx, [start, end], drawing.style.stroke);
-				}
+		case "fibExtension": {
+			const [startPoint, endPoint] = effectiveDrawing.points;
+			if (!startPoint || !endPoint) {
 				return;
 			}
+
+			const start = toPixel(startPoint, scales);
+			const end = toPixel(endPoint, scales);
+			const levels = effectiveDrawing.fibLevels ?? DEFAULT_FIB_EXTENSION_LEVELS;
+			const priceDelta = endPoint.y - startPoint.y;
+			levels.forEach((level) => {
+				const extensionPrice = endPoint.y + priceDelta * level;
+				const y = toPixel({ x: endPoint.x, y: extensionPrice }, scales).y;
+				drawLine(ctx, { x: 0, y }, { x: options.chartWidth, y }, effectiveDrawing.style);
+				drawTextLabel(ctx, `${(level * 100).toFixed(1)}% — ${numberFormatter(extensionPrice)}`, { x: options.chartWidth - 6, y: y - 4 }, effectiveDrawing.style, {
+					align: "right",
+					baseline: "alphabetic",
+					fontSize: effectiveDrawing.style.fontSize ?? 11,
+				});
+			});
+
+			if (options.isSelected) {
+				drawSelectionHandles(ctx, [start, end], effectiveDrawing.style.stroke);
+			}
+			return;
+		}
 		case "parallelChannel":
-			drawParallelChannel(drawing, scales, options.chartWidth, options.chartHeight, ctx, options.isSelected);
+			drawParallelChannel(effectiveDrawing, scales, options.chartWidth, options.chartHeight, ctx, options.isSelected);
 			return;
 		case "pitchfork":
-			drawPitchfork(drawing, scales, options.chartWidth, options.chartHeight, ctx, options.isSelected);
+			drawPitchfork(effectiveDrawing, scales, options.chartWidth, options.chartHeight, ctx, options.isSelected);
 			return;
 		case "abcdPattern":
-			drawAbcdPattern(drawing, scales, ctx, options.isSelected);
+			drawAbcdPattern(effectiveDrawing, scales, ctx, options.isSelected);
 			return;
 		case "fibArc":
-			drawFibArc(drawing, scales, ctx, options.isSelected);
+			drawFibArc(effectiveDrawing, scales, ctx, options.isSelected);
 			return;
 		case "fibTimeZone":
-			drawFibTimeZone(drawing, scales, options.chartHeight, ctx, options.isSelected);
+			drawFibTimeZone(effectiveDrawing, scales, options.chartWidth, ctx, options.isSelected);
 			return;
 		case "regressionChannel":
-			drawRegressionChannel(drawing, scales, options, ctx, options.isSelected);
+			drawRegressionChannel(effectiveDrawing, scales, options, ctx, options.isSelected);
 			return;
 		default:
 			return;

@@ -42,6 +42,7 @@ export type SeriesTypeId =
 export type YAxisSide = "left" | "right";
 
 export interface SeriesConfig {
+	id?: string;
 	type: SeriesTypeId;
 	params?: Record<string, unknown>;
 	yAxis: YAxisSide;

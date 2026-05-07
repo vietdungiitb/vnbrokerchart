@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { overrideDrawingStyle, resolveDrawingStyle, subscribeDrawingStyle } from "./drawingStyleRegistry";
 import type { DrawingObject, DrawingStyle } from "./types";
 
 export interface DrawingInspectorTextEditorLabels {
@@ -60,6 +62,17 @@ function isColorString(value: string | undefined) {
 	return typeof value === "string" && value.startsWith("#") ? value : "#ffffff";
 }
 
+function dashPatternFromStyle(value: DrawingStyle["strokeDasharray"]): number[] {
+	switch (value) {
+		case "dashed":
+			return [6, 4];
+		case "dotted":
+			return [2, 4];
+		default:
+			return [];
+	}
+}
+
 function updateStyle(drawing: DrawingObject, patch: Partial<DrawingStyle>): Partial<DrawingObject> {
 	return {
 		style: {
@@ -83,13 +96,27 @@ export default function DrawingInspector({
 	onSendToBack,
 	onClose,
 }: DrawingInspectorProps) {
+	const [, setStyleRevision] = useState(0);
+	useEffect(() => {
+		if (!drawing) {
+			return undefined;
+		}
+		return subscribeDrawingStyle(drawing.id, () => {
+			setStyleRevision((value) => value + 1);
+		});
+	}, [drawing]);
+
 	if (!drawing) {
 		return null;
 	}
 
+	const effectiveDrawing = {
+		...drawing,
+		style: resolveDrawingStyle(drawing),
+	};
+	const style = effectiveDrawing.style;
 	const locked = drawing.locked === true;
 	const visible = drawing.visible !== false;
-	const style = drawing.style;
 	const strokeDasharray = style.strokeDasharray ?? "solid";
 	const left = position?.x ?? 16;
 	const top = position?.y ?? 16;
@@ -117,7 +144,7 @@ export default function DrawingInspector({
 					<input
 						type="color"
 						value={isColorString(style.stroke)}
-						onChange={(event) => onUpdate(updateStyle(drawing, { stroke: event.target.value }))}
+						onChange={(event) => overrideDrawingStyle(drawing.id, { color: event.target.value })}
 						aria-label={labels.stroke}
 					/>
 				</label>
@@ -141,7 +168,7 @@ export default function DrawingInspector({
 						max="5"
 						step="1"
 						value={style.strokeWidth}
-						onChange={(event) => onUpdate(updateStyle(drawing, { strokeWidth: Number(event.target.value) }))}
+						onChange={(event) => overrideDrawingStyle(drawing.id, { lineWidth: Number(event.target.value) })}
 						aria-label={labels.strokeWidth}
 					/>
 				</label>
@@ -152,7 +179,7 @@ export default function DrawingInspector({
 					<span>{labels.lineStyle}</span>
 					<select
 						value={strokeDasharray}
-						onChange={(event) => onUpdate(updateStyle(drawing, { strokeDasharray: event.target.value as DrawingStyle["strokeDasharray"] }))}
+						onChange={(event) => overrideDrawingStyle(drawing.id, { dashPattern: dashPatternFromStyle(event.target.value as DrawingStyle["strokeDasharray"]) })}
 						aria-label={labels.lineStyle}
 					>
 						<option value="solid">{labels.solid}</option>
@@ -171,7 +198,7 @@ export default function DrawingInspector({
 						max="1"
 						step="0.05"
 						value={style.opacity ?? 1}
-						onChange={(event) => onUpdate(updateStyle(drawing, { opacity: Number(event.target.value) }))}
+						onChange={(event) => overrideDrawingStyle(drawing.id, { opacity: Number(event.target.value) })}
 						aria-label={labels.opacity}
 					/>
 				</label>
