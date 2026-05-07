@@ -3678,3 +3678,113 @@ Every completed slice must update this ledger with the exact files changed in th
 ### Residual risk
 
 - Existing drawings keep their stored stroke color; this only changes the default for newly created drawings.
+
+---
+
+## 40. CE18 — Drawing list panel theme + scrollbar fix
+
+### Commit: `2b53afc`
+
+### Completed
+
+- Thay thế tất cả `rgba(15,23,42,...)` hardcoded dark colors trong `DrawingListPanel` bằng CSS variables (`var(--gc-surface-sub)`, `var(--gc-border)`, `var(--gc-text)`, `var(--gc-text-muted)`, `var(--gc-accent)`). Panel giờ adapt đúng với cả light và dark theme.
+- Refactor container từ `display:grid` sang `display:flex; flex-direction:column` để scrollbar hoạt động đúng. Header `flex-shrink:0`; items section `flex:1 1 auto; min-height:0; overflow-y:auto`. Thêm `max-height: min(560px, calc(100vh-160px))`.
+
+### Validation
+
+- `npm run type-check` → PASS
+- `npm run build:docs` → PASS
+- `python scripts/generate_module_tree.py` → PASS (705 modules)
+
+### Files touched
+
+- [src/lib/drawing/DrawingListPanel.tsx](../../src/lib/drawing/DrawingListPanel.tsx)
+- [src/demo/demo.css](../../src/demo/demo.css)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)
+
+---
+
+## 41. CE19 — Tooltip indicator label color matches series color
+
+### Commit: `d85c060`
+
+### Completed
+
+- `PaneTooltip.tsx`: label `<tspan>` đổi `fill` từ `labelFill` (hardcoded muted gray) sang `fill={line.color}` — tooltip label giờ hiển thị đúng màu của indicator.
+- `DynamicChart.tsx`: thêm helper `resolveSeriesDisplayColor()` để build tooltip entries với màu chính xác từ `series.color ?? params.color`.
+- `buildTooltipEntriesForSeries` truyền color vào từng `TooltipLine` nên mọi indicator trong PaneTooltip giờ có màu khớp với line trên chart.
+
+### Validation
+
+- `npm run type-check` → PASS
+- `npm test` → PASS (238 tests)
+- `npm run build:docs` → PASS
+
+### Files touched
+
+- [src/lib/core/PaneTooltip.tsx](../../src/lib/core/PaneTooltip.tsx)
+- [src/lib/core/DynamicChart.tsx](../../src/lib/core/DynamicChart.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)
+
+---
+
+## 42. CE20 — Timeframe localStorage persistence
+
+### Commit: `6ff51f9`
+
+### Completed
+
+- Thay `useState<Timeframe>("1h")` bằng lazy initializer đọc `localStorage.getItem("vnsc_timeframe")`, validate bằng `TIMEFRAMES.includes()`, fallback về `"1h"`.
+- Thêm `useEffect` để persist timeframe sang `vnsc_timeframe` mỗi khi thay đổi.
+- Timeframe giữ nguyên qua reload trình duyệt.
+
+### Validation
+
+- `npm run type-check` → PASS
+- `npm test` → PASS (238 tests)
+- `npm run build:docs` → PASS
+
+### Files touched
+
+- [src/demo/LibraryShowcaseDemo.tsx](../../src/demo/LibraryShowcaseDemo.tsx)
+- [docs/upgrade-standard/AUDIT_LEDGER.md](../../docs/upgrade-standard/AUDIT_LEDGER.md)
+- [module_tree_full.md](../../module_tree_full.md)
+
+---
+
+## 43. CE21 — Per-component sub-colors cho multi-line indicators
+
+### Commit: `2a3d9da`
+
+### Completed
+
+- **`seriesComponents.ts`** (file mới): định nghĩa `SERIES_SUB_COMPONENTS` — map từ `SeriesTypeId` sang danh sách sub-component (key, i18n labelKey, defaultColor) cho 12 indicator đa đường: MACD, BollingerBand, KDJ, DMI, BRAR, StrengthElder, MTM, EMV, TRIX, DMA, PSY, CR.
+- **`pane-descriptor.ts`**: thêm `subColors?: Record<string, string>` vào `SeriesConfig`.
+- **`useDynamicPanes.ts`**: thêm action `updateSeriesSubColor` + reducer case + `useCallback` + `cloneSeries` spread subColors + expose qua `UseDynamicPanesResult`.
+- **`lib/core/index.ts`**: export `SERIES_SUB_COMPONENTS` và `SeriesSubComponent` type.
+- **`DynamicChart.tsx`**: thêm helper `sc(key, fallback)`, cập nhật render của MACD / BollingerBand / KDJ / DMI / BRAR / StrengthElder / MTM / EMV / TRIX / DMA / PSY / CR để dùng per-component sub-colors. BollingerBand bands còn giữ alpha `88` cho top/bottom.
+- **`PaneSettingsModal.tsx`**: thêm section "Màu thành phần" bên dưới color picker chính khi `SERIES_SUB_COMPONENTS[series.type]` tồn tại — mỗi sub-component có input color picker riêng.
+- **`i18n.tsx`**: thêm 29 key mới (cả VI lẫn EN): `settings.subColors`, `settings.sub.macd`, `settings.sub.signal`, `settings.sub.diverge`, `settings.sub.bbMiddle/Upper/Lower`, `settings.sub.k/d/j`, `settings.sub.plusDI/minusDI/adx`, `settings.sub.ar/br`, `settings.sub.bull/bear`, `settings.sub.mtm/emv/trix/ddd/ama/psy/cr`, `settings.sub.ma1–ma4`.
+- **`demo.css`**: thêm `.gc-settings-sub-colors` grid container + `.gc-settings-sub-colors__label` dùng CSS vars.
+
+### Validation
+
+- `npm run type-check` → PASS (0 errors)
+- `npm test` → PASS (48 files, 238 tests)
+- `npm run build:docs` → PASS (webpack compiled successfully in 4493ms)
+- `python scripts/generate_module_tree.py` → PASS (743 modules)
+
+### Files touched
+
+- [src/lib/core/types/seriesComponents.ts](../../src/lib/core/types/seriesComponents.ts) *(new)*
+- [src/lib/core/types/pane-descriptor.ts](../../src/lib/core/types/pane-descriptor.ts)
+- [src/lib/core/hooks/useDynamicPanes.ts](../../src/lib/core/hooks/useDynamicPanes.ts)
+- [src/lib/core/index.ts](../../src/lib/core/index.ts)
+- [src/lib/core/DynamicChart.tsx](../../src/lib/core/DynamicChart.tsx)
+- [src/demo/PaneSettingsModal.tsx](../../src/demo/PaneSettingsModal.tsx)
+- [src/demo/i18n.tsx](../../src/demo/i18n.tsx)
+- [src/demo/demo.css](../../src/demo/demo.css)
+- [module_tree_full.md](../../module_tree_full.md)
+
