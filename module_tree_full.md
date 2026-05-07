@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-07 15:32:18`
+Generated at: `2026-05-07 15:50:27`
 
 ## Summary
 
-- Total modules: 725
+- Total modules: 727
 - Python modules: 1
-- JS/TS modules: 724
+- JS/TS modules: 726
 - Total classes: 353
-- Total functions: 3882
-- Total top-level variables: 8657
+- Total functions: 3885
+- Total top-level variables: 8670
 
 ## Python Modules
 
@@ -2101,6 +2101,13 @@ Generated at: `2026-05-07 15:32:18`
 - Top-level variables:
   - `bars`, `currentBars`, `fetchMock`, `firstPage`, `merged`, `olderBars`, `secondPage`
 
+### `src/demo/__tests__/heikinAshi.test.ts`
+
+- Functions:
+  - `makeBar`
+- Top-level variables:
+  - `bars`, `expectedSecondOpen`, `firstClose`, `input`, `result`, `secondClose`, `snapshot`
+
 ### `src/demo/__tests__/i18n.test.tsx`
 
 - Functions:
@@ -2141,6 +2148,13 @@ Generated at: `2026-05-07 15:32:18`
 - Top-level variables:
   - `axisTheme`, `bearishColor`, `bollingerAppearance`, `bottomXAxisTheme`, `bullishColor`, `cancelled`, `chartData`, `chartHeight`, `chartSurfaceRef`, `controller`, `coordinateTheme`, `dateFormat`, `ema20Stroke`, `ema50Stroke`, `emaTrendUp`, `endDate`, `endIndex`, `gridWidth`, `integerFormat`, `latest`, `macdAppearance`, `macdHeight`, `macdOrigin`, `margin`, `node`, `observer`, `offlineData`, `overviewHeight`, `overviewOrigin`, `percentFormat`, `plotHeight`, `previous`, `priceChange`, `priceChangePercent`, `priceFormat`, `priceHeight`, `priceYAxisTheme`, `resolvedChartWidth`, `rsiAppearance`, `rsiOrigin`, `rsiPanelHeight`, `rsiValue`, `sign`, `sourceStatusLabel`, `sourceTone`, `startDate`, `startIndex`, `themeFontFamily`, `tooltipDisplayTexts`, `topXAxisTheme`, `volumeFormat`, `volumeHeight`, `volumeOrigin`, `volumeYAxisTheme`
 
+### `src/demo/heikinAshi.ts`
+
+- Functions:
+  - `transformHeikinAshi`
+- Top-level variables:
+  - `bar`, `close`, `high`, `low`, `open`, `result`
+
 ### `src/demo/i18n.tsx`
 
 - Functions:
@@ -2156,9 +2170,9 @@ Generated at: `2026-05-07 15:32:18`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `ToolIcon`, `clonePoint`, `formatBarsHeld`, `formatSignedPrice`, `getSelectedDrawingId`, `handleDrawingShortcuts`, `handleEscape`, `handler`, `isEditableTarget`, `isYAxisSide`, `loadDemoSettings`, `normalizeDate`, `paneTemplate`, `readSize`, `resolveDrawingPlacementForPane`, `saveDemoSettings`, `sortDrawings`
+  - `ToolIcon`, `clonePoint`, `formatBarsHeld`, `formatSignedPrice`, `getSelectedDrawingId`, `handleDrawingShortcuts`, `handleEscape`, `handler`, `isEditableTarget`, `isYAxisSide`, `loadChartType`, `loadDemoSettings`, `normalizeDate`, `paneTemplate`, `readSize`, `resolveDrawingPlacementForPane`, `saveDemoSettings`, `sortDrawings`
 - Top-level variables:
-  - `BACKFILL_MAX_PAGES`, `BACKFILL_PAGE_LIMIT`, `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_DEMO_SETTINGS`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `MAIN_PRICE_SERIES_TYPES`, `PERCENT_FORMAT`, `REPLAY_SPEEDS`, `TIMEFRAMES`, `TOOL_GROUPS`, `abortController`, `addPane`, `allPrices`, `applyDelta`, `available`, `averageBarsHeld`, `averagePnl`, `backfillDebounceRef`, `backfillInFlightRef`, `bestTrade`, `bringSelectedToFront`, `candleWidth`, `canvasBg`, `chartAdapter`, `chartData`, `chartMenuRef`, `chartRangeRef`, `chartReady`, `chartTypeLabel`, `clipboardDrawing`, `cloneSelectedDrawing`, `closeDrawingContextMenu`, `closePaperTradePosition`, `closeReplayContextMenu`, `closeSettings`, `closedTrade`, `controller`, `copySelectedDrawing`, `currentBars`, `currentItem`, `currentPosition`, `data`, `dateFormat`, `deleteDrawingById`, `desiredType`, `drawingClipboardRef`, `drawingContextMenuDrawing`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `drawingTextEditorLabels`, `earliestBar`, `enrichedData`, `ensureRangeHistory`, `file`, `first`, `firstBar`, `h`, `haCalc`, `handleAddPane`, `handleCancelTextEdit`, `handleChartRangeChange`, `handleChartTypeChange`, `handleClearDrawings`, `handleCloseDrawingInspector`, `handleCommitTextEdit`, `handleDrawingContextMenu`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handlePaperTradeClick`, `handlePaperTradeReset`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `handleStartTextEdit`, `handleVisibleDomainChange`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `initialDemoSettings`, `innerHeight`, `innerWidth`, `isEditingText`, `lastBar`, `lastClick`, `lastPaperTradeClickRef`, `lastPaperTradeSignatureRef`, `lastVisibleBar`, `leftZ`, `liveDataRef`, `localizePane`, `localizedPane`, `losses`, `maxPrice`, `maxZ`, `minPrice`, `minZ`, `mountedRef`, `msg`, `nativeEvent`, `nextClone`, `nextDrawings`, `nextLabel`, `nextPaste`, `nextPosition`, `node`, `normalizeDomain`, `now`, `observer`, `offlineBars`, `olderBars`, `openSettings`, `pagesLoaded`, `paneH`, `paneHeaderLabels`, `paneHeights`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `paperTradeJournal`, `paperTradePanelVisible`, `paperTradePositionRef`, `paperTradeRealizedPnl`, `paperTradeReportVisible`, `paperTradeSummary`, `paperTradeUnrealizedPnl`, `parsed`, `pasteCopiedDrawing`, `plotData`, `preferredSide`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `ratio`, `raw`, `realizedPnl`, `rect`, `replayController`, `replayControllerRef`, `replayFinished`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `requestOlderHistoryPage`, `resetToDefault`, `rightZ`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `shortcut`, `signature`, `sortedDrawings`, `stepPx`, `storageToolbarPosition`, `tagName`, `target`, `targetDrawing`, `targetSides`, `targetStart`, `timeOffset`, `timer`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `toolLabel`, `top`, `totalTrades`, `transformed`, `triggerBackfillDebounced`, `updateSelectedDrawing`, `visiblePanes`, `volumeFormat`, `w`, `widgetData`, `widgetMessages`, `wins`, `worstTrade`, `x`, `xExtents`, `y`
+  - `BACKFILL_MAX_PAGES`, `BACKFILL_PAGE_LIMIT`, `CANDLE_TYPE_STORAGE_KEY`, `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_DEMO_SETTINGS`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `MAIN_PRICE_SERIES_TYPES`, `PERCENT_FORMAT`, `REPLAY_SPEEDS`, `TIMEFRAMES`, `TOOL_GROUPS`, `abortController`, `addPane`, `allPrices`, `applyDelta`, `available`, `averageBarsHeld`, `averagePnl`, `backfillDebounceRef`, `backfillInFlightRef`, `bestTrade`, `bringSelectedToFront`, `candleTypeLabel`, `candleWidth`, `canvasBg`, `chartAdapter`, `chartData`, `chartRangeRef`, `chartReady`, `clipboardDrawing`, `cloneSelectedDrawing`, `closeDrawingContextMenu`, `closePaperTradePosition`, `closeReplayContextMenu`, `closeSettings`, `closedTrade`, `controller`, `copySelectedDrawing`, `currentBars`, `currentItem`, `currentPosition`, `data`, `dateFormat`, `deleteDrawingById`, `desiredType`, `drawingClipboardRef`, `drawingContextMenuDrawing`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `drawingTextEditorLabels`, `earliestBar`, `enrichedData`, `ensureRangeHistory`, `file`, `first`, `firstBar`, `h`, `handleAddPane`, `handleCancelTextEdit`, `handleChartRangeChange`, `handleChartTypeChange`, `handleClearDrawings`, `handleCloseDrawingInspector`, `handleCommitTextEdit`, `handleDrawingContextMenu`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handlePaperTradeClick`, `handlePaperTradeReset`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `handleStartTextEdit`, `handleVisibleDomainChange`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `initialDemoSettings`, `innerHeight`, `innerWidth`, `isEditingText`, `lastBar`, `lastClick`, `lastPaperTradeClickRef`, `lastPaperTradeSignatureRef`, `lastVisibleBar`, `leftZ`, `liveDataRef`, `localizePane`, `localizedPane`, `losses`, `maxPrice`, `maxZ`, `minPrice`, `minZ`, `mountedRef`, `msg`, `nativeEvent`, `nextClone`, `nextDrawings`, `nextLabel`, `nextPaste`, `nextPosition`, `node`, `normalizeDomain`, `now`, `observer`, `offlineBars`, `olderBars`, `openSettings`, `pagesLoaded`, `paneH`, `paneHeaderLabels`, `paneHeights`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `paperTradeJournal`, `paperTradePanelVisible`, `paperTradePositionRef`, `paperTradeRealizedPnl`, `paperTradeReportVisible`, `paperTradeSummary`, `paperTradeUnrealizedPnl`, `parsed`, `pasteCopiedDrawing`, `plotData`, `preferredSide`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `ratio`, `raw`, `realizedPnl`, `rect`, `replayController`, `replayControllerRef`, `replayFinished`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `requestOlderHistoryPage`, `resetToDefault`, `rightZ`, `saved`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `shortcut`, `signature`, `sortedDrawings`, `stepPx`, `storageToolbarPosition`, `tagName`, `target`, `targetDrawing`, `targetSides`, `targetStart`, `timeOffset`, `timer`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `toolLabel`, `top`, `totalTrades`, `transformed`, `triggerBackfillDebounced`, `updateSelectedDrawing`, `visiblePanes`, `volumeFormat`, `w`, `widgetData`, `widgetMessages`, `wins`, `worstTrade`, `x`, `xExtents`, `y`
 
 ### `src/demo/LiveDemo.tsx`
 

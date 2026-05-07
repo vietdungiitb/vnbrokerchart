@@ -2719,6 +2719,31 @@ Every completed slice must update this ledger with the exact files changed in th
 
 ---
 
+## CE17 — Candle Type Switcher
+
+**Ngày hoàn tất:** 2026-05-10
+**Sprint:** CE17
+
+### Thay đổi
+- `src/demo/LibraryShowcaseDemo.tsx` — thêm persist `vnsc_candleType`, đổi toolbar sang select, sync `candleType` → `SeriesConfig`, dùng Heikin-Ashi display path
+- `src/demo/heikinAshi.ts` — helper transform Heikin-Ashi thuần cho raw bars
+- `src/demo/__tests__/heikinAshi.test.ts` — unit tests cho công thức HA và tính không mutate
+- `src/demo/i18n.tsx` — thêm `toolbar.candleType` và `candleType.*` trong VI+EN
+- `src/demo/demo.css` — style cho `.vnsc-candle-type-select`
+- `docs/upgrade-standard/vnstockchart-upgrade/TASKBOARD.md` — đóng CE17 sang DONE
+- `module_tree_full.md` — regenerated (727 modules)
+
+### Gate evidence
+| Gate | Kết quả |
+|---|---|
+| type-check | 0 errors |
+| npm test | 189 tests / 40 files PASS |
+| build:docs | OK (webpack 4132ms) |
+| browser smoke | PASS: 6 candle types render; reload giữ selection |
+| module_tree | 727 modules |
+
+---
+
 ## CE16 — Advanced Oscillator Pack: KDJ, CCI, DMI, BIAS, BRAR, MTM, EMV, AO, ROC, TRIX, DMA, PVT, PSY, CR
 
 **Ngày hoàn tất:** 2026-05-09

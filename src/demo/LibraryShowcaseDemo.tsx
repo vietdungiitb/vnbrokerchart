@@ -38,7 +38,7 @@ import type { DrawingListPanelLabels } from "../lib/drawing/DrawingListPanel";
 import { cloneDrawingSnapshot, offsetDrawingByPixels } from "../lib/drawing/clipboard";
 import { enrichData } from "../lib/core/calculators/enrichData";
 import type { EnrichedDatum, RawOHLCV } from "../lib/core/calculators/types";
-import { heikinAshi } from "../lib/calculator";
+import { transformHeikinAshi } from "./heikinAshi";
 import { fetchHistoricalDemoBars, getOfflineDemoBars, mergeBarsByDate } from "./demoData";
 import { CHART_RANGE_LABEL_KEYS, CHART_RANGES, DEFAULT_CHART_RANGE, resolveChartRangeExtents, resolveChartRangeStart, type ChartRange } from "./chartRange";
 import DemoPageShell from "./DemoPageShell";
@@ -104,6 +104,7 @@ type Timeframe = typeof TIMEFRAMES[number];
 
 const CHART_TYPES = ["candlestick", "hollow", "ohlc", "heikinashi", "line", "area"] as const;
 type ChartTypeId = typeof CHART_TYPES[number];
+const CANDLE_TYPE_STORAGE_KEY = "vnsc_candleType";
 
 const CHART_TYPE_TO_SERIES: Record<ChartTypeId, SeriesTypeId> = {
 	candlestick: "Candlestick",
@@ -115,6 +116,23 @@ const CHART_TYPE_TO_SERIES: Record<ChartTypeId, SeriesTypeId> = {
 };
 
 const MAIN_PRICE_SERIES_TYPES: SeriesTypeId[] = ["Candlestick", "HollowCandle", "OHLC", "HeikinAshi", "Line", "Area", "Bar"];
+
+function loadChartType(): ChartTypeId {
+	if (typeof localStorage === "undefined") {
+		return "candlestick";
+	}
+
+	try {
+		const saved = localStorage.getItem(CANDLE_TYPE_STORAGE_KEY);
+		if (saved && CHART_TYPES.includes(saved as ChartTypeId)) {
+			return saved as ChartTypeId;
+		}
+	} catch {
+		// ignore storage errors
+	}
+
+	return "candlestick";
+}
 
 const TOOL_GROUPS = [
 	{ id: "lines", tools: ["cursor", "crosshair", "trendLine", "ray", "extendedLine", "hLine", "vLine"] as const },
@@ -430,13 +448,11 @@ export default function LibraryShowcaseDemo() {
 	const { language, setLanguage, t, getPaneLabel } = useDemoI18n();
 	const initialDemoSettings = useMemo(() => loadDemoSettings(), []);
 	const shellRef = useRef<HTMLDivElement | null>(null);
-	const chartMenuRef = useRef<HTMLDivElement | null>(null);
 	const [chartWidth, setChartWidth] = useState(0);
 	const [chartHeight, setChartHeight] = useState(0);
 	const [timeframe, setTimeframe] = useState<Timeframe>("1h");
 	const [chartRange, setChartRange] = useState<ChartRange>(DEFAULT_CHART_RANGE);
-	const [chartType, setChartType] = useState<ChartTypeId>("candlestick");
-	const [showChartMenu, setShowChartMenu] = useState(false);
+	const [chartType, setChartType] = useState<ChartTypeId>(() => loadChartType());
 	const [showPanesMenu, setShowPanesMenu] = useState(false);
 	const panesMenuRef = useRef<HTMLDivElement | null>(null);
 	const [activeTool, setActiveTool] = useState<string>("cursor");
@@ -489,6 +505,17 @@ export default function LibraryShowcaseDemo() {
 	useEffect(() => {
 		chartRangeRef.current = chartRange;
 	}, [chartRange]);
+
+	useEffect(() => {
+		if (typeof localStorage === "undefined") {
+			return;
+		}
+		try {
+			localStorage.setItem(CANDLE_TYPE_STORAGE_KEY, chartType);
+		} catch {
+			// ignore storage errors
+		}
+	}, [chartType]);
 
 	useEffect(() => () => {
 		mountedRef.current = false;
@@ -829,16 +856,14 @@ export default function LibraryShowcaseDemo() {
 		return data.slice(0, Math.min(2, data.length));
 	}, [data, replayState.currentIndex, replayState.visibleData]);
 
-	// Heikin Ashi transform — reuse base indicator fields, swap OHLC only
 	const plotData = useMemo<EnrichedDatum[]>(() => {
 		const enrichedData = enrichData(replayVisibleData, { series: indicatorSeries });
 		if (chartType !== "heikinashi" || enrichedData.length === 0) return enrichedData;
-		const haCalc = heikinAshi();
-		const transformed = haCalc(enrichedData as any[]) as any[];
-		return transformed.map((bar: any, i: number) => ({
+		const transformed = transformHeikinAshi(replayVisibleData);
+		return transformed.map((bar, i) => ({
 			...enrichedData[i],
-			open:  bar.open,
-			high:  bar.high,
+			open: bar.open,
+			high: bar.high,
 			low:   bar.low,
 			close: bar.close,
 		}));
@@ -1130,7 +1155,7 @@ export default function LibraryShowcaseDemo() {
 		const nextLabel = paneLabel(pane);
 		return nextLabel === pane.label ? pane : { ...pane, label: nextLabel };
 	}, [paneLabel]);
-	const chartTypeLabel = useCallback((type: ChartTypeId) => t(`chartType.${type}`), [t]);
+	const candleTypeLabel = useCallback((type: ChartTypeId) => t(`candleType.${type}`), [t]);
 	const toolLabel = useCallback((toolId: ToolId) => t(`tool.${toolId}`), [t]);
 
 	useEffect(() => {
@@ -1239,18 +1264,6 @@ export default function LibraryShowcaseDemo() {
 		},
 	}), [widgetData]);
 	const widgetMessages = language === "vi" ? widgetMessagesVi : widgetMessagesEn;
-
-	// Close chart type menu when clicking outside
-	useEffect(() => {
-		if (!showChartMenu) return;
-		const handler = (e: MouseEvent) => {
-			if (chartMenuRef.current && !chartMenuRef.current.contains(e.target as Node)) {
-				setShowChartMenu(false);
-			}
-		};
-		document.addEventListener("mousedown", handler);
-		return () => document.removeEventListener("mousedown", handler);
-	}, [showChartMenu]);
 
 	// Close panes menu when clicking outside
 	useEffect(() => {
@@ -1546,46 +1559,18 @@ export default function LibraryShowcaseDemo() {
 
 					<div className="gc-topbar-sep" />
 
-					<div className="gc-chart-type-wrap" ref={chartMenuRef}>
-						<button
-							type="button"
-							className={`gc-topbar-btn gc-chart-type-btn${showChartMenu ? " gc-topbar-btn--active" : ""}`}
-							onClick={() => setShowChartMenu((v) => !v)}
-						>
-							<svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
-								<rect x="1" y="10" width="3" height="5" fill="currentColor" rx="1" />
-								<rect x="6" y="6" width="3" height="9" fill="currentColor" rx="1" />
-								<rect x="11" y="2" width="3" height="13" fill="currentColor" rx="1" />
-							</svg>
-							{chartTypeLabel(chartType)}
-							<svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 4 }}>
-								<path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-							</svg>
-						</button>
-
-						{showChartMenu && (
-							<div className="gc-chart-type-menu">
-								{CHART_TYPES.map((id) => (
-									<button
-										key={id}
-										type="button"
-										className={`gc-chart-type-item${chartType === id ? " gc-chart-type-item--active" : ""}`}
-										onClick={() => {
-											handleChartTypeChange(id);
-											setShowChartMenu(false);
-										}}
-									>
-										{chartType === id && (
-											<svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: 6 }}>
-												<path d="M2 6l3 3 5-5" stroke="#2962ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-											</svg>
-										)}
-										{chartTypeLabel(id)}
-									</button>
-								))}
-							</div>
-						)}
-					</div>
+					<select
+						className="vnsc-candle-type-select"
+						aria-label={t("toolbar.candleType")}
+						value={chartType}
+						onChange={(event) => handleChartTypeChange(event.target.value as ChartTypeId)}
+					>
+						{CHART_TYPES.map((id) => (
+							<option key={id} value={id}>
+								{candleTypeLabel(id)}
+							</option>
+						))}
+					</select>
 
 					<button type="button" className="gc-topbar-btn">{t("library.compare")}</button>
 					<button

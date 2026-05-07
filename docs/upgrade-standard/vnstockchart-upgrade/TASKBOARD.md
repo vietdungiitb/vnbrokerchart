@@ -76,13 +76,13 @@
 
 | ID | Status | Công việc | File đích | DoD |
 |---|---|---|---|---|
-| CE17-01 | TODO | `candleType` state + persist | `LibraryShowcaseDemo.tsx` | Reload giữ setting |
-| CE17-02 | TODO | HeikinAshi transform | `demoData.ts` hoặc util | Transform đúng HA formula |
-| CE17-03 | TODO | Dropdown UI (6 options) | `LibraryShowcaseDemo.tsx`, CSS | Dropdown hoạt động |
-| CE17-04 | TODO | i18n keys candle types | `i18n.tsx` | VI+EN labels |
-| CE17-05 | TODO | Map candleType → SeriesConfig | `LibraryShowcaseDemo.tsx` | Chart re-render đúng type |
-| CE17-06 | TODO | Smoke test | Manual | Không crash qua 6 loại |
-| CE17-07 | TODO | Audit CE17 | ledger, module tree | Entry đầy đủ |
+| CE17-01 | DONE | `candleType` state + persist | `LibraryShowcaseDemo.tsx` | Reload giữ setting |
+| CE17-02 | DONE | HeikinAshi transform | `demoData.ts` hoặc util | Transform đúng HA formula |
+| CE17-03 | DONE | Dropdown UI (6 options) | `LibraryShowcaseDemo.tsx`, CSS | Dropdown hoạt động |
+| CE17-04 | DONE | i18n keys candle types | `i18n.tsx` | VI+EN labels |
+| CE17-05 | DONE | Map candleType → SeriesConfig | `LibraryShowcaseDemo.tsx` | Chart re-render đúng type |
+| CE17-06 | DONE | Smoke test | Manual | Không crash qua 6 loại |
+| CE17-07 | DONE | Audit CE17 | ledger, module tree | Entry đầy đủ |
 
 **DoD CE17:** Dropdown có 6 options: Candlestick / Hollow Candle / OHLC Bar / Heikin-Ashi / Area / Line. Mỗi option render đúng. Setting persist qua reload.
 

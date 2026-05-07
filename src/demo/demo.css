@@ -576,6 +576,28 @@ html[data-chart-theme="light"] body::before {
 	padding: 0;
 }
 
+.vnsc-candle-type-select {
+	min-width: 156px;
+	height: 28px;
+	padding: 0 8px;
+	border: 1px solid var(--gc-border);
+	border-radius: 5px;
+	background: var(--gc-surface);
+	color: var(--gc-text);
+	font-family: var(--gc-font);
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.vnsc-candle-type-select:hover {
+	background: var(--gc-surface-sub);
+}
+
+.vnsc-candle-type-select:focus-visible {
+	outline: 2px solid var(--gc-accent);
+	outline-offset: 1px;
+}
+
 .gc-chart-type-wrap {
 	position: relative;
 }
