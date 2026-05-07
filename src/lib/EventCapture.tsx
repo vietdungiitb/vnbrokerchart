@@ -28,6 +28,12 @@ class EventCapture extends Component<any, any> {
 		this.handleTouchMove = this.handleTouchMove.bind(this);
 		this.handlePinchZoom = this.handlePinchZoom.bind(this);
 		this.handlePinchZoomEnd = this.handlePinchZoomEnd.bind(this);
+		this.handlePointerDown = this.handlePointerDown.bind(this);
+		this.handlePointerMoveLongPress = this.handlePointerMoveLongPress.bind(this);
+		this.handlePointerUpLongPress = this.handlePointerUpLongPress.bind(this);
+
+		this.longPressTimer = null;
+		this.longPressStartPos = null;
 
 		this.handleClick = this.handleClick.bind(this);
 
@@ -68,6 +74,9 @@ class EventCapture extends Component<any, any> {
 		this.bindWheelListener();
 	}
 	componentWillUnmount() {
+		if (this.longPressTimer !== null) {
+			clearTimeout(this.longPressTimer);
+		}
 		if (this.node) {
 			select(this.node)
 				.on(MOUSEENTER, null)
@@ -499,6 +508,57 @@ class EventCapture extends Component<any, any> {
 			pinchZoomStart: null
 		});
 	}
+	// CE21: Pointer Events for touch/pen devices.
+	// - setPointerCapture: ensures move events are delivered even if pointer leaves element.
+	// - Long-press (500 ms, < 10 px movement) triggers onContextMenu — mobile replacement
+	//   for right-click. Skips pointerType="mouse" (handled by existing mouse events).
+	//
+	// Browser compat: iOS 13+, Chrome 55+, Firefox 59+.
+	handlePointerDown(e: React.PointerEvent<SVGRectElement>) {
+		if (e.pointerType === "mouse") return;
+		try {
+			e.currentTarget.setPointerCapture(e.pointerId);
+		} catch {
+			// setPointerCapture may throw in jsdom/test environments; safe to ignore
+		}
+		// Start long-press detection
+		if (this.longPressTimer !== null) {
+			clearTimeout(this.longPressTimer);
+		}
+		this.longPressStartPos = { x: e.clientX, y: e.clientY };
+		const { onContextMenu } = this.props;
+		if (onContextMenu) {
+			const eSnapshot = { clientX: e.clientX, clientY: e.clientY, pointerType: e.pointerType };
+			this.longPressTimer = setTimeout(() => {
+				if (this.longPressStartPos && this.node) {
+					const rect = this.node.getBoundingClientRect();
+					const mouseXY = [eSnapshot.clientX - rect.left, eSnapshot.clientY - rect.top];
+					onContextMenu(mouseXY, eSnapshot);
+				}
+				this.longPressTimer = null;
+				this.longPressStartPos = null;
+			}, 500);
+		}
+	}
+	handlePointerMoveLongPress(e: React.PointerEvent<SVGRectElement>) {
+		if (e.pointerType === "mouse" || !this.longPressStartPos) return;
+		const dx = e.clientX - this.longPressStartPos.x;
+		const dy = e.clientY - this.longPressStartPos.y;
+		if (Math.hypot(dx, dy) > 10) {
+			if (this.longPressTimer !== null) {
+				clearTimeout(this.longPressTimer);
+				this.longPressTimer = null;
+			}
+			this.longPressStartPos = null;
+		}
+	}
+	handlePointerUpLongPress(_e: React.PointerEvent<SVGRectElement>) {
+		if (this.longPressTimer !== null) {
+			clearTimeout(this.longPressTimer);
+			this.longPressTimer = null;
+		}
+		this.longPressStartPos = null;
+	}
 	setCursorClass(cursorOverrideClass: any) {
 		if (cursorOverrideClass !== this.state.cursorOverrideClass) {
 			this.setState({
@@ -520,14 +580,22 @@ class EventCapture extends Component<any, any> {
 			onContextMenu: this.handleRightClick,
 			onTouchStart: this.handleTouchStart,
 			onTouchMove: this.handleTouchMove,
+			// CE21: Pointer capture + long-press context menu for touch/pen devices
+			onPointerDown: this.handlePointerDown,
+			onPointerMove: this.handlePointerMoveLongPress,
+			onPointerUp: this.handlePointerUpLongPress,
+			onPointerCancel: this.handlePointerUpLongPress,
 		};
 
+		// CE21: touch-action:none prevents browser scroll/zoom stealing on mobile.
+		// Pointer Events API (iOS 13+, Chrome 55+, Firefox 59+) is handled by existing
+		// Touch Events fallback; touch-action ensures gesture delivery to JS handlers.
 		return (
 			<rect ref={this.saveNode}
 				className={className}
 				width={width}
 				height={height}
-				style={{ opacity: 0 }}
+				style={{ opacity: 0, touchAction: "none" }}
 				{...interactionProps}
 			/>
 		);

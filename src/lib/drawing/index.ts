@@ -128,6 +128,12 @@ export type { DrawingStyleOverride } from "./drawingStyleRegistry";
 export type { MagnetSensitivity } from "./snap";
 export { MAGNET_TOLERANCE } from "./snap";
 
+export { useLongPress } from "./useLongPress";
+export type { UseLongPressOptions, LongPressHandlers } from "./useLongPress";
+
+export { HIT_TOLERANCE } from "./hitTest";
+export type { PointerDeviceType } from "./hitTest";
+
 export type {
 	DrawingInteractionAction,
 	DrawingInteractionState,

@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-07 18:16:29`
+Generated at: `2026-05-07 18:32:35`
 
 ## Summary
 
-- Total modules: 739
+- Total modules: 742
 - Python modules: 1
-- JS/TS modules: 738
+- JS/TS modules: 741
 - Total classes: 356
-- Total functions: 3936
-- Total top-level variables: 8764
+- Total functions: 3947
+- Total top-level variables: 8793
 
 ## Python Modules
 
@@ -3275,7 +3275,14 @@ Generated at: `2026-05-07 18:16:29`
 - Functions:
   - `distanceToPolyline`, `distanceToSegment`, `getResizeHandleIndex`, `getTextBounds`, `hitTestAbcdPattern`, `hitTestChannelLike`, `hitTestDrawing`, `hitTestFibArc`, `hitTestFibTimeZone`, `hitTestFibonacciLike`, `hitTestLineLike`, `hitTestParallelChannel`, `hitTestPitchfork`, `hitTestPositionZones`, `hitTestRayLike`, `hitTestRectangleLike`, `hitTestRegressionChannel`, `pathBounds`, `pointInRect`, `toPixel`
 - Top-level variables:
-  - `best`, `bounds`, `clipped`, `distance`, `distanceFromCenter`, `dx`, `dy`, `effectiveDrawing`, `end`, `fontSize`, `geometry`, `height`, `leftFork`, `length`, `lengthSquared`, `lower`, `maxX`, `maxY`, `median`, `metrics`, `middle`, `minX`, `minY`, `normal`, `offsetAnchor`, `offsetEnd`, `offsetStart`, `offsetVector`, `pixel`, `pixelDelta`, `pixels`, `point`, `priceDelta`, `rightFork`, `start`, `t`, `text`, `upper`, `width`, `x`, `x1`, `x2`, `xs`, `y`, `y1`, `y2`, `ys`
+  - `HIT_TOLERANCE`, `best`, `bounds`, `clipped`, `distance`, `distanceFromCenter`, `dx`, `dy`, `effectiveDrawing`, `end`, `fontSize`, `geometry`, `height`, `leftFork`, `length`, `lengthSquared`, `lower`, `maxX`, `maxY`, `median`, `metrics`, `middle`, `minX`, `minY`, `normal`, `offsetAnchor`, `offsetEnd`, `offsetStart`, `offsetVector`, `pixel`, `pixelDelta`, `pixels`, `point`, `priceDelta`, `rightFork`, `start`, `t`, `text`, `tolerance`, `upper`, `width`, `x`, `x1`, `x2`, `xs`, `y`, `y1`, `y2`, `ys`
+
+### `src/lib/drawing/hitTestTolerance.test.ts`
+
+- Functions:
+  - `makeScales`, `makeTrendLine`
+- Top-level variables:
+  - `allTypes`, `drawing`, `invisible`, `mouseX`, `mouseY`, `now`, `options`, `scales`, `xScale`, `yScale`
 
 ### `src/lib/drawing/index.ts`
 
@@ -3416,6 +3423,20 @@ Generated at: `2026-05-07 18:16:29`
 - Top-level variables:
   - `anchor`, `blob`, `clearAll`, `exportJSON`, `hydratedRef`, `importJSON`, `imported`, `loaded`, `payload`, `storage`, `timeoutId`, `url`
 
+### `src/lib/drawing/useLongPress.test.ts`
+
+- Functions:
+  - `Probe`, `makePointerEvent`, `renderHook`
+- Top-level variables:
+  - `act`, `cb`, `container`, `createElement`, `createRoot`, `reactActEnvironment`, `root`, `store`, `useLongPress`
+
+### `src/lib/drawing/useLongPress.ts`
+
+- Functions:
+  - `clearTimer`, `onPointerCancel`, `onPointerDown`, `onPointerMove`, `onPointerUp`, `useLongPress`
+- Top-level variables:
+  - `callbackRef`, `captured`, `dx`, `dy`, `startPosRef`, `timerRef`
+
 ### `src/lib/EventCapture.test.tsx`
 
 - Top-level variables:
@@ -3426,7 +3447,7 @@ Generated at: `2026-05-07 18:16:29`
 - Classes:
   - `EventCapture`
 - Top-level variables:
-  - `className`, `currentCharts`, `dx`, `dxdy`, `dy`, `interactionProps`, `mouseXY`, `newPos`, `pan`, `touchXY`, `win`, `yZoom`, `zoomDir`
+  - `className`, `currentCharts`, `dx`, `dxdy`, `dy`, `eSnapshot`, `interactionProps`, `mouseXY`, `newPos`, `pan`, `rect`, `touchXY`, `win`, `yZoom`, `zoomDir`
 
 ### `src/lib/GenericChartComponent.tsx`
 

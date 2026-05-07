@@ -11,6 +11,7 @@ import type { UseDrawingInteractionReturn } from "./useDrawingInteraction";
 import { getSelectedObjectIds } from "./stateMachine";
 import type { ChartConfig } from "../StockChartContext";
 import { subscribeDrawingStyleChanges } from "./drawingStyleRegistry";
+import { useLongPress } from "./useLongPress";
 
 export interface DrawingLayerProps {
 	activeTool: string;

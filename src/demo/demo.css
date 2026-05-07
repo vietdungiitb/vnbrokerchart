@@ -2149,7 +2149,80 @@ html[data-chart-theme="light"] body::before {
 	font-weight: 700;
 	white-space: nowrap;
 	letter-spacing: 0.04em;
-	text-transform: uppercase;
+}
+
+/* =========================================================
+   CE21: Responsive / Mobile (≤767px)
+   Toolbar collapses from vertical column to horizontal row
+   with touch-friendly tap targets and scroll overflow.
+   ========================================================= */
+@media (max-width: 767px) {
+	/* Reconfigure layout: toolbar becomes top horizontal bar */
+	.gc-main {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto minmax(0, 1fr);
+	}
+
+	/* Toolbar rotates: column → row, scrolls horizontally */
+	.gc-tools {
+		flex-direction: row;
+		align-items: center;
+		padding: 4px 8px;
+		gap: 2px;
+		overflow-x: auto;
+		overflow-y: hidden;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+		border-right: none;
+		border-bottom: 1px solid var(--gc-border);
+	}
+
+	.gc-tools::-webkit-scrollbar {
+		display: none;
+	}
+
+	.gc-tools-group {
+		flex-direction: row;
+		align-items: center;
+		gap: 2px;
+	}
+
+	/* Vertical divider instead of horizontal */
+	.rsc-toolbar-divider {
+		width: 1px;
+		height: 20px;
+		margin: 0 4px;
+	}
+
+	/* Ensure all tool buttons meet 44×44px touch target minimum */
+	.gc-tool-btn {
+		min-width: 44px;
+		min-height: 44px;
+		width: 44px;
+		height: 44px;
+		flex-shrink: 0;
+	}
+
+	/* Drawing storage toolbar: stack vertically and widen */
+	.rsc-drawing-storage-toolbar {
+		flex-wrap: wrap;
+		width: calc(100vw - 32px);
+		left: 16px !important;
+		top: auto !important;
+		bottom: 60px;
+	}
+
+	.rsc-drawing-storage-toolbar__button {
+		min-height: 44px;
+		flex: 1;
+		font-size: 12px;
+	}
+
+	/* Candle type select touch-friendly */
+	.vnsc-candle-type-select {
+		min-height: 44px;
+		font-size: 13px;
+	}
 }
 
 .gc-settings-row {

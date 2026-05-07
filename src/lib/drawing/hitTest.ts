@@ -9,6 +9,14 @@ import { calculateFibTimeZoneGeometry } from "./builtin/fibTimeZone";
 import { calculateRegressionChannelMetrics } from "./builtin/regressionChannel";
 import { clipSegmentToBox, DEFAULT_FIB_EXTENSION_LEVELS, DEFAULT_FIB_LEVELS } from "./renderCanvas";
 
+// CE21: device-aware hit tolerance. Touch targets need ~3× the tolerance of mouse.
+export type PointerDeviceType = "mouse" | "touch" | "pen";
+export const HIT_TOLERANCE: Record<PointerDeviceType, number> = {
+	mouse: 6,
+	touch: 16,
+	pen: 8,
+};
+
 function toPixel(point: DrawingObject["points"][number], scales: ChartScales) {
 	return chartPointToPixel(point, scales);
 }
@@ -305,11 +313,15 @@ export function hitTestDrawing(
 	mouseY: number,
 	scales: ChartScales,
 	options: { chartWidth: number; chartHeight: number; plotData?: PlotDatum[] },
-	tolerance = 6,
+	toleranceOrPointerType: number | PointerDeviceType = "mouse",
 ): boolean {
 	if (drawing.visible === false) {
 		return false;
 	}
+
+	const tolerance = typeof toleranceOrPointerType === "number"
+		? toleranceOrPointerType
+		: HIT_TOLERANCE[toleranceOrPointerType];
 
 	const effectiveDrawing = {
 		...drawing,
