@@ -1,6 +1,15 @@
 import { chartPointToPixel, type ChartScales, type PlotDatum } from "./coordinateUtils";
 import type { DrawingObject } from "./types";
 
+// CE19-03: Magnet sensitivity levels
+export type MagnetSensitivity = "weak" | "normal" | "strong";
+
+export const MAGNET_TOLERANCE: Record<MagnetSensitivity, number> = {
+	weak: 5,
+	normal: 10,
+	strong: 20,
+} as const;
+
 export interface SnapResult {
 	chartPoint: { x: number; y: number };
 	pixelPoint: { x: number; y: number };

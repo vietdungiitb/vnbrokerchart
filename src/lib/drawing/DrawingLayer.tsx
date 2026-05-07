@@ -6,7 +6,7 @@ import { appendPoint, replaceNextPoint, replacePoint } from "./shared";
 import type { DrawingObject, DrawingToolType, Point } from "./types";
 import { renderDrawingToCanvas, type RenderCanvasOptions } from "./renderCanvas";
 import { getResizeHandleIndex, hitTestDrawing } from "./hitTest";
-import { findSnapPoint, type SnapResult } from "./snap";
+import { findSnapPoint, MAGNET_TOLERANCE, type MagnetSensitivity, type SnapResult } from "./snap";
 import type { UseDrawingInteractionReturn } from "./useDrawingInteraction";
 import { getSelectedObjectIds } from "./stateMachine";
 import type { ChartConfig } from "../StockChartContext";
@@ -15,6 +15,7 @@ import { subscribeDrawingStyleChanges } from "./drawingStyleRegistry";
 export interface DrawingLayerProps {
 	activeTool: string;
 	interaction: UseDrawingInteractionReturn;
+	magnetSensitivity?: MagnetSensitivity;
 	onToolUsed?: () => void;
 	onContextMenu?: (moreProps: any, event: unknown) => void;
 }
@@ -352,6 +353,7 @@ function getSnapPoint(
 	moreProps: any,
 	interaction: UseDrawingInteractionReturn,
 	activeTool: string,
+	magnetSensitivity: MagnetSensitivity,
 	chartConfig = resolveActiveChartConfig(moreProps),
 ): SnapResult | null {
 	if (!isDrawingToolName(activeTool)) {
@@ -374,10 +376,11 @@ function getSnapPoint(
 	}
 
 	const [mouseX, mouseY] = adjustedMousePosition;
-	return findSnapPoint(mouseX, mouseY, renderScales, plotData, getVisibleDrawings(interaction));
+	const tolerance = MAGNET_TOLERANCE[magnetSensitivity];
+	return findSnapPoint(mouseX, mouseY, renderScales, plotData, getVisibleDrawings(interaction), tolerance);
 }
 
-function toDrawingPoint(moreProps: any, interaction: UseDrawingInteractionReturn, activeTool: string) {
+function toDrawingPoint(moreProps: any, interaction: UseDrawingInteractionReturn, activeTool: string, magnetSensitivity: MagnetSensitivity) {
 	const chartConfig = interaction.drawingState.type === "drawing"
 		? resolveDrawingChartConfig(moreProps, interaction.drawingState.object)
 		: resolveActiveChartConfig(moreProps);
@@ -386,7 +389,7 @@ function toDrawingPoint(moreProps: any, interaction: UseDrawingInteractionReturn
 		return undefined;
 	}
 
-	const snap = getSnapPoint(moreProps, interaction, activeTool, chartConfig);
+	const snap = getSnapPoint(moreProps, interaction, activeTool, magnetSensitivity, chartConfig);
 	return {
 		point: snap?.chartPoint ?? point,
 		snap,
@@ -413,7 +416,7 @@ function hasRemainingPlaceholder(drawing: DrawingObject) {
 	return drawing.points.slice(1).some((point) => point.x === startPoint.x && point.y === startPoint.y);
 }
 
-export default function DrawingLayer({ activeTool, interaction, onToolUsed, onContextMenu }: DrawingLayerProps) {
+export default function DrawingLayer({ activeTool, interaction, magnetSensitivity = "normal", onToolUsed, onContextMenu }: DrawingLayerProps) {
 	const [, setStyleRevision] = useState(0);
 	useEffect(() => subscribeDrawingStyleChanges(() => {
 		setStyleRevision((value) => value + 1);
@@ -613,7 +616,7 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed, onCo
 			return;
 		}
 
-		const resolved = toDrawingPoint(moreProps, interaction, activeTool);
+		const resolved = toDrawingPoint(moreProps, interaction, activeTool, magnetSensitivity);
 		if (!resolved?.point) {
 			return;
 		}
@@ -631,7 +634,7 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed, onCo
 				yScaleId: chartConfig?.yScaleId,
 			},
 		});
-	}, [activeTool, canDragSelectedDrawing, interaction, selectedDrawing, selectedDrawingId]);
+	}, [activeTool, canDragSelectedDrawing, interaction, magnetSensitivity, selectedDrawing, selectedDrawingId]);
 
 	const handleMouseMove = useCallback((moreProps: any) => {
 		if (interaction.drawingState.type !== "drawing") {
@@ -639,7 +642,7 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed, onCo
 			return;
 		}
 
-		const resolved = toDrawingPoint(moreProps, interaction, interaction.drawingState.toolName);
+		const resolved = toDrawingPoint(moreProps, interaction, interaction.drawingState.toolName, magnetSensitivity);
 		if (!resolved?.point) {
 			snapRef.current = null;
 			return;
@@ -649,7 +652,7 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed, onCo
 		const tool = createTool(interaction.drawingState.toolName);
 		const updated = tool.updateDraft(interaction.drawingState.object, resolved.point);
 		interaction.dispatch({ type: "UPDATE_DRAWING", object: updated });
-	}, [interaction]);
+	}, [interaction, magnetSensitivity]);
 
 	const handleClick = useCallback((moreProps: any) => {
 		if (activeTool === "cursor" && interaction.drawingState.type !== "drawing") {
@@ -679,7 +682,7 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed, onCo
 			return;
 		}
 
-		const resolved = toDrawingPoint(moreProps, interaction, interaction.drawingState.toolName);
+		const resolved = toDrawingPoint(moreProps, interaction, interaction.drawingState.toolName, magnetSensitivity);
 		if (!resolved?.point) {
 			snapRef.current = null;
 			return;
@@ -715,7 +718,7 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed, onCo
 		interaction.selectObject(completed.id);
 		snapRef.current = null;
 		onToolUsed?.();
-	}, [activeTool, interaction, onToolUsed, selectedObjectIds, selectedObjectIdSet]);
+	}, [activeTool, interaction, magnetSensitivity, onToolUsed, selectedObjectIds, selectedObjectIdSet]);
 
 	const handleContextMenu = useCallback((moreProps: any) => {
 		const nativeEvent = moreProps.event as MouseEvent | undefined;
@@ -750,7 +753,7 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed, onCo
 			return;
 		}
 
-		const resolved = toDrawingPoint(moreProps, interaction, interaction.drawingState.toolName);
+		const resolved = toDrawingPoint(moreProps, interaction, interaction.drawingState.toolName, magnetSensitivity);
 		if (!resolved?.point) {
 			snapRef.current = null;
 			return;
@@ -765,7 +768,7 @@ export default function DrawingLayer({ activeTool, interaction, onToolUsed, onCo
 		interaction.selectObject(completed.id);
 		snapRef.current = null;
 		onToolUsed?.();
-	}, [activeTool, interaction, onToolUsed]);
+	}, [activeTool, interaction, magnetSensitivity, onToolUsed]);
 
 	const chartCursorClass = useMemo(() => {
 		switch (activeTool) {

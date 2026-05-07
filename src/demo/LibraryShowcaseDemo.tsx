@@ -15,6 +15,8 @@ import {
 	useDrawingInteraction,
 	useDrawingStorage,
 	BarReplayController,
+	MAGNET_TOLERANCE,
+	type MagnetSensitivity,
 	type PaneDescriptor,
 	type BarReplayState,
 	type SeriesConfig,
@@ -459,6 +461,13 @@ export default function LibraryShowcaseDemo() {
 	const [showPanesMenu, setShowPanesMenu] = useState(false);
 	const panesMenuRef = useRef<HTMLDivElement | null>(null);
 	const [activeTool, setActiveTool] = useState<string>("cursor");
+	const [magnetSensitivity, setMagnetSensitivity] = useState<MagnetSensitivity>(() => {
+		try {
+			return (typeof localStorage !== "undefined" && (localStorage.getItem("vnsc_magnet") as MagnetSensitivity)) || "normal";
+		} catch {
+			return "normal";
+		}
+	});
 	const [selectedPaneId, setSelectedPaneId] = useState("price");
 
 	const [settingsSection, setSettingsSection] = useState<SettingsSection>("layout");
@@ -632,6 +641,16 @@ export default function LibraryShowcaseDemo() {
 	useEffect(() => {
 		saveDemoSettings({ maxVisiblePanes, showDrawingPriceMarkers });
 	}, [maxVisiblePanes, showDrawingPriceMarkers]);
+
+	useEffect(() => {
+		try {
+			if (typeof localStorage !== "undefined") {
+				localStorage.setItem("vnsc_magnet", magnetSensitivity);
+			}
+		} catch {
+			// ignore storage errors
+		}
+	}, [magnetSensitivity]);
 
 	const normalizeDomain = useCallback((domain: [Date | number, Date | number]) => {
 		return [normalizeDate(domain[0]), normalizeDate(domain[1])] as [Date, Date];
@@ -1822,6 +1841,25 @@ export default function LibraryShowcaseDemo() {
 							<circle cx="2.5" cy="12" r="1.3" fill="currentColor" />
 						</svg>
 					</button>
+					{activeTool !== "cursor" && activeTool !== "crosshair" && (
+						<>
+							<span className="rsc-toolbar-divider" aria-hidden="true" />
+							<div className="gc-tools-group" title={t("drawing.magnetSensitivity")}>
+								{(["weak", "normal", "strong"] as const).map((level) => (
+									<button
+										key={level}
+										type="button"
+										title={t(`drawing.magnet.${level}`)}
+										aria-pressed={magnetSensitivity === level}
+										className={`gc-tool-btn gc-tool-btn--magnet${magnetSensitivity === level ? " gc-tool-btn--active" : ""}`}
+										onClick={() => setMagnetSensitivity(level)}
+									>
+										{MAGNET_TOLERANCE[level]}
+									</button>
+								))}
+							</div>
+						</>
+					)}
 				</aside>
 
 				<section className="gc-chart-area">
@@ -1870,10 +1908,11 @@ export default function LibraryShowcaseDemo() {
 								onContextMenu={handleReplayContextMenu}
 								onVisibleDomainChange={handleVisibleDomainChange}
 							>
-								<DrawingPriceLabels drawing={selectedDrawing} displayFormat={priceFormat} enabled={showDrawingPriceMarkers} />
+								<DrawingPriceLabels drawing={selectedDrawing} displayFormat={priceFormat} enabled={showDrawingPriceMarkers} highlighted={selectedDrawing != null} />
 								<DrawingLayer
 									activeTool={activeTool}
 									interaction={drawingInteraction}
+									magnetSensitivity={magnetSensitivity}
 									onToolUsed={handleDrawingToolUsed}
 									onContextMenu={handleDrawingContextMenu}
 								/>
@@ -1915,6 +1954,27 @@ export default function LibraryShowcaseDemo() {
 									},
 									{ key: "front", label: t("drawing.bringToFront"), onSelect: bringSelectedToFront },
 									{ key: "back", label: t("drawing.sendToBack"), onSelect: sendSelectedToBack },
+									...(drawingContextMenuDrawing.groupId
+										? [
+												{
+													key: "selectGroup",
+													label: t("drawing.selectGroup"),
+													onSelect: () => {
+														drawingInteraction.selectGroup(drawingContextMenuDrawing.groupId!);
+														closeDrawingContextMenu();
+													},
+												},
+												{
+													key: "deleteGroup",
+													label: t("drawing.deleteGroup"),
+													onSelect: () => {
+														drawingInteraction.deleteGroup(drawingContextMenuDrawing.groupId!);
+														closeDrawingContextMenu();
+													},
+													danger: true,
+												},
+											]
+										: []),
 									{ key: "delete", label: t("drawing.delete"), onSelect: deleteSelected, danger: true },
 								]}
 							/>

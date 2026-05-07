@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-07 17:09:45`
+Generated at: `2026-05-07 17:52:59`
 
 ## Summary
 
-- Total modules: 732
+- Total modules: 733
 - Python modules: 1
-- JS/TS modules: 731
+- JS/TS modules: 732
 - Total classes: 353
-- Total functions: 3924
-- Total top-level variables: 8714
+- Total functions: 3931
+- Total top-level variables: 8728
 
 ## Python Modules
 
@@ -3189,7 +3189,7 @@ Generated at: `2026-05-07 17:09:45`
 - Functions:
   - `buildRenderScales`, `calculatePositionRiskReward`, `constrainResizePoint`, `currentDrawing`, `findHitDrawing`, `getAdjustedMousePosition`, `getChartConfigList`, `getSelectedDrawingId`, `getSnapPoint`, `getVisibleDrawings`, `handleSelect`, `hasRemainingPlaceholder`, `isMultiStepTool`, `resizeDrawing`, `resizeDrawingsByIds`, `resolveActiveChartConfig`, `resolveBaseChartConfig`, `resolveDrawingChartConfig`, `sortVisibleDrawings`, `toChartPoint`, `toDrawingPoint`, `translateDrawing`, `translateDrawingsByIds`, `withChartTranslation`
 - Top-level variables:
-  - `adjustedMousePosition`, `anchorIndex`, `anchorPoint`, `baseChartConfig`, `baseDrawings`, `canDragSelectedDrawing`, `canvasOptions`, `chartConfig`, `chartConfigList`, `chartCursorClass`, `completed`, `constrainedPoint`, `currentChartPoint`, `currentCharts`, `currentMatch`, `dateValue`, `deltaX`, `deltaY`, `draft`, `draftChartConfig`, `dragPreviewRef`, `dragSessionRef`, `drawToCanvas`, `drawings`, `exactMatch`, `handleClick`, `handleContextMenu`, `handleDoubleClick`, `handleDrag`, `handleDragComplete`, `handleDragStart`, `handleHover`, `handleMouseDown`, `handleMouseMove`, `handleUnHover`, `hit`, `isHover`, `match`, `nativeEvent`, `nextSelectedIds`, `paneChartConfigs`, `pendingResizeHandleRef`, `plotData`, `point`, `previewDrawings`, `renderScales`, `resizeHandleIndex`, `resized`, `resolved`, `selectedCursorClass`, `selectedDrawing`, `selectedDrawingId`, `selectedObjectIdSet`, `selectedObjectIds`, `session`, `snap`, `snapRef`, `startChartPoint`, `startPoint`, `targetChartConfig`, `targetIndex`, `tool`, `toolName`, `updated`, `xValue`, `yValue`
+  - `adjustedMousePosition`, `anchorIndex`, `anchorPoint`, `baseChartConfig`, `baseDrawings`, `canDragSelectedDrawing`, `canvasOptions`, `chartConfig`, `chartConfigList`, `chartCursorClass`, `completed`, `constrainedPoint`, `currentChartPoint`, `currentCharts`, `currentMatch`, `dateValue`, `deltaX`, `deltaY`, `draft`, `draftChartConfig`, `dragPreviewRef`, `dragSessionRef`, `drawToCanvas`, `drawings`, `exactMatch`, `handleClick`, `handleContextMenu`, `handleDoubleClick`, `handleDrag`, `handleDragComplete`, `handleDragStart`, `handleHover`, `handleMouseDown`, `handleMouseMove`, `handleUnHover`, `hit`, `isHover`, `match`, `nativeEvent`, `nextSelectedIds`, `paneChartConfigs`, `pendingResizeHandleRef`, `plotData`, `point`, `previewDrawings`, `renderScales`, `resizeHandleIndex`, `resized`, `resolved`, `selectedCursorClass`, `selectedDrawing`, `selectedDrawingId`, `selectedObjectIdSet`, `selectedObjectIds`, `session`, `snap`, `snapRef`, `startChartPoint`, `startPoint`, `targetChartConfig`, `targetIndex`, `tolerance`, `tool`, `toolName`, `updated`, `xValue`, `yValue`
 
 ### `src/lib/drawing/DrawingListPanel.tsx`
 
@@ -3280,14 +3280,21 @@ Generated at: `2026-05-07 17:09:45`
 - Functions:
   - `DrawingPriceLabels`, `addPriceMarker`, `collectPointPriceMarkers`, `isFinitePrice`, `resolveDrawingPriceMarkers`, `resolveFibExtensionMarkers`, `resolveFibonacciMarkers`
 - Top-level variables:
-  - `effectiveDrawing`, `firstPoint`, `labelFill`, `labelStroke`, `labelStrokeWidth`, `labelTextFill`, `lastPoint`, `levels`, `markers`, `normalized`, `priceDelta`, `riskReward`, `seen`
+  - `effectiveDrawing`, `firstPoint`, `highlightFill`, `labelFill`, `labelStroke`, `labelStrokeWidth`, `labelTextFill`, `lastPoint`, `levels`, `markers`, `normalized`, `priceDelta`, `riskReward`, `seen`
+
+### `src/lib/drawing/registry.test.ts`
+
+- Functions:
+  - `makePlugin`
+- Top-level variables:
+  - `first`, `plugin`, `second`, `warn`
 
 ### `src/lib/drawing/registry.ts`
 
 - Functions:
-  - `createDraftFromTool`, `createTool`, `isDrawingToolName`, `listDrawingTools`, `registerDrawingTool`
+  - `createDraftFromTool`, `createTool`, `getDrawingPlugin`, `isDrawingToolName`, `listDrawingPlugins`, `listDrawingTools`, `registerDrawingPlugin`, `registerDrawingTool`
 - Top-level variables:
-  - `drawingToolRegistry`, `tool`
+  - `_pluginTools`, `drawingToolRegistry`, `tool`
 
 ### `src/lib/drawing/renderCanvas.ts`
 
@@ -3338,7 +3345,7 @@ Generated at: `2026-05-07 17:09:45`
 - Functions:
   - `findNearestBar`, `findSnapPoint`, `getDatumDate`, `pickEndpointSnap`, `toDate`
 - Top-level variables:
-  - `best`, `bestDistance`, `bestOhlc`, `candidates`, `date`, `distance`, `nearestBar`, `pixelPoint`, `pixelX`, `value`, `xAccessor`
+  - `MAGNET_TOLERANCE`, `best`, `bestDistance`, `bestOhlc`, `candidates`, `date`, `distance`, `nearestBar`, `pixelPoint`, `pixelX`, `value`, `xAccessor`
 
 ### `src/lib/drawing/stateMachine.ts`
 
@@ -3354,16 +3361,16 @@ Generated at: `2026-05-07 17:09:45`
 ### `src/lib/drawing/useDrawingInteraction.test.ts`
 
 - Functions:
-  - `DrawingInteractionProbe`, `createTrendLineDrawing`, `renderInteractionProbe`
+  - `DrawingGroupProbe`, `DrawingInteractionProbe`, `createTrendLineDrawing`, `makeDrawings`, `renderGroupProbe`, `renderInteractionProbe`
 - Top-level variables:
-  - `completeState`, `container`, `currentInteraction`, `currentRoot`, `deletedSnapshot`, `drawing`, `drawingState`, `nextPoint`, `pushedState`, `reactActEnvironment`, `root`, `selectedSnapshot`, `selectedState`, `snapshot`, `snapshotPoints`, `startPoint`
+  - `completeState`, `container`, `currentInteraction`, `currentRoot`, `d1`, `d2`, `d3`, `deletedSnapshot`, `drawing`, `drawingState`, `nextPoint`, `pushedState`, `reactActEnvironment`, `root`, `selectedSnapshot`, `selectedState`, `snapshot`, `snapshotPoints`, `startPoint`
 
 ### `src/lib/drawing/useDrawingInteraction.ts`
 
 - Functions:
   - `cloneDrawingPoints`, `createDrawingInteractionState`, `deleteSelectedInteractionState`, `drawingInteractionReducer`, `getSelectedObjectIds`, `isHistoryAction`, `patchDrawing`, `replaceDrawingById`, `useDrawingInteraction`
 - Top-level variables:
-  - `cancelDrawing`, `deleteSelected`, `didChange`, `nextDrawings`, `nextHistory`, `redo`, `replaceDrawings`, `selectObject`, `selectedDrawings`, `selectedObjectIds`, `setSelectedObjects`, `startEditing`, `startMoving`, `startResizing`, `undo`, `updateDrawing`
+  - `cancelDrawing`, `deleteGroup`, `deleteSelected`, `didChange`, `ids`, `nextDrawings`, `nextHistory`, `redo`, `replaceDrawings`, `selectGroup`, `selectObject`, `selectedDrawings`, `selectedObjectIds`, `setSelectedObjects`, `startEditing`, `startMoving`, `startResizing`, `undo`, `updateDrawing`
 
 ### `src/lib/drawing/useDrawingStorage.ts`
 

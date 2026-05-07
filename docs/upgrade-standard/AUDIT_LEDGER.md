@@ -179,6 +179,38 @@ Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã
 
 ## 2. Slice Status
 
+### CE19 — Drawing Overlay API (registerDrawingPlugin, groupId, magnet sensitivity, Y-axis highlight)
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-07
+- Scope: extend drawing subsystem with public plugin API, groupId bulk ops, 3-level magnet sensitivity, Y-axis price label highlight for selected drawings
+- Files sửa:
+  - `src/lib/drawing/types.ts` — Added `groupId?: string` to `DrawingObject`; Added `DrawingPluginDefinition` interface
+  - `src/lib/drawing/registry.ts` — Added `_pluginTools` Map + `registerDrawingPlugin`, `getDrawingPlugin`, `listDrawingPlugins`
+  - `src/lib/drawing/shared.ts` — Pass `groupId` through `createDrawingObject`
+  - `src/lib/drawing/snap.ts` — Added `MagnetSensitivity` type + `MAGNET_TOLERANCE` constant
+  - `src/lib/drawing/priceLabel.tsx` — Added `highlighted?: boolean` prop; uses amber fill when selected
+  - `src/lib/drawing/useDrawingInteraction.ts` — Added `selectGroup`, `deleteGroup` to API + implementation
+  - `src/lib/drawing/DrawingLayer.tsx` — Added `magnetSensitivity?: MagnetSensitivity` prop; threads tolerance through snap chain
+  - `src/lib/drawing/index.ts` — Exports `DrawingPluginDefinition`, `registerDrawingPlugin`, `getDrawingPlugin`, `listDrawingPlugins`, `MagnetSensitivity`, `MAGNET_TOLERANCE`
+  - `src/index.ts` — Re-exports same symbols to public API surface
+  - `src/demo/i18n.tsx` — Added i18n keys: `drawing.selectGroup`, `drawing.deleteGroup`, `drawing.magnetSensitivity`, `drawing.magnet.{weak,normal,strong}` (VI + EN)
+  - `src/demo/LibraryShowcaseDemo.tsx` — `magnetSensitivity` state + localStorage + 3-button toolbar toggle + passed to DrawingLayer; groupId items in context menu; `highlighted` passed to DrawingPriceLabels
+  - `src/lib/drawing/registry.test.ts` — NEW: 4 tests for `registerDrawingPlugin` / `getDrawingPlugin` / `listDrawingPlugins`
+  - `src/lib/drawing/useDrawingInteraction.test.ts` — Added 2 tests for `selectGroup` / `deleteGroup`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Public `registerDrawingPlugin` API lets external code register custom tools with `onStart/onUpdate/onFinish/render/hitTest` callbacks
+  - `groupId` field on `DrawingObject` enables `selectGroup(groupId)` and `deleteGroup(groupId)` bulk operations surfaced in context menu
+  - `MagnetSensitivity` 3-level type (`weak/normal/strong`) replaces hardcoded snap tolerance; persisted to `vnsc_magnet` localStorage key; toolbar toggle shown when drawing tool is active
+  - `DrawingPriceLabels` now accepts `highlighted` prop; selected-drawing labels render in amber (`#f59e0b`) for clear axis visibility
+- Validation:
+  - `npm run type-check` → PASS (0 errors)
+  - `npm test` → 44 test files, 204/204 PASS
+  - `npm run build:docs` → webpack compiled successfully in 3761 ms
+  - `python scripts/generate_module_tree.py` → 733 modules
+
 ### CE18-04 — Style override persistence and redraw wiring
 
 - Người thực hiện: GitHub Copilot

@@ -1,3 +1,5 @@
+import type React from "react";
+
 export type Point = Readonly<{
 	x: number;
 	y: number;
@@ -51,6 +53,7 @@ export interface DrawingObject {
 	timeframe?: string;
 	zIndex?: number;
 	clonedFrom?: string;
+	groupId?: string;
 	riskReward?: { entry: number; stop: number; target: number; quantity?: number };
 	extendLeft?: boolean;
 	extendRight?: boolean;
@@ -65,4 +68,37 @@ export interface DrawingToolDefinition {
 	createDraft: (startPoint: Point) => DrawingObject;
 	updateDraft: (draft: DrawingObject, nextPoint: Point) => DrawingObject;
 	render?: (ctx: CanvasRenderingContext2D, object: DrawingObject) => void;
+}
+
+/** CE19-01: Public plugin API for registering custom drawing tools from outside the library. */
+export interface DrawingPluginDefinition {
+	type: string;
+	labelKey: string;
+	iconKey?: string;
+	defaultParams?: Record<string, unknown>;
+	onStart(params: {
+		paneId: string;
+		xValue: number;
+		yValue: number;
+		pixelX: number;
+		pixelY: number;
+	}): Omit<DrawingObject, "id" | "createdAt" | "updatedAt">;
+	onUpdate?(
+		drawing: DrawingObject,
+		params: { xValue: number; yValue: number; pixelX: number; pixelY: number },
+	): Partial<DrawingObject>;
+	onFinish?(drawing: DrawingObject): DrawingObject;
+	render(props: {
+		drawing: DrawingObject;
+		xScale: (v: number) => number;
+		yScale: (v: number) => number;
+		isSelected: boolean;
+	}): React.ReactElement | null;
+	hitTest(
+		drawing: DrawingObject,
+		point: { pixelX: number; pixelY: number },
+		xScale: (v: number) => number,
+		yScale: (v: number) => number,
+		tolerance: number,
+	): boolean;
 }

@@ -1,4 +1,4 @@
-import { createDraftFromTool, createTool, isDrawingToolName, listDrawingTools, registerDrawingTool } from "./registry";
+import { createDraftFromTool, createTool, getDrawingPlugin, isDrawingToolName, listDrawingPlugins, listDrawingTools, registerDrawingPlugin, registerDrawingTool } from "./registry";
 import type { DrawingAction, DrawingState } from "./stateMachine";
 import { drawingReducer } from "./stateMachine";
 import type { DrawingHistory } from "./history";
@@ -82,7 +82,10 @@ export {
 	historyReducer,
 	isDrawingToolName,
 	listDrawingTools,
+	listDrawingPlugins,
 	registerDrawingTool,
+	registerDrawingPlugin,
+	getDrawingPlugin,
 	renderDrawingToSvg,
 	serializeDrawingHistory,
 	serializeDrawingObject,
@@ -113,6 +116,7 @@ export type { DrawingHistory } from "./history";
 
 export type {
 	DrawingObject,
+	DrawingPluginDefinition,
 	DrawingStyle,
 	DrawingToolDefinition,
 	DrawingToolType,
@@ -120,6 +124,9 @@ export type {
 } from "./types";
 
 export type { DrawingStyleOverride } from "./drawingStyleRegistry";
+
+export type { MagnetSensitivity } from "./snap";
+export { MAGNET_TOLERANCE } from "./snap";
 
 export type {
 	DrawingInteractionAction,

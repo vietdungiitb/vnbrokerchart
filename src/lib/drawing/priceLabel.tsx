@@ -11,6 +11,8 @@ export interface DrawingPriceMarker {
 export interface DrawingPriceLabelsProps {
 	drawing?: DrawingObject | null;
 	enabled?: boolean;
+	/** CE19-04: When true, render labels with a highlighted (accent) fill color to indicate selected drawing */
+	highlighted?: boolean;
 	displayFormat?: (value: number) => string;
 	at?: "left" | "right";
 	orient?: "left" | "right";
@@ -138,6 +140,7 @@ export function resolveDrawingPriceMarkers(drawing?: DrawingObject | null): Draw
 export function DrawingPriceLabels({
 	drawing,
 	enabled = true,
+	highlighted = false,
 	displayFormat = (value: number) => value.toFixed(2),
 	at = "right",
 	orient = "right",
@@ -162,8 +165,10 @@ export function DrawingPriceLabels({
 		style: resolveDrawingStyle(drawing),
 	};
 
-	const labelFill = fill ?? (effectiveDrawing.style.fill && effectiveDrawing.style.fill !== "transparent" ? effectiveDrawing.style.fill : "#BAB8B8");
-	const labelStroke = stroke ?? effectiveDrawing.style.stroke;
+	// CE19-04: When highlighted (selected drawing), use a vivid accent fill
+	const highlightFill = "#f59e0b";
+	const labelFill = fill ?? (highlighted ? highlightFill : (effectiveDrawing.style.fill && effectiveDrawing.style.fill !== "transparent" ? effectiveDrawing.style.fill : "#BAB8B8"));
+	const labelStroke = stroke ?? (highlighted ? highlightFill : effectiveDrawing.style.stroke);
 	const labelTextFill = textFill ?? "#FFFFFF";
 	const labelStrokeWidth = strokeWidth ?? effectiveDrawing.style.strokeWidth;
 

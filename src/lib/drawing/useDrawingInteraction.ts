@@ -29,6 +29,10 @@ export interface UseDrawingInteractionReturn {
 	redo: () => void;
 	deleteSelected: () => void;
 	cancelDrawing: () => void;
+	/** CE19-02: Select all drawings sharing the same groupId */
+	selectGroup: (groupId: string) => void;
+	/** CE19-02: Delete all drawings sharing the same groupId */
+	deleteGroup: (groupId: string) => void;
 	canUndo: boolean;
 	canRedo: boolean;
 	allDrawings: DrawingObject[];
@@ -195,6 +199,21 @@ export function useDrawingInteraction(initialDrawings: readonly DrawingObject[] 
 		dispatch({ type: "CANCEL" });
 	}, [dispatch, state.drawingState, state.history.present]);
 
+	const selectGroup = useCallback((groupId: string) => {
+		const ids = state.history.present
+			.filter((d) => d.groupId === groupId)
+			.map((d) => d.id);
+		dispatch({ type: "SET_SELECTED_OBJECTS", objectIds: ids });
+	}, [dispatch, state.history.present]);
+
+	const deleteGroup = useCallback((groupId: string) => {
+		const nextDrawings = state.history.present.filter((d) => d.groupId !== groupId);
+		if (nextDrawings.length !== state.history.present.length) {
+			dispatch({ type: "REPLACE", drawings: nextDrawings });
+		}
+		dispatch({ type: "CANCEL" });
+	}, [dispatch, state.history.present]);
+
 	return useMemo(() => ({
 		drawingState: state.drawingState,
 		history: state.history,
@@ -210,8 +229,10 @@ export function useDrawingInteraction(initialDrawings: readonly DrawingObject[] 
 		redo,
 		deleteSelected,
 		cancelDrawing,
+		selectGroup,
+		deleteGroup,
 		canUndo: state.history.past.length > 0,
 		canRedo: state.history.future.length > 0,
 		allDrawings: state.history.present,
-	}), [cancelDrawing, deleteSelected, dispatch, redo, replaceDrawings, selectObject, setSelectedObjects, startEditing, startMoving, startResizing, state.drawingState, state.history, undo, updateDrawing]);
+	}), [cancelDrawing, deleteGroup, deleteSelected, dispatch, redo, replaceDrawings, selectGroup, selectObject, setSelectedObjects, startEditing, startMoving, startResizing, state.drawingState, state.history, undo, updateDrawing]);
 }

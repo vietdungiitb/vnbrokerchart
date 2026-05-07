@@ -1,4 +1,4 @@
-import type { DrawingToolDefinition, DrawingToolType, Point } from "./types";
+import type { DrawingPluginDefinition, DrawingToolDefinition, DrawingToolType, Point } from "./types";
 
 const drawingToolRegistry = new Map<DrawingToolType, DrawingToolDefinition>();
 
@@ -25,4 +25,22 @@ export function isDrawingToolName(name: string): name is DrawingToolType {
 
 export function createDraftFromTool(name: DrawingToolType, startPoint: Point) {
 	return createTool(name).createDraft(startPoint);
+}
+
+// CE19-01: Plugin registry for custom drawing tools registered from outside the library
+const _pluginTools = new Map<string, DrawingPluginDefinition>();
+
+export function registerDrawingPlugin(definition: DrawingPluginDefinition): void {
+	if (_pluginTools.has(definition.type)) {
+		console.warn(`[DrawingRegistry] Overwriting existing plugin: ${definition.type}`);
+	}
+	_pluginTools.set(definition.type, definition);
+}
+
+export function getDrawingPlugin(type: string): DrawingPluginDefinition | undefined {
+	return _pluginTools.get(type);
+}
+
+export function listDrawingPlugins(): readonly DrawingPluginDefinition[] {
+	return [..._pluginTools.values()];
 }

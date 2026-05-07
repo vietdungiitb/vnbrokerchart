@@ -181,3 +181,51 @@ describe("useDrawingInteraction foundation", () => {
 		expect(snapshotPoints).not.toBe(drawing.points);
 	});
 });
+
+describe("CE19-02: groupId bulk operations", () => {
+	function makeDrawings() {
+		const d1 = createDrawingObject("trendLine", [startPoint, nextPoint], { id: "g1-a", groupId: "group-1" });
+		const d2 = createDrawingObject("hLine", [startPoint], { id: "g1-b", groupId: "group-1" });
+		const d3 = createDrawingObject("vLine", [startPoint], { id: "solo", groupId: undefined });
+		return [d1, d2, d3];
+	}
+
+	function DrawingGroupProbe() {
+		currentInteraction = useDrawingInteraction(makeDrawings());
+		return null;
+	}
+
+	function renderGroupProbe() {
+		const currentRoot = root;
+		if (!currentRoot) {
+			throw new Error("group probe root is not available");
+		}
+		act(() => {
+			currentRoot.render(createElement(DrawingGroupProbe));
+		});
+		if (!currentInteraction) {
+			throw new Error("group probe did not mount");
+		}
+		return currentInteraction;
+	}
+
+	it("selectGroup selects all drawings sharing the groupId", () => {
+		renderGroupProbe();
+		act(() => {
+			currentInteraction?.selectGroup("group-1");
+		});
+		expect(currentInteraction?.drawingState).toMatchObject({
+			type: "selectedMultiple",
+			objectIds: expect.arrayContaining(["g1-a", "g1-b"]),
+		});
+	});
+
+	it("deleteGroup removes all drawings with the groupId and leaves others intact", () => {
+		renderGroupProbe();
+		act(() => {
+			currentInteraction?.deleteGroup("group-1");
+		});
+		expect(currentInteraction?.allDrawings).toHaveLength(1);
+		expect(currentInteraction?.allDrawings[0].id).toBe("solo");
+	});
+});

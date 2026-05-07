@@ -35,6 +35,7 @@ export function createDrawingObject(type: DrawingToolType, points: Point[], patc
 		timeframe: patch.timeframe,
 		zIndex: patch.zIndex,
 		clonedFrom: patch.clonedFrom,
+		groupId: patch.groupId,
 		riskReward: patch.riskReward ? { ...patch.riskReward } : undefined,
 		extendLeft: patch.extendLeft,
 		extendRight: patch.extendRight,
