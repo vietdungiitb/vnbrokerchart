@@ -25,6 +25,8 @@ export { useDynamicPanes, dynamicPanesReducer, createDefaultPaneLayout, loadPane
 export { DEFAULT_PANES, PANE_LAYOUT_STORAGE_KEY, PANE_MAX_VISIBLE } from "./types/pane-descriptor";
 export { isDefaultPaneId } from "./types/pane-descriptor";
 export type { PaneDescriptor, SeriesConfig, SeriesTypeId, TooltipMode, YAxisSide } from "./types/pane-descriptor";
+export { SERIES_SUB_COMPONENTS } from "./types/seriesComponents";
+export type { SeriesSubComponent } from "./types/seriesComponents";
 export { INDICATOR_SETS_STORAGE_KEY } from "./types/indicator-set";
 export type { IndicatorSet, IndicatorSetsStorage, IndicatorSetStorageLike } from "./types/indicator-set";
 export type { BarReplayState, ReplayBarLike, ReplaySpeed } from "./replay/BarReplayController";

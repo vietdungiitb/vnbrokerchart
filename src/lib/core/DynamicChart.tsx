@@ -318,6 +318,8 @@ function renderSeries(series: SeriesConfig) {
 	const accessor = (datum: EnrichedDatum) => resolveSeriesValue(datum, series);
 	const structured = (datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as Record<string, number | undefined> | number | undefined;
 	const fieldAccessor = (field: string) => (datum: EnrichedDatum) => (structured(datum) as Record<string, number | undefined> | undefined)?.[field];
+	/** Resolve a per-component sub-color, falling back to fallback color */
+	const sc = (key: string, fallback: string) => series.subColors?.[key] ?? fallback;
 
 	switch (type) {
 		case "Candlestick":
@@ -396,13 +398,16 @@ function renderSeries(series: SeriesConfig) {
 				/>
 			);
 		case "BollingerBand": {
-			// Make top/bottom band lines semi-transparent so wide bands remain visually light
-			const bbBandColor = lineColor.match(/^#[0-9a-fA-F]{6}$/) ? lineColor + "88" : lineColor;
+			// Sub-colors: middle, top, bottom — apply 53% alpha to band lines for visual clarity
+			const bbMidColor = sc("middle", lineColor);
+			const bbTopRaw   = sc("top",    lineColor);
+			const bbBotRaw   = sc("bottom", lineColor);
+			const withAlpha  = (c: string) => c.match(/^#[0-9a-fA-F]{6}$/) ? c + "88" : c;
 			return (
 				<BollingerSeries
 					key={seriesKey}
 					yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as IndicatorBandValue | undefined}
-					stroke={{ top: bbBandColor, middle: lineColor, bottom: bbBandColor }}
+					stroke={{ top: withAlpha(bbTopRaw), middle: bbMidColor, bottom: withAlpha(bbBotRaw) }}
 					fill={fillColor}
 					opacity={styleOverride?.opacity ?? 0.12}
 				/>
@@ -431,19 +436,27 @@ function renderSeries(series: SeriesConfig) {
 					}}
 				/>
 			);
-		case "MACD":
-			return <MACDSeries key={seriesKey} yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as IndicatorMacdValue | undefined} stroke={{ macd: lineColor, signal: lineColor }} fill={{ divergence: lineColor }} opacity={strokeOpacity} />;
-		case "KDJ":
+		case "MACD": {
+			const macdColor   = sc("macd",    lineColor);
+			const signalColor = sc("signal",  "#ff6d00");
+			const divergeColor = sc("diverge", "#26a69a");
+			return <MACDSeries key={seriesKey} yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as IndicatorMacdValue | undefined} stroke={{ macd: macdColor, signal: signalColor }} fill={{ divergence: divergeColor }} opacity={strokeOpacity} />;
+		}
+		case "KDJ": {
+			const kColor = sc("k", lineColor);
+			const dColor = sc("d", "#ff6d00");
+			const jColor = sc("j", "#26a69a");
 			return (
 				<g key={seriesKey}>
-					<LineSeries key={`${type}-k`} yAccessor={fieldAccessor("k") as any} stroke={lineColor} strokeWidth={1.2} />
-					<LineSeries key={`${type}-d`} yAccessor={fieldAccessor("d") as any} stroke={fillColor} strokeWidth={1.2} />
-					<LineSeries key={`${type}-j`} yAccessor={fieldAccessor("j") as any} stroke={upColor} strokeWidth={1.2} />
-					<StraightLine stroke={lineColor} opacity={0.35} yValue={80} strokeDasharray="ShortDash" />
-					<StraightLine stroke={lineColor} opacity={0.35} yValue={50} strokeDasharray="ShortDash" />
-					<StraightLine stroke={lineColor} opacity={0.35} yValue={20} strokeDasharray="ShortDash" />
+					<LineSeries key={`${type}-k`} yAccessor={fieldAccessor("k") as any} stroke={kColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-d`} yAccessor={fieldAccessor("d") as any} stroke={dColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-j`} yAccessor={fieldAccessor("j") as any} stroke={jColor} strokeWidth={1.2} />
+					<StraightLine stroke={kColor} opacity={0.35} yValue={80} strokeDasharray="ShortDash" />
+					<StraightLine stroke={kColor} opacity={0.35} yValue={50} strokeDasharray="ShortDash" />
+					<StraightLine stroke={kColor} opacity={0.35} yValue={20} strokeDasharray="ShortDash" />
 				</g>
 			);
+		}
 		case "CCI":
 			return (
 				<g key={seriesKey}>
@@ -453,37 +466,46 @@ function renderSeries(series: SeriesConfig) {
 					<StraightLine stroke={lineColor} opacity={0.35} yValue={-100} strokeDasharray="ShortDash" />
 				</g>
 			);
-		case "DMI":
+		case "DMI": {
+			const plusColor  = sc("plusDI",  "#089981");
+			const minusColor = sc("minusDI", "#f23645");
+			const adxColor   = sc("adx",     lineColor);
 			return (
 				<g key={seriesKey}>
-					<LineSeries key={`${type}-plus`} yAccessor={fieldAccessor("plusDI") as any} stroke={upColor} strokeWidth={1.2} />
-					<LineSeries key={`${type}-minus`} yAccessor={fieldAccessor("minusDI") as any} stroke={downColor} strokeWidth={1.2} />
-					<LineSeries key={`${type}-adx`} yAccessor={fieldAccessor("adx") as any} stroke={lineColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-plus`}  yAccessor={fieldAccessor("plusDI") as any}  stroke={plusColor}  strokeWidth={1.2} />
+					<LineSeries key={`${type}-minus`} yAccessor={fieldAccessor("minusDI") as any} stroke={minusColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-adx`}   yAccessor={fieldAccessor("adx") as any}     stroke={adxColor}   strokeWidth={1.2} />
 				</g>
 			);
+		}
 		case "BIAS":
 			return <LineSeries key={type} yAccessor={accessor as any} stroke={lineColor} strokeWidth={1.2} />;
-		case "BRAR":
+		case "BRAR": {
+			const arColor = sc("ar", lineColor);
+			const brColor = sc("br", "#ff6d00");
 			return (
 				<g key={seriesKey}>
-					<LineSeries key={`${type}-ar`} yAccessor={fieldAccessor("ar") as any} stroke={lineColor} strokeWidth={1.2} />
-					<LineSeries key={`${type}-br`} yAccessor={fieldAccessor("br") as any} stroke={upColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-ar`} yAccessor={fieldAccessor("ar") as any} stroke={arColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-br`} yAccessor={fieldAccessor("br") as any} stroke={brColor} strokeWidth={1.2} />
 				</g>
 			);
-		case "MTM":
+		}
+		case "MTM": {
 			return (
 				<g key={seriesKey}>
-					<LineSeries key={`${type}-mtm`} yAccessor={fieldAccessor("mtm") as any} stroke={lineColor} strokeWidth={1.2} />
-					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-mtm`}    yAccessor={fieldAccessor("mtm") as any}    stroke={sc("mtm",    lineColor)}  strokeWidth={1.2} />
+					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={sc("signal", "#ff6d00")} strokeWidth={1.2} />
 				</g>
 			);
-		case "EMV":
+		}
+		case "EMV": {
 			return (
 				<g key={seriesKey}>
-					<LineSeries key={`${type}-emv`} yAccessor={fieldAccessor("emv") as any} stroke={lineColor} strokeWidth={1.2} />
-					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-emv`}    yAccessor={fieldAccessor("emv") as any}    stroke={sc("emv",    lineColor)}  strokeWidth={1.2} />
+					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={sc("signal", "#ff6d00")} strokeWidth={1.2} />
 				</g>
 			);
+		}
 		case "AO":
 			return (
 				<BarSeries
@@ -496,51 +518,56 @@ function renderSeries(series: SeriesConfig) {
 			);
 		case "ROC":
 			return <LineSeries key={type} yAccessor={accessor as any} stroke={lineColor} strokeWidth={1.2} />;
-		case "TRIX":
+		case "TRIX": {
 			return (
 				<g key={seriesKey}>
-					<LineSeries key={`${type}-trix`} yAccessor={fieldAccessor("trix") as any} stroke={lineColor} strokeWidth={1.2} />
-					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-trix`}   yAccessor={fieldAccessor("trix") as any}   stroke={sc("trix",   lineColor)}  strokeWidth={1.2} />
+					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={sc("signal", "#ff6d00")} strokeWidth={1.2} />
 				</g>
 			);
-		case "DMA":
+		}
+		case "DMA": {
 			return (
 				<g key={seriesKey}>
-					<LineSeries key={`${type}-ddd`} yAccessor={fieldAccessor("ddd") as any} stroke={lineColor} strokeWidth={1.2} />
-					<LineSeries key={`${type}-ama`} yAccessor={fieldAccessor("ama") as any} stroke={fillColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-ddd`} yAccessor={fieldAccessor("ddd") as any} stroke={sc("ddd", lineColor)}  strokeWidth={1.2} />
+					<LineSeries key={`${type}-ama`} yAccessor={fieldAccessor("ama") as any} stroke={sc("ama", "#ff6d00")} strokeWidth={1.2} />
 				</g>
 			);
+		}
 		case "PVT":
 			return <LineSeries key={type} yAccessor={accessor as any} stroke={lineColor} strokeWidth={1.2} />;
-		case "PSY":
+		case "PSY": {
 			return (
 				<g key={seriesKey}>
-					<LineSeries key={`${type}-psy`} yAccessor={fieldAccessor("psy") as any} stroke={lineColor} strokeWidth={1.2} />
-					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={fillColor} strokeWidth={1.2} />
+					<LineSeries key={`${type}-psy`}    yAccessor={fieldAccessor("psy") as any}    stroke={sc("psy",    lineColor)}  strokeWidth={1.2} />
+					<LineSeries key={`${type}-signal`} yAccessor={fieldAccessor("signal") as any} stroke={sc("signal", "#ff6d00")} strokeWidth={1.2} />
 				</g>
 			);
-		case "CR":
+		}
+		case "CR": {
 			return (
 				<g key={seriesKey}>
-					<LineSeries key={`${type}-cr`} yAccessor={fieldAccessor("cr") as any} stroke={lineColor} strokeWidth={1.2} />
-					<LineSeries key={`${type}-ma1`} yAccessor={fieldAccessor("ma1") as any} stroke={fillColor} strokeWidth={1.1} />
-					<LineSeries key={`${type}-ma2`} yAccessor={fieldAccessor("ma2") as any} stroke={upColor} strokeWidth={1.1} />
-					<LineSeries key={`${type}-ma3`} yAccessor={fieldAccessor("ma3") as any} stroke={downColor} strokeWidth={1.1} />
-					<LineSeries key={`${type}-ma4`} yAccessor={fieldAccessor("ma4") as any} stroke="#9ca3af" strokeWidth={1.1} />
+					<LineSeries key={`${type}-cr`}  yAccessor={fieldAccessor("cr") as any}  stroke={sc("cr",  lineColor)}  strokeWidth={1.2} />
+					<LineSeries key={`${type}-ma1`} yAccessor={fieldAccessor("ma1") as any} stroke={sc("ma1", "#ff6d00")} strokeWidth={1.1} />
+					<LineSeries key={`${type}-ma2`} yAccessor={fieldAccessor("ma2") as any} stroke={sc("ma2", "#26a69a")} strokeWidth={1.1} />
+					<LineSeries key={`${type}-ma3`} yAccessor={fieldAccessor("ma3") as any} stroke={sc("ma3", "#f23645")} strokeWidth={1.1} />
+					<LineSeries key={`${type}-ma4`} yAccessor={fieldAccessor("ma4") as any} stroke={sc("ma4", "#9ca3af")} strokeWidth={1.1} />
 				</g>
 			);
-		case "StrengthElder":
+		}
+		case "StrengthElder": {
 			return (
 				<ElderRaySeries
 					key={seriesKey}
 					yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as { bullPower?: number; bearPower?: number }}
-					bullPowerFill={lineColor}
-					bearPowerFill={lineColor}
+					bullPowerFill={sc("bull", "#089981")}
+					bearPowerFill={sc("bear", "#f23645")}
 					straightLineStroke={lineColor}
 					straightLineOpacity={strokeOpacity}
 					opacity={fillOpacity}
 				/>
 			);
+		}
 		default:
 			return <LineSeries key={seriesKey} yAccessor={accessor as any} stroke={lineColor} strokeWidth={lineWidth} strokeOpacity={strokeOpacity} strokeDasharray={dashArray} />;
 	}

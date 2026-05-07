@@ -33,6 +33,7 @@ export type DynamicPaneAction =
 	| { type: "updateSeriesParams"; paneId: string; seriesType: SeriesTypeId; params: Record<string, unknown>; seriesIndex?: number }
 	| { type: "updateSeriesYAxis"; paneId: string; seriesType: SeriesTypeId; yAxis: YAxisSide; seriesIndex?: number }
 	| { type: "updateSeriesColor"; paneId: string; seriesType: SeriesTypeId; color: string; seriesIndex?: number }
+	| { type: "updateSeriesSubColor"; paneId: string; seriesType: SeriesTypeId; subKey: string; color: string; seriesIndex?: number }
 	| { type: "applyDelta"; splitterIndex: number; deltaY: number; available: number }
 	| { type: "replaceLayout"; panes: readonly PaneDescriptor[] }
 	| { type: "resetToDefault" }
@@ -55,6 +56,7 @@ export interface UseDynamicPanesResult {
 	updateSeriesParams: (paneId: string, seriesType: SeriesTypeId, params: Record<string, unknown>, seriesIndex?: number) => void;
 	updateSeriesYAxis: (paneId: string, seriesType: SeriesTypeId, yAxis: YAxisSide, seriesIndex?: number) => void;
 	updateSeriesColor: (paneId: string, seriesType: SeriesTypeId, color: string, seriesIndex?: number) => void;
+	updateSeriesSubColor: (paneId: string, seriesType: SeriesTypeId, subKey: string, color: string, seriesIndex?: number) => void;
 	applyDelta: (splitterIndex: number, deltaY: number) => void;
 	replaceLayout: (panes: readonly PaneDescriptor[]) => void;
 	resetToDefault: () => void;
@@ -78,6 +80,7 @@ function cloneSeries(series: readonly SeriesConfig[]): SeriesConfig[] {
 		...item,
 		id: item.id ?? createSeriesId(item.type),
 		params: item.params ? { ...item.params } : undefined,
+		subColors: item.subColors ? { ...item.subColors } : undefined,
 	}));
 }
 
@@ -544,6 +547,16 @@ export function dynamicPanesReducer(state: readonly PaneDescriptor[], action: Dy
 			series.color = action.color || undefined;
 			return next;
 		}
+		case "updateSeriesSubColor": {
+			const next = clonePaneList(state);
+			const pane = next.find((p) => p.id === action.paneId);
+			if (!pane) return next;
+			const seriesIndex = resolveSeriesIndex(pane.series, action.seriesType, action.seriesIndex);
+			const series = pane.series[seriesIndex];
+			if (!series) return next;
+			series.subColors = { ...(series.subColors ?? {}), [action.subKey]: action.color };
+			return next;
+		}
 		default:
 			return clonePaneList(state);
 	}
@@ -648,6 +661,10 @@ export function useDynamicPanes(totalHeight: number, options: UseDynamicPanesOpt
 		dispatch({ type: "updateSeriesColor", paneId, seriesType, color, seriesIndex });
 	}, []);
 
+	const updateSeriesSubColor = useCallback((paneId: string, seriesType: SeriesTypeId, subKey: string, color: string, seriesIndex?: number) => {
+		dispatch({ type: "updateSeriesSubColor", paneId, seriesType, subKey, color, seriesIndex });
+	}, []);
+
 	return {
 		panes,
 		visiblePanes,
@@ -665,6 +682,7 @@ export function useDynamicPanes(totalHeight: number, options: UseDynamicPanesOpt
 		updateSeriesParams,
 		updateSeriesYAxis,
 		updateSeriesColor,
+		updateSeriesSubColor,
 		applyDelta,
 		replaceLayout,
 		resetToDefault,

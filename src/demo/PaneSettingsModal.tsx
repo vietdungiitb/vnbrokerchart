@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import { getSeries, listRegistered, type IndicatorSet, type PaneDescriptor, type SeriesConfig, type SeriesSettingField, type SeriesTypeId, type YAxisSide } from "../lib/core";
+import { getSeries, listRegistered, SERIES_SUB_COMPONENTS, type IndicatorSet, type PaneDescriptor, type SeriesConfig, type SeriesSettingField, type SeriesTypeId, type YAxisSide } from "../lib/core";
 import type { UseDynamicPanesResult } from "../lib/core/hooks/useDynamicPanes";
 import { useIndicatorSets } from "../lib/core/hooks/useIndicatorSets";
 import { isDefaultPaneId } from "../lib/core/types/pane-descriptor";
@@ -296,8 +296,30 @@ export function PaneSettingsModal({
 			</label>
 		);
 
+		const subComponents = SERIES_SUB_COMPONENTS[series.type];
+		const subColorSection = subComponents && subComponents.length > 0 ? (
+			<div className="gc-settings-sub-colors">
+				<span className="gc-settings-sub-colors__label">{t("settings.subColors")}</span>
+				{subComponents.map((comp) => (
+					<label key={comp.key} className="gc-settings-field gc-settings-field--color">
+						<span>{t(comp.labelKey)}</span>
+						<input
+							type="color"
+							value={series.subColors?.[comp.key] ?? comp.defaultColor}
+							onChange={(event) => paneState.updateSeriesSubColor(pane.id, series.type, comp.key, event.target.value, seriesIndex)}
+						/>
+					</label>
+				))}
+			</div>
+		) : null;
+
 		if (fields.length === 0) {
-			return colorPicker;
+			return (
+				<>
+					{colorPicker}
+					{subColorSection}
+				</>
+			);
 		}
 
 		const gridClassName = fields.length >= 3
@@ -308,6 +330,7 @@ export function PaneSettingsModal({
 			<div className={gridClassName}>
 				{fields.map(renderField)}
 				{colorPicker}
+				{subColorSection}
 			</div>
 		);
 	};

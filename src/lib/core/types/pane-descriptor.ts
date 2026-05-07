@@ -48,6 +48,8 @@ export interface SeriesConfig {
 	yAxis: YAxisSide;
 	overlay?: boolean;
 	color?: string;
+	/** Per-component color overrides for multi-line indicators (MACD, BB, KDJ, …) */
+	subColors?: Record<string, string>;
 	visible?: boolean;  // undefined | true = render; false = hidden (soft-hide, data still computed)
 }
 

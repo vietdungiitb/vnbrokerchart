@@ -2224,6 +2224,27 @@ html[data-chart-theme="dark"] .gc-paper-trade-panel {
 }
 
 /* =========================================================
+   Sub-component colors section (MACD, BB, KDJ, etc.)
+   ========================================================= */
+.gc-settings-sub-colors {
+	display: grid;
+	gap: 6px;
+	border-top: 1px solid var(--gc-border);
+	padding-top: 10px;
+	margin-top: 6px;
+	grid-column: 1 / -1;
+}
+
+.gc-settings-sub-colors__label {
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--gc-text-muted);
+	margin-bottom: 2px;
+}
+
+/* =========================================================
    Drawing tools grouped flyout sub-menus
    ========================================================= */
 .gc-tools-group-container {
