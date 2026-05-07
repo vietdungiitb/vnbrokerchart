@@ -2227,8 +2227,11 @@ html[data-chart-theme="dark"] .gc-paper-trade-panel {
    Sub-component colors section (MACD, BB, KDJ, etc.)
    ========================================================= */
 .gc-settings-sub-colors {
-	display: grid;
-	gap: 6px;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
 	border-top: 1px solid var(--gc-border);
 	padding-top: 10px;
 	margin-top: 6px;
@@ -2241,7 +2244,20 @@ html[data-chart-theme="dark"] .gc-paper-trade-panel {
 	letter-spacing: 0.1em;
 	text-transform: uppercase;
 	color: var(--gc-text-muted);
-	margin-bottom: 2px;
+	width: 100%;
+	margin-bottom: 0;
+}
+
+.gc-settings-sub-colors .gc-settings-field--color {
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	flex: 0 0 auto;
+}
+
+.gc-settings-sub-colors .gc-settings-field--color > span {
+	font-size: 11px;
+	white-space: nowrap;
 }
 
 /* =========================================================
