@@ -2351,6 +2351,126 @@ html[data-chart-theme="dark"] .gc-paper-trade-panel {
 		flex-direction: row;
 	}
 
+	/* Whale Panel */
+
+	.gc-whale-panel {
+		background: var(--gc-surface);
+		border: 1px solid var(--gc-border);
+		border-radius: var(--gc-radius);
+		padding: 12px;
+		margin-bottom: 8px;
+		font-size: 12px;
+		color: var(--gc-text);
+	}
+
+	.gc-whale-panel--loading,
+	.gc-whale-panel--empty {
+		opacity: 0.5;
+	}
+
+	.gc-whale-panel__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 12px;
+		padding-bottom: 8px;
+		border-bottom: 1px solid var(--gc-border);
+	}
+
+	.gc-whale-panel__header strong {
+		font-weight: 600;
+		font-size: 13px;
+		color: var(--gc-text);
+	}
+
+	.gc-whale-panel__symbol {
+		font-size: 11px;
+		color: var(--gc-text-muted);
+		font-weight: 500;
+		padding: 0 4px;
+	}
+
+	.gc-whale-panel__loading-text,
+	.gc-whale-panel__empty-text {
+		color: var(--gc-text-muted);
+		text-align: center;
+		padding: 8px 0;
+		font-size: 11px;
+	}
+
+	.gc-whale-panel__body {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 12px;
+		margin-bottom: 12px;
+	}
+
+	.gc-whale-panel__section {
+		border-radius: 4px;
+		padding: 8px;
+		background: var(--gc-surface-sub);
+	}
+
+	.gc-whale-panel__section--buy {
+		border-left: 3px solid var(--gc-up);
+	}
+
+	.gc-whale-panel__section--sell {
+		border-left: 3px solid var(--gc-dn);
+	}
+
+	.gc-whale-panel__section-title {
+		font-weight: 600;
+		font-size: 12px;
+		margin-bottom: 8px;
+		padding-bottom: 6px;
+		border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+	}
+
+	.gc-whale-panel__metric {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 4px 0;
+		font-size: 11px;
+	}
+
+	.gc-whale-panel__metric-label {
+		color: var(--gc-text-muted);
+		flex: 1;
+	}
+
+	.gc-whale-panel__metric-value {
+		color: var(--gc-text);
+		font-weight: 500;
+		font-family: var(--gc-mono);
+		text-align: right;
+		min-width: 50px;
+	}
+
+	.gc-whale-panel__footer {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		align-items: center;
+		gap: 8px;
+		padding: 8px;
+		background: rgba(34, 211, 238, 0.08);
+		border-radius: 4px;
+	}
+
+	.gc-whale-panel__net-label {
+		font-size: 11px;
+		color: var(--gc-text-muted);
+		font-weight: 500;
+	}
+
+	.gc-whale-panel__net-value {
+		text-align: right;
+		font-weight: 600;
+		font-family: var(--gc-mono);
+		font-size: 12px;
+	}
+
 	/* Ensure all tool buttons meet 44×44px touch target minimum */
 	.gc-tool-btn {
 		min-width: 44px;

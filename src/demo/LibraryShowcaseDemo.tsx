@@ -50,9 +50,10 @@ import { CHART_RANGE_LABEL_KEYS, CHART_RANGES, DEFAULT_CHART_RANGE, resolveChart
 import DemoPageShell from "./DemoPageShell";
 import { useDemoI18n } from "./i18n";
 import { PaneSettingsModal, type SettingsSection } from "./PaneSettingsModal";
-import { DataSourceSwitcher, PATTokenModal } from "./components";
+import { DataSourceSwitcher, PATTokenModal, WhalePanel } from "./components";
 import { VNInvestClient } from "./dataSources/VNInvestClient";
 import { VNInvestDataSource, DemoDataSource, type DataSource } from "./dataSources";
+import type { WhaleFeedResponse } from "./vninvest/types";
 import "./demo.css";
 import "../lib/styles/pane-overlays.css";
 
@@ -568,6 +569,10 @@ export default function LibraryShowcaseDemo() {
 		}
 	});
 
+	// Whale data state
+	const [whaleData, setWhaleData] = useState<WhaleFeedResponse | null>(null);
+	const [whaleLoading, setWhaleLoading] = useState(false);
+
 	// VNInvest data sources
 	const vninvestClient = useMemo(() => new VNInvestClient(), []);
 	const demoDataSource = useMemo(() => new DemoDataSource(), []);
@@ -819,6 +824,14 @@ export default function LibraryShowcaseDemo() {
 			setVisibleDomain(resolveChartRangeExtents(rawData, DEFAULT_CHART_RANGE));
 			setDataStatus("live");
 
+			// Fetch whale data in parallel
+			vninvestClient.getWhaleFeed(vniSymbol)
+				.then((response) => setWhaleData(response))
+				.catch(() => {
+					// Whale data is optional
+					console.warn("Failed to fetch whale data");
+				});
+
 			// Persist selections
 			if (typeof localStorage !== "undefined") {
 				try {
@@ -842,6 +855,25 @@ export default function LibraryShowcaseDemo() {
 			setVniLoading(false);
 		}
 	}, [activeSource, vniHasPAT, vninvestDataSource, vniSymbol, vniTimeframe, vniDays, paneState.panes, t]);
+
+	const handleFetchWhaleData = useCallback(async () => {
+		if (activeSource !== "vninvest" || !vniHasPAT || !vniSymbol) {
+			return;
+		}
+
+		setWhaleLoading(true);
+
+		try {
+			const response = await vninvestClient.getWhaleFeed(vniSymbol);
+			setWhaleData(response);
+		} catch (err: unknown) {
+			// Whale data is optional, just log error
+			const msg = err instanceof Error ? err.message : String(err);
+			console.warn("Failed to fetch whale data:", msg);
+		} finally {
+			setWhaleLoading(false);
+		}
+	}, [activeSource, vniHasPAT, vniSymbol, vninvestClient]);
 
 	const requestOlderHistoryPage = useCallback(async () => {
 		if (backfillInFlightRef.current || liveDataRef.current.length === 0) {
@@ -2445,6 +2477,14 @@ export default function LibraryShowcaseDemo() {
 							</>
 						)}
 					</div>
+
+					{activeSource === "vninvest" && (
+						<WhalePanel
+							data={whaleData}
+							isLoading={whaleLoading}
+							symbol={vniSymbol}
+						/>
+					)}
 				</section>
 
 				{settingsOpen ? (
