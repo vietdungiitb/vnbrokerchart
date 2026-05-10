@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-07 20:11:19`
+Generated at: `2026-05-10 22:24:53`
 
 ## Summary
 
-- Total modules: 743
+- Total modules: 748
 - Python modules: 1
-- JS/TS modules: 742
-- Total classes: 356
-- Total functions: 3950
-- Total top-level variables: 8819
+- JS/TS modules: 747
+- Total classes: 360
+- Total functions: 3953
+- Total top-level variables: 8863
 
 ## Python Modules
 
@@ -2133,6 +2133,27 @@ Generated at: `2026-05-07 20:11:19`
 - Top-level variables:
   - `CHART_RANGES`, `CHART_RANGE_LABEL_KEYS`, `DEFAULT_CHART_RANGE`, `dayOfMonth`, `first`, `last`, `lastDayOfMonth`, `next`, `rangeStart`, `single`
 
+### `src/demo/dataSources/__tests__/vninvest.test.ts`
+
+- Top-level variables:
+  - `bar`, `bars`, `client`, `client1`, `client2`, `intraday`, `mockChartResponse`, `mockClient`, `mockIntraday`, `mockPoint`, `mockResponse`, `mockStocks`, `mockTicker`, `name`, `response`, `result`, `results`, `source`, `stocks`, `symbols`, `technical`, `ticker`
+
+### `src/demo/dataSources/index.ts`
+
+- Classes:
+  - `DemoDataSource`, `VNInvestDataSource`
+- Top-level variables:
+  - `data`, `lowerQuery`, `names`, `response`, `results`, `stock`, `stocks`
+
+### `src/demo/dataSources/VNInvestClient.ts`
+
+- Classes:
+  - `RawOHLCVToStandardAdapter`, `VNInvestClient`
+- Functions:
+  - `clearVNInvestClient`, `createVNInvestClient`, `getVNInvestClient`
+- Top-level variables:
+  - `API_BASE`, `TIMEFRAME_MAP`, `VNI_ENDPOINTS`, `all`, `clientInstance`, `data`, `error`, `lowerQuery`, `params`, `response`, `url`
+
 ### `src/demo/demoData.ts`
 
 - Functions:
@@ -2212,6 +2233,14 @@ Generated at: `2026-05-07 20:11:19`
   - `applyDelta`, `loadRatio`, `pxToRatio`, `ratioToPx`, `sanitize`, `saveRatio`, `usePaneLayout`
 - Top-level variables:
   - `DEFAULT_RATIO`, `LS_KEY`, `MIN_PX`, `PANE_MARGIN_V`, `applyDragDelta`, `available`, `k`, `momentumH`, `newA`, `newB`, `newMomentumH`, `newPriceH`, `newVolumeH`, `overflow`, `priceH`, `px`, `r`, `resetLayout`, `stored`, `sum`, `total`, `volumeH`
+
+### `src/demo/vninvest/index.ts`
+
+- No parseable top-level symbols found
+
+### `src/demo/vninvest/types.ts`
+
+- No parseable top-level symbols found
 
 ### `src/index.ts`
 
@@ -2833,7 +2862,7 @@ Generated at: `2026-05-07 20:11:19`
 - Functions:
   - `accessor`, `axisFormatForSeriesTypes`, `buildChartSlots`, `buildPriceTooltipEntries`, `buildTooltipEntriesForSeries`, `buildYExtents`, `candleBodyWidth`, `computeExtentsForIndex`, `dashPatternToSeriesDasharray`, `fieldAccessor`, `finiteExtent`, `getSeriesStyleOverrideForSeries`, `origin`, `renderDynamicChartChildren`, `renderSeries`, `resolveSeriesDisplayColor`, `sc`, `structured`, `withAlpha`
 - Top-level variables:
-  - `BAR_SERIES_TYPES`, `DynamicChartComponent`, `INNER_PANE_GAP`, `OSCILLATOR_SERIES`, `PRICE_SERIES`, `VOLUME_SERIES`, `accessors`, `activeSeries`, `adxColor`, `arColor`, `barCount`, `bbBotRaw`, `bbMidColor`, `bbTopRaw`, `brColor`, `canvas`, `chartCanvasRef`, `chartChildren`, `chartId`, `chartSlots`, `clampedIndex`, `dColor`, `dashArray`, `divergeColor`, `downColor`, `end`, `endDate`, `entry`, `extents`, `fillColor`, `fillOpacity`, `finiteValues`, `first`, `fullData`, `gap`, `half`, `handleVisibleRangeChange`, `hasBottomAxis`, `hasLeftAxis`, `hasRightAxis`, `index`, `isInnerPane`, `isLastSlot`, `jColor`, `kColor`, `leftSeries`, `lineColor`, `lineWidth`, `macdColor`, `maxValue`, `minValue`, `minusColor`, `paneHeight`, `paneIndex`, `paneSlotCounter`, `paramColor`, `params`, `plusColor`, `ratio`, `rightSeries`, `second`, `seriesKey`, `seriesTypes`, `signalColor`, `slotInPane`, `slots`, `start`, `startDate`, `stepPx`, `strokeOpacity`, `styleOverride`, `tooltip`, `tooltipY`, `type`, `upColor`, `whale`, `yAxisFormat`, `yExtents`, `yScaleId`
+  - `BAR_SERIES_TYPES`, `DynamicChartComponent`, `INNER_PANE_GAP`, `OSCILLATOR_SERIES`, `PRICE_SERIES`, `VOLUME_SERIES`, `accessors`, `activeSeries`, `adxColor`, `arColor`, `barCount`, `bbBotRaw`, `bbMidColor`, `bbTopRaw`, `brColor`, `canvas`, `chartCanvasRef`, `chartChildren`, `chartId`, `chartSlots`, `clampedIndex`, `dColor`, `dashArray`, `divergeColor`, `downColor`, `end`, `endDate`, `entry`, `extents`, `fillColor`, `fillOpacity`, `finiteValues`, `first`, `fullData`, `gap`, `half`, `handleVisibleRangeChange`, `hasBottomAxis`, `hasLeftAxis`, `hasRightAxis`, `index`, `isInnerPane`, `isLastSlot`, `jColor`, `kColor`, `leftSeries`, `lineColor`, `lineWidth`, `macdColor`, `maxValue`, `minValue`, `minusColor`, `paneHeight`, `paneIndex`, `paneSlotCounter`, `paramColor`, `params`, `plusColor`, `ratio`, `rightSeries`, `rsiLine`, `rsiMid`, `rsiOB`, `rsiOS`, `second`, `seriesKey`, `seriesTypes`, `signalColor`, `slotInPane`, `slots`, `start`, `startDate`, `stepPx`, `strokeOpacity`, `styleOverride`, `tooltip`, `tooltipY`, `type`, `upColor`, `whale`, `yAxisFormat`, `yExtents`, `yScaleId`
 
 ### `src/lib/core/hooks/__tests__/useDynamicPanes.test.ts`
 
