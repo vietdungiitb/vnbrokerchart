@@ -33,9 +33,10 @@ describe('VNInvestClient', () => {
     expect(client).toBeDefined();
   });
 
-  it('should throw error with empty PAT token', () => {
-    expect(() => new VNInvestClient('')).toThrow('PAT token is required');
-    expect(() => new VNInvestClient('   ')).toThrow('PAT token is required');
+  it('should throw error with empty PAT token on setPAT', () => {
+    const client = new VNInvestClient();
+    expect(() => client.setPAT('')).toThrow('PAT token is required');
+    expect(() => client.setPAT('   ')).toThrow('PAT token is required');
   });
 
   // T-INT-02: Chart endpoint mock

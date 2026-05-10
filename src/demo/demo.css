@@ -113,6 +113,7 @@ html[data-chart-theme="light"] body::before {
 }
 
 .gc-topbar__left,
+.gc-topbar__center,
 .gc-topbar__right {
 	display: flex;
 	align-items: center;

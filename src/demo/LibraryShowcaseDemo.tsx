@@ -50,6 +50,9 @@ import { CHART_RANGE_LABEL_KEYS, CHART_RANGES, DEFAULT_CHART_RANGE, resolveChart
 import DemoPageShell from "./DemoPageShell";
 import { useDemoI18n } from "./i18n";
 import { PaneSettingsModal, type SettingsSection } from "./PaneSettingsModal";
+import { DataSourceSwitcher, PATTokenModal } from "./components";
+import { VNInvestClient } from "./dataSources/VNInvestClient";
+import { VNInvestDataSource, DemoDataSource, type DataSource } from "./dataSources";
 import "./demo.css";
 import "../lib/styles/pane-overlays.css";
 
@@ -530,6 +533,65 @@ export default function LibraryShowcaseDemo() {
 	const BACKFILL_PAGE_LIMIT = 1000;
 	const BACKFILL_MAX_PAGES = 20;
 
+	// VNInvest integration state
+	const [activeSource, setActiveSource] = useState<"demo" | "vninvest">("demo");
+	const [vniSymbol, setVniSymbol] = useState<string>(() => {
+		try {
+			return (typeof localStorage !== "undefined" && localStorage.getItem("vni_last_symbol")) || "VCB";
+		} catch {
+			return "VCB";
+		}
+	});
+	const [vniTimeframe, setVniTimeframe] = useState<string>(() => {
+		try {
+			return (typeof localStorage !== "undefined" && localStorage.getItem("vni_last_timeframe")) || "1D";
+		} catch {
+			return "1D";
+		}
+	});
+	const [vniDays, setVniDays] = useState<number>(() => {
+		try {
+			const stored = typeof localStorage !== "undefined" && localStorage.getItem("vni_last_days");
+			return stored ? Math.max(1, Math.min(365, parseInt(stored, 10))) : 90;
+		} catch {
+			return 90;
+		}
+	});
+	const [patModalOpen, setPatModalOpen] = useState(false);
+	const [vniLoading, setVniLoading] = useState(false);
+	const [vniError, setVniError] = useState<string | null>(null);
+	const [vniHasPAT, setVniHasPAT] = useState(() => {
+		try {
+			return typeof localStorage !== "undefined" && !!localStorage.getItem("vni_pat");
+		} catch {
+			return false;
+		}
+	});
+
+	// VNInvest data sources
+	const vninvestClient = useMemo(() => new VNInvestClient(), []);
+	const demoDataSource = useMemo(() => new DemoDataSource(), []);
+	const vninvestDataSource = useMemo(() => new VNInvestDataSource(vninvestClient), [vninvestClient]);
+	const currentDataSource = useMemo<DataSource>(() => {
+		return activeSource === "vninvest" ? vninvestDataSource : demoDataSource;
+	}, [activeSource, demoDataSource, vninvestDataSource]);
+
+	// Load PAT on mount
+	useEffect(() => {
+		if (typeof localStorage === "undefined") {
+			return;
+		}
+		try {
+			const token = localStorage.getItem("vni_pat");
+			if (token) {
+				vninvestClient.setPAT(token);
+				setVniHasPAT(true);
+			}
+		} catch {
+			// ignore
+		}
+	}, [vninvestClient]);
+
 	const localCacheAdapter = useMemo(() => {
 		const adapter = new LocalCacheAdapter();
 		const bars = getOfflineDemoBars().map((b) => ({
@@ -710,6 +772,76 @@ export default function LibraryShowcaseDemo() {
 	const normalizeDomain = useCallback((domain: [Date | number, Date | number]) => {
 		return [normalizeDate(domain[0]), normalizeDate(domain[1])] as [Date, Date];
 	}, []);
+
+	const handlePATSaved = useCallback((token: string) => {
+		if (typeof localStorage === "undefined") {
+			return;
+		}
+		try {
+			localStorage.setItem("vni_pat", token);
+			vninvestClient.setPAT(token);
+			setVniHasPAT(true);
+			setPatModalOpen(false);
+			setVniError(null);
+		} catch {
+			setVniError(t("vninvest.error.patStorage") ?? "Failed to save token");
+		}
+	}, [vninvestClient, t]);
+
+	const handleLoadVNIChart = useCallback(async () => {
+		if (activeSource !== "vninvest" || !vniHasPAT) {
+			setVniError(t("vninvest.error.noPAT") ?? "PAT token not configured");
+			return;
+		}
+
+		setVniLoading(true);
+		setVniError(null);
+
+		try {
+			// Fetch from VNInvest API
+			const rawData = await vninvestDataSource.loadBars(vniSymbol, {
+				timeframe: vniTimeframe,
+				days: vniDays,
+			});
+
+			if (rawData.length === 0) {
+				setVniError(t("vninvest.error.noData") ?? `No data found for ${vniSymbol}`);
+				setVniLoading(false);
+				return;
+			}
+
+			// Enrich and update chart data
+			const enrichedData = enrichData(rawData, {
+				series: paneState.panes.flatMap((p) => p.series),
+			});
+
+			setLiveData(rawData);
+			setVisibleDomain(resolveChartRangeExtents(rawData, DEFAULT_CHART_RANGE));
+			setDataStatus("live");
+
+			// Persist selections
+			if (typeof localStorage !== "undefined") {
+				try {
+					localStorage.setItem("vni_last_symbol", vniSymbol);
+					localStorage.setItem("vni_last_timeframe", vniTimeframe);
+					localStorage.setItem("vni_last_days", vniDays.toString());
+				} catch {
+					// ignore storage errors
+				}
+			}
+		} catch (err: unknown) {
+			const msg = err instanceof Error ? err.message : String(err);
+			if (msg.includes("401")) {
+				setVniError(t("vninvest.error.tokenExpired") ?? "PAT token expired");
+				setVniHasPAT(false);
+				setPatModalOpen(true);
+			} else {
+				setVniError(msg);
+			}
+		} finally {
+			setVniLoading(false);
+		}
+	}, [activeSource, vniHasPAT, vninvestDataSource, vniSymbol, vniTimeframe, vniDays, paneState.panes, t]);
 
 	const requestOlderHistoryPage = useCallback(async () => {
 		if (backfillInFlightRef.current || liveDataRef.current.length === 0) {
@@ -1748,6 +1880,27 @@ export default function LibraryShowcaseDemo() {
 					</div>
 				</div>
 
+				<div className="gc-topbar__center">
+					<DataSourceSwitcher
+						activeSource={activeSource}
+						onSourceChange={(source) => {
+							setActiveSource(source as "demo" | "vninvest");
+							setVniError(null);
+						}}
+						onPATModalOpen={() => setPatModalOpen(true)}
+						hasPAT={vniHasPAT}
+						dataSource={currentDataSource}
+						selectedSymbol={vniSymbol}
+						onSymbolChange={setVniSymbol}
+						selectedTimeframe={vniTimeframe}
+						onTimeframeChange={setVniTimeframe}
+						selectedDays={vniDays}
+						onDaysChange={setVniDays}
+						onLoadChart={handleLoadVNIChart}
+						isLoading={vniLoading}
+					/>
+				</div>
+
 				<div className="gc-topbar__right">
 					{dataStatus === "live" && <span className="gc-live-badge">{t("common.liveBinance")}</span>}
 					{historyStatus === "backfilling" && <span className="gc-loading-badge">{t("library.backfillingHistory")}</span>}
@@ -2338,6 +2491,32 @@ export default function LibraryShowcaseDemo() {
 				<button type="button" className="gc-publish-btn">{t("common.publish")}</button>
 			</footer>
 			</div>
+
+			{patModalOpen && (
+				<PATTokenModal
+					isOpen={patModalOpen}
+					onClose={() => setPatModalOpen(false)}
+					onPATSaved={handlePATSaved}
+					currentToken={vniHasPAT ? "***" : undefined}
+				/>
+			)}
+
+			{vniError && (
+				<div style={{
+					position: "fixed",
+					bottom: 20,
+					right: 20,
+					maxWidth: 300,
+					padding: "12px 16px",
+					background: "var(--gc-danger, #f44336)",
+					color: "#fff",
+					borderRadius: 4,
+					fontSize: 13,
+					zIndex: 1000,
+				}}>
+					{vniError}
+				</div>
+			)}
 		</DemoPageShell>
 	);
 }

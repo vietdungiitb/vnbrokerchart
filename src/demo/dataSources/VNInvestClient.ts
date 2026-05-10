@@ -62,11 +62,32 @@ export const TIMEFRAME_MAP = {
 export class VNInvestClient {
   private patToken: string;
 
-  constructor(patToken: string) {
-    if (!patToken || !patToken.trim()) {
-      throw new Error('PAT token is required');
+  constructor(patToken?: string) {
+    this.patToken = patToken ? patToken.trim() : "";
+  }
+
+  /**
+   * Set or update the PAT token
+   */
+  setPAT(token: string): void {
+    if (!token || !token.trim()) {
+      throw new Error("PAT token is required");
     }
-    this.patToken = patToken.trim();
+    this.patToken = token.trim();
+  }
+
+  /**
+   * Get the current PAT token
+   */
+  getPAT(): string {
+    return this.patToken;
+  }
+
+  /**
+   * Check if client has a valid PAT token
+   */
+  hasPAT(): boolean {
+    return this.patToken.length > 0;
   }
 
   /**
