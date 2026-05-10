@@ -140,3 +140,26 @@ Exit criteria:
 - `src/lib/**` không import từ `src/demo/**`.
 - Tests W-01 → W-18 PASS.
 - `AUDIT_LEDGER.md` + `module_tree_full.md` đã cập nhật.
+
+### Slice INT. VNInvest Integration — Data Source Switcher
+
+Trạng thái: READY — chờ xác nhận CORS pre-condition (G-00)
+
+Bộ tài liệu đầy đủ tại `docs/project-delivery/vninvest-integration/`.
+
+Mục tiêu:
+
+- Cho phép demo shell chuyển đổi nguồn dữ liệu giữa Binance Demo và VNInvest SAAS
+- PAT token input UI; symbol search mã CK Việt Nam
+- Biểu đồ OHLCV thật từ `GET /api/stock-management/stocks/{symbol}/chart/`
+- (Tuỳ chọn INT-5) Whale money flow panel từ `GET /api/realtime/whale-feed/{symbol}/`
+
+Bằng chứng yêu cầu khi đóng:
+
+- `npm run type-check` PASS
+- `npm test` PASS (không ít hơn 238 tests hiện có + 12 tests mới)
+- `npm run build:docs` PASS
+- Browser smoke INT-S01 đến INT-S08 PASS (theo `docs/project-delivery/vninvest-integration/AUDIT_PROTOCOL.md`)
+- Security audit SEC-01 đến SEC-05 PASS
+- `module_tree_full.md` đã regenerate
+- `docs/upgrade-standard/AUDIT_LEDGER.md` đã cập nhật với evidence đầy đủ

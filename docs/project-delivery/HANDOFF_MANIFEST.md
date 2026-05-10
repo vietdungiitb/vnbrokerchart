@@ -35,6 +35,11 @@ Bộ tài liệu này là gói chuyển giao chuẩn cho `react-stockcharts-mast
 | `docs/project-delivery/indicator-platform/IMPLEMENTATION_PLAN.md` | Slice map IC-1→IC-2 với gate và evidence |
 | `docs/project-delivery/indicator-platform/TASKBOARD.md` | Taskboard tác chiến cho IC-1 + IC-2 |
 | `docs/project-delivery/indicator-platform/AUDIT_PROTOCOL.md` | Audit protocol riêng cho GĐ1 Indicator Platform |
+| `docs/project-delivery/vninvest-integration/HANDOFF_MANIFEST.md` | **Entry point Slice INT — VNInvest Integration** |
+| `docs/project-delivery/vninvest-integration/TECH_SPEC.md` | API contract xác minh, TypeScript interfaces, i18n keys, security |
+| `docs/project-delivery/vninvest-integration/IMPLEMENTATION_PLAN.md` | Slices INT-1..INT-5 với code templates và exit criteria |
+| `docs/project-delivery/vninvest-integration/TASKBOARD.md` | Tasks INT-01→INT-16 với DoD và dependency chain |
+| `docs/project-delivery/vninvest-integration/AUDIT_PROTOCOL.md` | Test matrix 14 unit + 9 smoke + 5 security checks + evidence template |
 | `quality/QUALITY.md` | Hiến pháp chất lượng của repo |
 | `quality/RUN_CODE_REVIEW.md` | Quy trình review có guardrail |
 | `quality/RUN_INTEGRATION_TESTS.md` | Quy trình kiểm thử tích hợp và smoke |
@@ -71,3 +76,4 @@ Bộ tài liệu này là gói chuyển giao chuẩn cho `react-stockcharts-mast
 - Historical market data fidelity / backfill: đã bàn giao (Slice E DONE).
 - Widget extraction: bộ tài liệu Slice F đã hoàn tất tại `docs/project-delivery/widget/`. Sẵn sàng code F-01.
 - Indicator Platform GĐ1: bộ tài liệu IC-1 + IC-2 đã hoàn tất tại `docs/project-delivery/indicator-platform/`. Sẵn sàng code IC-1.
+- VNInvest Integration: bộ tài liệu Slice INT đã hoàn tất tại `docs/project-delivery/vninvest-integration/`. Sẵn sàng code sau khi xác nhận CORS pre-condition G-00.

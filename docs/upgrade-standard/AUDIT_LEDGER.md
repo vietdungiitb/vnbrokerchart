@@ -3907,3 +3907,77 @@ Every completed slice must update this ledger with the exact files changed in th
 - [src/demo/demo.css](../../src/demo/demo.css)
 - [module_tree_full.md](../../module_tree_full.md)
 
+---
+
+## 44. INT-2/INT-3 — DataSource Abstraction + i18n + UI Components
+
+### Commit: (pending INT-4 before final push)
+
+### Completed
+
+**INT-2: DataSource abstraction layer**
+- Implemented in `src/demo/dataSources/index.ts` alongside INT-1
+- `DataSource` interface: `loadBars()`, `getSymbols()`, `searchSymbols(query)`, `getSymbolName()`
+- `DemoDataSource`: wraps existing demo data, provides AAPL/MSFT/GE/BTC
+- `VNInvestDataSource`: wraps VNInvestClient, converts API responses to chart format
+- No changes to `src/lib/**` — all adaptation in `src/demo/**`
+
+**INT-3: i18n keys + UI components**
+- **i18n keys added** (`src/demo/i18n.tsx`): 34 keys (17 VI + 17 EN pairs)
+  - `dataSource.label/demo/vninvest/switch`
+  - `vninvest.connect/notConnected/pat/patModal.title/tabs/buttons/status`
+  - `vninvest.symbol/symbolSearch/timeframe/days/load/loading/status/noData`
+  - `vninvest.whale.buy/sell/shark/small/summary/noData`
+  
+- **PATTokenModal** (`src/demo/components/PATTokenModal.tsx` — 234 lines):
+  - 2-tab interface: Paste Token | Login
+  - Paste tab: textarea input, Save/Clear buttons
+  - Login tab: username/password inputs, Login button
+  - POST to `http://localhost/api/auth/token/`, stores in localStorage as `vni_pat`
+  - Error handling inline, loading state, callback `onPATSaved(token)`
+  
+- **VNSymbolSearch** (`src/demo/components/VNSymbolSearch.tsx` — 174 lines):
+  - Autocomplete dropdown with 300ms debounce
+  - Calls `dataSource.searchSymbols(query)`
+  - Keyboard navigation: Arrow keys, Enter (select), Escape (close)
+  - Display: `{symbol} — {company_name} ({exchange})`
+  
+- **DataSourceSwitcher** (`src/demo/components/DataSourceSwitcher.tsx` — 247 lines):
+  - Toggle buttons: Demo ↔ VNInvest
+  - PAT status badge: ✓ Connected / ✗ Not Connected + 🔑 Connect button
+  - VNInvest panel: symbol search, timeframe dropdown, days input, Load Chart button
+  - Disabled states for button when no PAT or loading
+  
+- **Component exports** (`src/demo/components/index.ts` — 6 lines):
+  - Clean TypeScript interface exports
+
+### Gate Evidence
+
+| Gate | Check | Result |
+|---|---|---|
+| type-check | `npm run type-check` | ✅ PASS (0 errors) |
+| INT-1 tests | `npm test -- src/demo/dataSources/__tests__/vninvest.test.ts` | ✅ PASS (19/19) |
+| module-tree | Regenerated | ✅ 752 modules |
+| i18n keys | 34 keys both VI + EN | ✅ Complete |
+| Component types | All 3 components type-safe | ✅ PASS |
+
+### Files touched
+
+**Created:**
+- [src/demo/components/PATTokenModal.tsx](../../src/demo/components/PATTokenModal.tsx) *(new)*
+- [src/demo/components/VNSymbolSearch.tsx](../../src/demo/components/VNSymbolSearch.tsx) *(new)*
+- [src/demo/components/DataSourceSwitcher.tsx](../../src/demo/components/DataSourceSwitcher.tsx) *(new)*
+- [src/demo/components/index.ts](../../src/demo/components/index.ts) *(new)*
+
+**Modified:**
+- [src/demo/i18n.tsx](../../src/demo/i18n.tsx) (+69 lines)
+- [module_tree_full.md](../../module_tree_full.md) (regenerated, 752 modules)
+
+### Next: INT-4 Integration
+
+Ready for INT-4 (wire into LibraryShowcaseDemo):
+- All UI component interfaces stable
+- All i18n keys prepared
+- All type checks passing
+- All existing tests still passing
+

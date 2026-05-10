@@ -9,6 +9,7 @@
 | PD-05 | DONE | Khôi phục lịch sử Binance thật | Pagination/backfill, pan-left append, range `1D`/`5D`/`1M`/`3M`/`YTD`/`1Y`/`All` đúng lịch sử |
 | PD-06 | READY | Tách widget boundary — VNStockChart | Bộ tài liệu đầy đủ tại `docs/project-delivery/widget/`. Tasks F-01→F-09 đã định nghĩa. Chờ code. |
 | PD-07 | READY | Indicator Platform GĐ1 — IC-1 + IC-2 | Bộ tài liệu đầy đủ tại `docs/project-delivery/indicator-platform/`. Code theo thứ tự IC-1 → IC-2, có audit ledger và module tree mỗi slice. |
+| PD-08 | READY | VNInvest Integration — Slice INT | Bộ tài liệu đầy đủ tại `docs/project-delivery/vninvest-integration/`. Tasks INT-01→INT-14 (bắt buộc) + INT-15→INT-16 (whale panel, tuỳ chọn). Xác nhận pre-condition CORS G-00 trước khi bắt đầu. |
 
 ## Cách dùng bảng này
 

@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-10 22:24:53`
+Generated at: `2026-05-10 22:36:06`
 
 ## Summary
 
-- Total modules: 748
+- Total modules: 752
 - Python modules: 1
-- JS/TS modules: 747
+- JS/TS modules: 751
 - Total classes: 360
-- Total functions: 3953
-- Total top-level variables: 8863
+- Total functions: 3956
+- Total top-level variables: 8877
 
 ## Python Modules
 
@@ -2132,6 +2132,31 @@ Generated at: `2026-05-10 22:24:53`
   - `normalizeDate`, `resolveChartRangeExtents`, `resolveChartRangeStart`, `subtractDays`, `subtractMonths`, `subtractYears`
 - Top-level variables:
   - `CHART_RANGES`, `CHART_RANGE_LABEL_KEYS`, `DEFAULT_CHART_RANGE`, `dayOfMonth`, `first`, `last`, `lastDayOfMonth`, `next`, `rangeStart`, `single`
+
+### `src/demo/components/DataSourceSwitcher.tsx`
+
+- Functions:
+  - `DataSourceSwitcher`
+- Top-level variables:
+  - `handleSourceChange`, `timeframes`
+
+### `src/demo/components/index.ts`
+
+- No parseable top-level symbols found
+
+### `src/demo/components/PATTokenModal.tsx`
+
+- Functions:
+  - `PATTokenModal`
+- Top-level variables:
+  - `data`, `handleClearToken`, `handleLogin`, `handleSaveToken`, `msg`, `response`, `token`
+
+### `src/demo/components/VNSymbolSearch.tsx`
+
+- Functions:
+  - `VNSymbolSearch`
+- Top-level variables:
+  - `debounceTimerRef`, `handleKeyDown`, `handleSelect`, `inputRef`, `symbols`
 
 ### `src/demo/dataSources/__tests__/vninvest.test.ts`
 
