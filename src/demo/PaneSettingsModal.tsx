@@ -5,7 +5,7 @@ import { useIndicatorSets } from "../lib/core/hooks/useIndicatorSets";
 import { isDefaultPaneId } from "../lib/core/types/pane-descriptor";
 import { useDemoI18n } from "./i18n";
 
-export type SettingsSection = "layout" | "indicators" | "indicatorSets" | "theme" | "reset";
+export type SettingsSection = "layout" | "indicators" | "indicatorSets" | "theme" | "datasource" | "reset";
 
 export interface PaneSettingsModalProps {
 	open: boolean;
@@ -26,6 +26,20 @@ export interface PaneSettingsModalProps {
 	/** CE20: optional — when provided, shows adapter selector dropdown */
 	dataAdapterName?: string;
 	onDataAdapterChange?: (name: string) => void;
+	/** VNInvest datasource config */
+	activeSource?: "demo" | "vninvest";
+	onSourceChange?: (source: "demo" | "vninvest") => void;
+	hasPAT?: boolean;
+	onPATModalOpen?: () => void;
+	dataSource?: unknown;
+	selectedSymbol?: string;
+	onSymbolChange?: (symbol: string) => void;
+	selectedTimeframe?: string;
+	onTimeframeChange?: (tf: string) => void;
+	selectedDays?: number;
+	onDaysChange?: (days: number) => void;
+	onLoadChart?: () => void;
+	isVniLoading?: boolean;
 }
 
 function describeSeries(series: SeriesConfig, index: number): string {
@@ -73,6 +87,19 @@ export function PaneSettingsModal({
 	onClose,
 	dataAdapterName,
 	onDataAdapterChange,
+	activeSource = "demo",
+	onSourceChange,
+	hasPAT,
+	onPATModalOpen,
+	dataSource,
+	selectedSymbol = "VCB",
+	onSymbolChange,
+	selectedTimeframe = "D",
+	onTimeframeChange,
+	selectedDays = 90,
+	onDaysChange,
+	onLoadChart,
+	isVniLoading = false,
 }: PaneSettingsModalProps) {
 	const { t, getPaneLabel } = useDemoI18n();
 	const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -219,6 +246,7 @@ export function PaneSettingsModal({
 		indicators: t("settings.indicators"),
 		indicatorSets: t("settings.indicatorSets"),
 		theme: t("settings.theme"),
+		datasource: t("settings.datasource"),
 		reset: t("settings.reset"),
 	}), [t]);
 
@@ -697,6 +725,109 @@ export function PaneSettingsModal({
 		</div>
 	);
 
+	const renderDatasourceSection = () => (
+		<div className="gc-settings-panel">
+			<div className="gc-settings-panel__header">
+				<div>
+					<div className="gc-settings-kicker">{t("settings.datasourceKicker")}</div>
+					<h3>{t("settings.datasourceTitle")}</h3>
+				</div>
+			</div>
+
+			{/* Source toggle */}
+			<div className="gc-settings-row gc-settings-row--split" style={{ marginBottom: 16 }}>
+				<span style={{ fontSize: 13, fontWeight: 600 }}>{t("dataSource.label")}</span>
+				<div style={{ display: "flex", gap: 8 }}>
+					{(["demo", "vninvest"] as const).map((src) => (
+						<button
+							key={src}
+							type="button"
+							className={`gc-btn${activeSource === src ? " gc-btn--accent" : ""}`}
+							onClick={() => onSourceChange?.(src)}
+						>
+							{src === "demo" ? t("dataSource.demo") : t("dataSource.vninvest")}
+						</button>
+					))}
+				</div>
+			</div>
+
+			{/* VNInvest config — visible only when vninvest source active */}
+			{activeSource === "vninvest" && (
+				<>
+					{/* PAT status */}
+					<div className="gc-settings-row gc-settings-row--split" style={{ marginBottom: 12 }}>
+						<div>
+							<div className="gc-settings-kicker">PAT Token</div>
+							<div style={{ marginTop: 4, fontSize: 13 }}>
+								{hasPAT
+									? <span style={{ color: "#4caf50", fontWeight: 600 }}>✓ {t("vninvest.connected")}</span>
+									: <span style={{ color: "#f44336" }}>✗ {t("vninvest.notConnected")}</span>
+								}
+							</div>
+						</div>
+						<button
+							type="button"
+							className={`gc-btn${hasPAT ? "" : " gc-btn--accent"}`}
+							onClick={() => { onPATModalOpen?.(); onClose(); }}
+						>
+							{hasPAT ? t("vninvest.reConnect") : `🔑 ${t("vninvest.connect")}`}
+						</button>
+					</div>
+
+					{/* Symbol */}
+					<label className="gc-settings-field" style={{ marginBottom: 12 }}>
+						<span>{t("vninvest.symbol")}</span>
+						<input
+							type="text"
+							className="gc-settings-input"
+							value={selectedSymbol}
+							placeholder="VCB"
+							onChange={(e) => onSymbolChange?.(e.target.value.toUpperCase())}
+						/>
+					</label>
+
+					{/* Timeframe & Days */}
+					<div className="gc-settings-param-grid" style={{ marginBottom: 12 }}>
+						<label className="gc-settings-field">
+							<span>{t("vninvest.timeframe")}</span>
+							<select
+								className="gc-settings-select"
+								value={selectedTimeframe}
+								onChange={(e) => onTimeframeChange?.(e.target.value)}
+							>
+								{["1m", "5m", "15m", "1H", "2H", "4H", "D", "W", "M", "Y"].map((tf) => (
+									<option key={tf} value={tf}>{tf}</option>
+								))}
+							</select>
+						</label>
+						<label className="gc-settings-field">
+							<span>{t("vninvest.days")}</span>
+							<input
+								type="number"
+								className="gc-settings-input"
+								min={1}
+								max={365}
+								value={selectedDays}
+								onChange={(e) => onDaysChange?.(Math.max(1, parseInt(e.target.value, 10) || 1))}
+							/>
+						</label>
+					</div>
+
+					{/* Load chart */}
+					<button
+						type="button"
+						className="gc-btn gc-btn--accent"
+						style={{ width: "100%", marginTop: 4 }}
+						onClick={() => { onLoadChart?.(); onClose(); }}
+						disabled={isVniLoading || !hasPAT || !dataSource}
+					>
+						{isVniLoading ? t("vninvest.loading") : t("vninvest.load")}
+					</button>
+				</>
+			)}
+		</div>
+	);
+
 	const renderResetSection = () => (
 		<div className="gc-settings-panel">
 			<div className="gc-settings-panel__header">
@@ -738,8 +869,7 @@ export function PaneSettingsModal({
 							["layout", t("settings.layout")],
 							["indicators", t("settings.indicators")],
 							["indicatorSets", t("settings.indicatorSets")],
-							["theme", t("settings.theme")],
-							["reset", t("settings.reset")],
+							["theme", t("settings.theme")],						["datasource", t("settings.datasource")],							["reset", t("settings.reset")],
 						] as const).map(([nextSection, label]) => (
 							<button
 								key={nextSection}
@@ -756,8 +886,7 @@ export function PaneSettingsModal({
 							{section === "layout" ? renderLayoutSection() : null}
 							{section === "indicators" ? renderIndicatorsSection() : null}
 							{section === "indicatorSets" ? renderIndicatorSetsSection() : null}
-							{section === "theme" ? renderThemeSection() : null}
-							{section === "reset" ? renderResetSection() : null}
+							{section === "theme" ? renderThemeSection() : null}						{section === "datasource" ? renderDatasourceSection() : null}							{section === "reset" ? renderResetSection() : null}
 						</div>
 					</div>
 				</div>

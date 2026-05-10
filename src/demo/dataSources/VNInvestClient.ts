@@ -31,6 +31,10 @@ export interface RawOHLCVBar {
 /**
  * API base URL and endpoints
  */
+/**
+ * VNInvest API base URL - must match backend server URL
+ * Docker dev uses nginx frontend reverse proxy on port 80 that forwards to backend
+ */
 const API_BASE = 'http://localhost';
 
 export const VNI_ENDPOINTS = {
@@ -52,8 +56,16 @@ export const TIMEFRAME_MAP = {
   '1m': '1m',
   '5m': '5m',
   '15m': '15m',
+  '1h': '1H',
   '1H': '1H',
-  '1D': '1D',
+  '2H': '2H',
+  '4H': '4H',
+  '1d': 'D',
+  '1D': 'D',
+  'D': 'D',
+  'W': 'W',
+  'M': 'M',
+  'Y': 'Y',
 } as const;
 
 /**
@@ -145,7 +157,12 @@ export class VNInvestClient {
   ): Promise<ChartResponse> {
     const params = new URLSearchParams();
     if (options?.days) params.append('days', String(options.days));
-    if (options?.timeframe) params.append('timeframe', options.timeframe);
+    if (options?.timeframe) {
+      const normalizedTimeframe =
+        (TIMEFRAME_MAP as Record<string, string>)[options.timeframe] ??
+        options.timeframe;
+      params.append('timeframe', normalizedTimeframe);
+    }
 
     const url =
       VNI_ENDPOINTS.CHART(symbol) +

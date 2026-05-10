@@ -2,6 +2,27 @@
 
 Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã sửa, và gates từng slice. Phải cập nhật liên tục trong quá trình migration.
 
+### VNInvest timeframe compatibility fix — chart API 400 remediation
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-10
+- Scope: sửa tương thích timeframe giữa frontend và legacy backend để loại lỗi `"1D" is not a valid choice` khi tải chart VNInvest
+- Files sửa:
+  - `src/demo/dataSources/VNInvestClient.ts`
+  - `src/demo/PaneSettingsModal.tsx`
+  - `src/demo/components/DataSourceSwitcher.tsx`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `module_tree_full.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Chuẩn hóa map timeframe client theo backend choices và thêm normalize cho legacy giá trị cũ (`1D` -> `D`, `1h` -> `1H`).
+  - Cập nhật mặc định/option timeframe trong Settings datasource để chỉ gửi giá trị hợp lệ.
+  - Chuẩn hóa đọc timeframe từ `localStorage` để không tái phát lỗi 400 sau khi reload trang.
+  - Regenerate module tree theo quy ước repo.
+- Validation:
+  - `npm run build:docs` -> PASS
+  - `python scripts/generate_module_tree.py` -> PASS (753 modules)
+
 ## 1. Canonical File Register
 
 | File | Mục đích | Trạng thái |

@@ -33,7 +33,7 @@ export function DataSourceSwitcher({
   dataSource,
   selectedSymbol = 'VCB',
   onSymbolChange,
-  selectedTimeframe = '1D',
+  selectedTimeframe = 'D',
   onTimeframeChange,
   selectedDays = 90,
   onDaysChange,
@@ -54,7 +54,7 @@ export function DataSourceSwitcher({
     [onSourceChange, hasPAT, onPATModalOpen]
   );
 
-  const timeframes = ['1m', '5m', '15m', '1H', '1D'];
+  const timeframes = ['1m', '5m', '15m', '1H', '2H', '4H', 'D', 'W', 'M', 'Y'];
 
   return (
     <div

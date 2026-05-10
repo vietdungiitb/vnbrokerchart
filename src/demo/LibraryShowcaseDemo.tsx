@@ -50,7 +50,7 @@ import { CHART_RANGE_LABEL_KEYS, CHART_RANGES, DEFAULT_CHART_RANGE, resolveChart
 import DemoPageShell from "./DemoPageShell";
 import { useDemoI18n } from "./i18n";
 import { PaneSettingsModal, type SettingsSection } from "./PaneSettingsModal";
-import { DataSourceSwitcher, PATTokenModal, WhalePanel } from "./components";
+import { PATTokenModal, WhalePanel } from "./components";
 import { VNInvestClient } from "./dataSources/VNInvestClient";
 import { VNInvestDataSource, DemoDataSource, type DataSource } from "./dataSources";
 import type { WhaleFeedResponse } from "./vninvest/types";
@@ -118,6 +118,26 @@ type Timeframe = typeof TIMEFRAMES[number];
 
 const CHART_TYPES = ["candlestick", "hollow", "ohlc", "heikinashi", "line", "area"] as const;
 type ChartTypeId = typeof CHART_TYPES[number];
+
+const VNI_VALID_TIMEFRAMES = new Set(["1m", "5m", "15m", "1H", "2H", "4H", "D", "W", "M", "Y"]);
+
+function normalizeVNITimeframe(input: string | null | undefined): string {
+	const value = (input || "").trim();
+	if (!value) {
+		return "D";
+	}
+	if (VNI_VALID_TIMEFRAMES.has(value)) {
+		return value;
+	}
+	const lowered = value.toLowerCase();
+	if (lowered === "1h") {
+		return "1H";
+	}
+	if (lowered === "1d" || lowered === "d") {
+		return "D";
+	}
+	return "D";
+}
 const CANDLE_TYPE_STORAGE_KEY = "vnsc_candleType";
 
 const CHART_TYPE_TO_SERIES: Record<ChartTypeId, SeriesTypeId> = {
@@ -545,9 +565,9 @@ export default function LibraryShowcaseDemo() {
 	});
 	const [vniTimeframe, setVniTimeframe] = useState<string>(() => {
 		try {
-			return (typeof localStorage !== "undefined" && localStorage.getItem("vni_last_timeframe")) || "1D";
+			return normalizeVNITimeframe(typeof localStorage !== "undefined" ? localStorage.getItem("vni_last_timeframe") : null);
 		} catch {
-			return "1D";
+			return "D";
 		}
 	});
 	const [vniDays, setVniDays] = useState<number>(() => {
@@ -1849,7 +1869,6 @@ export default function LibraryShowcaseDemo() {
 						))}
 					</select>
 
-					<button type="button" className="gc-topbar-btn">{t("library.compare")}</button>
 					<button
 						type="button"
 						className={`gc-topbar-btn${showReplayBar ? " gc-topbar-btn--active" : ""}`}
@@ -1857,10 +1876,9 @@ export default function LibraryShowcaseDemo() {
 						title={t("replay.controls")}
 						aria-pressed={showReplayBar}
 					>
-						<svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ marginRight: 4 }}>
+						<svg width="13" height="13" viewBox="0 0 16 16" fill="none">
 							<polygon points="4,2 14,8 4,14" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" fill={showReplayBar ? "currentColor" : "none"} />
 						</svg>
-						{t("library.replay")}
 					</button>
 
 					<div className="gc-topbar-sep" />
@@ -1912,32 +1930,25 @@ export default function LibraryShowcaseDemo() {
 					</div>
 				</div>
 
-				<div className="gc-topbar__center">
-					<DataSourceSwitcher
-						activeSource={activeSource}
-						onSourceChange={(source) => {
-							setActiveSource(source as "demo" | "vninvest");
-							setVniError(null);
-						}}
-						onPATModalOpen={() => setPatModalOpen(true)}
-						hasPAT={vniHasPAT}
-						dataSource={currentDataSource}
-						selectedSymbol={vniSymbol}
-						onSymbolChange={setVniSymbol}
-						selectedTimeframe={vniTimeframe}
-						onTimeframeChange={setVniTimeframe}
-						selectedDays={vniDays}
-						onDaysChange={setVniDays}
-						onLoadChart={handleLoadVNIChart}
-						isLoading={vniLoading}
-					/>
-				</div>
-
 				<div className="gc-topbar__right">
 					{dataStatus === "live" && <span className="gc-live-badge">{t("common.liveBinance")}</span>}
 					{historyStatus === "backfilling" && <span className="gc-loading-badge">{t("library.backfillingHistory")}</span>}
 					{dataStatus === "offline" && <span className="gc-offline-badge" title={dataError}>{t("common.offlineFallback")}</span>}
 					{dataStatus === "loading" && <span className="gc-loading-badge">{t("common.loading")}</span>}
+					{/* Compact datasource badge — click để mở Settings tab Nguồn dữ liệu */}
+					<button
+						type="button"
+						className="gc-topbar-btn"
+						onClick={() => openSettings("datasource")}
+						title={t("settings.datasource")}
+						style={{ fontWeight: activeSource === "vninvest" ? 700 : undefined, gap: 4 }}
+					>
+						{activeSource === "vninvest"
+							? <><span style={{ color: "#4caf50", fontSize: 9 }}>●</span> {vniSymbol || "VNI"}</>
+							: <><span style={{ color: "var(--gc-text-muted)", fontSize: 9 }}>●</span> Demo</>
+						}
+					</button>
+					<div className="gc-topbar-sep" />
 					<div className="gc-chart-type-wrap" role="group" aria-label={t("language.label")}>
 						<button type="button" className={`gc-topbar-btn${language === "vi" ? " gc-topbar-btn--active" : ""}`} onClick={() => setLanguage("vi")}>
 							{t("language.vi")}
@@ -2506,6 +2517,19 @@ export default function LibraryShowcaseDemo() {
 						onClose={closeSettings}
 						dataAdapterName={dataAdapterName}
 						onDataAdapterChange={setDataAdapterName}
+						activeSource={activeSource}
+						onSourceChange={(src) => { setActiveSource(src); setVniError(null); }}
+						hasPAT={vniHasPAT}
+						onPATModalOpen={() => { setPatModalOpen(true); }}
+						dataSource={currentDataSource}
+						selectedSymbol={vniSymbol}
+						onSymbolChange={setVniSymbol}
+						selectedTimeframe={vniTimeframe}
+						onTimeframeChange={setVniTimeframe}
+						selectedDays={vniDays}
+						onDaysChange={setVniDays}
+						onLoadChart={handleLoadVNIChart}
+						isVniLoading={vniLoading}
 					/>
 				) : null}
 			</div>
