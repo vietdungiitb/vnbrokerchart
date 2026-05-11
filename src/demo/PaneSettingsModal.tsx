@@ -16,6 +16,9 @@ export interface PaneSettingsModalProps {
 	paneState: UseDynamicPanesResult;
 	maxVisiblePanes: number;
 	onMaxVisiblePanesChange: (next: number) => void;
+	/** Cap on visible bars — prevents lag when zoomed out */
+	maxVisibleBars?: number;
+	onMaxVisibleBarsChange?: (next: number) => void;
 	showDrawingPriceMarkers: boolean;
 	onShowDrawingPriceMarkersChange: (next: boolean) => void;
 	onAddPane: () => void;
@@ -38,6 +41,9 @@ export interface PaneSettingsModalProps {
 	onTimeframeChange?: (tf: string) => void;
 	selectedDays?: number;
 	onDaysChange?: (days: number) => void;
+	showNonTradingDays?: boolean;
+	onShowNonTradingDaysChange?: (next: boolean) => void;
+	isStockContext?: boolean;
 	onLoadChart?: () => void;
 	isVniLoading?: boolean;
 }
@@ -78,6 +84,8 @@ export function PaneSettingsModal({
 	paneState,
 	maxVisiblePanes,
 	onMaxVisiblePanesChange,
+	maxVisibleBars = 500,
+	onMaxVisibleBarsChange,
 	showDrawingPriceMarkers,
 	onShowDrawingPriceMarkersChange,
 	onAddPane,
@@ -98,6 +106,9 @@ export function PaneSettingsModal({
 	onTimeframeChange,
 	selectedDays = 90,
 	onDaysChange,
+	showNonTradingDays = false,
+	onShowNonTradingDaysChange,
+	isStockContext = false,
 	onLoadChart,
 	isVniLoading = false,
 }: PaneSettingsModalProps) {
@@ -389,6 +400,22 @@ export function PaneSettingsModal({
 				<button type="button" className="gc-btn gc-btn--accent" onClick={onAddPane} disabled={!canAddPane}>
 					{t("settings.addPane")}
 				</button>
+			</div>
+
+			<div className="gc-settings-row">
+				<label className="gc-settings-field gc-settings-field--full">
+					<span>{t("settings.maxVisibleBars")} <strong>{maxVisibleBars}</strong></span>
+					<input
+						type="range"
+						className="gc-settings-range"
+						min={100}
+						max={2000}
+						step={100}
+						value={maxVisibleBars}
+						onChange={(event) => onMaxVisibleBarsChange?.(Math.max(100, Math.min(2000, parseNumber(event.target.value, maxVisibleBars))))}
+					/>
+					<span className="gc-settings-note">{t("settings.maxVisibleBarsNote")}</span>
+				</label>
 			</div>
 
 			<div className="gc-settings-pane-list">
@@ -750,6 +777,23 @@ export function PaneSettingsModal({
 					))}
 				</div>
 			</div>
+
+			{/* VNInvest config — visible only when vninvest source active */}
+			{isStockContext && onShowNonTradingDaysChange ? (
+				<div className="gc-settings-row gc-settings-row--split" style={{ marginBottom: 16 }}>
+					<div>
+						<div className="gc-settings-kicker">{t("vninvest.nonTradingDays")}</div>
+						<div className="gc-settings-note" style={{ marginTop: 6 }}>{t("vninvest.nonTradingDays.note")}</div>
+					</div>
+					<button
+						type="button"
+						className={`gc-btn${showNonTradingDays ? "" : " gc-btn--accent"}`}
+						onClick={() => onShowNonTradingDaysChange(!showNonTradingDays)}
+					>
+						{showNonTradingDays ? t("vninvest.nonTradingDays.show") : t("vninvest.nonTradingDays.hide")}
+					</button>
+				</div>
+			) : null}
 
 			{/* VNInvest config — visible only when vninvest source active */}
 			{activeSource === "vninvest" && (

@@ -32,15 +32,38 @@ export interface RawOHLCVBar {
  * API base URL and endpoints
  */
 /**
- * VNInvest API base URL - must match backend server URL
- * Docker dev uses nginx frontend reverse proxy on port 80 that forwards to backend
+ * Resolve API base URL with lightweight runtime config.
+ * Priority:
+ * 1) globalThis.__VNI_API_BASE__
+ * 2) localStorage.vni_api_base
+ * 3) current origin (works with dev proxy / reverse proxy)
  */
-const API_BASE = 'http://localhost';
+function resolveApiBase(): string {
+  const globalBase =
+    typeof globalThis !== 'undefined' &&
+    typeof (globalThis as { __VNI_API_BASE__?: unknown }).__VNI_API_BASE__ === 'string'
+      ? String((globalThis as { __VNI_API_BASE__?: string }).__VNI_API_BASE__).trim()
+      : '';
+
+  const storageBase =
+    typeof localStorage !== 'undefined' ? (localStorage.getItem('vni_api_base') || '').trim() : '';
+
+  const originBase =
+    typeof globalThis.location !== 'undefined' && globalThis.location.origin
+      ? globalThis.location.origin
+      : 'http://localhost';
+
+  const selected = globalBase || storageBase || originBase;
+  return selected.replace(/\/$/, '');
+}
+
+const API_BASE = resolveApiBase();
 
 export const VNI_ENDPOINTS = {
   CHART: (symbol: string) =>
     `${API_BASE}/api/stock-management/stocks/${symbol}/chart/`,
   STOCKS_LIST: `${API_BASE}/api/stock-management/stocks/`,
+  AUTH_TOKEN: `${API_BASE}/api/auth/token/`,
   TICKER: (symbol: string) =>
     `${API_BASE}/api/realtime/ticker/${symbol}/`,
   WHALE_FEED: (symbol: string) =>

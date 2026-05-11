@@ -124,6 +124,72 @@ function dashPatternToSeriesDasharray(dashPattern?: number[]) {
 	return "Dash";
 }
 
+/**
+ * Creates a smart date formatter that adapts to zoom level (visible bar count).
+ * Similar to KlineChart: intraday shows time, daily/weekly shows date.
+ */
+function createSmartDateFormatter(visibleBarCount: number): (date: Date) => string {
+	// Intelligent format selection based on zoom level
+	if (visibleBarCount <= 50) {
+		// Very zoomed in: show time with seconds
+		return timeFormat("%H:%M:%S");
+	}
+	if (visibleBarCount <= 120) {
+		// Intraday: show time HH:MM
+		return timeFormat("%H:%M");
+	}
+	if (visibleBarCount <= 300) {
+		// Multi-day to few weeks: show date + time
+		return timeFormat("%m-%d %H:%M");
+	}
+	// Zoomed out: show date only
+	return timeFormat("%Y-%m-%d");
+}
+
+/**
+ * Kline-like X-axis format:
+ * - For intraday data: HH:mm, but month/day boundaries are highlighted as MM-YYYY or DD-MM
+ * - For daily+ data: first day of month MM-YYYY, other days DD-MM
+ */
+function createKlineXAxisFormatter(data: readonly EnrichedDatum[]): (value: Date | number) => string {
+	const monthBoundaryFormat = timeFormat("%m-%Y");
+	const dayFormat = timeFormat("%d-%m");
+	const timeFormatHHmm = timeFormat("%H:%M");
+
+	let inferredIntervalMs = Number.POSITIVE_INFINITY;
+	for (let i = 1; i < data.length; i += 1) {
+		const previous = data[i - 1]?.date?.getTime();
+		const current = data[i]?.date?.getTime();
+		if (!Number.isFinite(previous) || !Number.isFinite(current)) {
+			continue;
+		}
+		const diff = Math.abs(current - previous);
+		if (diff > 0 && diff < inferredIntervalMs) {
+			inferredIntervalMs = diff;
+		}
+	}
+
+	const isIntraday = Number.isFinite(inferredIntervalMs) && inferredIntervalMs < 24 * 60 * 60 * 1000;
+
+	return (value: Date | number) => {
+		const date = value instanceof Date ? value : new Date(value);
+		if (Number.isNaN(date.getTime())) {
+			return "";
+		}
+		if (isIntraday) {
+			// Emphasize month/day boundaries, otherwise keep timestamp for readability.
+			if (date.getDate() === 1 && date.getHours() === 0 && date.getMinutes() === 0) {
+				return monthBoundaryFormat(date);
+			}
+			if (date.getHours() === 0 && date.getMinutes() === 0) {
+				return dayFormat(date);
+			}
+			return timeFormatHHmm(date);
+		}
+		return date.getDate() === 1 ? monthBoundaryFormat(date) : dayFormat(date);
+	};
+}
+
 function getSeriesStyleOverrideForSeries(series: SeriesConfig) {
 	return series.id ? getSeriesStyleOverride(series.id) : undefined;
 }
@@ -582,6 +648,7 @@ function renderDynamicChartChildren({
 	panes,
 	heights,
 	data,
+	xAccessor,
 	axisStroke,
 	axisTickFill,
 	isDark,
@@ -595,6 +662,13 @@ function renderDynamicChartChildren({
 	let chartId = 1;
 	// Track how many slots have been rendered per pane (for tooltip y-stagger in splitScale panes)
 	const paneSlotCounter = new Map<string, number>();
+
+	// Use smart date formatter based on data length (zoom level estimate)
+	// This adapts format: very zoomed in shows seconds, zoomed out shows date only
+	const adaptiveDateFormat = createSmartDateFormatter(Math.max(1, data.length));
+	const xAxisDateFormat = createKlineXAxisFormatter(data);
+	const sampleXValue = data.length > 0 ? xAccessor(data[0]) : undefined;
+	const isDiscontinuousScale = typeof sampleXValue === "number";
 
 	return chartSlots.flatMap(({ pane, slot }, index) => {
 		const paneIndex = panes.findIndex((item) => item.id === pane.id);
@@ -642,7 +716,7 @@ function renderDynamicChartChildren({
 						? (
 							<PaneTooltip
 								entries={buildPriceTooltipEntries(priceFormat, volumeFormat).concat(slot.tooltipEntries)}
-								xDisplayFormat={dateFormat}
+							xDisplayFormat={adaptiveDateFormat}
 								origin={[8, tooltipY]}
 								labelFill={isDark ? "#d1d4dc" : "#1e2a3b"}
 								textFill={isDark ? "#f8fafc" : "#1e2a3b"}
@@ -650,7 +724,7 @@ function renderDynamicChartChildren({
 						)
 						: pane.tooltip === "none"
 							? null
-							: <PaneTooltip entries={slot.tooltipEntries} xDisplayFormat={dateFormat} origin={[8, tooltipY]} labelFill={isDark ? "#d1d4dc" : "#1e2a3b"} textFill={isDark ? "#f8fafc" : "#1e2a3b"} />}
+							: <PaneTooltip entries={slot.tooltipEntries} xDisplayFormat={adaptiveDateFormat} origin={[8, tooltipY]} labelFill={isDark ? "#d1d4dc" : "#1e2a3b"} textFill={isDark ? "#f8fafc" : "#1e2a3b"} />}
 					{slot.series.map((series) => renderSeries(series))}
 					{hasBottomAxis && slot === chartSlots[chartSlots.length - 1]?.slot ? (
 					<XAxis
@@ -664,11 +738,12 @@ function renderDynamicChartChildren({
 						tickStrokeWidth={0}
 						stroke="transparent"
 						tickLabelFill={axisTickFill}
-					/>
-					) : null}
-					{/* MouseCoordinateX only on the last slot (bottom pane) — shows just HH:MM
-					    at the crosshair position. Date context is already in the OHLC tooltip. */}
-					{isLastSlot ? <MouseCoordinateX displayFormat={timeFormat("%H:%M")} /> : null}
+						tickFormat={isDiscontinuousScale ? undefined : (xAxisDateFormat as any)}
+				/>
+				) : null}
+				{/* MouseCoordinateX only on the last slot (bottom pane) — shows intelligent format
+				    at the crosshair position. Intraday shows HH:MM, daily shows MM-DD, etc. */}
+				{isLastSlot ? <MouseCoordinateX displayFormat={adaptiveDateFormat} /> : null}
 					<MouseCoordinateY rectWidth={64} displayFormat={yAxisFormat as any} />
 				</Chart>
 			),

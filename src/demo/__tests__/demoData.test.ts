@@ -9,6 +9,21 @@ function makeResponse(payload: unknown) {
 	};
 }
 
+function buildKlinePage(startTimestamp: number, stepMs: number, count: number, basePrice: number) {
+	return Array.from({ length: count }, (_unused, index) => {
+		const timestamp = startTimestamp + index * stepMs;
+		const price = basePrice + index;
+		return [
+			timestamp,
+			String(price),
+			String(price + 5),
+			String(price - 5),
+			String(price + 1),
+			String(1_000 + index),
+		];
+	});
+}
+
 describe("demoData history loaders", () => {
 	let fetchMock: ReturnType<typeof vi.fn>;
 
@@ -65,5 +80,31 @@ describe("demoData history loaders", () => {
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 		expect(String(fetchMock.mock.calls[1]?.[0])).toContain("endTime=1700003599999");
 		expect(String(fetchMock.mock.calls[1]?.[0])).toContain("limit=2");
+	});
+
+	describe.each([
+		["15m", 15 * 60 * 1000],
+		["1h", 60 * 60 * 1000],
+	] as const)("pages backwards through %s history beyond the initial 1000-bar page", (interval, stepMs) => {
+		it("loads two full pages and preserves Binance paging semantics", async () => {
+			const latestPageStart = 1_700_000_000_000;
+			const newestPage = makeResponse(buildKlinePage(latestPageStart, stepMs, 1_000, 100));
+			const olderPage = makeResponse(buildKlinePage(latestPageStart - 1_000 * stepMs, stepMs, 1_000, 50));
+
+			fetchMock
+				.mockResolvedValueOnce(newestPage)
+				.mockResolvedValueOnce(olderPage);
+
+			const bars = await fetchHistoricalDemoBars({ interval, limit: 1_000, pages: 2 });
+
+			expect(bars).toHaveLength(2_000);
+			expect(bars[0]?.date.getTime()).toBe(latestPageStart - 1_000 * stepMs);
+			expect(bars[1_999]?.date.getTime()).toBe(latestPageStart + 999 * stepMs);
+			expect(fetchMock).toHaveBeenCalledTimes(2);
+			expect(String(fetchMock.mock.calls[0]?.[0])).toContain(`interval=${interval}`);
+			expect(String(fetchMock.mock.calls[1]?.[0])).toContain(`interval=${interval}`);
+			expect(String(fetchMock.mock.calls[1]?.[0])).toContain(`endTime=${latestPageStart - 1}`);
+			expect(String(fetchMock.mock.calls[1]?.[0])).toContain("limit=1000");
+		});
 	});
 });

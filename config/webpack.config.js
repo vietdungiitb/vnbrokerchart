@@ -60,6 +60,12 @@ module.exports = (env, argv) => {
       static: {
         directory: path.join(__dirname, "../build"),
       },
+      proxy: {
+        "/api": {
+          target: process.env.VNINVEST_API_PROXY_TARGET || "http://127.0.0.1:80",
+          changeOrigin: true,
+        },
+      },
       compress: true,
       port: 8080,
       hot: true,

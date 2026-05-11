@@ -3,6 +3,7 @@ import { format } from "d3-format";
 import { scaleTime } from "d3-scale";
 import { timeFormat } from "d3-time-format";
 import { DynamicChart, DEFAULT_PANES, type PaneDescriptor, type ChartTheme, type VisibleRange, useChartTheme } from "../lib/core";
+import { discontinuousTimeScaleProviderBuilder } from "../lib/scale/discontinuousTimeScaleProvider";
 import type { EnrichedDatum } from "../lib/core/calculators/types";
 import { enrichData } from "../lib/core/calculators/enrichData";
 import { useCanvasResize } from "../lib/core/hooks/useCanvasResize";
@@ -32,6 +33,7 @@ export interface VNStockChartProps {
 	onContextMenu?: (moreProps: { currentItem?: EnrichedDatum; currentCharts?: number[]; mouseXY?: [number, number] }, event: unknown) => void;
 	onVisibleDomainChange?: (domain: [Date | number, Date | number]) => void;
 	onVisibleRangeChange?: (range: VisibleRange) => void;
+	showNonTradingDays?: boolean;
 	onError?: (error: Error) => void;
 }
 
@@ -98,6 +100,7 @@ function VNStockChartContent({
 	onContextMenu,
 	onVisibleDomainChange,
 	onVisibleRangeChange,
+	showNonTradingDays,
 	onError,
 }: VNStockChartProps) {
 	const { ref, size } = useCanvasResize<HTMLDivElement>();
@@ -149,12 +152,18 @@ function VNStockChartContent({
 		const nextPanes = candidatePanes.filter((pane) => pane.visible);
 		return nextPanes.length > 0 ? nextPanes : DEFAULT_PANES.filter((pane) => pane.visible);
 	}, [panes]);
+	const sortedBars = useMemo<readonly OHLCVBar[]>(() => {
+		if (bars.length <= 1) {
+			return bars;
+		}
+		return [...bars].sort((left, right) => left.date.getTime() - right.date.getTime());
+	}, [bars]);
 
 	const enrichedData = useMemo<EnrichedDatum[]>(() => {
-		return enrichData(bars, {
+		return enrichData(sortedBars, {
 			series: visiblePanes.flatMap((pane) => pane.series),
 		});
-	}, [bars, visiblePanes]);
+	}, [sortedBars, visiblePanes]);
 	const plotData = useMemo<EnrichedDatum[]>(() => enrichedData.filter((datum): datum is EnrichedDatum => Boolean(datum && datum.date)), [enrichedData]);
 
 	const computedXExtents = useMemo(() => {
@@ -169,6 +178,101 @@ function VNStockChartContent({
 		return [firstBar.date, lastBar.date] as [Date, Date];
 	}, [enrichedData]);
 	const resolvedXExtents = controlledXExtents ?? computedXExtents;
+	const shouldHideNonTradingDays = showNonTradingDays === false;
+
+	const chartScaleState = useMemo(() => {
+		const timeXAccessor = (datum?: EnrichedDatum) => datum?.date ?? new Date(0);
+		const buildContinuousState = () => ({
+			plotData,
+			xScale: scaleTime(),
+			xAccessor: timeXAccessor as (datum: EnrichedDatum) => Date,
+			displayXAccessor: timeXAccessor as (datum: EnrichedDatum) => Date,
+			xExtents: resolvedXExtents,
+			toDomainDate: (value: Date | number) => (value instanceof Date ? value : new Date(value)),
+		});
+
+		if (!shouldHideNonTradingDays || plotData.length === 0) {
+			return buildContinuousState();
+		}
+
+ 		try {
+			const provider = discontinuousTimeScaleProviderBuilder().inputDateAccessor((datum: EnrichedDatum) => datum.date);
+			const scaled = provider(plotData as EnrichedDatum[]);
+			const scaledData = scaled.data as EnrichedDatum[];
+			const scaledXAccessor = scaled.xAccessor as (datum: EnrichedDatum) => number;
+			const scaledDisplayXAccessor = scaled.displayXAccessor as (datum: EnrichedDatum) => Date;
+
+			const firstIndex = scaledData.length > 0 ? scaledXAccessor(scaledData[0]) : 0;
+			const lastIndex = scaledData.length > 0 ? scaledXAccessor(scaledData[scaledData.length - 1]) : 0;
+
+ 			const resolveNearestIndex = (bound: Date | number): number => {
+				if (scaledData.length === 0) {
+					return 0;
+				}
+				if (typeof bound === "number" && Number.isFinite(bound) && bound >= firstIndex && bound <= lastIndex) {
+					return bound;
+				}
+
+ 				const targetMs = bound instanceof Date ? bound.getTime() : Number(bound);
+				if (!Number.isFinite(targetMs)) {
+					return firstIndex;
+				}
+
+				let nearest = scaledData[0];
+				let minDiff = Math.abs(scaledDisplayXAccessor(nearest).getTime() - targetMs);
+				for (let i = 1; i < scaledData.length; i += 1) {
+					const current = scaledData[i];
+					const diff = Math.abs(scaledDisplayXAccessor(current).getTime() - targetMs);
+					if (diff < minDiff) {
+						minDiff = diff;
+						nearest = current;
+					}
+				}
+				return scaledXAccessor(nearest);
+			};
+
+			const scaledXExtents = (() => {
+				if (scaledData.length === 0) {
+					return undefined;
+				}
+				if (controlledXExtents) {
+					return [resolveNearestIndex(controlledXExtents[0]), resolveNearestIndex(controlledXExtents[1])] as [number, number];
+				}
+				return [scaledXAccessor(scaledData[0]), scaledXAccessor(scaledData[scaledData.length - 1])] as [number, number];
+			})();
+
+			const toDomainDate = (value: Date | number): Date => {
+				if (value instanceof Date) {
+					return value;
+				}
+				if (!Number.isFinite(value) || scaledData.length === 0) {
+					return new Date(value);
+				}
+				let nearest = scaledData[0];
+				let minDiff = Math.abs(scaledXAccessor(nearest) - value);
+				for (let i = 1; i < scaledData.length; i += 1) {
+					const current = scaledData[i];
+					const diff = Math.abs(scaledXAccessor(current) - value);
+					if (diff < minDiff) {
+						minDiff = diff;
+						nearest = current;
+					}
+				}
+				return scaledDisplayXAccessor(nearest);
+			};
+
+			return {
+				plotData: scaledData,
+				xScale: scaled.xScale,
+				xAccessor: scaledXAccessor,
+				displayXAccessor: scaledDisplayXAccessor,
+				xExtents: scaledXExtents,
+				toDomainDate,
+			};
+		} catch {
+			return buildContinuousState();
+		}
+	}, [controlledXExtents, plotData, resolvedXExtents, shouldHideNonTradingDays]);
 
 	useEffect(() => {
 		if (hasExternalData) {
@@ -249,7 +353,12 @@ function VNStockChartContent({
 	const axisTickFill = isDark ? "#e2e8f0" : "#0f172a";
 	const chartInnerHeight = Math.max(1, size.height - 8 - 28);
 	const paneHeights = visiblePanes.map((pane) => pane.heightRatio * chartInnerHeight);
-	const safeXAccessor = (datum?: EnrichedDatum) => datum?.date ?? new Date(0);
+	const handleChartVisibleDomainChange = (domain: [Date | number, Date | number]) => {
+		onVisibleDomainChange?.([
+			chartScaleState.toDomainDate(domain[0]),
+			chartScaleState.toDomainDate(domain[1]),
+		]);
+	};
 
 	return (
 		<div
@@ -268,16 +377,16 @@ function VNStockChartContent({
 			<DynamicChart
 				panes={visiblePanes}
 				heights={paneHeights}
-				data={plotData}
+				data={chartScaleState.plotData}
 				width={size.width}
 				height={size.height}
 				margin={{ left: 60, right: 68, top: 8, bottom: 28 }}
 				type="hybrid"
-				seriesName={`vnstock-${activeSymbol}-${activeTimeframe}`}
-				xScale={scaleTime()}
-				xAccessor={safeXAccessor}
-				displayXAccessor={safeXAccessor}
-				xExtents={resolvedXExtents}
+				seriesName={`vnstock-${activeSymbol}-${activeTimeframe}-${shouldHideNonTradingDays ? "discontinuous" : "continuous"}`}
+				xScale={chartScaleState.xScale}
+				xAccessor={chartScaleState.xAccessor}
+				displayXAccessor={chartScaleState.displayXAccessor}
+				xExtents={chartScaleState.xExtents}
 				ratio={typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1}
 				mouseMoveEvent
 				zoomEvent
@@ -285,7 +394,7 @@ function VNStockChartContent({
 				useCrossHairStyleCursor
 				onClick={onClick}
 				onContextMenu={onContextMenu}
-				onVisibleDomainChange={onVisibleDomainChange}
+				onVisibleDomainChange={handleChartVisibleDomainChange}
 				onVisibleRangeChange={onVisibleRangeChange}
 				axisStroke={axisStroke}
 				axisTickFill={axisTickFill}

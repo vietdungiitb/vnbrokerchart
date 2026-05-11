@@ -482,6 +482,8 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		this.panInProgress = false;
 		this.pendingChartRedraw = true;
 		this.setState(state);
+		// Always emit the final pan domain so edge-clamped pans still notify listeners.
+		this.notifyVisibleDomainChange(state.xScale);
 	}
 
 	handleMouseMove(mouseXY: MouseXY, inputType: string, e: unknown) {

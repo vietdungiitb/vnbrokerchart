@@ -66,12 +66,14 @@ interface DemoSettings {
 	maxVisiblePanes: number;
 	showDrawingPriceMarkers: boolean;
 	showNonTradingDays: boolean;
+	maxVisibleBars: number;
 }
 
 const DEFAULT_DEMO_SETTINGS: DemoSettings = {
 	maxVisiblePanes: DEFAULT_MAX_VISIBLE_PANES,
 	showDrawingPriceMarkers: true,
 	showNonTradingDays: false,
+	maxVisibleBars: 500,
 };
 
 function loadDemoSettings(): DemoSettings {
@@ -94,6 +96,9 @@ function loadDemoSettings(): DemoSettings {
 			showNonTradingDays: typeof parsed.showNonTradingDays === "boolean"
 				? parsed.showNonTradingDays
 				: DEFAULT_DEMO_SETTINGS.showNonTradingDays,
+			maxVisibleBars: typeof parsed.maxVisibleBars === "number" && Number.isFinite(parsed.maxVisibleBars)
+				? Math.max(100, Math.min(2000, Math.floor(parsed.maxVisibleBars)))
+				: DEFAULT_DEMO_SETTINGS.maxVisibleBars,
 		};
 	} catch {
 		// ignore malformed settings payloads
@@ -537,6 +542,7 @@ export default function LibraryShowcaseDemo() {
 	const [maxVisiblePanes, setMaxVisiblePanes] = useState(initialDemoSettings.maxVisiblePanes);
 	const [showDrawingPriceMarkers, setShowDrawingPriceMarkers] = useState(initialDemoSettings.showDrawingPriceMarkers);
 	const [showNonTradingDays, setShowNonTradingDays] = useState(initialDemoSettings.showNonTradingDays);
+	const [maxVisibleBars, setMaxVisibleBars] = useState(initialDemoSettings.maxVisibleBars);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [showReplayBar, setShowReplayBar] = useState(false);
 	const [showDrawingList, setShowDrawingList] = useState(false);
@@ -820,8 +826,8 @@ export default function LibraryShowcaseDemo() {
 	}, []);
 
 	useEffect(() => {
-		saveDemoSettings({ maxVisiblePanes, showDrawingPriceMarkers, showNonTradingDays });
-	}, [maxVisiblePanes, showDrawingPriceMarkers, showNonTradingDays]);
+		saveDemoSettings({ maxVisiblePanes, showDrawingPriceMarkers, showNonTradingDays, maxVisibleBars });
+	}, [maxVisiblePanes, showDrawingPriceMarkers, showNonTradingDays, maxVisibleBars]);
 
 	useEffect(() => {
 		try {
@@ -1411,12 +1417,31 @@ export default function LibraryShowcaseDemo() {
 		};
 	}, []);
 
-	const xExtents = useMemo(() => {
-		if (visibleDomain) {
-			return visibleDomain;
+	const xExtents = useMemo<[Date, Date]>(() => {
+		const base: [Date, Date] = visibleDomain ?? resolveChartRangeExtents(chartData, chartRange);
+		// Clamp to maxVisibleBars: count chartData points inside [start, end]; if more than limit,
+		// shift start rightward so only the rightmost maxVisibleBars bars are visible.
+		if (chartData.length >= 2 && maxVisibleBars > 0) {
+			const [start, end] = base;
+			const startMs = start.valueOf();
+			const endMs = end.valueOf();
+			// Count bars in current domain
+			let inRange = 0;
+			for (let i = chartData.length - 1; i >= 0; i--) {
+				const t = chartData[i].date.valueOf();
+				if (t > endMs) continue;
+				if (t < startMs) break;
+				inRange++;
+				if (inRange > maxVisibleBars) {
+					// find the bar at position maxVisibleBars from the right within range
+					// shift start to that bar's timestamp
+					const clampedStart = new Date(t);
+					return [clampedStart, base[1]];
+				}
+			}
 		}
-		return resolveChartRangeExtents(chartData, chartRange);
-	}, [visibleDomain, chartRange, chartData]);
+		return base;
+	}, [visibleDomain, chartRange, chartData, maxVisibleBars]);
 	const lastBar = chartData[chartData.length - 1];
 	const selectedDrawingId = useMemo(() => getSelectedDrawingId(drawingInteraction.drawingState), [drawingInteraction.drawingState]);
 	const sortedDrawings = useMemo(() => sortDrawings(drawingInteraction.allDrawings), [drawingInteraction.allDrawings]);
@@ -2062,6 +2087,7 @@ export default function LibraryShowcaseDemo() {
 		setMaxVisiblePanes(DEFAULT_MAX_VISIBLE_PANES);
 		setShowDrawingPriceMarkers(DEFAULT_DEMO_SETTINGS.showDrawingPriceMarkers);
 		setShowNonTradingDays(DEFAULT_DEMO_SETTINGS.showNonTradingDays);
+		setMaxVisibleBars(DEFAULT_DEMO_SETTINGS.maxVisibleBars);
 		setSettingsSection("layout");
 		setSettingsPaneId("price");
 		setSettingsOpen(false);
@@ -2805,6 +2831,8 @@ export default function LibraryShowcaseDemo() {
 						onDaysChange={setVniDays}
 						onLoadChart={handleLoadVNIChart}
 						isVniLoading={vniLoading}
+						maxVisibleBars={maxVisibleBars}
+						onMaxVisibleBarsChange={setMaxVisibleBars}
 					/>
 				) : null}
 			</div>

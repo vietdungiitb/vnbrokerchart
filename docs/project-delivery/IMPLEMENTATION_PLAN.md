@@ -83,6 +83,35 @@ Xác nhận hoàn tất:
 - Test suite gắn với pagination/backfill/range math PASS
 - `AUDIT_LEDGER.md` có evidence thật cho data fidelity
 
+### Slice TWL. Time-window scheduler for viewport-driven data loading
+
+Trạng thái: READY
+
+Tài liệu chi tiết: [`docs/project-delivery/time-window-loader/`](../project-delivery/time-window-loader/HANDOFF_MANIFEST.md)
+
+Mục tiêu:
+
+- Chuẩn hóa toàn bộ cơ chế nạp dữ liệu theo viewport time-window thay cho trigger heuristic rời rạc.
+- Mỗi lần pan/zoom/span sẽ tính target coverage theo công thức prefetch và đưa phần thiếu vào queue.
+- Queue xử lý single-flight, dedupe, generation invalidation để tránh request storm/race.
+- Loại bỏ khả năng bị kẹt cứng 1000 bars khi API còn dữ liệu lịch sử.
+
+Tasks:
+
+| ID | Task | Dependency |
+| :--- | :--- | :--- |
+| TWL-01 | Planner foundation (`historyWindowPlanner`) | — |
+| TWL-02 | Fetch queue engine (`historyFetchQueue`) | TWL-01 |
+| TWL-03 | Wire scheduler vào `LibraryShowcaseDemo` | TWL-02 |
+| TWL-04 | Stabilization + audit closeout | TWL-03 |
+
+Exit criteria:
+
+- 1h và 15m không còn kẹt cứng 1000 bars trong điều kiện upstream còn dữ liệu.
+- Pan/zoom/span đều kích hoạt load theo coverage target, không dựa edge heuristic đơn lẻ.
+- Type-check + test + build docs PASS.
+- `AUDIT_LEDGER.md` + `module_tree_full.md` được cập nhật đầy đủ.
+
 ### Slice F. Widget boundary extraction — VNStockChart
 
 Trạng thái: TODO

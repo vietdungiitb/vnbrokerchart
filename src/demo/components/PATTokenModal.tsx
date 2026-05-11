@@ -5,6 +5,7 @@
 
 import { useCallback, useState, type ReactNode } from 'react';
 import { useDemoI18n } from '../i18n';
+import { VNI_ENDPOINTS } from '../dataSources/VNInvestClient';
 
 export interface PATTokenModalProps {
   isOpen: boolean;
@@ -55,7 +56,7 @@ export function PATTokenModal({
     }
     setLoading(true);
     try {
-      const response = await fetch('http://localhost/api/auth/token/', {
+      const response = await fetch(VNI_ENDPOINTS.AUTH_TOKEN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),

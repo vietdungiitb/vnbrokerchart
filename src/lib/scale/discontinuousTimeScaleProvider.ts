@@ -2,7 +2,7 @@
 import { timeFormat } from "d3-time-format";
 
 import financeDiscontinuousScale from "./financeDiscontinuousScale";
-import { slidingWindow, zipper, identity, isNotDefined } from "../utils";
+import { slidingWindow, zipper, identity, isDefined, isNotDefined } from "../utils";
 import { defaultFormatters, levelDefinition } from "./levels";
 
 function evaluateLevel(d: any, date: any, i: any, formatters: any) {
@@ -135,6 +135,45 @@ export function discontinuousTimeScaleProviderBuilder() {
 		const xScale = financeDiscontinuousScale(
 			inputIndex,
 		);
+		const dateAccessor = realDateAccessor(inputDateAccessor);
+		const firstIndexValue = inputIndex.length > 0 ? inputIndex[0].index : 0;
+		const timeToIndex = new Map<number, number>(
+			inputIndex.map((row: any) => [row.date.getTime(), row.index] as const)
+		);
+
+		const safeXAccessor = (d: any) => {
+			if (!isDefined(d)) {
+				return firstIndexValue;
+			}
+
+			const indexed = indexAccessor(d);
+			if (isDefined(indexed) && isDefined(indexed.index)) {
+				return indexed.index;
+			}
+
+			const date = dateAccessor(d);
+			if (!isDefined(date) || !Number.isFinite(date.getTime())) {
+				return firstIndexValue;
+			}
+
+			const exactMatch = timeToIndex.get(date.getTime());
+			if (isDefined(exactMatch)) {
+				return exactMatch;
+			}
+
+			let nearest = firstIndexValue;
+			let minDiff = Number.POSITIVE_INFINITY;
+			for (let i = 0; i < inputIndex.length; i += 1) {
+				const row = inputIndex[i];
+				const diff = Math.abs(row.date.getTime() - date.getTime());
+				if (diff < minDiff) {
+					minDiff = diff;
+					nearest = row.index;
+				}
+			}
+
+			return nearest;
+		};
 
 		const mergedData = (zipper() as any)
 			.combine(indexMutator);
@@ -144,7 +183,7 @@ export function discontinuousTimeScaleProviderBuilder() {
 		return {
 			data: finalData,
 			xScale,
-			xAccessor: (d: any) => d && indexAccessor(d).index,
+			xAccessor: safeXAccessor,
 			displayXAccessor: realDateAccessor(inputDateAccessor),
 		};
 	};

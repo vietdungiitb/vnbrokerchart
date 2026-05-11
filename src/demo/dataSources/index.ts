@@ -86,23 +86,40 @@ export class DemoDataSource implements DataSource {
 export class VNInvestDataSource implements DataSource {
   constructor(private client: any) {} // VNInvestClient type
 
+  private async _fetchBars(
+    symbol: string,
+    options?: { days?: number; timeframe?: string }
+  ): Promise<RawOHLCV[]> {
+    const response = await this.client.getChart(symbol, options);
+    return response.points.map((point: any) => ({
+      date: new Date(point.date),
+      open: point.open,
+      high: point.high,
+      low: point.low,
+      close: point.close,
+      volume: point.volume,
+    }));
+  }
+
   async loadBars(
     symbol: string,
     options?: { days?: number; timeframe?: string }
   ): Promise<RawOHLCV[]> {
     try {
-      const response = await this.client.getChart(symbol, options);
-      
-      // Convert ChartResponse to RawOHLCV[]
-      return response.points.map((point: any) => ({
-        date: new Date(point.date),
-        open: point.open,
-        high: point.high,
-        low: point.low,
-        close: point.close,
-        volume: point.volume,
-      }));
-    } catch (error) {
+      return await this._fetchBars(symbol, options);
+    } catch (error: any) {
+      const status = error?.status ?? error?.response?.status;
+      if (status === 503 && options?.timeframe && options.timeframe !== 'D') {
+        console.warn(
+          `VNInvest: 503 for timeframe=${options.timeframe} (${symbol}), falling back to timeframe=D`
+        );
+        try {
+          return await this._fetchBars(symbol, { ...options, timeframe: 'D' });
+        } catch (fallbackError) {
+          console.error(`Failed fallback loadBars (timeframe=D) for ${symbol}:`, fallbackError);
+          throw fallbackError;
+        }
+      }
       console.error(`Failed to load VNInvest data for ${symbol}:`, error);
       throw error;
     }
