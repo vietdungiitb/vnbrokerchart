@@ -625,6 +625,11 @@ html[data-chart-theme="dark"] .gc-paper-trade-panel {
 	box-shadow: 0 8px 24px rgba(17, 24, 39, 0.16);
 }
 
+.gc-chart-type-menu--right {
+	left: auto;
+	right: 0;
+}
+
 .gc-chart-type-item {
 	width: 100%;
 	appearance: none;
