@@ -2,6 +2,427 @@
 
 Tài liệu này là đăng ký duy nhất cho trạng thái delivery, file đã sửa, và gates từng slice. Phải cập nhật liên tục trong quá trình migration.
 
+### TWL-S01 browser smoke PASS — warmup backfill > 1000 bars confirmed
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope:
+  - Xác nhận browser smoke TWL-S01: sau khi init fetch, warmup backfill tự động chạy và bar count vượt 1000.
+- Root causes được fix:
+  1. `publishWarmupDebug` có `dataStatus` trong deps → init useEffect re-fire loop → fixed bằng `dataStatusRef`.
+  2. `backfillInFlightRef` shared với viewport scheduler → race condition → fixed bằng `warmupInFlightRef` riêng cho warmup.
+  3. React StrictMode (development React bundled) double-invoke cleanup → `mountedRef.current = false` trước khi warmup timer fires → fixed bằng `mountedRef.current = true` tại đầu init useEffect.
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx` (modify: warmupInFlightRef, dataStatusRef, mountedRef reset)
+  - `docs/upgrade-standard/AUDIT_LEDGER.md` (modify)
+  - `module_tree_full.md` (regenerate)
+- Validation:
+  - `npm run type-check` → PASS
+  - `npm test` → PASS (51 files, 276 tests)
+  - `npm run build:docs` → PASS
+  - Browser smoke TWL-S01: `11000 nến` hiển thị, `hasBackward: true`, `smoke: PASS`
+
+### TWL regression closeout — 15m/1h historical paging beyond the initial 1000-bar page
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope:
+  - Bổ sung regression test cho loader paging 15m/1h để chứng minh lịch sử có thể vượt ranh giới 1000 bars và giữ đúng semantics `endTime` backward paging.
+- Files sửa/tạo:
+  - `src/demo/__tests__/demoData.test.ts` (modify)
+  - `docs/upgrade-standard/AUDIT_LEDGER.md` (modify)
+  - `module_tree_full.md` (regenerate)
+- Nội dung bàn giao:
+  - Thêm helper tạo page Binance giả lập 1000 bars cho cả `15m` và `1h`.
+  - Xác nhận `fetchHistoricalDemoBars({ pages: 2, limit: 1000 })` trả về 2000 bars và page thứ hai gọi với `endTime = firstPageStart - 1`.
+  - Regression này khóa lại ngưỡng “1000 bars” để tránh tái phát bug load lịch sử bị chặn sớm.
+- Validation:
+  - `npm test -- src/demo/__tests__/demoData.test.ts` -> PASS (4 tests)
+  - `npm run type-check` -> PASS
+  - `npm test` -> PASS (51 files, 276 tests)
+  - `npm run build:docs` -> PASS
+
+### TWL implementation wave 1 — planner, queue, runtime wiring
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope:
+  - Thực thi theo bộ tài liệu TWL đã phê duyệt: dựng planner + queue + tích hợp vào runtime demo shell.
+- Files sửa/tạo:
+  - `src/demo/historyWindowPlanner.ts` (create)
+  - `src/demo/historyFetchQueue.ts` (create)
+  - `src/demo/__tests__/historyWindowPlanner.test.ts` (create)
+  - `src/demo/__tests__/historyFetchQueue.test.ts` (create)
+  - `src/demo/LibraryShowcaseDemo.tsx` (modify, wire scheduler and queue worker)
+  - `docs/upgrade-standard/AUDIT_LEDGER.md` (modify)
+  - `module_tree_full.md` (regenerate)
+- Nội dung bàn giao:
+  - Thêm mô-đun planner thuần hàm để tính target coverage từ viewport và xác định missing segments.
+  - Thêm queue engine với dedupe target left/right, priority và single-flight.
+  - Thay trigger heuristic rời rạc trong `LibraryShowcaseDemo` bằng pipeline schedule theo viewport + worker tick xử lý queue.
+  - Init flow reset generation queue khi đổi context dữ liệu và enqueue theo viewport ban đầu.
+- Validation:
+  - `npm run type-check` -> PASS
+  - `npm test -- src/demo/__tests__/historyWindowPlanner.test.ts src/demo/__tests__/historyFetchQueue.test.ts` -> PASS (17 tests)
+
+### TWL planning handoff pack — implementation-ready documentation
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope:
+  - Lập bộ tài liệu chuyển giao đầy đủ cho workstream `Time-Window Data Loader` để đội code triển khai không cần hỏi lại.
+- Files sửa/tạo:
+  - `docs/project-delivery/time-window-loader/HANDOFF_MANIFEST.md` (create)
+  - `docs/project-delivery/time-window-loader/TECH_SPEC.md` (create)
+  - `docs/project-delivery/time-window-loader/IMPLEMENTATION_PLAN.md` (create)
+  - `docs/project-delivery/time-window-loader/TASKBOARD.md` (create)
+  - `docs/project-delivery/time-window-loader/AUDIT_PROTOCOL.md` (create)
+  - `docs/project-delivery/IMPLEMENTATION_PLAN.md` (modify, add Slice TWL roadmap)
+  - `docs/project-delivery/README.md` (modify, add TWL entry point)
+  - `docs/upgrade-standard/AUDIT_LEDGER.md` (modify)
+- Nội dung bàn giao:
+  - Chuẩn hóa scope, kiến trúc, task breakdown, DoD, gates, risk/rollback cho mô hình load dữ liệu theo viewport time-window + queue scheduler.
+  - Bổ sung mapping vào roadmap delivery hiện hành để đội code triển khai theo slice TWL ngay.
+- Validation:
+  - Đây là thay đổi tài liệu kế hoạch/handoff, chưa thực thi mã nguồn runtime trong entry này.
+
+### Backfill breakthrough — automatic Binance warmup beyond 1000 bars
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Bối cảnh:
+  - User xác nhận vẫn kẹt cứng ở 1000 bars dù đã tăng trigger reliability.
+  - Cần cơ chế không phụ thuộc thao tác pan để phá giới hạn khởi tạo 1000 bars.
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Thêm warmup lịch sử nền chỉ cho Binance: sau `init` tự gọi backward paging cho đến mục tiêu `INITIAL_HISTORY_TARGET_BARS=5000` (tối đa `INITIAL_HISTORY_MAX_PAGES=8`).
+  - Tái sử dụng guard no-progress (oldestReturnedTs < previousEarliestTs) để tránh vòng lặp vô hạn.
+  - Cập nhật `liveData` sau warmup nếu tăng độ dài dữ liệu; giữ `visibleDomain` hiện có nếu user đã tương tác.
+  - Giữ nguyên pipeline edge-backfill trước đó cho việc mở rộng thêm khi pan.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Backfill unlock — index-based edge detection to break 1000-bar lock
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Bối cảnh:
+  - User vẫn quan sát bị cố định ở 1000 bars sau các vòng fix theo domain-time.
+  - Nguyên nhân khả nghi: edge detection theo mốc thời gian không ổn định với gap/discontinuous timeline.
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Thêm `visibleRangeRef` và callback `handleVisibleRangeChange`.
+  - Arm + trigger backfill theo `range.startIndex <= BACKFILL_TRIGGER_BARS` (gần index 0 của viewport).
+  - Watchdog và effect edge hiện dùng điều kiện OR: near-left theo time-domain hoặc near-left theo range index.
+  - Gắn `onVisibleRangeChange` vào `VNStockChart` trong demo shell.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Backfill hardening — edge watchdog to prevent clamp stall
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Bối cảnh:
+  - Sau khi đã phát domain ở pan-end, user vẫn gặp trạng thái kéo trái nhưng lịch sử không tiến thêm.
+  - Cần lớp đảm bảo không phụ thuộc vào tần suất callback pan/domain.
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Thêm `visibleDomainRef` + `edgeBackfillArmedRef` để theo dõi trạng thái chạm mép trái ổn định qua các render.
+  - Trong `handleVisibleDomainChange`, arm/disarm edge backfill theo điều kiện prefetch boundary.
+  - Thêm watchdog interval (600ms) khi `dataStatus="live"`: nếu vẫn ở near-edge và không inflight thì tự gọi `triggerBackfillDebounced()` liên tục.
+  - Reset trạng thái arm khi đổi chart range hoặc khi reload dữ liệu init.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Backfill audit fix — emit visible domain on pan end at edge clamp
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Root cause đã xác nhận:
+  - `onVisibleDomainChange` tại `ChartCanvas` chỉ phát khi visible range index thay đổi trong `componentDidUpdate`.
+  - Khi pan tới biên trái và domain bị clamp (không đổi index), callback không phát -> demo không nhận signal để trigger backfill tiếp.
+- Files sửa:
+  - `src/lib/ChartCanvas.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Trong `handlePanEnd`, phát `notifyVisibleDomainChange(state.xScale)` luôn luôn để edge-pan vẫn báo domain hiện tại lên tầng demo.
+  - Giữ nguyên logic callback cũ theo visible-range change để không phá hành vi hiện hữu.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Backfill reliability hardening — trigger on pan and shift viewport after prepend
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: xử lý trường hợp vẫn không thể lùi BTC quá 05/2026 dù đã có batch backfill.
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Kích hoạt backfill trực tiếp trong `handleVisibleDomainChange` (sự kiện pan) khi viewport tiến vào vùng prefetch gần mép trái.
+  - Sau khi prepend dữ liệu cũ thành công ở edge mode, tự dịch `visibleDomain` sang trái theo cùng span hiện tại để người dùng nhìn thấy dữ liệu mới ngay, không cần pan thêm nhiều lần.
+  - Giữ guard chống race/no-op như các bước trước.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### BTC historical backfill enhancement — edge-trigger batch paging
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: xử lý trường hợp BTC dữ liệu chỉ tới 05/2026 khi kéo trái, không lùi tiếp lịch sử.
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Nâng `requestOlderHistoryPage` từ single-page thành batch multi-page (`BACKFILL_EDGE_BATCH_PAGES = 6`) trong một lượt trigger khi viewport còn sát mép trái.
+  - Mỗi trang backward có guard no-op: nếu adapter không trả về bar cũ hơn `earliest` hiện tại thì dừng ngay để tránh loop giả.
+  - Batch sẽ tự dừng khi viewport đã rời vùng prefetch boundary hoặc đạt giới hạn số trang.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Backfill unblock fix — bind chart xExtents to visibleDomain while panning
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: sửa lỗi vẫn không backfill khi kéo trái do `xExtents` bị reset cứng theo `chartRange` thay vì bám viewport domain thực tế.
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Cập nhật `xExtents` để ưu tiên `visibleDomain` (domain thực tế nhận từ `onVisibleDomainChange`) và chỉ fallback về `resolveChartRangeExtents` khi chưa có `visibleDomain`.
+  - Giữ trạng thái pan trái ổn định qua các lần rerender, giúp logic trigger backfill ở mép trái hoạt động nhất quán.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### X-axis 1970 label fix — respect discontinuous scale tick format
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: sửa lỗi trục X hiển thị mốc `01-1970` khi dùng discontinuous timeline.
+- Files sửa:
+  - `src/lib/core/DynamicChart.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Root cause: formatter Date custom (`xAxisDateFormat`) bị áp cho tick value kiểu số (index) của discontinuous scale, dẫn đến `new Date(number)` về epoch 1970.
+  - Fix: detect scale mode qua sample `xAccessor(data[0])`.
+    - Nếu discontinuous (number): không override `tickFormat`, để scale gốc tự format theo index/date mapping.
+    - Nếu continuous (Date): giữ formatter custom hiện tại.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Historical auto-backfill fix — preload when panning near left edge
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: sửa lỗi kéo chart sang trái nhưng không tự nạp thêm lịch sử ngoài vùng dữ liệu đã load.
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Thêm ngưỡng prefetch theo số bars (`BACKFILL_TRIGGER_BARS = 48`): khi viewport tiến gần mép trái dữ liệu, backfill sẽ chạy sớm thay vì đợi chạm đúng cây nến đầu.
+  - Cải tiến `requestOlderHistoryPage`: nếu adapter trả về trang không có nến nào cũ hơn mốc hiện tại thì bỏ qua merge để tránh loop no-op/backfilling giả.
+  - Giữ nguyên hành vi cũ cho các luồng khác (init/forward/range).
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Discontinuous scale crash fix — safe xAccessor for missing idx
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: sửa lỗi runtime `TypeError: Cannot read properties of undefined (reading 'index')` trong `discontinuousTimeScaleProvider.ts` khi datum thiếu `idx`.
+- Files sửa:
+  - `src/lib/scale/discontinuousTimeScaleProvider.ts`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Thêm `safeXAccessor` trong discontinuous provider:
+    - Ưu tiên đọc `indexAccessor(d).index` nếu tồn tại.
+    - Fallback theo `dateAccessor` + map timestamp -> index.
+    - Nếu không khớp exact thì lấy nearest index theo thời gian.
+    - Nếu datum/date không hợp lệ thì trả về first index an toàn.
+  - Thay `xAccessor` cũ (`indexAccessor(d).index`) bằng `safeXAccessor` để tránh crash trong các component canvas (Candlestick/Line/Bar/MouseCoordinateX).
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Chart render runtime hotfix — stabilize xScale pipeline and prevent widget crash
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: sửa lỗi runtime hiển thị `An error occurred in the chart` sau khi áp dụng timeline discontinuous.
+- Files sửa:
+  - `src/widget/VNStockChart.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Chuẩn hóa dữ liệu đầu vào chart theo thứ tự thời gian tăng dần (`sortedBars`) trước khi `enrichData`.
+  - Bọc nhánh `discontinuousTimeScaleProvider` bằng cơ chế fallback an toàn: nếu scale discontinuous gặp lỗi runtime thì tự động quay về `scaleTime` liên tục để chart không sập.
+  - Giữ nguyên API/props hiện tại, chỉ tăng độ bền runtime cho chart widget.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Whale Money Flow UI containment — convert to bottom-left modal with close and Panes toggle
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: ngăn `Whale Money Flow` phá vỡ khung view chart bằng cách chuyển sang modal nổi trong chart shell, có nút đóng và điều khiển trong menu `Panes`.
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/demo.css`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Thêm state `showWhaleDialog` và lifecycle theo `activeSource`.
+  - Chuyển render `WhalePanel` vào trong `gc-chart-shell` dưới dạng modal nổi `gc-whale-dialog` (bottom-left).
+  - Bổ sung nút `Close` trên modal.
+  - Thêm mục bật/tắt `Whale Money Flow` trong menu `Panes`.
+  - Bổ sung style modal/scroll/responsive để không làm vỡ layout chart.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Stock timeline standards — setting to show/hide non-trading days
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: thêm mục trong Settings cho mã cổ phiếu để cho phép hiển thị hoặc ẩn ngày không giao dịch theo thông lệ charting.
+- Files sửa:
+  - `src/widget/VNStockChart.tsx`
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/PaneSettingsModal.tsx`
+  - `src/demo/i18n.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Bổ sung cờ `showNonTradingDays` trong `VNStockChartProps`.
+  - Với chế độ ẩn ngày không giao dịch (`showNonTradingDays = false`), widget dùng `discontinuousTimeScaleProvider` để nén khoảng trống cuối tuần/ngày nghỉ.
+  - Giữ callback `onVisibleDomainChange` trả về Date domain để không phá workflow hiện có ở demo shell.
+  - Thêm state/persistence `showNonTradingDays` trong `LibraryShowcaseDemo` (lưu qua `DEMO_SETTINGS_STORAGE_KEY`).
+  - Thêm toggle trong `PaneSettingsModal` (section datasource) với i18n đầy đủ VI/EN.
+  - Toggle chỉ áp dụng trong ngữ cảnh cổ phiếu (`activeSource === "vninvest"` hoặc adapter `vnstocks`); ngữ cảnh crypto giữ timeline liên tục.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### X-axis intraday timestamp restore — keep HH:mm on intraday charts
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: sửa regression khiến trục X chỉ hiển thị ngày, làm mất timestamp giờ trên dữ liệu intraday.
+- Files sửa:
+  - `src/lib/core/DynamicChart.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Cập nhật `createKlineXAxisFormatter` để nhận `data` và tự suy luận loại dữ liệu (intraday hay daily+) bằng khoảng cách thời gian nhỏ nhất giữa các bars.
+  - Với intraday:
+    - Mốc đầu tháng lúc 00:00 hiển thị `MM-YYYY`
+    - Mốc đầu ngày lúc 00:00 hiển thị `DD-MM`
+    - Các mốc còn lại hiển thị `HH:mm` để giữ timestamp dễ đọc.
+  - Với daily+:
+    - Ngày đầu tháng hiển thị `MM-YYYY`
+    - Ngày khác hiển thị `DD-MM`.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Kline-like X-axis labels — month boundary and day labels
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: đổi định dạng trục X theo rule KlineChart để dễ đọc và phân biệt mốc tháng.
+- Files sửa:
+  - `src/lib/core/DynamicChart.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Thêm formatter trục X mới với rule:
+    - Ngày đầu tháng (`date.getDate() === 1`) hiển thị `MM-YYYY`
+    - Các ngày còn lại hiển thị `DD-MM`
+  - Gắn formatter này cho `XAxis.tickFormat` tại chart động.
+  - Giữ nguyên formatter tooltip/crosshair hiện tại để tránh ảnh hưởng hành vi phần khác.
+- Validation:
+  - `npm run type-check` -> PASS
+
+### Smart X-axis date formatter — zoom-aware timestamp display like KlineChart
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: Đổi định dạng hiển thị timestamp trên trục X để thích ứng với zoom level (similar to KlineChart), giúp dễ đọc hơn.
+- Files sửa:
+  - `src/lib/core/DynamicChart.tsx`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Thêm hàm `createSmartDateFormatter(visibleBarCount)` để tạo formatter thông minh dựa vào zoom level:
+    - Très zoomed in (< 50 bars): HH:MM:SS
+    - Intraday (50-120 bars): HH:MM
+    - Multi-day (120-300 bars): MM-DD HH:MM
+    - Zoomed out (> 300 bars): YYYY-MM-DD
+  - Dùng `data.length` làm heuristic estimate cho visible bar count.
+  - Áp dụng formatter thông minh cho:
+    - PaneTooltip xDisplayFormat (2 usages: ohlc + default)
+    - XAxis tickFormat (trục X tick labels)
+    - MouseCoordinateX displayFormat (crosshair timestamp hiển thị)
+- Validation:
+  - `npm run type-check` → PASS
+  - webpack dev server hot-reload → formatter thích ứng hiển thị
+
+### Fix data source switching bug — prevent unintended adapter changes on timeframe change
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: Fix lỗi khi thay đổi timeframe, hệ thống tự động chuyển sang data source khác (VN chứng khoán ↔ Bitcoin) thay vì giữ nguyên nguồn.
+- Gốc rễ: Symbol "BTCUSDT" được hardcode tại 9 chỗ trong code, không theo dõi adapter được chọn. Khi timeframe thay đổi, có thể tự động chuyển về adapter mặc định.
+- Files sửa:
+  - `src/demo/LibraryShowcaseDemo.tsx`
+  - `src/demo/dataSources/index.ts`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+  - `module_tree_full.md`
+- Nội dung bàn giao:
+  - Thêm state `selectedSymbol` để quản lý symbol hiện tại độc lập với timeframe.
+  - Khi `dataAdapterName` thay đổi → reset `selectedSymbol` về default của adapter đó (BTCUSDT cho Binance, VCB cho VNStocks).
+  - Khi `timeframe` thay đổi → **GIỮ NGUYÊN** `selectedSymbol` (không reset).
+  - Thêm `selectedSymbol` vào dependency của tất cả `dataAdapter.getBars()` call (requestOlderHistoryPage, ensureRangeHistory, useEffect init/forward).
+  - Persistent state: lưu `selectedSymbol` vào localStorage để khôi phục sau reload.
+  - UI: hiển thị `{selectedSymbol}` thay vì hardcode "BTCUSDT" trong topbar và OHLC strip.
+- Validation:
+  - `npm run type-check` -> PASS
+  - Webpack dev server hot-reload: cùng adapter, thay đổi timeframe → symbol vẫn giữ nguyên.
+  - Chuyển adapter → symbol tự reset về default mới (không thay đổi có ý).
+
+### VNInvest data server connectivity hotfix — remove localhost hardcode and add dev proxy
+
+- Người thực hiện: GitHub Copilot
+- Ngày: 2026-05-11
+- Scope: sửa lỗi `không kết nối được với máy chủ data` khi demo chạy ở `http://localhost:8080` nhưng frontend gọi cứng host backend.
+- Files sửa:
+  - `src/demo/dataSources/VNInvestClient.ts`
+  - `src/demo/components/PATTokenModal.tsx`
+  - `config/webpack.config.js`
+  - `module_tree_full.md`
+  - `docs/upgrade-standard/AUDIT_LEDGER.md`
+- Nội dung bàn giao:
+  - Thay hardcode `http://localhost` bằng cơ chế resolve base URL theo runtime (`globalThis.__VNI_API_BASE__`, `localStorage.vni_api_base`, rồi fallback `location.origin`).
+  - Chuẩn hóa endpoint đăng nhập PAT dùng chung `VNI_ENDPOINTS.AUTH_TOKEN` để không lệch host giữa modal auth và data client.
+  - Bổ sung `devServer.proxy` cho `/api` trong webpack dev server; mặc định trỏ `http://127.0.0.1:80` và có thể override qua `VNINVEST_API_PROXY_TARGET`.
+  - Regenerate module tree theo quy ước repo.
+- Validation:
+  - `npm run type-check` -> PASS
+  - `python scripts/generate_module_tree.py` -> PASS (753 modules)
+  - `Test-NetConnection 127.0.0.1:8000` -> FAIL (backend chưa chạy tại thời điểm kiểm tra)
+
 ### VNInvest timeframe compatibility fix — chart API 400 remediation
 
 - Người thực hiện: GitHub Copilot

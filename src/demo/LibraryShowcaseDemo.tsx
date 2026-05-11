@@ -54,6 +54,8 @@ import { PATTokenModal, WhalePanel } from "./components";
 import { VNInvestClient } from "./dataSources/VNInvestClient";
 import { VNInvestDataSource, DemoDataSource, type DataSource } from "./dataSources";
 import type { WhaleFeedResponse } from "./vninvest/types";
+import { computeLoadedWindow, computeMissingSegments, computeTargetWindow, type MissingSegments, type TimeWindow } from "./historyWindowPlanner";
+import { HistoryFetchQueue } from "./historyFetchQueue";
 import "./demo.css";
 import "../lib/styles/pane-overlays.css";
 
@@ -63,11 +65,13 @@ const DEFAULT_MAX_VISIBLE_PANES = 5;
 interface DemoSettings {
 	maxVisiblePanes: number;
 	showDrawingPriceMarkers: boolean;
+	showNonTradingDays: boolean;
 }
 
 const DEFAULT_DEMO_SETTINGS: DemoSettings = {
 	maxVisiblePanes: DEFAULT_MAX_VISIBLE_PANES,
 	showDrawingPriceMarkers: true,
+	showNonTradingDays: false,
 };
 
 function loadDemoSettings(): DemoSettings {
@@ -87,6 +91,9 @@ function loadDemoSettings(): DemoSettings {
 			showDrawingPriceMarkers: typeof parsed.showDrawingPriceMarkers === "boolean"
 				? parsed.showDrawingPriceMarkers
 				: DEFAULT_DEMO_SETTINGS.showDrawingPriceMarkers,
+			showNonTradingDays: typeof parsed.showNonTradingDays === "boolean"
+				? parsed.showNonTradingDays
+				: DEFAULT_DEMO_SETTINGS.showNonTradingDays,
 		};
 	} catch {
 		// ignore malformed settings payloads
@@ -494,6 +501,7 @@ export default function LibraryShowcaseDemo() {
 	const [chartRange, setChartRange] = useState<ChartRange>(DEFAULT_CHART_RANGE);
 	const [chartType, setChartType] = useState<ChartTypeId>(() => loadChartType());
 	const [showPanesMenu, setShowPanesMenu] = useState(false);
+	const [showWhaleDialog, setShowWhaleDialog] = useState(true);
 	const panesMenuRef = useRef<HTMLDivElement | null>(null);
 	const [activeTool, setActiveTool] = useState<string>("cursor");
 	const [openGroupId, setOpenGroupId] = useState<string | null>(null);
@@ -512,12 +520,23 @@ export default function LibraryShowcaseDemo() {
 			return "binance";
 		}
 	});
+	
+	// Track selected symbol per adapter to avoid switching datasources on timeframe change
+	const [selectedSymbol, setSelectedSymbol] = useState<string>(() => {
+		try {
+			const stored = typeof localStorage !== "undefined" && localStorage.getItem("vnsc_selectedSymbol");
+			if (stored) return stored;
+		} catch { /* ignore */ }
+		return "BTCUSDT"; // Default for binance
+	});
+	
 	const [selectedPaneId, setSelectedPaneId] = useState("price");
 
 	const [settingsSection, setSettingsSection] = useState<SettingsSection>("layout");
 	const [settingsPaneId, setSettingsPaneId] = useState("price");
 	const [maxVisiblePanes, setMaxVisiblePanes] = useState(initialDemoSettings.maxVisiblePanes);
 	const [showDrawingPriceMarkers, setShowDrawingPriceMarkers] = useState(initialDemoSettings.showDrawingPriceMarkers);
+	const [showNonTradingDays, setShowNonTradingDays] = useState(initialDemoSettings.showNonTradingDays);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [showReplayBar, setShowReplayBar] = useState(false);
 	const [showDrawingList, setShowDrawingList] = useState(false);
@@ -536,7 +555,7 @@ export default function LibraryShowcaseDemo() {
 	const handleLoadDrawings = useCallback((drawings: DrawingObject[]) => {
 		drawingInteraction.dispatch({ type: "REPLACE", drawings });
 	}, [drawingInteraction.dispatch]);
-	const drawingStorage = useDrawingStorage("BTCUSDT", timeframe, drawingInteraction.allDrawings, handleLoadDrawings);
+	const drawingStorage = useDrawingStorage(selectedSymbol, timeframe, drawingInteraction.allDrawings, handleLoadDrawings);
 	const { theme, toggleTheme, isDark } = useChartTheme("light");
 	const canvasBg = "var(--gc-surface)";
 	const closeDrawingContextMenu = useCallback(() => setDrawingContextMenu(null), []);
@@ -548,11 +567,25 @@ export default function LibraryShowcaseDemo() {
 	const [historyStatus, setHistoryStatus] = useState<"idle" | "backfilling">("idle");
 	const [visibleDomain, setVisibleDomain] = useState<[Date, Date] | null>(null);
 	const liveDataRef = useRef<RawOHLCV[]>([]);
+	const visibleDomainRef = useRef<[Date, Date] | null>(null);
+	const visibleRangeRef = useRef<{ startIndex: number; endIndex: number } | null>(null);
 	const backfillInFlightRef = useRef(false);
+	const warmupInFlightRef = useRef(false);
 	const backfillDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const mountedRef = useRef(true);
+	const initialWarmupRequestedRef = useRef(false);
 	const BACKFILL_PAGE_LIMIT = 1000;
 	const BACKFILL_MAX_PAGES = 20;
+	const SCHEDULER_TICK_MS = 250;
+	const SCHEDULER_LEFT_PREFETCH_RATIO = 2.0;
+	const SCHEDULER_RIGHT_PREFETCH_RATIO = 0.5;
+	const SCHEDULER_MAX_BACKWARD_PAGES = 8;
+	const SCHEDULER_MAX_FORWARD_PAGES = 2;
+	const INITIAL_HISTORY_TARGET_BARS = 5000;
+	const INITIAL_HISTORY_MAX_PAGES = 8;
+	const queueRef = useRef(new HistoryFetchQueue());
+	const schedulerGenerationRef = useRef(0);
+	const lastMissingRef = useRef<MissingSegments | null>(null);
 
 	// VNInvest integration state
 	const [activeSource, setActiveSource] = useState<"demo" | "vninvest">("demo");
@@ -622,9 +655,9 @@ export default function LibraryShowcaseDemo() {
 		const bars = getOfflineDemoBars().map((b) => ({
 			timestamp: b.date.valueOf(), open: b.open, high: b.high, low: b.low, close: b.close, volume: b.volume,
 		}));
-		adapter.loadBars("BTCUSDT", timeframe, bars);
+		adapter.loadBars(selectedSymbol, timeframe, bars);
 		return adapter;
-	}, [timeframe]);
+	}, [timeframe, selectedSymbol]);
 
 	const dataAdapter = useMemo<DataAdapter>(() => {
 		if (dataAdapterName === "local") return localCacheAdapter;
@@ -635,6 +668,10 @@ export default function LibraryShowcaseDemo() {
 	useEffect(() => {
 		liveDataRef.current = liveData;
 	}, [liveData]);
+
+	useEffect(() => {
+		visibleDomainRef.current = visibleDomain;
+	}, [visibleDomain]);
 
 	useEffect(() => {
 		chartRangeRef.current = chartRange;
@@ -651,15 +688,27 @@ export default function LibraryShowcaseDemo() {
 		}
 	}, [chartType]);
 
+	// When adapter changes, reset selected symbol to adapter's default
+	useEffect(() => {
+		const defaultSymbol = dataAdapterName === "binance" || dataAdapterName === "local" ? "BTCUSDT" : "VCB";
+		setSelectedSymbol(defaultSymbol);
+		try {
+			if (typeof localStorage !== "undefined") {
+				localStorage.setItem("vnsc_selectedSymbol", defaultSymbol);
+			}
+		} catch { /* ignore storage errors */ }
+	}, [dataAdapterName]);
+
 	useEffect(() => {
 		try {
 			if (typeof localStorage !== "undefined") {
 				localStorage.setItem("vnsc_timeframe", timeframe);
+				localStorage.setItem("vnsc_selectedSymbol", selectedSymbol);
 			}
 		} catch {
 			// ignore storage errors
 		}
-	}, [timeframe]);
+	}, [timeframe, selectedSymbol]);
 
 	useEffect(() => () => {
 		mountedRef.current = false;
@@ -771,8 +820,8 @@ export default function LibraryShowcaseDemo() {
 	}, []);
 
 	useEffect(() => {
-		saveDemoSettings({ maxVisiblePanes, showDrawingPriceMarkers });
-	}, [maxVisiblePanes, showDrawingPriceMarkers]);
+		saveDemoSettings({ maxVisiblePanes, showDrawingPriceMarkers, showNonTradingDays });
+	}, [maxVisiblePanes, showDrawingPriceMarkers, showNonTradingDays]);
 
 	useEffect(() => {
 		try {
@@ -895,92 +944,96 @@ export default function LibraryShowcaseDemo() {
 		}
 	}, [activeSource, vniHasPAT, vniSymbol, vninvestClient]);
 
-	const requestOlderHistoryPage = useCallback(async () => {
-		if (backfillInFlightRef.current || liveDataRef.current.length === 0) {
+	const scheduleForViewport = useCallback((viewport: TimeWindow) => {
+		const loadedWindow = computeLoadedWindow(liveDataRef.current);
+		if (!loadedWindow) {
 			return;
 		}
 
-		const earliestBar = liveDataRef.current[0];
-		if (!earliestBar) {
-			return;
-		}
+		const targetWindow = computeTargetWindow(viewport, {
+			leftPrefetchRatio: SCHEDULER_LEFT_PREFETCH_RATIO,
+			rightPrefetchRatio: SCHEDULER_RIGHT_PREFETCH_RATIO,
+		});
+		const missing = computeMissingSegments(targetWindow, loadedWindow);
+		lastMissingRef.current = missing;
 
-		backfillInFlightRef.current = true;
-		setHistoryStatus("backfilling");
-
-		try {
-			const { bars: olderBarRaw } = await dataAdapter.getBars({
-				type: "backward",
-				symbol: "BTCUSDT",
-				interval: timeframe,
-				limit: BACKFILL_PAGE_LIMIT,
-				timestamp: earliestBar.date.valueOf(),
+		const key = `${dataAdapter.name}:${selectedSymbol}:${timeframe}`;
+		if (missing.leftMissing) {
+			queueRef.current.enqueue({
+				key,
+				side: "left",
+				targetTs: missing.leftTargetMs,
+				priority: 10,
+				generation: schedulerGenerationRef.current,
 			});
-			const olderBars = olderBarRaw.map(klineBarToRawOHLCV);
-
-			if (!mountedRef.current || olderBars.length === 0) {
-				return;
-			}
-
-			setLiveData((current) => mergeBarsByDate(olderBars, current));
-		} catch (err: unknown) {
-			if (!mountedRef.current) {
-				return;
-			}
-			const msg = err instanceof Error ? err.message : String(err);
-			setDataError(msg);
-		} finally {
-			backfillInFlightRef.current = false;
-			if (mountedRef.current) {
-				setHistoryStatus("idle");
-			}
 		}
-	}, [dataAdapter, timeframe]);
-
-	const triggerBackfillDebounced = useCallback(() => {
-		if (backfillDebounceRef.current !== null) {
-			return; // already pending
+		if (missing.rightMissing) {
+			queueRef.current.enqueue({
+				key,
+				side: "right",
+				targetTs: missing.rightTargetMs,
+				priority: 5,
+				generation: schedulerGenerationRef.current,
+			});
 		}
-		backfillDebounceRef.current = setTimeout(() => {
-			backfillDebounceRef.current = null;
-			void requestOlderHistoryPage();
-		}, 200);
-	}, [requestOlderHistoryPage]);
 
-	const ensureRangeHistory = useCallback(async (range: ChartRange) => {
-		if (backfillInFlightRef.current || liveDataRef.current.length === 0) {
+		if (queueRef.current.hasPending(schedulerGenerationRef.current)) {
+			setHistoryStatus("backfilling");
+		}
+	}, [SCHEDULER_LEFT_PREFETCH_RATIO, SCHEDULER_RIGHT_PREFETCH_RATIO, dataAdapter.name, selectedSymbol, timeframe]);
+
+	const warmupInitialBinanceHistory = useCallback(async (seedBars: RawOHLCV[]) => {
+		if (
+			dataAdapter.name !== "binance"
+			|| seedBars.length === 0
+			|| seedBars.length >= INITIAL_HISTORY_TARGET_BARS
+			|| warmupInFlightRef.current
+		) {
 			return;
 		}
 
-		backfillInFlightRef.current = true;
+		warmupInFlightRef.current = true;
 		setHistoryStatus("backfilling");
 
 		try {
-			let currentBars = liveDataRef.current;
+			let currentBars = seedBars;
 			let pagesLoaded = 0;
-			const targetStart = resolveChartRangeStart(currentBars[currentBars.length - 1].date, range);
 
-			while (currentBars[0].date.valueOf() > targetStart.valueOf() && pagesLoaded < BACKFILL_MAX_PAGES) {
+			while (
+				mountedRef.current
+				&& currentBars.length < INITIAL_HISTORY_TARGET_BARS
+				&& pagesLoaded < INITIAL_HISTORY_MAX_PAGES
+			) {
+				const previousEarliestTs = currentBars[0]?.date?.valueOf?.() ?? Number.NaN;
+				if (!Number.isFinite(previousEarliestTs)) {
+					break;
+				}
+
 				const { bars: olderBarRaw } = await dataAdapter.getBars({
 					type: "backward",
-					symbol: "BTCUSDT",
+					symbol: selectedSymbol,
 					interval: timeframe,
 					limit: BACKFILL_PAGE_LIMIT,
-					timestamp: currentBars[0].date.valueOf(),
+					timestamp: previousEarliestTs,
 				});
 				const olderBars = olderBarRaw.map(klineBarToRawOHLCV);
 
-				if (!mountedRef.current || olderBars.length === 0) {
+				if (olderBars.length === 0) {
+					break;
+				}
+
+				const oldestReturnedTs = olderBars[0]?.date?.valueOf?.() ?? Number.POSITIVE_INFINITY;
+				if (!Number.isFinite(oldestReturnedTs) || oldestReturnedTs >= previousEarliestTs) {
 					break;
 				}
 
 				currentBars = mergeBarsByDate(olderBars, currentBars);
 				pagesLoaded += 1;
-				setLiveData(currentBars);
 			}
 
-			if (mountedRef.current && currentBars.length > 0) {
-				setVisibleDomain(resolveChartRangeExtents(currentBars, range));
+			if (mountedRef.current && currentBars.length > liveDataRef.current.length) {
+				setLiveData(currentBars);
+				setVisibleDomain((current) => current ?? resolveChartRangeExtents(currentBars, chartRangeRef.current));
 			}
 		} catch (err: unknown) {
 			if (!mountedRef.current) {
@@ -989,19 +1042,70 @@ export default function LibraryShowcaseDemo() {
 			const msg = err instanceof Error ? err.message : String(err);
 			setDataError(msg);
 		} finally {
-			backfillInFlightRef.current = false;
+			warmupInFlightRef.current = false;
 			if (mountedRef.current) {
 				setHistoryStatus("idle");
 			}
 		}
-	}, [dataAdapter, timeframe]);
+	}, [BACKFILL_PAGE_LIMIT, INITIAL_HISTORY_MAX_PAGES, INITIAL_HISTORY_TARGET_BARS, dataAdapter, selectedSymbol, timeframe]);
+
+	const ensureRangeHistory = useCallback(async (range: ChartRange) => {
+		const currentBars = liveDataRef.current;
+		if (currentBars.length === 0) {
+			return;
+		}
+
+		const rangeDomain = resolveChartRangeExtents(currentBars, range);
+		setVisibleDomain(rangeDomain);
+		const rangeEnd = currentBars[currentBars.length - 1]?.date;
+		if (!rangeEnd) {
+			return;
+		}
+		scheduleForViewport({
+			startMs: resolveChartRangeStart(rangeEnd, range).valueOf(),
+			endMs: rangeEnd.valueOf(),
+		});
+	}, [scheduleForViewport]);
 
 	const handleVisibleDomainChange = useCallback((domain: [Date | number, Date | number]) => {
-		setVisibleDomain(normalizeDomain(domain));
-	}, [normalizeDomain]);
+		const normalized = normalizeDomain(domain);
+		setVisibleDomain(normalized);
+		scheduleForViewport({
+			startMs: normalized[0].valueOf(),
+			endMs: normalized[1].valueOf(),
+		});
+	}, [normalizeDomain, scheduleForViewport]);
+
+	const handleVisibleRangeChange = useCallback((range: { startIndex: number; endIndex: number }) => {
+		visibleRangeRef.current = range;
+		const currentDomain = visibleDomainRef.current;
+		if (currentDomain) {
+			scheduleForViewport({
+				startMs: currentDomain[0].valueOf(),
+				endMs: currentDomain[1].valueOf(),
+			});
+		}
+	}, [scheduleForViewport]);
+
+	const dataStatusRef = useRef(dataStatus);
+	useEffect(() => { dataStatusRef.current = dataStatus; }, [dataStatus]);
+
+	const publishWarmupDebug = useCallback((reason: string) => {
+		if (typeof window === "undefined") {
+			return;
+		}
+		(window as typeof window & { __twlWarmupDebug?: unknown }).__twlWarmupDebug = {
+			reason,
+			dataStatus: dataStatusRef.current,
+			adapterName: dataAdapter.name,
+			requested: initialWarmupRequestedRef.current,
+			liveBars: liveDataRef.current.length,
+		};
+	}, [dataAdapter.name]);
 
 	const handleChartRangeChange = useCallback((range: ChartRange) => {
 		setChartRange(range);
+		visibleRangeRef.current = null;
 		const currentBars = liveDataRef.current;
 		if (currentBars.length > 0) {
 			setVisibleDomain(resolveChartRangeExtents(currentBars, range));
@@ -1011,19 +1115,36 @@ export default function LibraryShowcaseDemo() {
 
 	// Fetch history on mount and on timeframe/adapter change.
 	useEffect(() => {
+		mountedRef.current = true;
 		const abortController = new AbortController();
 		setDataStatus("loading");
 		setDataError("");
 		setHistoryStatus("idle");
+		initialWarmupRequestedRef.current = false;
+		schedulerGenerationRef.current += 1;
+		queueRef.current.clearAll();
+		lastMissingRef.current = null;
+		visibleRangeRef.current = null;
 		setVisibleDomain(null);
 
-		dataAdapter.getBars({ type: "init", symbol: "BTCUSDT", interval: timeframe, limit: BACKFILL_PAGE_LIMIT, timestamp: null, signal: abortController.signal })
+		dataAdapter.getBars({ type: "init", symbol: selectedSymbol, interval: timeframe, limit: BACKFILL_PAGE_LIMIT, timestamp: null, signal: abortController.signal })
 			.then((result) => {
 				if (abortController.signal.aborted) return;
 				const bars = result.bars.map(klineBarToRawOHLCV);
+				liveDataRef.current = bars;
 				setLiveData(bars);
-				setVisibleDomain(resolveChartRangeExtents(bars, chartRangeRef.current));
+				const initialDomain = resolveChartRangeExtents(bars, chartRangeRef.current);
+				setVisibleDomain(initialDomain);
 				setDataStatus("live");
+				scheduleForViewport({
+					startMs: initialDomain[0].valueOf(),
+					endMs: initialDomain[1].valueOf(),
+				});
+				window.setTimeout(() => {
+					initialWarmupRequestedRef.current = true;
+					publishWarmupDebug("warmup-timer-fired");
+					void warmupInitialBinanceHistory(bars);
+				}, 0);
 			})
 			.catch((err: unknown) => {
 				if (abortController.signal.aborted) return;
@@ -1037,7 +1158,7 @@ export default function LibraryShowcaseDemo() {
 			});
 
 		return () => abortController.abort();
-	}, [dataAdapter, timeframe]);
+	}, [BACKFILL_PAGE_LIMIT, dataAdapter, publishWarmupDebug, scheduleForViewport, selectedSymbol, timeframe, warmupInitialBinanceHistory]);
 
 	const data = useMemo<RawOHLCV[]>(
 		() => (liveData.length > 0 ? liveData : getOfflineDemoBars()),
@@ -1054,7 +1175,7 @@ export default function LibraryShowcaseDemo() {
 				return;
 			}
 
-			void dataAdapter.getBars({ type: "forward", symbol: "BTCUSDT", interval: timeframe, limit: BACKFILL_PAGE_LIMIT, timestamp: null })
+			void dataAdapter.getBars({ type: "forward", symbol: selectedSymbol, interval: timeframe, limit: BACKFILL_PAGE_LIMIT, timestamp: null })
 				.then((result) => {
 					const latestBars = result.bars.map(klineBarToRawOHLCV);
 					if (!mountedRef.current || latestBars.length === 0) {
@@ -1072,22 +1193,127 @@ export default function LibraryShowcaseDemo() {
 		}, 30000);
 
 		return () => window.clearInterval(timer);
-	}, [dataAdapter, dataStatus, timeframe]);
+	}, [BACKFILL_PAGE_LIMIT, dataAdapter, dataStatus, selectedSymbol, timeframe]);
 
 	useEffect(() => {
-		if (dataStatus !== "live" || historyStatus === "backfilling" || visibleDomain === null || liveData.length === 0) {
+		if (dataStatus !== "live") {
 			return;
 		}
 
-		const earliestBar = liveData[0];
-		if (!earliestBar) {
-			return;
-		}
+		const timer = window.setInterval(() => {
+			if (backfillInFlightRef.current || !mountedRef.current) {
+				return;
+			}
 
-		if (!backfillInFlightRef.current && normalizeDate(visibleDomain[0]).valueOf() <= earliestBar.date.valueOf()) {
-			triggerBackfillDebounced();
-		}
-	}, [dataStatus, historyStatus, liveData, triggerBackfillDebounced, visibleDomain]);
+			const job = queueRef.current.dequeue(schedulerGenerationRef.current);
+			if (!job) {
+				if (!queueRef.current.hasPending(schedulerGenerationRef.current) && historyStatus !== "idle") {
+					setHistoryStatus("idle");
+				}
+				return;
+			}
+
+			backfillInFlightRef.current = true;
+			setHistoryStatus("backfilling");
+
+			void (async () => {
+				let currentBars = liveDataRef.current;
+				try {
+					if (job.side === "left") {
+						let pagesLoaded = 0;
+						while (
+							mountedRef.current
+							&& currentBars.length > 0
+							&& currentBars[0].date.valueOf() > job.targetTs
+							&& pagesLoaded < SCHEDULER_MAX_BACKWARD_PAGES
+						) {
+							const previousEarliestTs = currentBars[0].date.valueOf();
+							const { bars: olderBarRaw } = await dataAdapter.getBars({
+								type: "backward",
+								symbol: selectedSymbol,
+								interval: timeframe,
+								limit: BACKFILL_PAGE_LIMIT,
+								timestamp: previousEarliestTs,
+							});
+							const olderBars = olderBarRaw.map(klineBarToRawOHLCV);
+							if (olderBars.length === 0) {
+								break;
+							}
+
+							const oldestReturnedTs = olderBars[0]?.date?.valueOf?.() ?? Number.POSITIVE_INFINITY;
+							if (!Number.isFinite(oldestReturnedTs) || oldestReturnedTs >= previousEarliestTs) {
+								break;
+							}
+
+							currentBars = mergeBarsByDate(olderBars, currentBars);
+							pagesLoaded += 1;
+						}
+
+						if (
+							mountedRef.current
+							&& currentBars.length > 0
+							&& currentBars[0].date.valueOf() > job.targetTs
+						) {
+							queueRef.current.enqueue({
+								key: job.key,
+								side: "left",
+								targetTs: job.targetTs,
+								priority: job.priority,
+								generation: job.generation,
+							});
+						}
+					} else {
+						let pagesLoaded = 0;
+						while (
+							mountedRef.current
+							&& currentBars.length > 0
+							&& currentBars[currentBars.length - 1].date.valueOf() < job.targetTs
+							&& pagesLoaded < SCHEDULER_MAX_FORWARD_PAGES
+						) {
+							const previousLatestTs = currentBars[currentBars.length - 1].date.valueOf();
+							const { bars: newerBarRaw } = await dataAdapter.getBars({
+								type: "forward",
+								symbol: selectedSymbol,
+								interval: timeframe,
+								limit: BACKFILL_PAGE_LIMIT,
+								timestamp: null,
+							});
+							const newerBars = newerBarRaw.map(klineBarToRawOHLCV);
+							if (newerBars.length === 0) {
+								break;
+							}
+
+							const mergedBars = mergeBarsByDate(currentBars, newerBars);
+							const mergedLatestTs = mergedBars[mergedBars.length - 1]?.date?.valueOf?.() ?? Number.NEGATIVE_INFINITY;
+							if (!Number.isFinite(mergedLatestTs) || mergedLatestTs <= previousLatestTs) {
+								break;
+							}
+
+							currentBars = mergedBars;
+							pagesLoaded += 1;
+						}
+					}
+
+					if (currentBars !== liveDataRef.current) {
+						setLiveData(currentBars);
+					}
+				} catch (err: unknown) {
+					if (mountedRef.current) {
+						const msg = err instanceof Error ? err.message : String(err);
+						setDataError(msg);
+					}
+				} finally {
+					queueRef.current.complete(job.id);
+					backfillInFlightRef.current = false;
+					if (!queueRef.current.hasPending(schedulerGenerationRef.current)) {
+						setHistoryStatus("idle");
+					}
+				}
+			})();
+		}, SCHEDULER_TICK_MS);
+
+		return () => window.clearInterval(timer);
+	}, [BACKFILL_PAGE_LIMIT, SCHEDULER_MAX_BACKWARD_PAGES, SCHEDULER_MAX_FORWARD_PAGES, SCHEDULER_TICK_MS, dataAdapter, dataStatus, historyStatus, selectedSymbol, timeframe]);
 
 	const replayControllerRef = useRef<BarReplayController<RawOHLCV> | null>(null);
 	if (replayControllerRef.current === null) {
@@ -1185,7 +1411,12 @@ export default function LibraryShowcaseDemo() {
 		};
 	}, []);
 
-	const xExtents = useMemo(() => resolveChartRangeExtents(chartData, chartRange), [chartRange, chartData]);
+	const xExtents = useMemo(() => {
+		if (visibleDomain) {
+			return visibleDomain;
+		}
+		return resolveChartRangeExtents(chartData, chartRange);
+	}, [visibleDomain, chartRange, chartData]);
 	const lastBar = chartData[chartData.length - 1];
 	const selectedDrawingId = useMemo(() => getSelectedDrawingId(drawingInteraction.drawingState), [drawingInteraction.drawingState]);
 	const sortedDrawings = useMemo(() => sortDrawings(drawingInteraction.allDrawings), [drawingInteraction.allDrawings]);
@@ -1562,6 +1793,14 @@ export default function LibraryShowcaseDemo() {
 		return () => document.removeEventListener("mousedown", handler);
 	}, [showPanesMenu]);
 
+	useEffect(() => {
+		if (activeSource !== "vninvest") {
+			setShowWhaleDialog(false);
+			return;
+		}
+		setShowWhaleDialog(true);
+	}, [activeSource]);
+
 	// Close drawing tool flyout when clicking outside toolbar
 	useEffect(() => {
 		if (!openGroupId) return;
@@ -1822,10 +2061,13 @@ export default function LibraryShowcaseDemo() {
 		paneState.resetToDefault();
 		setMaxVisiblePanes(DEFAULT_MAX_VISIBLE_PANES);
 		setShowDrawingPriceMarkers(DEFAULT_DEMO_SETTINGS.showDrawingPriceMarkers);
+		setShowNonTradingDays(DEFAULT_DEMO_SETTINGS.showNonTradingDays);
 		setSettingsSection("layout");
 		setSettingsPaneId("price");
 		setSettingsOpen(false);
 	}, [paneState]);
+
+	const isStockContext = activeSource === "vninvest" || dataAdapterName === "vnstocks";
 
 	return (
 		<DemoPageShell className="demo-page--terminal" frameClassName="demo-frame--terminal">
@@ -1835,8 +2077,7 @@ export default function LibraryShowcaseDemo() {
 					<div className="gc-logo" aria-label={t("library.topbarAria")}>BT</div>
 
 					<div className="gc-symbol-block">
-						<span className="gc-symbol-name">BTCUSDT</span>
-						<span className="gc-symbol-exchange">BINANCE</span>
+					<span className="gc-symbol-name">{selectedSymbol}</span>
 					</div>
 
 					<div className="gc-topbar-sep" />
@@ -1925,6 +2166,23 @@ export default function LibraryShowcaseDemo() {
 										{pane.pinned && <span style={{ marginLeft: 4, fontSize: 10, opacity: 0.5 }}>🔒</span>}
 									</button>
 								))}
+								{activeSource === "vninvest" ? (
+									<button
+										type="button"
+										className={`gc-chart-type-item${showWhaleDialog ? " gc-chart-type-item--active" : ""}`}
+										onClick={() => setShowWhaleDialog((value) => !value)}
+										title={showWhaleDialog ? t("library.hidePane") : t("library.showPane")}
+									>
+										{showWhaleDialog ? (
+											<svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: 6, flexShrink: 0 }}>
+												<path d="M2 6l3 3 5-5" stroke="#2962ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+											</svg>
+										) : (
+											<span style={{ display: "inline-block", width: 18, flexShrink: 0 }} />
+										)}
+										{t("vninvest.whale")}
+									</button>
+								) : null}
 							</div>
 						)}
 					</div>
@@ -2154,7 +2412,7 @@ export default function LibraryShowcaseDemo() {
 
 				<section className="gc-chart-area">
 					<div className="gc-ohlc-strip">
-						<span className="gc-ohlc-pair">BTCUSDT <span className="gc-ohlc-tf">· {timeframe}</span></span>
+						<span className="gc-ohlc-pair">{selectedSymbol} <span className="gc-ohlc-tf">· {timeframe}</span></span>
 						{dataStatus !== "loading" && lastBar ? (
 							<>
 								<span className="gc-ohlc-item">O <b>{priceFormat(lastBar.open)}</b></span>
@@ -2192,11 +2450,13 @@ export default function LibraryShowcaseDemo() {
 								locale={language}
 								messages={widgetMessages}
 								theme={theme}
+								showNonTradingDays={isStockContext ? showNonTradingDays : true}
 								xExtents={xExtents}
 								measurementEnabled={activeTool === "crosshair"}
 								onClick={handlePaperTradeClick}
 								onContextMenu={handleReplayContextMenu}
 								onVisibleDomainChange={handleVisibleDomainChange}
+								onVisibleRangeChange={handleVisibleRangeChange}
 							>
 								<DrawingPriceLabels drawing={selectedDrawing} displayFormat={priceFormat} enabled={showDrawingPriceMarkers} highlighted={selectedDrawing != null} />
 								<DrawingLayer
@@ -2269,6 +2529,25 @@ export default function LibraryShowcaseDemo() {
 								]}
 							/>
 						)}
+
+						{activeSource === "vninvest" && showWhaleDialog ? (
+							<div className="gc-whale-dialog" role="dialog" aria-label={t("vninvest.whale")}> 
+								<button
+									type="button"
+									className="gc-whale-dialog__close"
+									onClick={() => setShowWhaleDialog(false)}
+									aria-label={t("drawing.close")}
+									title={t("drawing.close")}
+								>
+									×
+								</button>
+								<WhalePanel
+									data={whaleData}
+									isLoading={whaleLoading}
+									symbol={vniSymbol}
+								/>
+							</div>
+						) : null}
 
 						<DrawingInspector
 							drawing={selectedDrawing}
@@ -2489,13 +2768,6 @@ export default function LibraryShowcaseDemo() {
 						)}
 					</div>
 
-					{activeSource === "vninvest" && (
-						<WhalePanel
-							data={whaleData}
-							isLoading={whaleLoading}
-							symbol={vniSymbol}
-						/>
-					)}
 				</section>
 
 				{settingsOpen ? (
@@ -2519,6 +2791,9 @@ export default function LibraryShowcaseDemo() {
 						onDataAdapterChange={setDataAdapterName}
 						activeSource={activeSource}
 						onSourceChange={(src) => { setActiveSource(src); setVniError(null); }}
+						isStockContext={isStockContext}
+						showNonTradingDays={showNonTradingDays}
+						onShowNonTradingDaysChange={setShowNonTradingDays}
 						hasPAT={vniHasPAT}
 						onPATModalOpen={() => { setPatModalOpen(true); }}
 						dataSource={currentDataSource}
