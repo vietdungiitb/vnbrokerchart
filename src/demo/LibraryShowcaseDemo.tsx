@@ -128,10 +128,13 @@ function klineBarToRawOHLCV(bar: KLineBar): RawOHLCV {
 const TIMEFRAMES = ["1m", "3m", "5m", "15m", "30m", "1h", "4h"] as const;
 type Timeframe = typeof TIMEFRAMES[number];
 
+const VNI_TIMEFRAMES = ["1m", "5m", "15m", "1H", "2H", "4H", "D", "W", "M", "Y"] as const;
+type VNITimeframe = typeof VNI_TIMEFRAMES[number];
+
 const CHART_TYPES = ["candlestick", "hollow", "ohlc", "heikinashi", "line", "area"] as const;
 type ChartTypeId = typeof CHART_TYPES[number];
 
-const VNI_VALID_TIMEFRAMES = new Set(["1m", "5m", "15m", "1H", "2H", "4H", "D", "W", "M", "Y"]);
+const VNI_VALID_TIMEFRAMES = new Set<string>(VNI_TIMEFRAMES);
 
 function normalizeVNITimeframe(input: string | null | undefined): string {
 	const value = (input || "").trim();
@@ -937,6 +940,15 @@ export default function LibraryShowcaseDemo() {
 		}
 	}, [activeSource, vniHasPAT, vninvestDataSource, vniSymbol, vniTimeframe, vniDays, paneState.panes, t]);
 
+	// Auto-reload VNI chart when timeframe changes from the topbar combobox.
+	const handleLoadVNIChartRef = useRef(handleLoadVNIChart);
+	useEffect(() => { handleLoadVNIChartRef.current = handleLoadVNIChart; }, [handleLoadVNIChart]);
+	useEffect(() => {
+		if (activeSource !== "vninvest" || !vniHasPAT) return;
+		void handleLoadVNIChartRef.current();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [vniTimeframe]); // intentionally only on timeframe change
+
 	const handleFetchWhaleData = useCallback(async () => {
 		if (activeSource !== "vninvest" || !vniHasPAT || !vniSymbol) {
 			return;
@@ -1144,6 +1156,18 @@ export default function LibraryShowcaseDemo() {
 		}
 		void ensureRangeHistory(range);
 	}, [ensureRangeHistory]);
+
+	// Unified timeframe change: routes to the correct state depending on active source.
+	const handleTimeframeChange = useCallback((value: string) => {
+		const isStock = activeSource === "vninvest" || dataAdapterName === "vnstocks";
+		if (isStock) {
+			setVniTimeframe(value);
+		} else {
+			if ((TIMEFRAMES as readonly string[]).includes(value)) {
+				setTimeframe(value as Timeframe);
+			}
+		}
+	}, [activeSource, dataAdapterName]);
 
 	// Fetch history on mount and on timeframe/adapter change.
 	useEffect(() => {
@@ -2130,18 +2154,24 @@ export default function LibraryShowcaseDemo() {
 
 					<div className="gc-topbar-sep" />
 
-					<nav className="gc-tf-chips" aria-label={t("library.timeframes")}>
-						{TIMEFRAMES.map((tf) => (
-							<button
-								key={tf}
-								type="button"
-								className={`gc-tf-chip${timeframe === tf ? " gc-tf-chip--active" : ""}`}
-								onClick={() => setTimeframe(tf)}
+					{/* Unified timeframe selector — options differ by data source */}
+					{(() => {
+						const isStock = activeSource === "vninvest" || dataAdapterName === "vnstocks";
+						const options = isStock ? VNI_TIMEFRAMES : TIMEFRAMES;
+						const value = isStock ? vniTimeframe : timeframe;
+						return (
+							<select
+								className="vnsc-candle-type-select"
+								aria-label={t("library.timeframes")}
+								value={value}
+								onChange={(e) => handleTimeframeChange(e.target.value)}
 							>
-								{tf}
-							</button>
-						))}
-					</nav>
+								{options.map((tf) => (
+									<option key={tf} value={tf}>{tf}</option>
+								))}
+							</select>
+						);
+					})()}
 
 					<div className="gc-topbar-sep" />
 
