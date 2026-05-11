@@ -7,3 +7,4 @@ build
 /tmp
 .fuse*
 npm-debug.log
+docs/
