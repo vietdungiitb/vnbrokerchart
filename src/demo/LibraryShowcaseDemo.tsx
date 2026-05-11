@@ -574,6 +574,8 @@ export default function LibraryShowcaseDemo() {
 	const [visibleDomain, setVisibleDomain] = useState<[Date, Date] | null>(null);
 	const liveDataRef = useRef<RawOHLCV[]>([]);
 	const visibleDomainRef = useRef<[Date, Date] | null>(null);
+	const chartDataRef = useRef<EnrichedDatum[]>([]);
+	const maxVisibleBarsRef = useRef(maxVisibleBars);
 	const visibleRangeRef = useRef<{ startIndex: number; endIndex: number } | null>(null);
 	const backfillInFlightRef = useRef(false);
 	const warmupInFlightRef = useRef(false);
@@ -678,6 +680,10 @@ export default function LibraryShowcaseDemo() {
 	useEffect(() => {
 		visibleDomainRef.current = visibleDomain;
 	}, [visibleDomain]);
+
+	useEffect(() => {
+		maxVisibleBarsRef.current = maxVisibleBars;
+	}, [maxVisibleBars]);
 
 	useEffect(() => {
 		chartRangeRef.current = chartRange;
@@ -1075,10 +1081,30 @@ export default function LibraryShowcaseDemo() {
 
 	const handleVisibleDomainChange = useCallback((domain: [Date | number, Date | number]) => {
 		const normalized = normalizeDomain(domain);
-		setVisibleDomain(normalized);
+		// Clamp zoom-out: count bars inside proposed domain; if > maxVisibleBars, shift start rightward.
+		const data = chartDataRef.current;
+		const limit = maxVisibleBarsRef.current;
+		const endMs = normalized[1].valueOf();
+		let startMs = normalized[0].valueOf();
+		if (data.length >= 2 && limit > 0) {
+			let count = 0;
+			for (let i = data.length - 1; i >= 0; i--) {
+				const t = data[i].date.valueOf();
+				if (t > endMs) continue;
+				if (t < startMs) break;
+				count++;
+				if (count > limit) {
+					// clamp: use next bar's timestamp as new start
+					startMs = data[i + 1]?.date.valueOf() ?? t;
+					break;
+				}
+			}
+		}
+		const clamped: [Date, Date] = [new Date(startMs), normalized[1]];
+		setVisibleDomain(clamped);
 		scheduleForViewport({
-			startMs: normalized[0].valueOf(),
-			endMs: normalized[1].valueOf(),
+			startMs: clamped[0].valueOf(),
+			endMs: clamped[1].valueOf(),
 		});
 	}, [normalizeDomain, scheduleForViewport]);
 
@@ -1387,6 +1413,10 @@ export default function LibraryShowcaseDemo() {
 	}, [chartType, indicatorSeries, replayVisibleData]);
 
 	const chartData = useMemo<EnrichedDatum[]>(() => plotData.filter((bar): bar is EnrichedDatum => Boolean(bar && bar.date)), [plotData]);
+
+	useEffect(() => {
+		chartDataRef.current = chartData;
+	}, [chartData]);
 	const widgetData = useMemo<OHLCVBar[]>(() => replayVisibleData.map((bar, index) => ({
 		...bar,
 		index,
