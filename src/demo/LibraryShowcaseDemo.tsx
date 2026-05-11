@@ -1086,29 +1086,40 @@ export default function LibraryShowcaseDemo() {
 		const endMs = normalized[1].valueOf();
 		let startMs = normalized[0].valueOf();
 
-		if (data.length >= 2 && limit > 0) {
-			// Estimate bar interval from the last two loaded bars (handles any timeframe).
+		// Only clamp zoom-OUT (domain widening). Never interfere with zoom-in.
+		const prevDomain = visibleDomainRef.current;
+		const prevSpan = prevDomain
+			? prevDomain[1].valueOf() - prevDomain[0].valueOf()
+			: Infinity;
+		const proposedSpan = endMs - startMs;
+		const isZoomingOut = proposedSpan > prevSpan;
+
+		if (isZoomingOut && data.length >= 2 && limit > 0) {
+			// Estimate bar interval from the last two loaded bars.
 			const intervalMs = data[data.length - 1].date.valueOf() - data[data.length - 2].date.valueOf();
 
-			// Guard 1: time-span clamp — prevents domain extending into empty future space.
-			const maxSpanMs = limit * intervalMs;
-			if (endMs - startMs > maxSpanMs) {
-				startMs = endMs - maxSpanMs;
+			// Guard: time-span clamp — hard ceiling on visible span.
+			if (intervalMs > 0) {
+				const maxSpanMs = limit * intervalMs;
+				if (proposedSpan > maxSpanMs) {
+					startMs = endMs - maxSpanMs;
+				}
 			}
 
-			// Guard 2: bar-count clamp — catches the case where loaded bars are dense.
-			let count = 0;
-			for (let i = data.length - 1; i >= 0; i--) {
-				const t = data[i].date.valueOf();
-				if (t > endMs) continue;
-				if (t < startMs) break;
-				count++;
-				if (count > limit) {
-					startMs = data[i + 1]?.date.valueOf() ?? t;
-					break;
+			// Guard: bar-count clamp — walk back from right edge of loaded data.
+			let rightIdx = data.length - 1;
+			while (rightIdx >= 0 && data[rightIdx].date.valueOf() > endMs) rightIdx--;
+			const leftIdx = Math.max(0, rightIdx - limit + 1);
+			if (rightIdx >= 0) {
+				const leftBarMs = data[leftIdx].date.valueOf();
+				if (leftBarMs > startMs && leftBarMs < endMs) {
+					startMs = leftBarMs;
 				}
 			}
 		}
+
+		// Safety: startMs must never exceed endMs.
+		if (startMs >= endMs) startMs = normalized[0].valueOf();
 
 		const clamped: [Date, Date] = [new Date(startMs), normalized[1]];
 		setVisibleDomain(clamped);
@@ -1461,27 +1472,15 @@ export default function LibraryShowcaseDemo() {
 		const base: [Date, Date] = visibleDomain ?? resolveChartRangeExtents(chartData, chartRange);
 		if (chartData.length >= 2 && maxVisibleBars > 0) {
 			const endMs = base[1].valueOf();
-			let startMs = base[0].valueOf();
-
-			// Guard 1: time-span clamp (handles empty-future scrolling)
+			const baseSpan = endMs - base[0].valueOf();
 			const intervalMs = chartData[chartData.length - 1].date.valueOf() - chartData[chartData.length - 2].date.valueOf();
 			if (intervalMs > 0) {
 				const maxSpanMs = maxVisibleBars * intervalMs;
-				if (endMs - startMs > maxSpanMs) {
-					startMs = endMs - maxSpanMs;
+				// Only clamp when domain is wider than the limit (zoom-out guard).
+				if (baseSpan > maxSpanMs) {
+					const clampedStart = endMs - maxSpanMs;
+					return [new Date(clampedStart), base[1]];
 				}
-			}
-
-			// Guard 2: bar-count clamp (handles dense loaded data)
-			let rightIdx = chartData.length - 1;
-			while (rightIdx >= 0 && chartData[rightIdx].date.valueOf() > endMs) rightIdx--;
-			const leftIdx = Math.max(0, rightIdx - maxVisibleBars + 1);
-			if (rightIdx >= 0 && chartData[leftIdx].date.valueOf() > startMs) {
-				startMs = chartData[leftIdx].date.valueOf();
-			}
-
-			if (startMs !== base[0].valueOf()) {
-				return [new Date(startMs), base[1]];
 			}
 		}
 		return base;
