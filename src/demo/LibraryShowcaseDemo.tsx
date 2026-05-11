@@ -511,6 +511,8 @@ export default function LibraryShowcaseDemo() {
 	const [showPanesMenu, setShowPanesMenu] = useState(false);
 	const [showWhaleDialog, setShowWhaleDialog] = useState(true);
 	const panesMenuRef = useRef<HTMLDivElement | null>(null);
+	const [showProfileMenu, setShowProfileMenu] = useState(false);
+	const profileMenuRef = useRef<HTMLDivElement | null>(null);
 	const [activeTool, setActiveTool] = useState<string>("cursor");
 	const [openGroupId, setOpenGroupId] = useState<string | null>(null);
 	const toolbarRef = useRef<HTMLElement | null>(null);
@@ -1864,6 +1866,18 @@ export default function LibraryShowcaseDemo() {
 		return () => document.removeEventListener("mousedown", handler);
 	}, [showPanesMenu]);
 
+	// Close profile menu when clicking outside
+	useEffect(() => {
+		if (!showProfileMenu) return;
+		const handler = (e: MouseEvent) => {
+			if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+				setShowProfileMenu(false);
+			}
+		};
+		document.addEventListener("mousedown", handler);
+		return () => document.removeEventListener("mousedown", handler);
+	}, [showProfileMenu]);
+
 	useEffect(() => {
 		if (activeSource !== "vninvest") {
 			setShowWhaleDialog(false);
@@ -2164,6 +2178,7 @@ export default function LibraryShowcaseDemo() {
 								className="vnsc-candle-type-select"
 								aria-label={t("library.timeframes")}
 								value={value}
+								style={{ width: "fit-content" }}
 								onChange={(e) => handleTimeframeChange(e.target.value)}
 							>
 								{options.map((tf) => (
@@ -2179,6 +2194,7 @@ export default function LibraryShowcaseDemo() {
 						className="vnsc-candle-type-select"
 						aria-label={t("toolbar.candleType")}
 						value={chartType}
+						style={{ width: "fit-content" }}
 						onChange={(event) => handleChartTypeChange(event.target.value as ChartTypeId)}
 					>
 						{CHART_TYPES.map((id) => (
@@ -2293,7 +2309,6 @@ export default function LibraryShowcaseDemo() {
 							{t("language.en")}
 						</button>
 					</div>
-					<span className="gc-version-text">v{version}</span>
 					<div className="gc-topbar-sep" />
 					<button
 						type="button"
@@ -2331,7 +2346,46 @@ export default function LibraryShowcaseDemo() {
 					>
 						<ToolIcon id="settings" />
 					</button>
-					<button type="button" className="gc-upgrade-btn">{t("library.upgrade")}</button>
+					<div className="gc-topbar-sep" />
+					{/* Profile icon + dropdown */}
+					<div className="gc-chart-type-wrap" ref={profileMenuRef}>
+						<button
+							type="button"
+							className={`gc-topbar-btn${showProfileMenu ? " gc-topbar-btn--active" : ""}`}
+							onClick={() => setShowProfileMenu((v) => !v)}
+							title={t("profile.menu")}
+							aria-label={t("profile.menu")}
+							aria-expanded={showProfileMenu}
+						>
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+								<circle cx="12" cy="8" r="4" />
+								<path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+							</svg>
+						</button>
+						{showProfileMenu && (
+							<div className="gc-chart-type-menu gc-chart-type-menu--right" style={{ minWidth: 160 }}>
+								<button type="button" className="gc-chart-type-item" onClick={() => setShowProfileMenu(false)}>
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ marginRight: 8, flexShrink: 0 }}>
+										<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" />
+									</svg>
+									{t("profile.login")}
+								</button>
+								<button type="button" className="gc-chart-type-item" onClick={() => setShowProfileMenu(false)}>
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ marginRight: 8, flexShrink: 0 }}>
+										<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM19 8v6M22 11h-6" />
+									</svg>
+									{t("profile.register")}
+								</button>
+								<div style={{ height: 1, background: "var(--gc-border, rgba(120,120,120,0.2))", margin: "4px 8px" }} />
+								<button type="button" className="gc-chart-type-item gc-chart-type-item--accent" onClick={() => setShowProfileMenu(false)}>
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ marginRight: 8, flexShrink: 0 }}>
+										<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+									</svg>
+									{t("profile.upgrade")}
+								</button>
+							</div>
+						)}
+					</div>
 				</div>
 			</header>
 
