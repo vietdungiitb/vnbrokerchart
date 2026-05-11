@@ -1081,52 +1081,31 @@ export default function LibraryShowcaseDemo() {
 
 	const handleVisibleDomainChange = useCallback((domain: [Date | number, Date | number]) => {
 		const normalized = normalizeDomain(domain);
+		// Do NOT call setVisibleDomain here — that would change xExtents prop, which is in
+		// ChartCanvas.CANDIDATES_FOR_RESET, triggering resetChart() on every zoom/pan gesture
+		// and causing a feedback loop that can produce blank NaN charts when filterData returns
+		// an empty range. visibleDomain is only updated by explicit user actions (range buttons,
+		// chart load). The xExtents useMemo applies the zoom-out clamp as a display constraint.
+
+		// Update the ref synchronously so scheduleForViewport and future clamp checks are current.
+		visibleDomainRef.current = normalized;
+
+		// Clamp the backfill viewport to maxVisibleBars so we don't request excessive history.
 		const data = chartDataRef.current;
 		const limit = maxVisibleBarsRef.current;
 		const endMs = normalized[1].valueOf();
 		let startMs = normalized[0].valueOf();
-
-		// Only clamp zoom-OUT (domain widening). Never interfere with zoom-in.
-		const prevDomain = visibleDomainRef.current;
-		const prevSpan = prevDomain
-			? prevDomain[1].valueOf() - prevDomain[0].valueOf()
-			: Infinity;
-		const proposedSpan = endMs - startMs;
-		const isZoomingOut = proposedSpan > prevSpan;
-
-		if (isZoomingOut && data.length >= 2 && limit > 0) {
-			// Estimate bar interval from the last two loaded bars.
+		if (data.length >= 2 && limit > 0) {
 			const intervalMs = data[data.length - 1].date.valueOf() - data[data.length - 2].date.valueOf();
-
-			// Guard: time-span clamp — hard ceiling on visible span.
 			if (intervalMs > 0) {
 				const maxSpanMs = limit * intervalMs;
-				if (proposedSpan > maxSpanMs) {
+				if (endMs - startMs > maxSpanMs) {
 					startMs = endMs - maxSpanMs;
-				}
-			}
-
-			// Guard: bar-count clamp — walk back from right edge of loaded data.
-			let rightIdx = data.length - 1;
-			while (rightIdx >= 0 && data[rightIdx].date.valueOf() > endMs) rightIdx--;
-			const leftIdx = Math.max(0, rightIdx - limit + 1);
-			if (rightIdx >= 0) {
-				const leftBarMs = data[leftIdx].date.valueOf();
-				if (leftBarMs > startMs && leftBarMs < endMs) {
-					startMs = leftBarMs;
 				}
 			}
 		}
 
-		// Safety: startMs must never exceed endMs.
-		if (startMs >= endMs) startMs = normalized[0].valueOf();
-
-		const clamped: [Date, Date] = [new Date(startMs), normalized[1]];
-		setVisibleDomain(clamped);
-		scheduleForViewport({
-			startMs: clamped[0].valueOf(),
-			endMs: clamped[1].valueOf(),
-		});
+		scheduleForViewport({ startMs, endMs });
 	}, [normalizeDomain, scheduleForViewport]);
 
 	const handleVisibleRangeChange = useCallback((range: { startIndex: number; endIndex: number }) => {
