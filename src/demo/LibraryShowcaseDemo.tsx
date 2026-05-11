@@ -1081,12 +1081,22 @@ export default function LibraryShowcaseDemo() {
 
 	const handleVisibleDomainChange = useCallback((domain: [Date | number, Date | number]) => {
 		const normalized = normalizeDomain(domain);
-		// Clamp zoom-out: count bars inside proposed domain; if > maxVisibleBars, shift start rightward.
 		const data = chartDataRef.current;
 		const limit = maxVisibleBarsRef.current;
 		const endMs = normalized[1].valueOf();
 		let startMs = normalized[0].valueOf();
+
 		if (data.length >= 2 && limit > 0) {
+			// Estimate bar interval from the last two loaded bars (handles any timeframe).
+			const intervalMs = data[data.length - 1].date.valueOf() - data[data.length - 2].date.valueOf();
+
+			// Guard 1: time-span clamp — prevents domain extending into empty future space.
+			const maxSpanMs = limit * intervalMs;
+			if (endMs - startMs > maxSpanMs) {
+				startMs = endMs - maxSpanMs;
+			}
+
+			// Guard 2: bar-count clamp — catches the case where loaded bars are dense.
 			let count = 0;
 			for (let i = data.length - 1; i >= 0; i--) {
 				const t = data[i].date.valueOf();
@@ -1094,12 +1104,12 @@ export default function LibraryShowcaseDemo() {
 				if (t < startMs) break;
 				count++;
 				if (count > limit) {
-					// clamp: use next bar's timestamp as new start
 					startMs = data[i + 1]?.date.valueOf() ?? t;
 					break;
 				}
 			}
 		}
+
 		const clamped: [Date, Date] = [new Date(startMs), normalized[1]];
 		setVisibleDomain(clamped);
 		scheduleForViewport({
@@ -1449,25 +1459,29 @@ export default function LibraryShowcaseDemo() {
 
 	const xExtents = useMemo<[Date, Date]>(() => {
 		const base: [Date, Date] = visibleDomain ?? resolveChartRangeExtents(chartData, chartRange);
-		// Clamp to maxVisibleBars: count chartData points inside [start, end]; if more than limit,
-		// shift start rightward so only the rightmost maxVisibleBars bars are visible.
 		if (chartData.length >= 2 && maxVisibleBars > 0) {
-			const [start, end] = base;
-			const startMs = start.valueOf();
-			const endMs = end.valueOf();
-			// Count bars in current domain
-			let inRange = 0;
-			for (let i = chartData.length - 1; i >= 0; i--) {
-				const t = chartData[i].date.valueOf();
-				if (t > endMs) continue;
-				if (t < startMs) break;
-				inRange++;
-				if (inRange > maxVisibleBars) {
-					// find the bar at position maxVisibleBars from the right within range
-					// shift start to that bar's timestamp
-					const clampedStart = new Date(t);
-					return [clampedStart, base[1]];
+			const endMs = base[1].valueOf();
+			let startMs = base[0].valueOf();
+
+			// Guard 1: time-span clamp (handles empty-future scrolling)
+			const intervalMs = chartData[chartData.length - 1].date.valueOf() - chartData[chartData.length - 2].date.valueOf();
+			if (intervalMs > 0) {
+				const maxSpanMs = maxVisibleBars * intervalMs;
+				if (endMs - startMs > maxSpanMs) {
+					startMs = endMs - maxSpanMs;
 				}
+			}
+
+			// Guard 2: bar-count clamp (handles dense loaded data)
+			let rightIdx = chartData.length - 1;
+			while (rightIdx >= 0 && chartData[rightIdx].date.valueOf() > endMs) rightIdx--;
+			const leftIdx = Math.max(0, rightIdx - maxVisibleBars + 1);
+			if (rightIdx >= 0 && chartData[leftIdx].date.valueOf() > startMs) {
+				startMs = chartData[leftIdx].date.valueOf();
+			}
+
+			if (startMs !== base[0].valueOf()) {
+				return [new Date(startMs), base[1]];
 			}
 		}
 		return base;
