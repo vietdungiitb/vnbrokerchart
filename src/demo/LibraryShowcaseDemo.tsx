@@ -633,6 +633,7 @@ export default function LibraryShowcaseDemo() {
 
 	// VNInvest integration state
 	const [activeSource, setActiveSource] = useState<"demo" | "vninvest">("demo");
+	const isVNInvestSource = activeSource === "vninvest";
 	const [vniSymbol, setVniSymbol] = useState<string>(() => {
 		try {
 			return (typeof localStorage !== "undefined" && localStorage.getItem("vni_last_symbol")) || "VCB";
@@ -708,6 +709,24 @@ export default function LibraryShowcaseDemo() {
 		if (dataAdapterName === "vnstocks") return new VNStocksAdapter();
 		return binanceAdapter;
 	}, [dataAdapterName, localCacheAdapter]);
+
+	// Keep source and adapter synchronized so runtime data pipeline never enters mixed mode.
+	useEffect(() => {
+		if (isVNInvestSource) {
+			setDataAdapterName((current) => (current === "vnstocks" ? current : "vnstocks"));
+			return;
+		}
+		setDataAdapterName((current) => (current === "vnstocks" ? "binance" : current));
+	}, [isVNInvestSource]);
+
+	useEffect(() => {
+		setActiveSource((current) => {
+			if (dataAdapterName === "vnstocks") {
+				return current === "vninvest" ? current : "vninvest";
+			}
+			return current === "demo" ? current : "demo";
+		});
+	}, [dataAdapterName]);
 
 	useEffect(() => {
 		liveDataRef.current = liveData;
@@ -1002,6 +1021,10 @@ export default function LibraryShowcaseDemo() {
 	}, [activeSource, vniHasPAT, vniSymbol, vninvestClient]);
 
 	const scheduleForViewport = useCallback((viewport: TimeWindow) => {
+		if (isVNInvestSource) {
+			return;
+		}
+
 		const loadedWindow = computeLoadedWindow(liveDataRef.current);
 		if (!loadedWindow) {
 			return;
@@ -1037,7 +1060,7 @@ export default function LibraryShowcaseDemo() {
 		if (queueRef.current.hasPending(schedulerGenerationRef.current)) {
 			setHistoryStatus("backfilling");
 		}
-	}, [SCHEDULER_LEFT_PREFETCH_RATIO, SCHEDULER_RIGHT_PREFETCH_RATIO, dataAdapter.name, selectedSymbol, timeframe]);
+	}, [SCHEDULER_LEFT_PREFETCH_RATIO, SCHEDULER_RIGHT_PREFETCH_RATIO, dataAdapter.name, isVNInvestSource, selectedSymbol, timeframe]);
 
 	const warmupInitialBinanceHistory = useCallback(async (seedBars: RawOHLCV[]) => {
 		if (
@@ -1192,18 +1215,21 @@ export default function LibraryShowcaseDemo() {
 
 	// Unified timeframe change: routes to the correct state depending on active source.
 	const handleTimeframeChange = useCallback((value: string) => {
-		const isStock = activeSource === "vninvest" || dataAdapterName === "vnstocks";
-		if (isStock) {
+		if (isVNInvestSource) {
 			setVniTimeframe(value);
 		} else {
 			if ((TIMEFRAMES as readonly string[]).includes(value)) {
 				setTimeframe(value as Timeframe);
 			}
 		}
-	}, [activeSource, dataAdapterName]);
+	}, [isVNInvestSource]);
 
 	// Fetch history on mount and on timeframe/adapter change.
 	useEffect(() => {
+		if (isVNInvestSource) {
+			return undefined;
+		}
+
 		mountedRef.current = true;
 		const abortController = new AbortController();
 		setDataStatus("loading");
@@ -1247,15 +1273,20 @@ export default function LibraryShowcaseDemo() {
 			});
 
 		return () => abortController.abort();
-	}, [BACKFILL_PAGE_LIMIT, dataAdapter, publishWarmupDebug, scheduleForViewport, selectedSymbol, timeframe, warmupInitialBinanceHistory]);
+	}, [BACKFILL_PAGE_LIMIT, dataAdapter, isVNInvestSource, publishWarmupDebug, scheduleForViewport, selectedSymbol, timeframe, warmupInitialBinanceHistory]);
 
 	const data = useMemo<RawOHLCV[]>(
-		() => (liveData.length > 0 ? liveData : getOfflineDemoBars()),
-		[liveData],
+		() => {
+			if (liveData.length > 0) {
+				return liveData;
+			}
+			return isVNInvestSource ? [] : getOfflineDemoBars();
+		},
+		[isVNInvestSource, liveData],
 	);
 
 	useEffect(() => {
-		if (dataStatus !== "live") {
+		if (isVNInvestSource || dataStatus !== "live") {
 			return;
 		}
 
@@ -1282,10 +1313,10 @@ export default function LibraryShowcaseDemo() {
 		}, 30000);
 
 		return () => window.clearInterval(timer);
-	}, [BACKFILL_PAGE_LIMIT, dataAdapter, dataStatus, selectedSymbol, timeframe]);
+	}, [BACKFILL_PAGE_LIMIT, dataAdapter, dataStatus, isVNInvestSource, selectedSymbol, timeframe]);
 
 	useEffect(() => {
-		if (dataStatus !== "live") {
+		if (isVNInvestSource || dataStatus !== "live") {
 			return;
 		}
 
@@ -1402,7 +1433,7 @@ export default function LibraryShowcaseDemo() {
 		}, SCHEDULER_TICK_MS);
 
 		return () => window.clearInterval(timer);
-	}, [BACKFILL_PAGE_LIMIT, SCHEDULER_MAX_BACKWARD_PAGES, SCHEDULER_MAX_FORWARD_PAGES, SCHEDULER_TICK_MS, dataAdapter, dataStatus, historyStatus, selectedSymbol, timeframe]);
+	}, [BACKFILL_PAGE_LIMIT, SCHEDULER_MAX_BACKWARD_PAGES, SCHEDULER_MAX_FORWARD_PAGES, SCHEDULER_TICK_MS, dataAdapter, dataStatus, historyStatus, isVNInvestSource, selectedSymbol, timeframe]);
 
 	const replayControllerRef = useRef<BarReplayController<RawOHLCV> | null>(null);
 	if (replayControllerRef.current === null) {
@@ -2184,7 +2215,17 @@ export default function LibraryShowcaseDemo() {
 		setSettingsOpen(false);
 	}, [paneState]);
 
-	const isStockContext = activeSource === "vninvest" || dataAdapterName === "vnstocks";
+	const isStockContext = isVNInvestSource;
+
+	const handleSourceChange = useCallback((source: "demo" | "vninvest") => {
+		setActiveSource(source);
+		setVniError(null);
+	}, []);
+
+	const handleDataAdapterChange = useCallback((nextAdapter: string) => {
+		setDataAdapterName(nextAdapter);
+		setVniError(null);
+	}, []);
 
 	useEffect(() => {
 		if (aboutOpen) {
@@ -2208,14 +2249,14 @@ export default function LibraryShowcaseDemo() {
 					</button>
 
 					<div className="gc-symbol-block">
-					<span className="gc-symbol-name">{selectedSymbol}</span>
+					<span className="gc-symbol-name">{isVNInvestSource ? vniSymbol : selectedSymbol}</span>
 					</div>
 
 					<div className="gc-topbar-sep" />
 
 					{/* Unified timeframe selector — options differ by data source */}
 					{(() => {
-						const isStock = activeSource === "vninvest" || dataAdapterName === "vnstocks";
+						const isStock = isVNInvestSource;
 						const options = isStock ? VNI_TIMEFRAMES : TIMEFRAMES;
 						const value = isStock ? vniTimeframe : timeframe;
 						return (
@@ -2965,9 +3006,9 @@ export default function LibraryShowcaseDemo() {
 						toggleTheme={toggleTheme}
 						onClose={closeSettings}
 						dataAdapterName={dataAdapterName}
-						onDataAdapterChange={setDataAdapterName}
+						onDataAdapterChange={handleDataAdapterChange}
 						activeSource={activeSource}
-						onSourceChange={(src) => { setActiveSource(src); setVniError(null); }}
+						onSourceChange={handleSourceChange}
 						isStockContext={isStockContext}
 						showNonTradingDays={showNonTradingDays}
 						onShowNonTradingDaysChange={setShowNonTradingDays}
