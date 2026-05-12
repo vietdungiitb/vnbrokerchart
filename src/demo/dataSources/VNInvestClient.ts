@@ -60,8 +60,12 @@ function resolveApiBase(): string {
 const API_BASE = resolveApiBase();
 
 export const VNI_ENDPOINTS = {
+  // Legacy bridge — still used for intraday until SaaS OHLC endpoint is ready
   CHART: (symbol: string) =>
     `${API_BASE}/api/stock-management/stocks/${symbol}/chart/`,
+  // Native SaaS endpoint — daily OHLCV from DailyPrice model
+  DAILY_PRICES: (symbol: string) =>
+    `${API_BASE}/core/v1/market-data/daily-prices/${symbol}/`,
   STOCKS_LIST: `${API_BASE}/api/stock-management/stocks/`,
   AUTH_TOKEN: `${API_BASE}/api/auth/token/`,
   TICKER: (symbol: string) =>
@@ -71,6 +75,9 @@ export const VNI_ENDPOINTS = {
   INTRADAY: (symbol: string) =>
     `${API_BASE}/api/realtime/intraday/${symbol}/`,
 };
+
+/** Timeframes considered "daily or coarser" — routed to native SaaS endpoint */
+const DAILY_TIMEFRAMES = new Set(['D', '1D', '1d', 'W', 'M', 'Y']);
 
 /**
  * Supported timeframes for chart endpoint
@@ -169,7 +176,10 @@ export class VNInvestClient {
   }
 
   /**
-   * Get OHLCV chart data for a stock
+   * Get OHLCV chart data for a stock.
+   * Routes daily/weekly/monthly timeframes to the native SaaS endpoint;
+   * intraday timeframes fall back to the legacy bridge while a native
+   * intraday SaaS endpoint is not yet available.
    */
   async getChart(
     symbol: string,
@@ -177,6 +187,71 @@ export class VNInvestClient {
       days?: number;
       timeframe?: string;
     }
+  ): Promise<ChartResponse> {
+    const tf = options?.timeframe ?? 'D';
+    const normalizedTf = (TIMEFRAME_MAP as Record<string, string>)[tf] ?? tf;
+
+    if (DAILY_TIMEFRAMES.has(normalizedTf)) {
+      return this._getChartNative(symbol, options);
+    }
+    return this._getChartLegacy(symbol, options);
+  }
+
+  /**
+   * Native SaaS path: GET /core/v1/market-data/daily-prices/<symbol>/
+   * Adapts DailyPriceSerializer response to the shared ChartResponse contract.
+   */
+  private async _getChartNative(
+    symbol: string,
+    options?: { days?: number; timeframe?: string }
+  ): Promise<ChartResponse> {
+    const params = new URLSearchParams();
+    if (options?.days) {
+      // Convert days → date_from for the native endpoint
+      const from = new Date();
+      from.setDate(from.getDate() - (options.days ?? 90));
+      params.append('date_from', from.toISOString().slice(0, 10));
+    }
+    const url =
+      VNI_ENDPOINTS.DAILY_PRICES(symbol) +
+      (params.toString() ? `?${params.toString()}` : '');
+
+    const { data } = await this.request<{ symbol: string; results: Array<{
+      date: string; open: number; high: number; low: number;
+      close: number; volume: number;
+    }>; }>(url);
+
+    const results = data.results ?? [];
+    const points: ChartPoint[] = results.map((r) => ({
+      date: r.date,
+      open: Number(r.open),
+      high: Number(r.high),
+      low: Number(r.low),
+      close: Number(r.close),
+      volume: Number(r.volume),
+    }));
+    // Native returns newest-first; chart layer expects oldest-first
+    points.reverse();
+
+    const tf = options?.timeframe ?? 'D';
+    return {
+      symbol: data.symbol ?? symbol.toUpperCase(),
+      days: options?.days ?? 90,
+      timeframe: (TIMEFRAME_MAP as Record<string, string>)[tf] ?? tf,
+      start_date: points[0]?.date ?? '',
+      end_date: points[points.length - 1]?.date ?? '',
+      points,
+      technical: {} as any,
+    };
+  }
+
+  /**
+   * Legacy bridge path: GET /api/stock-management/stocks/<symbol>/chart/
+   * Used for intraday timeframes until native SaaS OHLC endpoint exists.
+   */
+  private async _getChartLegacy(
+    symbol: string,
+    options?: { days?: number; timeframe?: string }
   ): Promise<ChartResponse> {
     const params = new URLSearchParams();
     if (options?.days) params.append('days', String(options.days));
@@ -186,11 +261,9 @@ export class VNInvestClient {
         options.timeframe;
       params.append('timeframe', normalizedTimeframe);
     }
-
     const url =
       VNI_ENDPOINTS.CHART(symbol) +
       (params.toString() ? `?${params.toString()}` : '');
-
     const { data } = await this.request<ChartResponse>(url);
     return data;
   }
