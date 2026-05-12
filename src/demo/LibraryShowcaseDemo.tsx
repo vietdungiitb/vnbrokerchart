@@ -710,24 +710,6 @@ export default function LibraryShowcaseDemo() {
 		return binanceAdapter;
 	}, [dataAdapterName, localCacheAdapter]);
 
-	// Keep source and adapter synchronized so runtime data pipeline never enters mixed mode.
-	useEffect(() => {
-		if (isVNInvestSource) {
-			setDataAdapterName((current) => (current === "vnstocks" ? current : "vnstocks"));
-			return;
-		}
-		setDataAdapterName((current) => (current === "vnstocks" ? "binance" : current));
-	}, [isVNInvestSource]);
-
-	useEffect(() => {
-		setActiveSource((current) => {
-			if (dataAdapterName === "vnstocks") {
-				return current === "vninvest" ? current : "vninvest";
-			}
-			return current === "demo" ? current : "demo";
-		});
-	}, [dataAdapterName]);
-
 	useEffect(() => {
 		liveDataRef.current = liveData;
 	}, [liveData]);
@@ -2219,11 +2201,23 @@ export default function LibraryShowcaseDemo() {
 
 	const handleSourceChange = useCallback((source: "demo" | "vninvest") => {
 		setActiveSource(source);
+		// Keep adapter in sync: vnstocks <-> vninvest, binance <-> demo
+		if (source === "vninvest") {
+			setDataAdapterName((cur) => cur === "vnstocks" ? cur : "vnstocks");
+		} else {
+			setDataAdapterName((cur) => cur === "vnstocks" ? "binance" : cur);
+		}
 		setVniError(null);
 	}, []);
 
 	const handleDataAdapterChange = useCallback((nextAdapter: string) => {
 		setDataAdapterName(nextAdapter);
+		// Keep activeSource in sync with adapter choice
+		if (nextAdapter === "vnstocks") {
+			setActiveSource("vninvest");
+		} else {
+			setActiveSource("demo");
+		}
 		setVniError(null);
 	}, []);
 

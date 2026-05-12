@@ -119,6 +119,11 @@ export async function fetchLatestGithubRelease(signal?: AbortSignal): Promise<Re
 		return refreshedNotice;
 	}
 
+	if (response.status === 404) {
+		// Repo has no releases yet — treat as no update available.
+		return null;
+	}
+
 	if (!response.ok) {
 		throw new Error(`GitHub release request failed with status ${response.status}`);
 	}
