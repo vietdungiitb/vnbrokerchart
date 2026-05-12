@@ -60,20 +60,38 @@ function resolveApiBase(): string {
 const API_BASE = resolveApiBase();
 
 export const VNI_ENDPOINTS = {
-  // Legacy bridge — still used for intraday until SaaS OHLC endpoint is ready
-  CHART: (symbol: string) =>
-    `${API_BASE}/api/stock-management/stocks/${symbol}/chart/`,
-  // Native SaaS endpoint — daily OHLCV from DailyPrice model
+  // ── Native SaaS endpoints (core-api) ─────────────────────────────────────
+  /** Stock profiles list/search */
+  SYMBOLS_LIST: `${API_BASE}/core/v1/market-data/symbols/`,
+  /** Real-time snapshot (price, change_pct, volume) */
+  SYMBOL_SNAPSHOT: (symbol: string) =>
+    `${API_BASE}/core/v1/symbol-snapshot/${symbol}`,
+  /** Native daily OHLCV bars */
   DAILY_PRICES: (symbol: string) =>
     `${API_BASE}/core/v1/market-data/daily-prices/${symbol}/`,
-  STOCKS_LIST: `${API_BASE}/api/stock-management/stocks/`,
+  /** Whale alert feed — filtered by ?symbol= query param */
+  WHALE_FEED_SIGNALS: `${API_BASE}/api/signals/whale-feed/`,
+  /** Order flow events per symbol */
+  ORDER_FLOW: (symbol: string) =>
+    `${API_BASE}/api/signals/order-flow/${symbol}/`,
+  /** Auth */
   AUTH_TOKEN: `${API_BASE}/api/auth/token/`,
-  TICKER: (symbol: string) =>
-    `${API_BASE}/api/realtime/ticker/${symbol}/`,
-  WHALE_FEED: (symbol: string) =>
-    `${API_BASE}/api/realtime/whale-feed/${symbol}/`,
+
+  // ── Legacy bridge — kept until native intraday SaaS endpoint exists ────────
+  /** Legacy chart bridge (intraday timeframes only) */
+  CHART: (symbol: string) =>
+    `${API_BASE}/api/stock-management/stocks/${symbol}/chart/`,
+  /** Legacy intraday trade tape — no native equivalent yet */
   INTRADAY: (symbol: string) =>
     `${API_BASE}/api/realtime/intraday/${symbol}/`,
+  // STOCKS_LIST kept as alias for any remaining callers
+  STOCKS_LIST: `${API_BASE}/core/v1/market-data/symbols/`,
+  // TICKER kept as alias
+  TICKER: (symbol: string) =>
+    `${API_BASE}/core/v1/symbol-snapshot/${symbol}`,
+  // WHALE_FEED kept as alias
+  WHALE_FEED: (symbol: string) =>
+    `${API_BASE}/api/signals/whale-feed/?symbol=${symbol}`,
 };
 
 /** Timeframes considered "daily or coarser" — routed to native SaaS endpoint */
@@ -269,11 +287,12 @@ export class VNInvestClient {
   }
 
   /**
-   * Get list of all stocks
+   * Get list of all stocks.
+   * Native SaaS: GET /core/v1/market-data/symbols/
    */
   async getStocks(): Promise<StockItem[]> {
     const { data } = await this.request<{ results?: StockItem[] }>(
-      VNI_ENDPOINTS.STOCKS_LIST
+      VNI_ENDPOINTS.SYMBOLS_LIST
     );
     return data.results || [];
   }
@@ -293,22 +312,38 @@ export class VNInvestClient {
   }
 
   /**
-   * Get realtime ticker data
+   * Get realtime ticker/snapshot data.
+   * Native SaaS: GET /core/v1/symbol-snapshot/<symbol>
+   * Adapts SymbolSnapshot fields to TickerResponse contract.
    */
   async getTicker(symbol: string): Promise<TickerResponse> {
-    const { data } = await this.request<TickerResponse>(
-      VNI_ENDPOINTS.TICKER(symbol)
-    );
-    return data;
+    const { data } = await this.request<{
+      symbol: string;
+      session_date: string;
+      price: number;
+      price_change: number;
+      price_change_pct: number;
+      volume: number;
+      market_status?: string;
+      [key: string]: any;
+    }>(VNI_ENDPOINTS.SYMBOL_SNAPSHOT(symbol));
+    // Adapt native snapshot shape → TickerResponse contract
+    return {
+      ...data,
+      current_price: data.price,
+      change_pct: data.price_change_pct,
+      last_date: data.session_date,
+      market_phase: data.market_status,
+    };
   }
 
   /**
-   * Get whale feed orders
+   * Get whale feed orders for a symbol.
+   * Native SaaS: GET /api/signals/whale-feed/?symbol=<symbol>
    */
   async getWhaleFeed(symbol: string): Promise<WhaleFeedResponse> {
-    const { data } = await this.request<WhaleFeedResponse>(
-      VNI_ENDPOINTS.WHALE_FEED(symbol)
-    );
+    const url = `${VNI_ENDPOINTS.WHALE_FEED_SIGNALS}?symbol=${encodeURIComponent(symbol)}`;
+    const { data } = await this.request<WhaleFeedResponse>(url);
     return data;
   }
 
