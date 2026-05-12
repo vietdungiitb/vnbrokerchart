@@ -76,7 +76,7 @@ describe("githubReleaseClient", () => {
 			new Response(JSON.stringify({
 				tag_name: "v1.1.0",
 				name: "Release 1.1.0",
-				html_url: "https://github.com/vietdungiitb/vnbrockercharts/releases/tag/v1.1.0",
+				html_url: "https://github.com/vietdungiitb/vnbrokercharts/releases/tag/v1.1.0",
 				published_at: "2026-05-12T00:00:00.000Z",
 				body: "Hello\n\nMore details",
 			}), {

@@ -1,9 +1,9 @@
 {
-  "name": "VNBrockerChart",
-  "shortName": "VNBrockerChart",
+  "name": "VNBrokerChart",
+  "shortName": "VNBrokerChart",
   "displayName": {
-    "vi": "VNBrockerChart",
-    "en": "VNBrockerChart"
+    "vi": "VNBrokerChart",
+    "en": "VNBrokerChart"
   },
   "tagline": {
     "vi": "Biểu đồ chứng khoán Việt Nam với nhận diện thương hiệu và cảnh báo GitHub Release.",
@@ -14,7 +14,7 @@
     "en": "Shared brand contract for the demo shell, footer, and About dialog."
   },
   "homepageUrl": "https://vninvest.edusuccess.vn",
-  "repositoryUrl": "https://github.com/vietdungiitb/vnbrockercharts",
+  "repositoryUrl": "https://github.com/vietdungiitb/vnbrokercharts",
   "themeColor": "#1DA8F3",
   "backgroundColor": "#07111F",
   "logo": {
@@ -28,21 +28,21 @@
   "release": {
     "repository": {
       "owner": "vietdungiitb",
-      "name": "vnbrockercharts",
-      "url": "https://github.com/vietdungiitb/vnbrockercharts",
-      "latestUrl": "https://github.com/vietdungiitb/vnbrockercharts/releases/latest",
-      "apiLatestUrl": "https://api.github.com/repos/vietdungiitb/vnbrockercharts/releases/latest"
+      "name": "vnbrokercharts",
+      "url": "https://github.com/vietdungiitb/vnbrokercharts",
+      "latestUrl": "https://github.com/vietdungiitb/vnbrokercharts/releases/latest",
+      "apiLatestUrl": "https://api.github.com/repos/vietdungiitb/vnbrokercharts/releases/latest"
     },
     "enabled": false,
     "cacheTtlMs": 21600000,
     "storageKeys": {
-      "cache": "vnbrockercharts-release-cache-v1",
-      "etag": "vnbrockercharts-release-etag-v1",
-      "dismissedVersion": "vnbrockercharts-release-dismissed-version-v1"
+      "cache": "vnbrokercharts-release-cache-v1",
+      "etag": "vnbrokercharts-release-etag-v1",
+      "dismissedVersion": "vnbrokercharts-release-dismissed-version-v1"
     }
   },
   "siteTitle": {
-    "vi": "VNBrockerChart | Biểu đồ chứng khoán Việt Nam",
-    "en": "VNBrockerChart | Vietnam Stock Charts"
+    "vi": "VNBrokerChart | Biểu đồ chứng khoán Việt Nam",
+    "en": "VNBrokerChart | Vietnam Stock Charts"
   }
 }

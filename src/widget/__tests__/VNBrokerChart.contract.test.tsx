@@ -19,14 +19,14 @@ vi.mock("../../lib/core/hooks/useCanvasResize", () => {
 
 let act: typeof import("react").act;
 let createRoot: typeof import("react-dom/client").createRoot;
-let VNBrockerChart: typeof import("../VNBrockerChart").VNBrockerChart;
+let VNBrokerChart: typeof import("../VNBrokerChart").VNBrokerChart;
 let WidgetErrorBoundary: typeof import("../WidgetErrorBoundary").WidgetErrorBoundary;
 let WidgetI18nProvider: typeof import("../context/WidgetI18nContext").WidgetI18nProvider;
 
 beforeAll(async () => {
 	({ act } = await import("react"));
 	({ createRoot } = await import("react-dom/client"));
-	({ VNBrockerChart } = await import("../VNBrockerChart"));
+	({ VNBrokerChart } = await import("../VNBrokerChart"));
 	({ WidgetErrorBoundary } = await import("../WidgetErrorBoundary"));
 	({ WidgetI18nProvider } = await import("../context/WidgetI18nContext"));
 });
@@ -59,7 +59,7 @@ function createAdapter(fetchBarsPromise: Promise<any[]>, label: string) {
 	};
 }
 
-describe("VNBrockerChart", () => {
+describe("VNBrokerChart", () => {
 	let container: HTMLDivElement | null = null;
 	let root: ReturnType<typeof createRoot> | null = null;
 	let abortSpy: any = null;
@@ -96,7 +96,7 @@ describe("VNBrockerChart", () => {
 		root = createRoot(container);
 
 		await act(async () => {
-			root?.render(<VNBrockerChart adapter={adapter as never} locale="vi" />);
+			root?.render(<VNBrokerChart adapter={adapter as never} locale="vi" />);
 		});
 
 		expect(container.textContent).toContain("Đang tải biểu đồ…");
@@ -123,11 +123,11 @@ describe("VNBrockerChart", () => {
 		root = createRoot(container);
 
 		await act(async () => {
-			root?.render(<VNBrockerChart adapter={firstAdapter as never} locale="en" />);
+			root?.render(<VNBrokerChart adapter={firstAdapter as never} locale="en" />);
 		});
 
 		await act(async () => {
-			root?.render(<VNBrockerChart adapter={secondAdapter as never} locale="en" />);
+			root?.render(<VNBrokerChart adapter={secondAdapter as never} locale="en" />);
 		});
 
 		expect(abortSpy?.mock.calls.length ?? 0).toBeGreaterThan(0);

@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-12 21:57:05`
+Generated at: `2026-05-12 22:01:08`
 
 ## Summary
 
@@ -4643,12 +4643,12 @@ Generated at: `2026-05-12 21:57:05`
 
 - No parseable top-level symbols found
 
-### `src/widget/__tests__/VNBrockerChart.contract.test.tsx`
+### `src/widget/__tests__/VNBrokerChart.contract.test.tsx`
 
 - Functions:
   - `ThrowingChild`, `createAdapter`, `createDeferred`
 - Top-level variables:
-  - `VNBrockerChart`, `WidgetErrorBoundary`, `WidgetI18nProvider`, `abortSpy`, `act`, `adapter`, `container`, `createRoot`, `fetchDeferred`, `firstAdapter`, `firstFetch`, `originalConsoleError`, `promise`, `reactActEnvironment`, `ref`, `reject`, `resolve`, `root`, `secondAdapter`, `secondFetch`
+  - `VNBrokerChart`, `WidgetErrorBoundary`, `WidgetI18nProvider`, `abortSpy`, `act`, `adapter`, `container`, `createRoot`, `fetchDeferred`, `firstAdapter`, `firstFetch`, `originalConsoleError`, `promise`, `reactActEnvironment`, `ref`, `reject`, `resolve`, `root`, `secondAdapter`, `secondFetch`
 
 ### `src/widget/context/__tests__/WidgetI18nContext.test.tsx`
 
@@ -4691,10 +4691,10 @@ Generated at: `2026-05-12 21:57:05`
 - Top-level variables:
   - `accentColor`, `bottom`, `boxHeight`, `boxWidth`, `boxX`, `boxY`, `chartConfig`, `drawOn`, `endPixel`, `hoverPixel`, `hoverPoint`, `labels`, `lineHeight`, `lines`, `paddingX`, `paddingY`, `point`, `right`, `selection`, `startPixel`, `summary`
 
-### `src/widget/VNBrockerChart.tsx`
+### `src/widget/VNBrokerChart.tsx`
 
 - Functions:
-  - `VNBrockerChart`, `VNBrockerChartContent`, `buildContinuousState`, `handleChartVisibleDomainChange`, `lookbackDays`, `mergeBarsByDate`, `resolveFetchWindow`, `scaledXExtents`, `timeXAccessor`
+  - `VNBrokerChart`, `VNBrokerChartContent`, `buildContinuousState`, `handleChartVisibleDomainChange`, `lookbackDays`, `mergeBarsByDate`, `resolveFetchWindow`, `scaledXExtents`, `timeXAccessor`
 - Top-level variables:
   - `activeSymbol`, `activeTimeframe`, `axisStroke`, `axisTickFill`, `candidatePanes`, `chartInnerHeight`, `chartScaleState`, `computedXExtents`, `controller`, `current`, `dateFormat`, `diff`, `disposed`, `enrichedData`, `existingIndex`, `firstBar`, `firstIndex`, `hasExternalData`, `isDark`, `lastBar`, `lastIndex`, `minDiff`, `nearest`, `nextPanes`, `oneDay`, `paneHeights`, `plotData`, `previousTheme`, `priceFormat`, `provider`, `ready`, `resolveNearestIndex`, `resolvedTheme`, `resolvedXExtents`, `root`, `scaled`, `scaledData`, `scaledDisplayXAccessor`, `scaledXAccessor`, `shouldHideNonTradingDays`, `sortedBars`, `targetMs`, `themeState`, `to`, `toDomainDate`, `unsubscribe`, `visiblePanes`, `volumeFormat`
 

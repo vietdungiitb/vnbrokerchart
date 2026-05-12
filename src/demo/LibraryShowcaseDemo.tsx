@@ -26,7 +26,7 @@ import {
 		type StockDataAdapter,
 	ChartSplitter,
 	useChartTheme,
-	VNBrockerChart,
+	VNBrokerChart,
 		resolveDrawingShortcut,
 		subscribeDrawingStyleChanges,
 		subscribeSeriesStyleChanges,
@@ -2655,7 +2655,7 @@ export default function LibraryShowcaseDemo() {
 								<span>{t("library.loadingRealData")}</span>
 							</div>
 						) : (
-							<VNBrockerChart
+							<VNBrokerChart
 								adapter={chartAdapter}
 								data={widgetData}
 								panes={paneState.panes}
@@ -2678,7 +2678,7 @@ export default function LibraryShowcaseDemo() {
 									onToolUsed={handleDrawingToolUsed}
 									onContextMenu={handleDrawingContextMenu}
 								/>
-							</VNBrockerChart>
+							</VNBrokerChart>
 						)}
 
 						{replayContextMenu && (

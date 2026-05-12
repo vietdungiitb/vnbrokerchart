@@ -46,7 +46,7 @@ describe("useReleaseNotice", () => {
 			new Response(JSON.stringify({
 				tag_name: "v1.0.1",
 				name: "Release 1.0.1",
-				html_url: "https://github.com/vietdungiitb/vnbrockercharts/releases/tag/v1.0.1",
+				html_url: "https://github.com/vietdungiitb/vnbrokercharts/releases/tag/v1.0.1",
 				published_at: "2026-05-12T00:00:00.000Z",
 				body: "Notes",
 			}), {
@@ -75,7 +75,7 @@ describe("useReleaseNotice", () => {
 			await Promise.resolve();
 		});
 
-		expect(window.localStorage.getItem("vnbrockercharts-release-dismissed-version-v1")).toBe("1.0.1");
+		expect(window.localStorage.getItem("vnbrokercharts-release-dismissed-version-v1")).toBe("1.0.1");
 		expect(container.querySelector("div")?.getAttribute("data-status")).toBe("up-to-date");
 
 		root.unmount();

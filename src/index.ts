@@ -126,8 +126,8 @@ export type {
 
 export type { DrawingStyleOverride } from "./lib/drawing";
 
-export { MeasurementOverlay, VNBrockerChart, WidgetErrorBoundary, WidgetEmptyState, WidgetI18nContext, WidgetI18nProvider, useWidgetI18n } from "./widget";
+export { MeasurementOverlay, VNBrokerChart, WidgetErrorBoundary, WidgetEmptyState, WidgetI18nContext, WidgetI18nProvider, useWidgetI18n } from "./widget";
 export { widgetMessagesEn, widgetMessagesVi } from "./widget";
-export type { VNBrockerChartProps, WidgetLocale, WidgetMessages, WidgetI18nContextValue, WidgetI18nProviderProps } from "./widget";
+export type { VNBrokerChartProps, WidgetLocale, WidgetMessages, WidgetI18nContextValue, WidgetI18nProviderProps } from "./widget";
 
 export const version = "1.0.0";

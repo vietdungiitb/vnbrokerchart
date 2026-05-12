@@ -1,4 +1,4 @@
-export { VNBrockerChart } from "./VNBrockerChart";
+export { VNBrokerChart } from "./VNBrokerChart";
 export { default as MeasurementOverlay } from "./MeasurementOverlay";
 export { WidgetErrorBoundary } from "./WidgetErrorBoundary";
 export { WidgetEmptyState } from "./WidgetEmptyState";
@@ -7,5 +7,5 @@ export type { WidgetI18nContextValue, WidgetI18nProviderProps } from "./context/
 export { widgetMessagesEn } from "./i18n/messages.en";
 export { widgetMessagesVi } from "./i18n/messages.vi";
 export type { WidgetLocale, WidgetMessages } from "./i18n/types";
-export type { VNBrockerChartProps } from "./VNBrockerChart";
+export type { VNBrokerChartProps } from "./VNBrokerChart";
 export type { StockDataAdapter, Timeframe } from "../lib/types/adapter";
