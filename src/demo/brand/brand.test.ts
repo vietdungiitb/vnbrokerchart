@@ -19,15 +19,15 @@ import {
 
 describe("brand manifest", () => {
 	it("exposes a stable shared identity contract", () => {
-		expect(brandManifest.name).toBe("VNStockChart");
-		expect(brandManifest.shortName).toBe("VNStockChart");
-		expect(getBrandDisplayName("vi")).toBe("VNStockChart");
-		expect(getBrandDisplayName("en")).toBe("VNStockChart");
+		expect(brandManifest.name).toBe("VNBrockerChart");
+		expect(brandManifest.shortName).toBe("VNBrockerChart");
+		expect(getBrandDisplayName("vi")).toBe("VNBrockerChart");
+		expect(getBrandDisplayName("en")).toBe("VNBrockerChart");
 		expect(getBrandTagline("vi")).toContain("GitHub Release");
-		expect(getBrandSiteTitle("en")).toBe("VNStockChart | Vietnam Stock Charts");
+		expect(getBrandSiteTitle("en")).toBe("VNBrockerChart | Vietnam Stock Charts");
 		expect(getBrandRuntimeVersion()).toBe("1.0.0");
-		expect(getBrandLatestReleaseUrl()).toBe("https://github.com/vietdungiitb/vnstockcharts/releases/latest");
-		expect(getBrandLatestReleaseApiUrl()).toBe("https://api.github.com/repos/vietdungiitb/vnstockcharts/releases/latest");
+		expect(getBrandLatestReleaseUrl()).toBe("https://github.com/vietdungiitb/vnbrockercharts/releases/latest");
+		expect(getBrandLatestReleaseApiUrl()).toBe("https://api.github.com/repos/vietdungiitb/vnbrockercharts/releases/latest");
 		expect(getBrandReleaseConfig().cacheTtlMs).toBe(6 * 60 * 60 * 1000);
 	});
 
@@ -39,8 +39,8 @@ describe("brand manifest", () => {
 		}
 
 		expect(getBrandAssetUrl("mark")).toContain("brand/assets/logo-mark.png");
-		expect(brandManifest.release.storageKeys.cache).toBe("vnstockcharts-release-cache-v1");
-		expect(brandManifest.release.storageKeys.etag).toBe("vnstockcharts-release-etag-v1");
-		expect(brandManifest.release.storageKeys.dismissedVersion).toBe("vnstockcharts-release-dismissed-version-v1");
+		expect(brandManifest.release.storageKeys.cache).toBe("vnbrockercharts-release-cache-v1");
+		expect(brandManifest.release.storageKeys.etag).toBe("vnbrockercharts-release-etag-v1");
+		expect(brandManifest.release.storageKeys.dismissedVersion).toBe("vnbrockercharts-release-dismissed-version-v1");
 	});
 });

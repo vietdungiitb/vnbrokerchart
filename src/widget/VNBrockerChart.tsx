@@ -15,7 +15,7 @@ import MeasurementOverlay from "./MeasurementOverlay";
 import { WidgetI18nProvider } from "./context/WidgetI18nContext";
 import type { WidgetLocale, WidgetMessages } from "./i18n/types";
 
-export interface VNStockChartProps {
+export interface VNBrockerChartProps {
 	adapter: StockDataAdapter;
 	data?: readonly OHLCVBar[];
 	symbol?: string;
@@ -84,7 +84,7 @@ function mergeBarsByDate(previousBars: readonly OHLCVBar[], nextBar: OHLCVBar): 
 	return [...previousBars, nextBar].sort((left, right) => left.date.getTime() - right.date.getTime());
 }
 
-function VNStockChartContent({
+function VNBrockerChartContent({
 	adapter,
 	data,
 	symbol,
@@ -102,7 +102,7 @@ function VNStockChartContent({
 	onVisibleRangeChange,
 	showNonTradingDays,
 	onError,
-}: VNStockChartProps) {
+}: VNBrockerChartProps) {
 	const { ref, size } = useCanvasResize<HTMLDivElement>();
 	const themeState = useChartTheme("light");
 	const resolvedTheme = theme ?? themeState.theme;
@@ -415,11 +415,11 @@ function VNStockChartContent({
 	);
 }
 
-export function VNStockChart(props: VNStockChartProps) {
+export function VNBrockerChart(props: VNBrockerChartProps) {
 	return (
 		<WidgetI18nProvider locale={props.locale} messages={props.messages}>
 			<WidgetErrorBoundary onError={(caughtError) => props.onError?.(caughtError)}>
-				<VNStockChartContent {...props} />
+				<VNBrockerChartContent {...props} />
 			</WidgetErrorBoundary>
 		</WidgetI18nProvider>
 	);

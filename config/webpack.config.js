@@ -74,6 +74,11 @@ module.exports = (env, argv) => {
           target: process.env.VNINVEST_API_PROXY_TARGET || "http://127.0.0.1:80",
           changeOrigin: true,
         },
+        // Native SaaS core-api endpoints use /core/v1/ prefix
+        "/core": {
+          target: process.env.VNINVEST_API_PROXY_TARGET || "http://127.0.0.1:80",
+          changeOrigin: true,
+        },
       },
       compress: true,
       port: devServerPort,

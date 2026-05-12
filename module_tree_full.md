@@ -2,7 +2,7 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-12 16:30:17`
+Generated at: `2026-05-12 21:57:05`
 
 ## Summary
 
@@ -11,7 +11,7 @@ Generated at: `2026-05-12 16:30:17`
 - JS/TS modules: 768
 - Total classes: 361
 - Total functions: 4015
-- Total top-level variables: 9094
+- Total top-level variables: 9100
 
 ## Python Modules
 
@@ -2227,7 +2227,7 @@ Generated at: `2026-05-12 16:30:17`
 - Functions:
   - `clearVNInvestClient`, `createVNInvestClient`, `getVNInvestClient`, `resolveApiBase`
 - Top-level variables:
-  - `API_BASE`, `TIMEFRAME_MAP`, `VNI_ENDPOINTS`, `all`, `clientInstance`, `data`, `error`, `globalBase`, `lowerQuery`, `normalizedTimeframe`, `originBase`, `params`, `response`, `selected`, `storageBase`, `url`
+  - `API_BASE`, `DAILY_TIMEFRAMES`, `TIMEFRAME_MAP`, `VNI_ENDPOINTS`, `all`, `clientInstance`, `data`, `error`, `from`, `globalBase`, `lowerQuery`, `normalizedTf`, `normalizedTimeframe`, `originBase`, `params`, `points`, `response`, `results`, `selected`, `storageBase`, `tf`, `url`
 
 ### `src/demo/demoData.ts`
 
@@ -4643,12 +4643,12 @@ Generated at: `2026-05-12 16:30:17`
 
 - No parseable top-level symbols found
 
-### `src/widget/__tests__/VNStockChart.contract.test.tsx`
+### `src/widget/__tests__/VNBrockerChart.contract.test.tsx`
 
 - Functions:
   - `ThrowingChild`, `createAdapter`, `createDeferred`
 - Top-level variables:
-  - `VNStockChart`, `WidgetErrorBoundary`, `WidgetI18nProvider`, `abortSpy`, `act`, `adapter`, `container`, `createRoot`, `fetchDeferred`, `firstAdapter`, `firstFetch`, `originalConsoleError`, `promise`, `reactActEnvironment`, `ref`, `reject`, `resolve`, `root`, `secondAdapter`, `secondFetch`
+  - `VNBrockerChart`, `WidgetErrorBoundary`, `WidgetI18nProvider`, `abortSpy`, `act`, `adapter`, `container`, `createRoot`, `fetchDeferred`, `firstAdapter`, `firstFetch`, `originalConsoleError`, `promise`, `reactActEnvironment`, `ref`, `reject`, `resolve`, `root`, `secondAdapter`, `secondFetch`
 
 ### `src/widget/context/__tests__/WidgetI18nContext.test.tsx`
 
@@ -4691,10 +4691,10 @@ Generated at: `2026-05-12 16:30:17`
 - Top-level variables:
   - `accentColor`, `bottom`, `boxHeight`, `boxWidth`, `boxX`, `boxY`, `chartConfig`, `drawOn`, `endPixel`, `hoverPixel`, `hoverPoint`, `labels`, `lineHeight`, `lines`, `paddingX`, `paddingY`, `point`, `right`, `selection`, `startPixel`, `summary`
 
-### `src/widget/VNStockChart.tsx`
+### `src/widget/VNBrockerChart.tsx`
 
 - Functions:
-  - `VNStockChart`, `VNStockChartContent`, `buildContinuousState`, `handleChartVisibleDomainChange`, `lookbackDays`, `mergeBarsByDate`, `resolveFetchWindow`, `scaledXExtents`, `timeXAccessor`
+  - `VNBrockerChart`, `VNBrockerChartContent`, `buildContinuousState`, `handleChartVisibleDomainChange`, `lookbackDays`, `mergeBarsByDate`, `resolveFetchWindow`, `scaledXExtents`, `timeXAccessor`
 - Top-level variables:
   - `activeSymbol`, `activeTimeframe`, `axisStroke`, `axisTickFill`, `candidatePanes`, `chartInnerHeight`, `chartScaleState`, `computedXExtents`, `controller`, `current`, `dateFormat`, `diff`, `disposed`, `enrichedData`, `existingIndex`, `firstBar`, `firstIndex`, `hasExternalData`, `isDark`, `lastBar`, `lastIndex`, `minDiff`, `nearest`, `nextPanes`, `oneDay`, `paneHeights`, `plotData`, `previousTheme`, `priceFormat`, `provider`, `ready`, `resolveNearestIndex`, `resolvedTheme`, `resolvedXExtents`, `root`, `scaled`, `scaledData`, `scaledDisplayXAccessor`, `scaledXAccessor`, `shouldHideNonTradingDays`, `sortedBars`, `targetMs`, `themeState`, `to`, `toDomainDate`, `unsubscribe`, `visiblePanes`, `volumeFormat`
 

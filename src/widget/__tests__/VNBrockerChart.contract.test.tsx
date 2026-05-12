@@ -19,14 +19,14 @@ vi.mock("../../lib/core/hooks/useCanvasResize", () => {
 
 let act: typeof import("react").act;
 let createRoot: typeof import("react-dom/client").createRoot;
-let VNStockChart: typeof import("../VNStockChart").VNStockChart;
+let VNBrockerChart: typeof import("../VNBrockerChart").VNBrockerChart;
 let WidgetErrorBoundary: typeof import("../WidgetErrorBoundary").WidgetErrorBoundary;
 let WidgetI18nProvider: typeof import("../context/WidgetI18nContext").WidgetI18nProvider;
 
 beforeAll(async () => {
 	({ act } = await import("react"));
 	({ createRoot } = await import("react-dom/client"));
-	({ VNStockChart } = await import("../VNStockChart"));
+	({ VNBrockerChart } = await import("../VNBrockerChart"));
 	({ WidgetErrorBoundary } = await import("../WidgetErrorBoundary"));
 	({ WidgetI18nProvider } = await import("../context/WidgetI18nContext"));
 });
@@ -59,7 +59,7 @@ function createAdapter(fetchBarsPromise: Promise<any[]>, label: string) {
 	};
 }
 
-describe("VNStockChart", () => {
+describe("VNBrockerChart", () => {
 	let container: HTMLDivElement | null = null;
 	let root: ReturnType<typeof createRoot> | null = null;
 	let abortSpy: any = null;
@@ -96,7 +96,7 @@ describe("VNStockChart", () => {
 		root = createRoot(container);
 
 		await act(async () => {
-			root?.render(<VNStockChart adapter={adapter as never} locale="vi" />);
+			root?.render(<VNBrockerChart adapter={adapter as never} locale="vi" />);
 		});
 
 		expect(container.textContent).toContain("Đang tải biểu đồ…");
@@ -123,11 +123,11 @@ describe("VNStockChart", () => {
 		root = createRoot(container);
 
 		await act(async () => {
-			root?.render(<VNStockChart adapter={firstAdapter as never} locale="en" />);
+			root?.render(<VNBrockerChart adapter={firstAdapter as never} locale="en" />);
 		});
 
 		await act(async () => {
-			root?.render(<VNStockChart adapter={secondAdapter as never} locale="en" />);
+			root?.render(<VNBrockerChart adapter={secondAdapter as never} locale="en" />);
 		});
 
 		expect(abortSpy?.mock.calls.length ?? 0).toBeGreaterThan(0);

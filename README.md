@@ -1,9 +1,9 @@
-# VNStockChart
+# VNBrockerChart
 
 > **Nền tảng biểu đồ chứng khoán chuyên nghiệp cho thị trường Việt Nam**  
 > Từ Runtime Demo đến TradingView-class Indicator Platform
 
-[![Release](https://img.shields.io/github/v/release/vietdungiitb/vnstockcharts?include_prereleases=true&label=release)](https://github.com/vietdungiitb/vnstockcharts/releases/latest)
+[![Release](https://img.shields.io/github/v/release/vietdungiitb/vnbrockercharts?include_prereleases=true&label=release)](https://github.com/vietdungiitb/vnbrockercharts/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![React](https://img.shields.io/badge/React-19-61DAFB)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-3178C6)](https://www.typescriptlang.org)
@@ -12,7 +12,7 @@
 
 ## Giới thiệu
 
-**VNStockChart** là thư viện biểu đồ kỹ thuật được xây dựng đặc biệt cho thị trường chứng khoán Việt Nam, với kiến trúc indicator platform 5 tầng hướng đến chuẩn TradingView. Dự án tích hợp trực tiếp với **VNInvest** (whale flow, CVD, dark money signals) và **VNStock** (dữ liệu nội địa VN), cung cấp những chỉ báo độc quyền mà không một platform quốc tế nào có được trên data VN thật.
+**VNBrockerChart** là thư viện biểu đồ kỹ thuật được xây dựng đặc biệt cho thị trường chứng khoán Việt Nam, với kiến trúc indicator platform 5 tầng hướng đến chuẩn TradingView. Dự án tích hợp trực tiếp với **VNInvest** (whale flow, CVD, dark money signals) và **VNStock** (dữ liệu nội địa VN), cung cấp những chỉ báo độc quyền mà không một platform quốc tế nào có được trên data VN thật.
 
 Điểm khác biệt cốt lõi so với TradingView hay GoCharting:
 
@@ -46,7 +46,7 @@ Website: [https://vninvest.edusuccess.vn](https://vninvest.edusuccess.vn)
 
 ### Tại sao không dùng ECharts / Recharts / Chart.js cho core?
 
-Các thư viện charting phổ thông đóng gói rendering pipeline — không thể inject whale bubble annotations vào đúng price bar theo bar index, không thể sync drawing layer với zoom/pan state. VNStockChart cần kiểm soát toàn bộ render loop để:
+Các thư viện charting phổ thông đóng gói rendering pipeline — không thể inject whale bubble annotations vào đúng price bar theo bar index, không thể sync drawing layer với zoom/pan state. VNBrockerChart cần kiểm soát toàn bộ render loop để:
 
 1. Overlay whale events chính xác theo timestamp trên canvas layer
 2. Drawing tools tương tác trực tiếp với chart coordinate system
@@ -75,7 +75,7 @@ src/
 │   ├── demo.css                             ← gc-* layout + CSS variables theme
 │   └── i18n.tsx                             ← VI/EN i18n
 └── widget/
-    └── VNStockChart.tsx                     ← embeddable widget surface
+    └── VNBrockerChart.tsx                     ← embeddable widget surface
 ```
 
 ### Nguyên tắc kiến trúc bất biến
@@ -169,7 +169,7 @@ Ví dụ thực tế: `EMA(RSI(14), 5)` — làm mượt RSI bằng EMA, giảm 
 
 #### Giai đoạn 5 — Custom Data + Marketplace *(Enterprise + Marketplace)*
 
-Biến VNStockChart từ tool thành platform:
+Biến VNBrockerChart từ tool thành platform:
 
 - **Custom data sources:** CSV upload, REST API endpoint, WebSocket stream, Database query
 - **Combine với DAG Builder:** indicator trên data nội bộ công ty, không share với ai

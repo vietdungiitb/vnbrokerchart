@@ -4,7 +4,7 @@ fork or clone the repo
 
 ```sh
 $ git clone <git url>
-$ cd vnstockcharts
+$ cd vnbrockercharts
 $ npm install
 $ npm run watch
 ```
