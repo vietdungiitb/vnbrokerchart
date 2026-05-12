@@ -23,7 +23,7 @@
     "build": "tsup",
     "storybook": "storybook dev -p 6006",
     "build:storybook": "storybook build",
-    "watch": "npm run clean && cross-env IP=0.0.0.0 PORT=8080 webpack serve --config config/webpack.config.js",
+    "watch": "npm run clean && cross-env IP=0.0.0.0 PORT=3000 webpack serve --config config/webpack.config.js",
     "build:docs": "cross-env NODE_ENV=production webpack --config config/webpack.config.js",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx src --fix",
     "type-check": "tsc --noEmit",

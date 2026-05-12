@@ -1,9 +1,9 @@
-# VNStockCharts
+# VNStockChart
 
 > **Nền tảng biểu đồ chứng khoán chuyên nghiệp cho thị trường Việt Nam**  
 > Từ Runtime Demo đến TradingView-class Indicator Platform
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://vninvest.edusuccess.vn)
+[![Release](https://img.shields.io/github/v/release/vietdungiitb/vnstockcharts?include_prereleases=true&label=release)](https://github.com/vietdungiitb/vnstockcharts/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![React](https://img.shields.io/badge/React-19-61DAFB)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-3178C6)](https://www.typescriptlang.org)
@@ -12,7 +12,7 @@
 
 ## Giới thiệu
 
-**VNStockCharts** là thư viện biểu đồ kỹ thuật được xây dựng đặc biệt cho thị trường chứng khoán Việt Nam, với kiến trúc indicator platform 5 tầng hướng đến chuẩn TradingView. Dự án tích hợp trực tiếp với **VNInvest** (whale flow, CVD, dark money signals) và **VNStock** (dữ liệu nội địa VN), cung cấp những chỉ báo độc quyền mà không một platform quốc tế nào có được trên data VN thật.
+**VNStockChart** là thư viện biểu đồ kỹ thuật được xây dựng đặc biệt cho thị trường chứng khoán Việt Nam, với kiến trúc indicator platform 5 tầng hướng đến chuẩn TradingView. Dự án tích hợp trực tiếp với **VNInvest** (whale flow, CVD, dark money signals) và **VNStock** (dữ liệu nội địa VN), cung cấp những chỉ báo độc quyền mà không một platform quốc tế nào có được trên data VN thật.
 
 Điểm khác biệt cốt lõi so với TradingView hay GoCharting:
 
@@ -46,7 +46,7 @@ Website: [https://vninvest.edusuccess.vn](https://vninvest.edusuccess.vn)
 
 ### Tại sao không dùng ECharts / Recharts / Chart.js cho core?
 
-Các thư viện charting phổ thông đóng gói rendering pipeline — không thể inject whale bubble annotations vào đúng price bar theo bar index, không thể sync drawing layer với zoom/pan state. VNStockCharts cần kiểm soát toàn bộ render loop để:
+Các thư viện charting phổ thông đóng gói rendering pipeline — không thể inject whale bubble annotations vào đúng price bar theo bar index, không thể sync drawing layer với zoom/pan state. VNStockChart cần kiểm soát toàn bộ render loop để:
 
 1. Overlay whale events chính xác theo timestamp trên canvas layer
 2. Drawing tools tương tác trực tiếp với chart coordinate system
@@ -169,7 +169,7 @@ Ví dụ thực tế: `EMA(RSI(14), 5)` — làm mượt RSI bằng EMA, giảm 
 
 #### Giai đoạn 5 — Custom Data + Marketplace *(Enterprise + Marketplace)*
 
-Biến VNStockCharts từ tool thành platform:
+Biến VNStockChart từ tool thành platform:
 
 - **Custom data sources:** CSV upload, REST API endpoint, WebSocket stream, Database query
 - **Combine với DAG Builder:** indicator trên data nội bộ công ty, không share với ai
@@ -211,7 +211,7 @@ Biến VNStockCharts từ tool thành platform:
 
 ```bash
 npm install
-npm run watch          # dev server tại http://localhost:8080
+npm run watch          # dev server tại http://localhost:3000
 ```
 
 ### Build production
@@ -231,15 +231,14 @@ python scripts/generate_module_tree.py  # cập nhật module_tree_full.md
 
 ---
 
-## Cấu trúc tài liệu
+## Tài liệu công khai
 
 | File | Mục đích |
 |------|---------|
-| [docs/planning/INDICATOR_PLATFORM_PROPOSAL.md](docs/planning/INDICATOR_PLATFORM_PROPOSAL.md) | Đề xuất kiến trúc 5 giai đoạn đầy đủ |
-| [docs/planning/INDICATOR_SSOT_POLICY.md](docs/planning/INDICATOR_SSOT_POLICY.md) | Quy tắc canonical store bắt buộc |
-| [docs/upgrade-standard/AUDIT_LEDGER.md](docs/upgrade-standard/AUDIT_LEDGER.md) | Lịch sử thay đổi đầy đủ |
-| [docs/project-delivery/PROJECT_GOVERNANCE.md](docs/project-delivery/PROJECT_GOVERNANCE.md) | Quy trình phê duyệt và authority |
-| [quality/QUALITY.md](quality/QUALITY.md) | Tiêu chuẩn chất lượng tối thiểu |
+| [public-docs/README.md](public-docs/README.md) | Cổng vào cho tài liệu công khai |
+| [public-docs/planning/INDICATOR_PLATFORM_PROPOSAL.md](public-docs/planning/INDICATOR_PLATFORM_PROPOSAL.md) | Đề xuất kiến trúc indicator platform |
+| [public-docs/planning/INDICATOR_SSOT_POLICY.md](public-docs/planning/INDICATOR_SSOT_POLICY.md) | Quy tắc canonical store bắt buộc |
+| [public-docs/roadmap/COMING-SOON.md](public-docs/roadmap/COMING-SOON.md) | Roadmap công khai / legacy notes |
 | [AGENTS.md](AGENTS.md) | Bootstrap guide cho AI agents |
 
 ---
@@ -324,9 +323,6 @@ npm install  --save react-stockcharts
 
 [Quality docs](./quality/QUALITY.md)
 
-[Documentation](http://rrag.github.io/react-stockcharts)
-
-[Ready to use Examples](https://github.com/rrag/react-stockcharts-examples2)
 
 ### Contributing
 

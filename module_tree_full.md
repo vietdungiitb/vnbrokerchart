@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-11 17:05:03`
+Generated at: `2026-05-12 12:15:08`
 
 ## Summary
 
-- Total modules: 757
+- Total modules: 769
 - Python modules: 1
-- JS/TS modules: 756
+- JS/TS modules: 768
 - Total classes: 361
-- Total functions: 3972
-- Total top-level variables: 9007
+- Total functions: 4015
+- Total top-level variables: 9091
 
 ## Python Modules
 
@@ -40,7 +40,7 @@ Generated at: `2026-05-11 17:05:03`
 ### `config/webpack.config.js`
 
 - Top-level variables:
-  - `HtmlWebpackPlugin`, `isProduction`, `path`
+  - `HtmlWebpackPlugin`, `brandManifest`, `devServerPort`, `isProduction`, `path`
 
 ### `docs/documentation.js`
 
@@ -841,6 +841,8 @@ Generated at: `2026-05-11 17:05:03`
 
 - Functions:
   - `getDevServerJs`, `getDocumentationContent`, `getExternalAssets`, `getIndexContent`
+- Top-level variables:
+  - `brandManifest`, `packageJson`
 
 ### `react-stockcharts-examples/examples/AreaChart/src/Chart.js`
 
@@ -2075,7 +2077,7 @@ Generated at: `2026-05-11 17:05:03`
 ### `scripts/updateVersion.js`
 
 - Top-level variables:
-  - `fs`, `indexjs`, `packageJson`, `path`, `root`, `shell`, `version`
+  - `fs`, `indexContent`, `indexTs`, `packageJson`, `path`, `root`, `updatedContent`, `version`
 
 ### `src/csv.d.ts`
 
@@ -2129,6 +2131,18 @@ Generated at: `2026-05-11 17:05:03`
 
 - No parseable top-level symbols found
 
+### `src/demo/brand/brand.test.ts`
+
+- Top-level variables:
+  - `assetPath`
+
+### `src/demo/brand/brand.ts`
+
+- Functions:
+  - `getBrandAssetPath`, `getBrandAssetUrl`, `getBrandDescription`, `getBrandDisplayName`, `getBrandHomepageUrl`, `getBrandLatestReleaseApiUrl`, `getBrandLatestReleaseUrl`, `getBrandLogoMarkupUrls`, `getBrandReleaseConfig`, `getBrandRepositoryConfig`, `getBrandRepositoryUrl`, `getBrandRuntimeVersion`, `getBrandSiteTitle`, `getBrandTagline`
+- Top-level variables:
+  - `brandAssetKeys`, `brandAssetUrls`, `brandManifest`, `runtimeVersion`
+
 ### `src/demo/ChartPaneSplitter.tsx`
 
 - Functions:
@@ -2142,6 +2156,25 @@ Generated at: `2026-05-11 17:05:03`
   - `normalizeDate`, `resolveChartRangeExtents`, `resolveChartRangeStart`, `subtractDays`, `subtractMonths`, `subtractYears`
 - Top-level variables:
   - `CHART_RANGES`, `CHART_RANGE_LABEL_KEYS`, `DEFAULT_CHART_RANGE`, `dayOfMonth`, `first`, `last`, `lastDayOfMonth`, `next`, `rangeStart`, `single`
+
+### `src/demo/components/AboutDialog.tsx`
+
+- Functions:
+  - `AboutDialog`, `formatPublishedAt`, `getReleaseStatusLabel`, `handleKeyDown`
+- Top-level variables:
+  - `brandName`, `canDismiss`, `description`, `dialogRef`, `formatter`, `latestVersion`, `publishedAt`, `releaseNotes`, `releasePageUrl`, `releaseStatusLabel`, `repository`, `siteTitle`, `tagline`, `version`
+
+### `src/demo/components/BrandFooter.tsx`
+
+- Functions:
+  - `BrandFooter`, `getReleaseLabel`
+- Top-level variables:
+  - `releaseLabel`
+
+### `src/demo/components/BrandMark.tsx`
+
+- Functions:
+  - `BrandMark`
 
 ### `src/demo/components/DataSourceSwitcher.tsx`
 
@@ -2255,7 +2288,7 @@ Generated at: `2026-05-11 17:05:03`
 - Functions:
   - `ToolIcon`, `clonePoint`, `formatBarsHeld`, `formatSignedPrice`, `getSelectedDrawingId`, `handleDrawingShortcuts`, `handleEscape`, `handler`, `isEditableTarget`, `isYAxisSide`, `klineBarToRawOHLCV`, `loadChartType`, `loadDemoSettings`, `normalizeDate`, `normalizeVNITimeframe`, `paneTemplate`, `persistStyleOverrides`, `readSize`, `resolveDrawingPlacementForPane`, `saveDemoSettings`, `sortDrawings`
 - Top-level variables:
-  - `BACKFILL_MAX_PAGES`, `BACKFILL_PAGE_LIMIT`, `CANDLE_TYPE_STORAGE_KEY`, `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_DEMO_SETTINGS`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `INITIAL_HISTORY_MAX_PAGES`, `INITIAL_HISTORY_TARGET_BARS`, `MAIN_PRICE_SERIES_TYPES`, `PERCENT_FORMAT`, `REPLAY_SPEEDS`, `SCHEDULER_LEFT_PREFETCH_RATIO`, `SCHEDULER_MAX_BACKWARD_PAGES`, `SCHEDULER_MAX_FORWARD_PAGES`, `SCHEDULER_RIGHT_PREFETCH_RATIO`, `SCHEDULER_TICK_MS`, `TIMEFRAMES`, `TOOL_GROUPS`, `VNI_VALID_TIMEFRAMES`, `abortController`, `activeInGroup`, `adapter`, `addPane`, `allPrices`, `applyDelta`, `available`, `averageBarsHeld`, `averagePnl`, `backfillDebounceRef`, `backfillInFlightRef`, `bars`, `base`, `bestTrade`, `bringSelectedToFront`, `candleTypeLabel`, `candleWidth`, `canvasBg`, `chartAdapter`, `chartData`, `chartDataRef`, `chartRangeRef`, `chartReady`, `clamped`, `clampedStart`, `clipboardDrawing`, `cloneSelectedDrawing`, `closeDrawingContextMenu`, `closePaperTradePosition`, `closeReplayContextMenu`, `closeSettings`, `closedTrade`, `controller`, `copySelectedDrawing`, `count`, `currentBars`, `currentDataSource`, `currentDomain`, `currentItem`, `currentPosition`, `data`, `dataAdapter`, `dataStatusRef`, `dateFormat`, `defaultSymbol`, `deleteDrawingById`, `demoDataSource`, `desiredType`, `drawingClipboardRef`, `drawingContextMenuDrawing`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `drawingTextEditorLabels`, `endMs`, `enrichedData`, `ensureRangeHistory`, `file`, `first`, `firstBar`, `h`, `handleAddPane`, `handleCancelTextEdit`, `handleChartRangeChange`, `handleChartTypeChange`, `handleClearDrawings`, `handleCloseDrawingInspector`, `handleCommitTextEdit`, `handleDrawingContextMenu`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleFetchWhaleData`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handleLoadVNIChart`, `handlePATSaved`, `handlePaperTradeClick`, `handlePaperTradeReset`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `handleStartTextEdit`, `handleVisibleDomainChange`, `handleVisibleRangeChange`, `iconId`, `importInputRef`, `inRange`, `indicatorLegendLabels`, `indicatorSeries`, `initialDemoSettings`, `initialDomain`, `initialWarmupRequestedRef`, `innerHeight`, `innerWidth`, `isEditingText`, `isOpen`, `isStockContext`, `job`, `key`, `lastBar`, `lastClick`, `lastMissingRef`, `lastPaperTradeClickRef`, `lastPaperTradeSignatureRef`, `lastVisibleBar`, `latestBars`, `leftZ`, `limit`, `liveDataRef`, `loadedWindow`, `localCacheAdapter`, `localizePane`, `localizedPane`, `losses`, `lowered`, `maxPrice`, `maxVisibleBarsRef`, `maxZ`, `mergedBars`, `mergedLatestTs`, `minPrice`, `minZ`, `missing`, `mountedRef`, `msg`, `nativeEvent`, `newerBars`, `nextClone`, `nextDrawings`, `nextLabel`, `nextPaste`, `nextPosition`, `node`, `normalizeDomain`, `normalized`, `now`, `observer`, `offlineBars`, `olderBars`, `oldestReturnedTs`, `openSettings`, `pagesLoaded`, `paneH`, `paneHeaderLabels`, `paneHeights`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `paperTradeJournal`, `paperTradePanelVisible`, `paperTradePositionRef`, `paperTradeRealizedPnl`, `paperTradeReportVisible`, `paperTradeSummary`, `paperTradeUnrealizedPnl`, `parsed`, `pasteCopiedDrawing`, `plotData`, `preferredSide`, `previousEarliestTs`, `previousLatestTs`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `publishWarmupDebug`, `queueRef`, `rangeDomain`, `rangeEnd`, `ratio`, `raw`, `rawData`, `realizedPnl`, `rect`, `replayController`, `replayControllerRef`, `replayFinished`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `resetToDefault`, `response`, `rightZ`, `saved`, `scheduleForViewport`, `schedulerGenerationRef`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `shortcut`, `signature`, `sortedDrawings`, `startMs`, `stepPx`, `storageToolbarPosition`, `stored`, `t`, `tagName`, `target`, `targetDrawing`, `targetSides`, `targetWindow`, `timeOffset`, `timer`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `token`, `toolLabel`, `toolbarRef`, `top`, `totalTrades`, `transformed`, `unsubscribeDrawings`, `unsubscribeSeries`, `updateSelectedDrawing`, `value`, `visibleDomainRef`, `visiblePanes`, `visibleRangeRef`, `vninvestClient`, `vninvestDataSource`, `volumeFormat`, `w`, `warmupInFlightRef`, `warmupInitialBinanceHistory`, `widgetData`, `widgetMessages`, `wins`, `worstTrade`, `x`, `xExtents`, `y`
+  - `BACKFILL_MAX_PAGES`, `BACKFILL_PAGE_LIMIT`, `CANDLE_TYPE_STORAGE_KEY`, `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_DEMO_SETTINGS`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `INITIAL_HISTORY_MAX_PAGES`, `INITIAL_HISTORY_TARGET_BARS`, `MAIN_PRICE_SERIES_TYPES`, `PERCENT_FORMAT`, `REPLAY_SPEEDS`, `SCHEDULER_LEFT_PREFETCH_RATIO`, `SCHEDULER_MAX_BACKWARD_PAGES`, `SCHEDULER_MAX_FORWARD_PAGES`, `SCHEDULER_RIGHT_PREFETCH_RATIO`, `SCHEDULER_TICK_MS`, `TIMEFRAMES`, `TOOL_GROUPS`, `VNI_TIMEFRAMES`, `VNI_VALID_TIMEFRAMES`, `abortController`, `activeInGroup`, `adapter`, `addPane`, `allPrices`, `applyDelta`, `available`, `averageBarsHeld`, `averagePnl`, `backfillDebounceRef`, `backfillInFlightRef`, `bars`, `base`, `baseSpan`, `bestTrade`, `bringSelectedToFront`, `candleTypeLabel`, `candleWidth`, `canvasBg`, `chartAdapter`, `chartData`, `chartDataRef`, `chartRangeRef`, `chartReady`, `clampedStart`, `clipboardDrawing`, `cloneSelectedDrawing`, `closeAbout`, `closeDrawingContextMenu`, `closePaperTradePosition`, `closeReplayContextMenu`, `closeSettings`, `closedTrade`, `controller`, `copySelectedDrawing`, `currentBars`, `currentDataSource`, `currentDomain`, `currentItem`, `currentPosition`, `data`, `dataAdapter`, `dataStatusRef`, `dateFormat`, `defaultSymbol`, `deleteDrawingById`, `demoDataSource`, `desiredType`, `drawingClipboardRef`, `drawingContextMenuDrawing`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `drawingTextEditorLabels`, `endMs`, `enrichedData`, `ensureRangeHistory`, `file`, `first`, `firstBar`, `h`, `handleAddPane`, `handleCancelTextEdit`, `handleChartRangeChange`, `handleChartTypeChange`, `handleClearDrawings`, `handleCloseDrawingInspector`, `handleCommitTextEdit`, `handleDrawingContextMenu`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleFetchWhaleData`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handleLoadVNIChart`, `handleLoadVNIChartRef`, `handlePATSaved`, `handlePaperTradeClick`, `handlePaperTradeReset`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `handleStartTextEdit`, `handleTimeframeChange`, `handleVisibleDomainChange`, `handleVisibleRangeChange`, `iconId`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `initialDemoSettings`, `initialDomain`, `initialWarmupRequestedRef`, `innerHeight`, `innerWidth`, `intervalMs`, `isEditingText`, `isOpen`, `isStock`, `isStockContext`, `job`, `key`, `lastBar`, `lastClick`, `lastMissingRef`, `lastPaperTradeClickRef`, `lastPaperTradeSignatureRef`, `lastVisibleBar`, `latestBars`, `leftZ`, `limit`, `liveDataRef`, `loadedWindow`, `localCacheAdapter`, `localizePane`, `localizedPane`, `losses`, `lowered`, `maxPrice`, `maxSpanMs`, `maxVisibleBarsRef`, `maxZ`, `mergedBars`, `mergedLatestTs`, `minPrice`, `minZ`, `missing`, `mountedRef`, `msg`, `nativeEvent`, `newerBars`, `nextClone`, `nextDrawings`, `nextLabel`, `nextPaste`, `nextPosition`, `node`, `normalizeDomain`, `normalized`, `now`, `observer`, `offlineBars`, `olderBars`, `oldestReturnedTs`, `openAbout`, `openSettings`, `options`, `pagesLoaded`, `paneH`, `paneHeaderLabels`, `paneHeights`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `paperTradeJournal`, `paperTradePanelVisible`, `paperTradePositionRef`, `paperTradeRealizedPnl`, `paperTradeReportVisible`, `paperTradeSummary`, `paperTradeUnrealizedPnl`, `parsed`, `pasteCopiedDrawing`, `plotData`, `preferredSide`, `previousColorScheme`, `previousEarliestTs`, `previousLatestTs`, `previousTheme`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `profileMenuRef`, `publishWarmupDebug`, `queueRef`, `rangeDomain`, `rangeEnd`, `ratio`, `raw`, `rawData`, `realizedPnl`, `rect`, `releaseNotice`, `replayController`, `replayControllerRef`, `replayFinished`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `resetToDefault`, `response`, `rightZ`, `root`, `saved`, `scheduleForViewport`, `schedulerGenerationRef`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `shortcut`, `signature`, `sortedDrawings`, `startMs`, `stepPx`, `storageToolbarPosition`, `stored`, `tagName`, `target`, `targetDrawing`, `targetSides`, `targetWindow`, `timeOffset`, `timer`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `token`, `toolLabel`, `toolbarRef`, `top`, `totalTrades`, `transformed`, `unsubscribeDrawings`, `unsubscribeSeries`, `updateSelectedDrawing`, `value`, `visibleDomainRef`, `visiblePanes`, `visibleRangeRef`, `vninvestClient`, `vninvestDataSource`, `volumeFormat`, `w`, `warmupInFlightRef`, `warmupInitialBinanceHistory`, `widgetData`, `widgetMessages`, `wins`, `worstTrade`, `x`, `xExtents`, `y`
 
 ### `src/demo/LiveDemo.tsx`
 
@@ -2277,6 +2310,47 @@ Generated at: `2026-05-11 17:05:03`
   - `PaneSettingsModal`, `describeSeries`, `getIndicatorSetLabel`, `handleAddSeries`, `handleApplyIndicatorSet`, `handleBackdropMouseDown`, `handleDeleteIndicatorSet`, `handleDeletePane`, `handleImportIndicatorSetChange`, `handleImportIndicatorSetClick`, `handleKeyDown`, `handleSaveCurrentIndicatorSet`, `handleSeriesParamChange`, `paneLabel`, `parseNumber`, `renderDatasourceSection`, `renderField`, `renderIndicatorSetsSection`, `renderIndicatorsSection`, `renderLayoutSection`, `renderResetSection`, `renderSeriesParams`, `renderSetCard`, `renderThemeSection`
 - Top-level variables:
   - `availableSeriesTypes`, `builtinSets`, `canAddPane`, `canMoveDown`, `canMoveUp`, `colorPicker`, `composerEntry`, `currentValue`, `dialogRef`, `entry`, `fast`, `fields`, `file`, `gridClassName`, `hidden`, `importInputRef`, `imported`, `indicatorSets`, `isDefaultPane`, `isSelected`, `label`, `next`, `nextSelectedPaneId`, `overLimit`, `rawValue`, `resolvedComposerType`, `revealEnabled`, `saved`, `sectionLabels`, `selectedPane`, `set`, `slow`, `subColorSection`, `subComponents`, `userSets`, `visibleCount`, `visibleIndex`
+
+### `src/demo/release/__tests__/githubReleaseClient.test.ts`
+
+- Top-level variables:
+  - `cachedAt`, `fetchMock`, `fetchSpy`, `notice`
+
+### `src/demo/release/__tests__/releaseVersion.test.ts`
+
+- No parseable top-level symbols found
+
+### `src/demo/release/__tests__/useReleaseNotice.test.tsx`
+
+- Functions:
+  - `ReleaseNoticeProbe`
+- Top-level variables:
+  - `act`, `container`, `createRoot`, `fetchMock`, `originalConsoleError`, `reactActEnvironment`, `root`, `useReleaseNotice`
+
+### `src/demo/release/githubReleaseClient.ts`
+
+- Functions:
+  - `fetchLatestGithubRelease`, `getCachedReleaseEtag`, `getCachedReleaseNotice`, `getStorage`, `hasNewerStableRelease`, `isFresh`, `mapGitHubPayloadToNotice`, `readCacheRecord`, `readCachedEtag`, `writeCacheRecord`
+- Top-level variables:
+  - `body`, `bodyExcerpt`, `cacheRecord`, `cachedEtag`, `etag`, `fetchedAt`, `headers`, `notice`, `parsed`, `payload`, `raw`, `refreshedNotice`, `remoteVersion`, `response`, `storage`
+
+### `src/demo/release/releaseTypes.ts`
+
+- No parseable top-level symbols found
+
+### `src/demo/release/releaseVersion.ts`
+
+- Functions:
+  - `comparePrereleaseIdentifier`, `compareReleaseVersions`, `isStableReleaseVersion`, `normalizeReleaseTag`, `parseNumericVersion`, `splitPrerelease`
+- Top-level variables:
+  - `comparison`, `left`, `leftIsNumeric`, `local`, `maxLength`, `normalized`, `parsedVersion`, `remote`, `right`, `rightIsNumeric`, `segments`
+
+### `src/demo/release/useReleaseNotice.ts`
+
+- Functions:
+  - `deriveStatus`, `readDismissedReleaseVersion`, `task`, `useReleaseNotice`, `writeDismissedReleaseVersion`
+- Top-level variables:
+  - `cachedNotice`, `currentVersion`, `dismissCurrentRelease`, `dismissedVersion`, `existingNotice`, `inFlightRef`, `latestReleaseRef`, `mountedRef`, `notice`, `refresh`
 
 ### `src/demo/styleOverridesPersistence.ts`
 

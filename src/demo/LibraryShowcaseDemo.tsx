@@ -32,7 +32,6 @@ import {
 		subscribeSeriesStyleChanges,
 	widgetMessagesEn,
 	widgetMessagesVi,
-	version,
 } from "../index";
 import { DrawingPriceLabels } from "../lib/drawing/priceLabel";
 import { restorePersistedStyleOverrides, saveCurrentStyleOverrides } from "./styleOverridesPersistence";
@@ -50,12 +49,13 @@ import { CHART_RANGE_LABEL_KEYS, CHART_RANGES, DEFAULT_CHART_RANGE, resolveChart
 import DemoPageShell from "./DemoPageShell";
 import { useDemoI18n } from "./i18n";
 import { PaneSettingsModal, type SettingsSection } from "./PaneSettingsModal";
-import { PATTokenModal, WhalePanel } from "./components";
+import { AboutDialog, BrandFooter, BrandMark, PATTokenModal, WhalePanel } from "./components";
 import { VNInvestClient } from "./dataSources/VNInvestClient";
 import { VNInvestDataSource, DemoDataSource, type DataSource } from "./dataSources";
 import type { WhaleFeedResponse } from "./vninvest/types";
 import { computeLoadedWindow, computeMissingSegments, computeTargetWindow, type MissingSegments, type TimeWindow } from "./historyWindowPlanner";
 import { HistoryFetchQueue } from "./historyFetchQueue";
+import { useReleaseNotice } from "./release/useReleaseNotice";
 import "./demo.css";
 import "../lib/styles/pane-overlays.css";
 
@@ -510,6 +510,8 @@ export default function LibraryShowcaseDemo() {
 	const [chartType, setChartType] = useState<ChartTypeId>(() => loadChartType());
 	const [showPanesMenu, setShowPanesMenu] = useState(false);
 	const [showWhaleDialog, setShowWhaleDialog] = useState(true);
+	const [aboutOpen, setAboutOpen] = useState(false);
+	const releaseNotice = useReleaseNotice();
 	const panesMenuRef = useRef<HTMLDivElement | null>(null);
 	const [showProfileMenu, setShowProfileMenu] = useState(false);
 	const profileMenuRef = useRef<HTMLDivElement | null>(null);
@@ -555,6 +557,8 @@ export default function LibraryShowcaseDemo() {
 	const [drawingTextDraft, setDrawingTextDraft] = useState("");
 	const [paperTradePosition, setPaperTradePosition] = useState<PaperTradePosition | null>(null);
 	const [paperTradeHistory, setPaperTradeHistory] = useState<ClosedPaperTrade[]>([]);
+	const openAbout = useCallback(() => setAboutOpen(true), []);
+	const closeAbout = useCallback(() => setAboutOpen(false), []);
 	const chartRangeRef = useRef(chartRange);
 	const paperTradePositionRef = useRef<PaperTradePosition | null>(null);
 	const lastPaperTradeClickRef = useRef<{ timestamp: number; index: number } | null>(null);
@@ -568,6 +572,33 @@ export default function LibraryShowcaseDemo() {
 	}, [drawingInteraction.dispatch]);
 	const drawingStorage = useDrawingStorage(selectedSymbol, timeframe, drawingInteraction.allDrawings, handleLoadDrawings);
 	const { theme, toggleTheme, isDark } = useChartTheme("light");
+	useEffect(() => {
+		if (typeof document === "undefined") {
+			return undefined;
+		}
+
+		const root = document.documentElement;
+		const previousTheme = root.getAttribute("data-chart-theme");
+		const previousColorScheme = root.style.colorScheme;
+		root.setAttribute("data-chart-theme", theme);
+		root.style.colorScheme = theme;
+
+		return () => {
+			if (previousTheme === null) {
+				if (root.getAttribute("data-chart-theme") === theme) {
+					root.removeAttribute("data-chart-theme");
+				}
+			} else if (root.getAttribute("data-chart-theme") === theme) {
+				root.setAttribute("data-chart-theme", previousTheme);
+			}
+
+			if (previousColorScheme) {
+				root.style.colorScheme = previousColorScheme;
+			} else {
+				root.style.removeProperty("color-scheme");
+			}
+		};
+	}, [theme]);
 	const canvasBg = "var(--gc-surface)";
 	const closeDrawingContextMenu = useCallback(() => setDrawingContextMenu(null), []);
 
@@ -2155,12 +2186,26 @@ export default function LibraryShowcaseDemo() {
 
 	const isStockContext = activeSource === "vninvest" || dataAdapterName === "vnstocks";
 
+	useEffect(() => {
+		if (aboutOpen) {
+			void releaseNotice.refresh();
+		}
+	}, [aboutOpen, releaseNotice.refresh]);
+
 	return (
 		<DemoPageShell className="demo-page--terminal" frameClassName="demo-frame--terminal">
-			<div className={`gc-terminal gc-terminal--embedded${showReplayBar ? " gc-terminal--replay-bar" : ""}`} data-chart-theme={theme}>
+			<div className={`gc-terminal gc-terminal--embedded${showReplayBar ? " gc-terminal--replay-bar" : ""}`}>
 			<header className="gc-topbar">
 				<div className="gc-topbar__left">
-					<div className="gc-logo" aria-label={t("library.topbarAria")}>BT</div>
+					<button
+						type="button"
+						className="gc-logo gc-logo--button"
+						aria-label={t("brand.openAbout")}
+						aria-haspopup="dialog"
+						onClick={openAbout}
+					>
+						<BrandMark className="gc-brand-mark" size={28} />
+					</button>
 
 					<div className="gc-symbol-block">
 					<span className="gc-symbol-name">{selectedSymbol}</span>
@@ -2960,10 +3005,25 @@ export default function LibraryShowcaseDemo() {
 				<button type="button" className="gc-bottom-btn">{t("common.alert")}</button>
 				<button type="button" className="gc-bottom-btn">{t("common.trade")}</button>
 				<div className="gc-grow" />
-				<span className="gc-version-badge">v{version}</span>
+				<BrandFooter
+					version={releaseNotice.currentVersion}
+					releaseStatus={releaseNotice.status}
+					hasUpdate={releaseNotice.hasUpdate}
+					onOpenAbout={openAbout}
+				/>
 				<button type="button" className="gc-publish-btn">{t("common.publish")}</button>
 			</footer>
 			</div>
+
+			<AboutDialog
+				open={aboutOpen}
+				currentVersion={releaseNotice.currentVersion}
+				latestRelease={releaseNotice.latestRelease}
+				releaseStatus={releaseNotice.status}
+				onClose={closeAbout}
+				onCheckAgain={releaseNotice.refresh}
+				onDismissCurrentRelease={releaseNotice.dismissCurrentRelease}
+			/>
 
 			{patModalOpen && (
 				<PATTokenModal

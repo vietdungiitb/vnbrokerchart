@@ -4,3 +4,8 @@ declare module "save-svg-as-png";
 declare module "d3-force";
 declare module "d3-selection";
 declare module "d3-interpolate";
+declare module "*.png";
+declare module "*.jpg";
+declare module "*.jpeg";
+declare module "*.gif";
+declare module "*.svg";

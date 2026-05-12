@@ -9,7 +9,7 @@ $ npm install
 $ npm run watch
 ```
 
-open [http://localhost:8080](http://localhost:8080) in a browser
+open [http://localhost:3000](http://localhost:3000) in a browser
 
 Logging is done using the [debug](https://www.npmjs.com/package/debug) package. To see logs in the browser's development console enter this code and refresh the page: `localStorage.debug = "react-stockcharts:*"`.
 

@@ -1,8 +1,10 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const brandManifest = require("../brand/brand.manifest.json");
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === "production";
+  const devServerPort = Number(process.env.PORT || 3000);
 
   return {
     entry: {
@@ -54,6 +56,13 @@ module.exports = (env, argv) => {
       new HtmlWebpackPlugin({
         template: "./src/demo/index.html",
         filename: "index.html",
+        title: brandManifest.siteTitle.vi,
+        description: brandManifest.tagline.vi,
+        themeColor: brandManifest.themeColor,
+        backgroundColor: brandManifest.backgroundColor,
+        author: "Phạm Việt Dũng",
+        shortName: brandManifest.shortName,
+        favicon: path.resolve(__dirname, "../brand/assets/favicon-32.png"),
       }),
     ],
     devServer: {
@@ -67,7 +76,7 @@ module.exports = (env, argv) => {
         },
       },
       compress: true,
-      port: 8080,
+      port: devServerPort,
       hot: true,
       client: {
         overlay: false,

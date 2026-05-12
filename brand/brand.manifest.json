@@ -1,0 +1,47 @@
+{
+  "name": "VNStockChart",
+  "shortName": "VNStockChart",
+  "displayName": {
+    "vi": "VNStockChart",
+    "en": "VNStockChart"
+  },
+  "tagline": {
+    "vi": "Biểu đồ chứng khoán Việt Nam với nhận diện thương hiệu và cảnh báo GitHub Release.",
+    "en": "Vietnam stock charts with brand identity and GitHub Release awareness."
+  },
+  "description": {
+    "vi": "Thành phần thương hiệu dùng chung cho shell demo, footer và hộp thoại About.",
+    "en": "Shared brand contract for the demo shell, footer, and About dialog."
+  },
+  "homepageUrl": "https://vninvest.edusuccess.vn",
+  "repositoryUrl": "https://github.com/vietdungiitb/vnstockcharts",
+  "themeColor": "#1DA8F3",
+  "backgroundColor": "#07111F",
+  "logo": {
+    "source": "brand/source/logo-source.png",
+    "mark": "brand/assets/logo-mark.png",
+    "favicon16": "brand/assets/favicon-16.png",
+    "favicon32": "brand/assets/favicon-32.png",
+    "appleTouchIcon": "brand/assets/apple-touch-icon.png",
+    "socialPreview": "brand/assets/social-preview.png"
+  },
+  "release": {
+    "repository": {
+      "owner": "vietdungiitb",
+      "name": "vnstockcharts",
+      "url": "https://github.com/vietdungiitb/vnstockcharts",
+      "latestUrl": "https://github.com/vietdungiitb/vnstockcharts/releases/latest",
+      "apiLatestUrl": "https://api.github.com/repos/vietdungiitb/vnstockcharts/releases/latest"
+    },
+    "cacheTtlMs": 21600000,
+    "storageKeys": {
+      "cache": "vnstockcharts-release-cache-v1",
+      "etag": "vnstockcharts-release-etag-v1",
+      "dismissedVersion": "vnstockcharts-release-dismissed-version-v1"
+    }
+  },
+  "siteTitle": {
+    "vi": "VNStockChart | Biểu đồ chứng khoán Việt Nam",
+    "en": "VNStockChart | Vietnam Stock Charts"
+  }
+}

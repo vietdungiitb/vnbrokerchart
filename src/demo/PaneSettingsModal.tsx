@@ -493,7 +493,7 @@ export function PaneSettingsModal({
 	);
 
 	const renderIndicatorsSection = () => (
-		<div className="gc-settings-panel">
+		<div className="gc-settings-panel gc-settings-panel--dense gc-settings-panel--indicators">
 			<div className="gc-settings-panel__header">
 				<div>
 						<div className="gc-settings-kicker">{t("settings.indicatorKicker")}</div>
@@ -515,7 +515,7 @@ export function PaneSettingsModal({
 
 			{selectedPane ? (
 				<>
-					<div className="gc-settings-pane-summary">
+					<div className="gc-settings-pane-summary gc-settings-pane-summary--dense">
 						<div className="gc-settings-pane-summary__title">
 							{paneLabel(selectedPane)}
 							{selectedPane.pinned ? <span className="gc-settings-pill">{t("settings.pinned")}</span> : null}
@@ -524,11 +524,11 @@ export function PaneSettingsModal({
 						<div className="gc-settings-note">{t("settings.paneSummary")}</div>
 					</div>
 
-					<div className="gc-settings-series-list">
+					<div className="gc-settings-series-list gc-settings-series-list--dense">
 						{selectedPane.series.map((series, seriesIndex) => {
 							const revealEnabled = selectedPane.visible || paneState.canAddPane;
 							return (
-								<div key={`${selectedPane.id}-${series.type}-${seriesIndex}`} className="gc-settings-series">
+								<div key={`${selectedPane.id}-${series.type}-${seriesIndex}`} className="gc-settings-series gc-settings-series--dense">
 									<div className="gc-settings-series__head">
 										<div>
 											<div className="gc-settings-series__title">{describeSeries(series, seriesIndex)}</div>
@@ -562,7 +562,7 @@ export function PaneSettingsModal({
 						})}
 					</div>
 
-					<div className="gc-settings-composer">
+					<div className="gc-settings-composer gc-settings-composer--dense">
 						<div className="gc-settings-composer__head">
 							<div>
 								<div className="gc-settings-kicker">{t("settings.addIndicator")}</div>
@@ -605,7 +605,7 @@ export function PaneSettingsModal({
 		const userSets = indicatorSets.userSets;
 
 		const renderSetCard = (set: IndicatorSet, isBuiltin: boolean) => (
-			<div key={set.id} className="gc-settings-series">
+			<div key={set.id} className="gc-settings-series gc-settings-series--dense gc-settings-series--set">
 				<div className="gc-settings-series__head">
 					<div>
 						<div className="gc-settings-series__title">{getIndicatorSetLabel(set)}</div>
@@ -640,7 +640,7 @@ export function PaneSettingsModal({
 		);
 
 		return (
-			<div className="gc-settings-panel">
+			<div className="gc-settings-panel gc-settings-panel--dense gc-settings-panel--sets">
 				<div className="gc-settings-panel__header">
 					<div>
 						<div className="gc-settings-kicker">{t("settings.indicatorSetsKicker")}</div>
@@ -679,7 +679,7 @@ export function PaneSettingsModal({
 						<h4>{t("settings.builtinSetsTitle")}</h4>
 					</div>
 				</div>
-				<div className="gc-settings-series-list">
+				<div className="gc-settings-series-list gc-settings-series-list--dense gc-settings-series-list--sets">
 					{builtinSets.map((set) => renderSetCard(set, true))}
 				</div>
 
@@ -689,7 +689,7 @@ export function PaneSettingsModal({
 						<h4>{t("settings.mySetsTitle")}</h4>
 					</div>
 				</div>
-				<div className="gc-settings-series-list">
+				<div className="gc-settings-series-list gc-settings-series-list--dense gc-settings-series-list--sets">
 					{userSets.length > 0
 						? userSets.map((set) => renderSetCard(set, false))
 						: <div className="gc-settings-empty">{t("settings.noUserSets")}</div>}
