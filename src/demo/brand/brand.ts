@@ -26,6 +26,7 @@ export interface BrandRepositoryConfig {
 
 export interface BrandReleaseConfig {
 	repository: BrandRepositoryConfig;
+	enabled?: boolean;
 	cacheTtlMs: number;
 	storageKeys: {
 		cache: string;

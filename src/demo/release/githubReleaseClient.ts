@@ -89,6 +89,11 @@ function isFresh(record: ReleaseCacheRecord): boolean {
 }
 
 export async function fetchLatestGithubRelease(signal?: AbortSignal): Promise<ReleaseNotice | null> {
+	// Skip entirely when release checking is disabled (e.g. repo has no releases yet).
+	if (getBrandReleaseConfig().enabled === false) {
+		return null;
+	}
+
 	const cacheRecord = readCacheRecord();
 	if (cacheRecord && isFresh(cacheRecord)) {
 		return cacheRecord.notice;

@@ -33,6 +33,7 @@
       "latestUrl": "https://github.com/vietdungiitb/vnstockcharts/releases/latest",
       "apiLatestUrl": "https://api.github.com/repos/vietdungiitb/vnstockcharts/releases/latest"
     },
+    "enabled": false,
     "cacheTtlMs": 21600000,
     "storageKeys": {
       "cache": "vnstockcharts-release-cache-v1",
