@@ -1,0 +1,15 @@
+VNBrokerChart
+Copyright (c) 2026 Pham Viet Dung
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+---
+
+This project is based on react-stockcharts
+(https://github.com/rrag/react-stockcharts) by Ragu Ramaswamy,
+originally licensed under the MIT License.
+
+All modifications and additions made by Pham Viet Dung are licensed
+under the Mozilla Public License Version 2.0.

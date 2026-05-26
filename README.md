@@ -1,7 +1,7 @@
 # VNBrokerChart
 
 [![Release](https://img.shields.io/github/v/release/vietdungiitb/vnbrokercharts?include_prereleases=true&label=release)](https://github.com/vietdungiitb/vnbrokercharts/releases/latest)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![License](https://img.shields.io/badge/license-MPL--2.0-blue)](LICENSE)
 [![React](https://img.shields.io/badge/React-19-61DAFB)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-3178C6)](https://www.typescriptlang.org)
 
@@ -129,4 +129,4 @@ Mọi thay đổi lớn cần implementation plan được phê duyệt trước
 
 ---
 
-MIT © 2026 [Phạm Việt Dũng](mailto:vietdung@edusuccess.vn)
+MPL-2.0 © 2026 [Phạm Việt Dũng](mailto:vietdung@edusuccess.vn)

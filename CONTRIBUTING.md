@@ -26,4 +26,16 @@ see the `docs/documentation.js` file to understand how the different pages are o
 
 To update the source update files under `src`
 
+#### License
+
+By contributing to this project, you agree that your contributions will be licensed under the **Mozilla Public License Version 2.0** (MPL-2.0).
+
+All new source files must include the following Exhibit A notice at the top:
+
+```
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+```
+
 #### Help needed

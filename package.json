@@ -17,7 +17,7 @@
     "email": "vietdung@edusuccess.vn"
   },
   "homepage": "https://vninvest.edusuccess.vn",
-  "license": "MIT",
+  "license": "MPL-2.0",
   "scripts": {
     "clean": "rimraf -rf ./build ./dist",
     "build": "tsup",
