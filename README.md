@@ -23,6 +23,22 @@
 
 ---
 
+## Ảnh chụp màn hình
+
+### Biểu đồ chính — Multi-pane với EMA, Bollinger Bands, Volume, RSI+MACD
+
+![Demo biểu đồ chính](docs/images/demo-chart-main.png)
+
+### Công cụ vẽ — Drawing tools với Channel, ABCD Pattern, Fibonacci, Pitchfork
+
+![Demo công cụ vẽ](docs/images/demo-drawing-tools.png)
+
+### Cài đặt chỉ báo — Settings modal với danh sách indicator đầy đủ
+
+![Demo cài đặt chỉ báo](docs/images/demo-indicator-settings.png)
+
+---
+
 ## Tác giả
 
 **Phạm Việt Dũng**  
