@@ -114,12 +114,29 @@ src/
 
 ---
 
+## Community vs Pro+
+
+Bản này là **Community (open-source, MPL-2.0)**. Phiên bản **Pro+** dành cho tổ chức / tích hợp sản xuất cung cấp thêm:
+
+| Tính năng | Community | Pro+ |
+|---|:---:|:---:|
+| Toàn bộ tính năng Community | ✅ | ✅ |
+| **History chunk store** — incremental persistence, gap fill, trim window | ❌ | ✅ |
+| **Whale / CVD / Dark Flow overlays** — WhaleMarketBubble, CVDIndicator, ExternalCVD, DarkFlowBadge, whaleDetector | cơ bản | đầy đủ |
+| **Drawing workspace nâng cao** — multi-select batch, floating selection toolbar, harmonic ratio validation, Gann Fan math, touch stylus | ❌ | ✅ |
+| **Modular engine packages** — `vn-kline-engine-core` + `vn-kline-engine-react` (dual runtime: legacy + KLineChart fork) | ❌ | ✅ |
+| **Custom render context API** — `WidgetPaneToolbarRenderContext`, `WidgetDrawingChromeRenderContext` | ❌ | ✅ |
+| Hỗ trợ thương mại & SLA | ❌ | ✅ |
+
+> Liên hệ nâng cấp: [vietdung@edusuccess.vn](mailto:vietdung@edusuccess.vn)
+
+---
+
 ## Tài liệu
 
 | File | Nội dung |
 |---|---|
 | [AGENTS.md](AGENTS.md) | Entry point cho AI agents, canonical commands |
-| [docs/CHANGE_CONTROL_STANDARD.md](docs/CHANGE_CONTROL_STANDARD.md) | Quy trình thay đổi |
 | [quality/QUALITY.md](quality/QUALITY.md) | Quality gates |
 | [public-docs/README.md](public-docs/README.md) | Tài liệu công khai |
 
