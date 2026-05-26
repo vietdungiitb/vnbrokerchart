@@ -4,6 +4,9 @@
 [![License](https://img.shields.io/badge/license-MPL--2.0-blue)](LICENSE)
 [![React](https://img.shields.io/badge/React-19-61DAFB)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-3178C6)](https://www.typescriptlang.org)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-stockchart.edusuccess.vn-brightgreen)](https://stockchart.edusuccess.vn/)
+
+> **🔗 Live Demo: [stockchart.edusuccess.vn](https://stockchart.edusuccess.vn/)**
 
 Thư viện biểu đồ kỹ thuật cho thị trường chứng khoán Việt Nam. Xây dựng trên React 19 + D3 v7 với kiến trúc hybrid SVG/Canvas, SSOT canonical indicator store, và drawing tool layer có FSM interaction.
 
