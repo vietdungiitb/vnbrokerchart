@@ -2,16 +2,16 @@
 
 > Do not edit manually. Regenerate with `python scripts/generate_module_tree.py`.
 
-Generated at: `2026-05-12 22:01:08`
+Generated at: `2026-05-19 18:58:32`
 
 ## Summary
 
-- Total modules: 769
+- Total modules: 782
 - Python modules: 1
-- JS/TS modules: 768
-- Total classes: 361
-- Total functions: 4015
-- Total top-level variables: 9100
+- JS/TS modules: 781
+- Total classes: 362
+- Total functions: 4125
+- Total top-level variables: 9525
 
 ## Python Modules
 
@@ -2131,6 +2131,13 @@ Generated at: `2026-05-12 22:01:08`
 
 - No parseable top-level symbols found
 
+### `src/demo/__tests__/vniViewportBackfill.test.ts`
+
+- Functions:
+  - `createBars`
+- Top-level variables:
+  - `bars`, `window`
+
 ### `src/demo/brand/brand.test.ts`
 
 - Top-level variables:
@@ -2206,7 +2213,7 @@ Generated at: `2026-05-12 22:01:08`
 - Functions:
   - `WhalePanel`
 - Top-level variables:
-  - `summary`
+  - `numericValue`, `sharkBuy`, `sharkSell`, `smallBuy`, `smallSell`, `summary`, `toBillions`, `whaleBuy`, `whaleSell`
 
 ### `src/demo/dataSources/__tests__/vninvest.test.ts`
 
@@ -2225,9 +2232,9 @@ Generated at: `2026-05-12 22:01:08`
 - Classes:
   - `RawOHLCVToStandardAdapter`, `VNInvestClient`
 - Functions:
-  - `clearVNInvestClient`, `createVNInvestClient`, `getVNInvestClient`, `resolveApiBase`
+  - `classifySizeClass`, `clearVNInvestClient`, `createVNInvestClient`, `getVNInvestClient`, `normalizeWhaleFeedResponse`, `normalizeWhaleOrders`, `normalizeWhaleSummary`, `parseNumericCandidate`, `pickNumericField`, `resolveApiBase`, `summarizeOrders`
 - Top-level variables:
-  - `API_BASE`, `DAILY_TIMEFRAMES`, `TIMEFRAME_MAP`, `VNI_ENDPOINTS`, `all`, `clientInstance`, `data`, `error`, `from`, `globalBase`, `lowerQuery`, `normalizedTf`, `normalizedTimeframe`, `originBase`, `params`, `points`, `response`, `results`, `selected`, `storageBase`, `tf`, `url`
+  - `API_BASE`, `DAILY_TIMEFRAMES`, `TIMEFRAME_MAP`, `VNI_ENDPOINTS`, `all`, `bucket`, `clientInstance`, `data`, `detail`, `err`, `error`, `from`, `globalBase`, `isSell`, `item`, `lowerQuery`, `match`, `matchedValue`, `normalized`, `normalizedSummary`, `normalizedTf`, `normalizedTimeframe`, `orderSummary`, `originBase`, `params`, `parsed`, `points`, `preview`, `price`, `rawText`, `remainSec`, `remainingMs`, `response`, `results`, `retryAfterSec`, `retryHeader`, `selected`, `side`, `source`, `storageBase`, `summary`, `tf`, `url`, `volume`, `whaleOrders`
 
 ### `src/demo/demoData.ts`
 
@@ -2286,9 +2293,9 @@ Generated at: `2026-05-12 22:01:08`
 ### `src/demo/LibraryShowcaseDemo.tsx`
 
 - Functions:
-  - `ToolIcon`, `clonePoint`, `formatBarsHeld`, `formatSignedPrice`, `getSelectedDrawingId`, `handleDrawingShortcuts`, `handleEscape`, `handler`, `isEditableTarget`, `isYAxisSide`, `klineBarToRawOHLCV`, `loadChartType`, `loadDemoSettings`, `normalizeDate`, `normalizeVNITimeframe`, `paneTemplate`, `persistStyleOverrides`, `readSize`, `resolveDrawingPlacementForPane`, `saveDemoSettings`, `sortDrawings`
+  - `ToolIcon`, `bars`, `chartRangeToDays`, `clonePoint`, `estimateSeriesWarmupBars`, `formatBarsHeld`, `formatSignedPrice`, `getSelectedDrawingId`, `getSelectedDrawingIds`, `handleDrawingShortcuts`, `handleEscape`, `handler`, `isEditableTarget`, `isYAxisSide`, `klineBarToRawOHLCV`, `loadChartType`, `loadDemoSettings`, `normalizeDate`, `normalizeVNITimeframe`, `paneTemplate`, `persistStyleOverrides`, `poll`, `readSize`, `resolveDrawingPlacementForPane`, `saveDemoSettings`, `scheduleVNInvestViewportBackfill`, `sortDrawings`
 - Top-level variables:
-  - `BACKFILL_MAX_PAGES`, `BACKFILL_PAGE_LIMIT`, `CANDLE_TYPE_STORAGE_KEY`, `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_DEMO_SETTINGS`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `INITIAL_HISTORY_MAX_PAGES`, `INITIAL_HISTORY_TARGET_BARS`, `MAIN_PRICE_SERIES_TYPES`, `PERCENT_FORMAT`, `REPLAY_SPEEDS`, `SCHEDULER_LEFT_PREFETCH_RATIO`, `SCHEDULER_MAX_BACKWARD_PAGES`, `SCHEDULER_MAX_FORWARD_PAGES`, `SCHEDULER_RIGHT_PREFETCH_RATIO`, `SCHEDULER_TICK_MS`, `TIMEFRAMES`, `TOOL_GROUPS`, `VNI_TIMEFRAMES`, `VNI_VALID_TIMEFRAMES`, `abortController`, `activeInGroup`, `adapter`, `addPane`, `allPrices`, `applyDelta`, `available`, `averageBarsHeld`, `averagePnl`, `backfillDebounceRef`, `backfillInFlightRef`, `bars`, `base`, `baseSpan`, `bestTrade`, `bringSelectedToFront`, `candleTypeLabel`, `candleWidth`, `canvasBg`, `chartAdapter`, `chartData`, `chartDataRef`, `chartRangeRef`, `chartReady`, `clampedStart`, `clipboardDrawing`, `cloneSelectedDrawing`, `closeAbout`, `closeDrawingContextMenu`, `closePaperTradePosition`, `closeReplayContextMenu`, `closeSettings`, `closedTrade`, `controller`, `copySelectedDrawing`, `currentBars`, `currentDataSource`, `currentDomain`, `currentItem`, `currentPosition`, `data`, `dataAdapter`, `dataStatusRef`, `dateFormat`, `defaultSymbol`, `deleteDrawingById`, `demoDataSource`, `desiredType`, `drawingClipboardRef`, `drawingContextMenuDrawing`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `drawingTextEditorLabels`, `endMs`, `enrichedData`, `ensureRangeHistory`, `file`, `first`, `firstBar`, `h`, `handleAddPane`, `handleCancelTextEdit`, `handleChartRangeChange`, `handleChartTypeChange`, `handleClearDrawings`, `handleCloseDrawingInspector`, `handleCommitTextEdit`, `handleDataAdapterChange`, `handleDrawingContextMenu`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleFetchWhaleData`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handleLoadVNIChart`, `handleLoadVNIChartRef`, `handlePATSaved`, `handlePaperTradeClick`, `handlePaperTradeReset`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `handleSourceChange`, `handleStartTextEdit`, `handleTimeframeChange`, `handleVisibleDomainChange`, `handleVisibleRangeChange`, `iconId`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `initialDemoSettings`, `initialDomain`, `initialWarmupRequestedRef`, `innerHeight`, `innerWidth`, `intervalMs`, `isEditingText`, `isOpen`, `isStock`, `isStockContext`, `isVNInvestSource`, `job`, `key`, `lastBar`, `lastClick`, `lastMissingRef`, `lastPaperTradeClickRef`, `lastPaperTradeSignatureRef`, `lastVisibleBar`, `latestBars`, `leftZ`, `limit`, `liveDataRef`, `loadedWindow`, `localCacheAdapter`, `localizePane`, `localizedPane`, `losses`, `lowered`, `maxPrice`, `maxSpanMs`, `maxVisibleBarsRef`, `maxZ`, `mergedBars`, `mergedLatestTs`, `minPrice`, `minZ`, `missing`, `mountedRef`, `msg`, `nativeEvent`, `newerBars`, `nextClone`, `nextDrawings`, `nextLabel`, `nextPaste`, `nextPosition`, `node`, `normalizeDomain`, `normalized`, `now`, `observer`, `offlineBars`, `olderBars`, `oldestReturnedTs`, `openAbout`, `openSettings`, `options`, `pagesLoaded`, `paneH`, `paneHeaderLabels`, `paneHeights`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `paperTradeJournal`, `paperTradePanelVisible`, `paperTradePositionRef`, `paperTradeRealizedPnl`, `paperTradeReportVisible`, `paperTradeSummary`, `paperTradeUnrealizedPnl`, `parsed`, `pasteCopiedDrawing`, `plotData`, `preferredSide`, `previousColorScheme`, `previousEarliestTs`, `previousLatestTs`, `previousTheme`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `profileMenuRef`, `publishWarmupDebug`, `queueRef`, `rangeDomain`, `rangeEnd`, `ratio`, `raw`, `rawData`, `realizedPnl`, `rect`, `releaseNotice`, `replayController`, `replayControllerRef`, `replayFinished`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `resetToDefault`, `response`, `rightZ`, `root`, `saved`, `scheduleForViewport`, `schedulerGenerationRef`, `second`, `selectDrawingById`, `selectedDrawing`, `selectedDrawingId`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `shortcut`, `signature`, `sortedDrawings`, `startMs`, `stepPx`, `storageToolbarPosition`, `stored`, `tagName`, `target`, `targetDrawing`, `targetSides`, `targetWindow`, `timeOffset`, `timer`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `token`, `toolLabel`, `toolbarRef`, `top`, `totalTrades`, `transformed`, `unsubscribeDrawings`, `unsubscribeSeries`, `updateSelectedDrawing`, `value`, `visibleDomainRef`, `visiblePanes`, `visibleRangeRef`, `vninvestClient`, `vninvestDataSource`, `volumeFormat`, `w`, `warmupInFlightRef`, `warmupInitialBinanceHistory`, `widgetData`, `widgetMessages`, `wins`, `worstTrade`, `x`, `xExtents`, `y`
+  - `BACKFILL_MAX_PAGES`, `BACKFILL_PAGE_LIMIT`, `CANDLE_TYPE_STORAGE_KEY`, `CHART_TYPES`, `CHART_TYPE_TO_SERIES`, `DEFAULT_DEMO_SETTINGS`, `DEFAULT_MAX_VISIBLE_PANES`, `DEMO_SETTINGS_STORAGE_KEY`, `DRAWING_PANEL_WIDTH`, `INITIAL_HISTORY_MAX_PAGES`, `INITIAL_HISTORY_TARGET_BARS`, `MAIN_PRICE_SERIES_TYPES`, `PERCENT_FORMAT`, `POLL_INTERVAL_MS`, `REPLAY_SPEEDS`, `SCHEDULER_LEFT_PREFETCH_RATIO`, `SCHEDULER_MAX_BACKWARD_PAGES`, `SCHEDULER_MAX_FORWARD_PAGES`, `SCHEDULER_RIGHT_PREFETCH_RATIO`, `SCHEDULER_TICK_MS`, `TIMEFRAMES`, `TOOL_GROUPS`, `VNI_TIMEFRAMES`, `VNI_VALID_TIMEFRAMES`, `VNI_VIEWPORT_BACKFILL_DEBOUNCE_MS`, `abortController`, `activeInGroup`, `activeSourceRef`, `adapter`, `addPane`, `allPrices`, `applyDelta`, `available`, `averageBarsHeld`, `averagePnl`, `backfillDebounceRef`, `backfillInFlightRef`, `bars`, `base`, `baseSpan`, `bestTrade`, `bringSelectedToFront`, `candleTypeLabel`, `candleWidth`, `canvasBg`, `chartAdapter`, `chartData`, `chartDataRef`, `chartRangeRef`, `chartReady`, `clampedStart`, `clipboardDrawing`, `cloneSelectedDrawing`, `closeAbout`, `closeDrawingContextMenu`, `closePaperTradePosition`, `closeReplayContextMenu`, `closeSettings`, `closedTrade`, `controller`, `copySelectedDrawing`, `current`, `currentBars`, `currentDataSource`, `currentDomain`, `currentItem`, `currentPosition`, `data`, `dataAdapter`, `dataStatusRef`, `dateFormat`, `days`, `defaultSymbol`, `deleteDrawingById`, `demoDataSource`, `desiredType`, `drawingClipboardRef`, `drawingContextMenuDrawing`, `drawingInspectorLabels`, `drawingInspectorPosition`, `drawingInteraction`, `drawingListPanelLabels`, `drawingListPosition`, `drawingPanelX`, `drawingStorage`, `drawingTextEditorLabels`, `endMs`, `enrichedData`, `ensureRangeHistory`, `file`, `first`, `firstBar`, `h`, `handleAddPane`, `handleCancelTextEdit`, `handleChartRangeChange`, `handleChartTypeChange`, `handleClearDrawings`, `handleCloseDrawingInspector`, `handleCommitTextEdit`, `handleDataAdapterChange`, `handleDrawingContextMenu`, `handleDrawingToolUsed`, `handleExportDrawings`, `handleFetchWhaleData`, `handleImportButtonClick`, `handleImportFileChange`, `handleLoadDrawings`, `handleLoadVNIChart`, `handleLoadVNIChartRef`, `handlePATSaved`, `handlePaperTradeClick`, `handlePaperTradeReset`, `handleReplayContextMenu`, `handleReplayFromHere`, `handleReplayJumpLatest`, `handleReplayRewind`, `handleReplaySpeedChange`, `handleReplayStepBack`, `handleReplayStepForward`, `handleReplayToggle`, `handleResetSettings`, `handleSourceChange`, `handleStartTextEdit`, `handleTimeframeChange`, `handleVisibleDomainChange`, `handleVisibleRangeChange`, `hasNew`, `hoveredBar`, `iconId`, `importInputRef`, `indicatorLegendLabels`, `indicatorSeries`, `initialDemoSettings`, `initialDomain`, `initialWarmupRequestedRef`, `innerHeight`, `innerWidth`, `intervalMs`, `isEditingText`, `isOpen`, `isStock`, `isStockContext`, `isVNInvestSource`, `job`, `key`, `lastBar`, `lastClick`, `lastMissingRef`, `lastPaperTradeClickRef`, `lastPaperTradeSignatureRef`, `lastVisibleBar`, `latestBars`, `leftZ`, `limit`, `liveDataRef`, `loadedStartMs`, `loadedWindow`, `localCacheAdapter`, `localChartAdapter`, `localizePane`, `localizedPane`, `longPeriod`, `losses`, `lowered`, `maxPrice`, `maxSpanMs`, `maxVisibleBarsRef`, `merged`, `mergedBars`, `mergedLatestTs`, `minPrice`, `missing`, `mountedRef`, `msg`, `nativeEvent`, `newerBars`, `nextClone`, `nextDrawings`, `nextLabel`, `nextPaste`, `nextPosition`, `node`, `normalizeDomain`, `normalized`, `normalizedOlderBars`, `normalizedTimeframe`, `now`, `observer`, `offlineBars`, `ohlcBar`, `olderBars`, `oldestReturnedTs`, `openAbout`, `openSettings`, `options`, `pagesLoaded`, `paneH`, `paneHeaderLabels`, `paneHeights`, `paneLabel`, `paneState`, `paneTop`, `panesMenuRef`, `paperTradeJournal`, `paperTradePanelVisible`, `paperTradePositionRef`, `paperTradeRealizedPnl`, `paperTradeReportVisible`, `paperTradeSummary`, `paperTradeUnrealizedPnl`, `params`, `parsed`, `pasteCopiedDrawing`, `period`, `plotData`, `preferredSide`, `previousColorScheme`, `previousEarliestTs`, `previousLatestTs`, `previousTheme`, `priceFormat`, `priceIsUp`, `priceOffset`, `pricePane`, `primary`, `profileMenuRef`, `publishWarmupDebug`, `queueRef`, `range`, `rangeDomain`, `rangeEnd`, `ratio`, `raw`, `rawData`, `realizedPnl`, `rect`, `releaseNotice`, `remainSec`, `replayController`, `replayControllerRef`, `replayFinished`, `replayProgressLabel`, `replayToggleTitle`, `replayVisibleData`, `requestVNInvestViewportHistory`, `resetToDefault`, `response`, `rightZ`, `root`, `saved`, `scheduleForViewport`, `schedulerGenerationRef`, `second`, `selectDrawingById`, `selectedAllLocked`, `selectedAllVisible`, `selectedAnyLocked`, `selectedDrawing`, `selectedDrawingCount`, `selectedDrawingId`, `selectedDrawingIds`, `selectedDrawingSet`, `selectedDrawings`, `selectedPane`, `sendSelectedToBack`, `shellNode`, `shellRef`, `shortDateFormat`, `shortPeriod`, `shortcut`, `signal`, `signature`, `slow`, `sortedDrawings`, `startMs`, `status`, `stepPx`, `storageToolbarPosition`, `stored`, `switchToDemoSource`, `tagName`, `target`, `targetDrawing`, `targetSides`, `targetWindow`, `timeOffset`, `timer`, `toggleDrawingVisibleById`, `toggleSelectedLock`, `toggleSelectedVisible`, `token`, `toolLabel`, `toolbarRef`, `top`, `totalTrades`, `transformed`, `unsubscribeDrawings`, `unsubscribeSeries`, `updateSelectedDrawing`, `value`, `viewportDomain`, `visibleBarCount`, `visibleDomainRef`, `visibleEndIndex`, `visibleLastBar`, `visiblePanes`, `visibleRangeRef`, `vniAbortRef`, `vniDaysRef`, `vniHistoryFloorLabel`, `vniLoadingRef`, `vniViewportBackfillInFlightRef`, `vniViewportHistoryExhaustedAtRef`, `vniWarmupBars`, `vninvestAdapter`, `vninvestClient`, `vninvestDataSource`, `volumeFormat`, `w`, `warmupInFlightRef`, `warmupInitialBinanceHistory`, `widgetData`, `widgetMessages`, `window`, `wins`, `worstTrade`, `x`, `xExtents`, `y`
 
 ### `src/demo/LiveDemo.tsx`
 
@@ -2374,6 +2381,13 @@ Generated at: `2026-05-12 22:01:08`
 
 - No parseable top-level symbols found
 
+### `src/demo/vniViewportBackfill.ts`
+
+- Functions:
+  - `computeVNIViewportBackfillWindow`, `toDate`
+- Top-level variables:
+  - `date`, `defaultIntervalMs`, `fetchFromMs`, `fetchToMs`, `inferredIntervalMs`, `intervalMs`, `leftBufferRatio`, `leftTriggerRatio`, `loadedStart`, `loadedStartMs`, `minBufferBars`, `minTriggerBars`, `targetStartMs`, `triggerBars`, `visibleEnd`, `visibleEndMs`, `visibleSpanMs`, `visibleStart`, `visibleStartMs`
+
 ### `src/index.ts`
 
 - Top-level variables:
@@ -2450,6 +2464,15 @@ Generated at: `2026-05-12 22:01:08`
 ### `src/lib/adapters/StockDataAdapter.ts`
 
 - No parseable top-level symbols found
+
+### `src/lib/adapters/VNInvestAdapter.ts`
+
+- Classes:
+  - `VNInvestAdapter`
+- Functions:
+  - `createVNInvestAdapter`
+- Top-level variables:
+  - `DAILY_TF`, `bar`, `base`, `bucket`, `buckets`, `cacheKey`, `d`, `data`, `days`, `existing`, `from`, `msg`, `now`, `params`, `path`, `price`, `raw`, `records`, `ref`, `socket`, `sorted`, `tf`, `trades`, `ts`, `vol`, `wsUrl`
 
 ### `src/lib/adapters/VNStocksAdapter.ts`
 
@@ -2847,6 +2870,10 @@ Generated at: `2026-05-12 22:01:08`
 - Top-level variables:
   - `coordinate`, `coordinateProps`, `edgeAt`, `hideLine`, `props`, `show`, `type`, `x1`, `y`
 
+### `src/lib/core/__tests__/bollingerBandAppearance.test.ts`
+
+- No parseable top-level symbols found
+
 ### `src/lib/core/__tests__/gap1-viewport-event.test.tsx`
 
 - Functions:
@@ -2992,9 +3019,9 @@ Generated at: `2026-05-12 22:01:08`
 ### `src/lib/core/DynamicChart.tsx`
 
 - Functions:
-  - `accessor`, `axisFormatForSeriesTypes`, `buildChartSlots`, `buildPriceTooltipEntries`, `buildTooltipEntriesForSeries`, `buildYExtents`, `candleBodyWidth`, `computeExtentsForIndex`, `createKlineXAxisFormatter`, `createSmartDateFormatter`, `dashPatternToSeriesDasharray`, `fieldAccessor`, `finiteExtent`, `getSeriesStyleOverrideForSeries`, `origin`, `renderDynamicChartChildren`, `renderSeries`, `resolveSeriesDisplayColor`, `sc`, `structured`, `withAlpha`
+  - `accessor`, `axisFormatForSeriesTypes`, `buildChartSlots`, `buildPriceTooltipEntries`, `buildTooltipEntriesForSeries`, `buildYExtents`, `candleBodyWidth`, `computeExtentsForIndex`, `createKlineXAxisFormatter`, `createSmartDateFormatter`, `dashPatternToSeriesDasharray`, `fieldAccessor`, `finiteExtent`, `getSeriesStyleOverrideForSeries`, `origin`, `renderDynamicChartChildren`, `renderSeries`, `resolveBollingerBandFillColor`, `resolveSeriesDisplayColor`, `sc`, `structured`, `withAlpha`
 - Top-level variables:
-  - `BAR_SERIES_TYPES`, `DynamicChartComponent`, `INNER_PANE_GAP`, `OSCILLATOR_SERIES`, `PRICE_SERIES`, `VOLUME_SERIES`, `accessors`, `activeSeries`, `adaptiveDateFormat`, `adxColor`, `arColor`, `barCount`, `bbBotRaw`, `bbMidColor`, `bbTopRaw`, `brColor`, `canvas`, `chartCanvasRef`, `chartChildren`, `chartId`, `chartSlots`, `clampedIndex`, `current`, `dColor`, `dashArray`, `date`, `dayFormat`, `diff`, `divergeColor`, `downColor`, `end`, `endDate`, `entry`, `extents`, `fillColor`, `fillOpacity`, `finiteValues`, `first`, `fullData`, `gap`, `half`, `handleVisibleRangeChange`, `hasBottomAxis`, `hasLeftAxis`, `hasRightAxis`, `index`, `inferredIntervalMs`, `isDiscontinuousScale`, `isInnerPane`, `isIntraday`, `isLastSlot`, `jColor`, `kColor`, `leftSeries`, `lineColor`, `lineWidth`, `macdColor`, `maxValue`, `minValue`, `minusColor`, `monthBoundaryFormat`, `paneHeight`, `paneIndex`, `paneSlotCounter`, `paramColor`, `params`, `plusColor`, `previous`, `ratio`, `rightSeries`, `rsiLine`, `rsiMid`, `rsiOB`, `rsiOS`, `sampleXValue`, `second`, `seriesKey`, `seriesTypes`, `signalColor`, `slotInPane`, `slots`, `start`, `startDate`, `stepPx`, `strokeOpacity`, `styleOverride`, `timeFormatHHmm`, `tooltip`, `tooltipY`, `type`, `upColor`, `whale`, `xAxisDateFormat`, `yAxisFormat`, `yExtents`, `yScaleId`
+  - `BAR_SERIES_TYPES`, `DAY_MS`, `DynamicChartComponent`, `INNER_PANE_GAP`, `OSCILLATOR_SERIES`, `PRICE_SERIES`, `VOLUME_SERIES`, `accessors`, `activeSeries`, `adaptiveDateFormat`, `adxColor`, `arColor`, `barCount`, `bbBotRaw`, `bbFillColor`, `bbMidColor`, `bbTopRaw`, `brColor`, `canvas`, `chartCanvasRef`, `chartChildren`, `chartId`, `chartSlots`, `clampedIndex`, `current`, `dColor`, `dashArray`, `date`, `dayFormat`, `diff`, `divergeColor`, `downColor`, `end`, `endDate`, `entry`, `extents`, `fill`, `fillColor`, `fillOpacity`, `finiteValues`, `first`, `fullData`, `gap`, `half`, `handleVisibleRangeChange`, `hasBottomAxis`, `hasLeftAxis`, `hasRightAxis`, `index`, `inferredIntervalMs`, `isDiscontinuousScale`, `isInnerPane`, `isIntraday`, `isLastSlot`, `jColor`, `kColor`, `leftSeries`, `lineColor`, `lineWidth`, `macdColor`, `maxValue`, `minIntervalMs`, `minValue`, `minusColor`, `monthBoundaryFormat`, `paneHeight`, `paneIndex`, `paneSlotCounter`, `paramColor`, `params`, `plusColor`, `previous`, `ratio`, `rightSeries`, `rsiLine`, `rsiMid`, `rsiOB`, `rsiOS`, `sampleCount`, `sampleXValue`, `second`, `seriesKey`, `seriesTypes`, `signalColor`, `slotInPane`, `slots`, `start`, `startDate`, `stepPx`, `strokeOpacity`, `styleOverride`, `timeFormatHHmm`, `tooltip`, `tooltipY`, `type`, `upColor`, `whale`, `xAxisDateFormat`, `yAxisFormat`, `yExtents`, `yScaleId`
 
 ### `src/lib/core/hooks/__tests__/useDynamicPanes.test.ts`
 
@@ -3201,12 +3228,19 @@ Generated at: `2026-05-12 22:01:08`
 - Top-level variables:
   - `SERIES_SUB_COMPONENTS`
 
+### `src/lib/drawing/abcdPatternFill.test.ts`
+
+- Functions:
+  - `createCanvasMock`, `createPattern`, `makeScales`
+- Top-level variables:
+  - `ctx`, `drawing`, `elements`, `fillCalls`, `now`, `options`, `points`, `polygon`, `scales`, `xScale`, `yScale`
+
 ### `src/lib/drawing/builtin/abcdPattern.ts`
 
 - Functions:
-  - `calculateAbcdPatternMetrics`
+  - `calculateAbcdPatternMetrics`, `resolveAbcdPatternFillColor`, `resolveAbcdPatternFillOpacity`
 - Top-level variables:
-  - `AbcdPattern`, `ab`, `bc`, `cd`, `points`
+  - `AbcdPattern`, `DEFAULT_ABCD_PATTERN_FILL`, `DEFAULT_ABCD_PATTERN_FILL_OPACITY`, `ab`, `bc`, `cd`, `points`
 
 ### `src/lib/drawing/builtin/arrow.ts`
 
@@ -3365,22 +3399,41 @@ Generated at: `2026-05-12 22:01:08`
 - Top-level variables:
   - `arrow`, `completeState`, `draft`, `drawing`, `drawingState`, `editingState`, `first`, `history`, `initialHistory`, `movingState`, `nextPoint`, `pushedHistory`, `rectangle`, `redoneHistory`, `resizingState`, `second`, `selectedState`, `serializedDrawing`, `serializedDrawings`, `serializedHistory`, `startPoint`, `text`, `tool`, `toolNames`, `trendLine`, `undoneHistory`, `updatedDraft`, `updatedState`
 
+### `src/lib/drawing/drawingAlerts.test.ts`
+
+- Functions:
+  - `createBar`
+- Top-level variables:
+  - `currentBar`, `drawing`, `events`, `previousBar`
+
+### `src/lib/drawing/drawingAlerts.ts`
+
+- Functions:
+  - `didBreak`, `didCloseAbove`, `didCloseBelow`, `didTouch`, `didTriggerAlert`, `evaluateDrawingAlerts`, `interpolateLineValue`, `isAlertableDrawingType`, `resolveAlertReferencePrice`
+- Top-level variables:
+  - `ALERTABLE_TOOL_TYPES`, `alert`, `barTime`, `currentBodyCrosses`, `currentTouches`, `deltaX`, `direction`, `endTime`, `previousBodyCrosses`, `previousTouches`, `ratio`, `referencePrice`, `startTime`
+
 ### `src/lib/drawing/DrawingInspector.test.tsx`
 
 - Top-level variables:
-  - `buttons`, `cancelButton`, `container`, `drawing`, `editButton`, `labels`, `onCancel`, `onChange`, `onCommit`, `onStartEdit`, `reactActEnvironment`, `root`, `saveButton`, `strokeInput`, `textLabels`, `textarea`
+  - `alertToggle`, `alertTrigger`, `bringButton`, `buttons`, `cancelButton`, `container`, `deleteButton`, `drawing`, `editButton`, `enabledAlertTrigger`, `enabledDrawing`, `hideButton`, `labels`, `lockButton`, `onBringToFront`, `onCancel`, `onChange`, `onCommit`, `onDelete`, `onSendToBack`, `onStartEdit`, `onToggleLock`, `onToggleVisible`, `onUpdate`, `reactActEnvironment`, `root`, `saveButton`, `sendButton`, `strokeInput`, `strokeWidthInput`, `textLabels`, `textarea`, `valueSetter`
 
 ### `src/lib/drawing/DrawingInspector.tsx`
 
 - Functions:
-  - `dashPatternFromStyle`, `isColorString`, `updateStyle`
+  - `applyAlertChange`, `applyStyleChange`, `isColorString`
 - Top-level variables:
-  - `effectiveDrawing`, `left`, `locked`, `strokeDasharray`, `style`, `top`, `visible`
+  - `alert`, `alertSupported`, `deleteDisabled`, `effectiveDrawing`, `isMultiSelect`, `left`, `locked`, `strokeDasharray`, `style`, `top`, `visible`
 
 ### `src/lib/drawing/DrawingLayer.hover.test.tsx`
 
 - Top-level variables:
   - `actual`, `baseChartConfig`, `capturedProps`, `container`, `drawing`, `interaction`, `momentumChartConfig`, `onToolUsed`, `reactActEnvironment`, `root`, `xScale`
+
+### `src/lib/drawing/DrawingLayer.spatialIndex.test.tsx`
+
+- Top-level variables:
+  - `actual`, `baseChartConfig`, `capturedProps`, `container`, `farDrawings`, `interaction`, `isHoverResult`, `reactActEnvironment`, `root`, `target`, `xScale`
 
 ### `src/lib/drawing/DrawingLayer.test.ts`
 
@@ -3390,58 +3443,63 @@ Generated at: `2026-05-12 22:01:08`
 ### `src/lib/drawing/DrawingLayer.tsx`
 
 - Functions:
-  - `buildRenderScales`, `calculatePositionRiskReward`, `constrainResizePoint`, `currentDrawing`, `findHitDrawing`, `getAdjustedMousePosition`, `getChartConfigList`, `getSelectedDrawingId`, `getSnapPoint`, `getVisibleDrawings`, `handleSelect`, `hasRemainingPlaceholder`, `isMultiStepTool`, `resizeDrawing`, `resizeDrawingsByIds`, `resolveActiveChartConfig`, `resolveBaseChartConfig`, `resolveDrawingChartConfig`, `sortVisibleDrawings`, `toChartPoint`, `toDrawingPoint`, `translateDrawing`, `translateDrawingsByIds`, `withChartTranslation`
+  - `boundsFromPixels`, `buildRenderScales`, `buildSpatialIndex`, `buildSpatialIndexSignature`, `calculatePositionRiskReward`, `constrainResizePoint`, `currentDrawing`, `findHitDrawing`, `getAdjustedMousePosition`, `getCellKey`, `getChartConfigList`, `getDrawingSpatialBounds`, `getSelectedDrawingId`, `getSnapHintPalette`, `getSnapPoint`, `getTextBounds`, `getVisibleDrawings`, `handleSelect`, `hasRemainingPlaceholder`, `isMultiStepTool`, `normalizeBounds`, `querySpatialIndex`, `resizeDrawing`, `resizeDrawingsByIds`, `resolveActiveChartConfig`, `resolveBaseChartConfig`, `resolveDrawingChartConfig`, `sortVisibleDrawings`, `toChartPoint`, `toDrawingPoint`, `translateDrawing`, `translateDrawingsByIds`, `withChartTranslation`
 - Top-level variables:
-  - `adjustedMousePosition`, `anchorIndex`, `anchorPoint`, `baseChartConfig`, `baseDrawings`, `canDragSelectedDrawing`, `canvasOptions`, `chartConfig`, `chartConfigList`, `chartCursorClass`, `completed`, `constrainedPoint`, `currentChartPoint`, `currentCharts`, `currentMatch`, `dateValue`, `deltaX`, `deltaY`, `draft`, `draftChartConfig`, `dragPreviewRef`, `dragSessionRef`, `drawToCanvas`, `drawings`, `exactMatch`, `handleClick`, `handleContextMenu`, `handleDoubleClick`, `handleDrag`, `handleDragComplete`, `handleDragStart`, `handleHover`, `handleMouseDown`, `handleMouseMove`, `handleUnHover`, `hit`, `isHover`, `match`, `nativeEvent`, `nextSelectedIds`, `paneChartConfigs`, `pendingResizeHandleRef`, `plotData`, `point`, `previewDrawings`, `renderScales`, `resizeHandleIndex`, `resized`, `resolved`, `selectedCursorClass`, `selectedDrawing`, `selectedDrawingId`, `selectedObjectIdSet`, `selectedObjectIds`, `session`, `snap`, `snapRef`, `startChartPoint`, `startPoint`, `targetChartConfig`, `targetIndex`, `tolerance`, `tool`, `toolName`, `updated`, `xValue`, `yValue`
+  - `SPATIAL_INDEX_CELL_SIZE`, `SPATIAL_INDEX_PADDING`, `adjustedMousePosition`, `anchorIndex`, `anchorPoint`, `baseChartConfig`, `baseDrawings`, `bounds`, `cachedIndex`, `canDragSelectedDrawing`, `candidateDrawings`, `candidates`, `canvasOptions`, `cellCandidates`, `cellKey`, `chartConfig`, `chartConfigList`, `chartCursorClass`, `chartSignature`, `clipped`, `completed`, `constrainedPoint`, `currentChartPoint`, `currentCharts`, `currentMatch`, `dateValue`, `deltaX`, `deltaY`, `draft`, `draftChartConfig`, `dragPreviewRef`, `dragSessionRef`, `drawToCanvas`, `drawings`, `drawingsToCheck`, `exactMatch`, `existing`, `fontSize`, `group`, `groupKey`, `groups`, `handleClick`, `handleContextMenu`, `handleDoubleClick`, `handleDrag`, `handleDragComplete`, `handleDragStart`, `handleHover`, `handleMouseDown`, `handleMouseMove`, `handleUnHover`, `hit`, `hitIndexRef`, `isHover`, `match`, `maxCellX`, `maxCellY`, `measuredWidth`, `minCellX`, `minCellY`, `nativeEvent`, `nextSelectedIds`, `padding`, `paneChartConfigs`, `pendingResizeHandleRef`, `plotData`, `plotDataLength`, `point`, `previewDrawings`, `renderScales`, `resizeHandleIndex`, `resized`, `resolved`, `selectedCursorClass`, `selectedDrawing`, `selectedDrawingId`, `selectedObjectIdSet`, `selectedObjectIds`, `session`, `signature`, `snap`, `snapPalette`, `snapRef`, `spatialIndex`, `startChartPoint`, `startPoint`, `targetChartConfig`, `targetIndex`, `text`, `toPixels`, `tolerance`, `tool`, `toolName`, `updated`, `visibleDrawings`, `xScaleDomain`, `xScaleRange`, `xValue`, `xs`, `yValue`, `ys`
+
+### `src/lib/drawing/DrawingListPanel.test.tsx`
+
+- Top-level variables:
+  - `actionButtons`, `container`, `drawings`, `groupToggle`, `labels`, `onDelete`, `onSelect`, `onToggleVisible`, `paneToggle`, `reactActEnvironment`, `root`, `standaloneItem`, `standaloneSelect`
 
 ### `src/lib/drawing/DrawingListPanel.tsx`
 
 - Functions:
-  - `formatDrawingLabel`, `formatTimestamp`
+  - `buildDrawingTree`, `countTreeDrawings`, `ensureGroupNode`, `formatDrawingLabel`, `formatTimestamp`, `getGroupKey`, `nodeContainsSelection`, `normalizeMetaValue`, `renderGroup`, `renderLeaf`, `renderSection`, `toggleNode`
 - Top-level variables:
-  - `hidden`, `isSelected`, `left`, `locked`, `top`
+  - `collapsed`, `drawing`, `groupLabel`, `groupMap`, `groupNode`, `hidden`, `isSelected`, `leafNode`, `left`, `locked`, `paneLabel`, `rootGroupMap`, `sectionGroupMaps`, `sectionMap`, `sectionNode`, `selected`, `top`, `tree`, `trimmed`
 
 ### `src/lib/drawing/DrawingStorage.test.ts`
 
 - Functions:
   - `createStorageMock`
 - Top-level variables:
-  - `adapter`, `drawing`, `payload`, `store`
+  - `adapter`, `alertDrawing`, `drawing`, `fibonacci`, `payload`, `store`, `trendLine`
 
 ### `src/lib/drawing/DrawingStorage.ts`
 
 - Classes:
   - `DrawingImportError`
 - Functions:
-  - `createLocalStorageAdapter`, `getStorage`, `getStorageKey`, `isDrawingType`, `isPoint`, `isRecord`, `isRiskReward`, `isStyle`, `normalizeDasharray`, `normalizeDrawingObject`, `normalizeDrawings`
+  - `createLocalStorageAdapter`, `getStorage`, `getStorageKey`, `isAlertConfig`, `isDrawingType`, `isPoint`, `isRecord`, `isRiskReward`, `isStyle`, `normalizeDasharray`, `normalizeDrawingObject`, `normalizeDrawings`, `normalizeTemplateMap`
 - Top-level variables:
-  - `DRAWING_TOOL_TYPES`, `createdAt`, `normalized`, `raw`, `style`, `updatedAt`
+  - `DRAWING_ALERT_TRIGGERS`, `DRAWING_TOOL_TYPES`, `createdAt`, `drawings`, `normalized`, `parsed`, `previousTemplates`, `raw`, `style`, `styleTemplates`, `updatedAt`
 
 ### `src/lib/drawing/drawingStyleRegistry.test.ts`
 
 - Top-level variables:
-  - `drawing`, `global`, `perDrawing`, `unsubscribeGlobal`, `unsubscribeInstance`
+  - `drawing`, `fibonacci`, `global`, `perDrawing`, `trendLine`, `unsubscribeGlobal`, `unsubscribeInstance`
 
 ### `src/lib/drawing/drawingStyleRegistry.ts`
 
 - Functions:
-  - `clearDrawingStyleOverride`, `clearDrawingStyleOverrides`, `cloneDrawingStyleOverride`, `dashPatternToStrokeDasharray`, `getDrawingStyleOverride`, `listDrawingStyleOverrides`, `normalizeDrawingStyleOverride`, `notifyAllDrawingStyleChanges`, `notifyDrawingStyleChange`, `overrideDrawingStyle`, `resolveDrawingStyle`, `subscribeDrawingStyle`, `subscribeDrawingStyleChanges`
+  - `applyDrawingStyleTemplate`, `clearDrawingStyleOverride`, `clearDrawingStyleOverrides`, `clearDrawingStyleTemplate`, `clearDrawingStyleTemplates`, `cloneDrawingStyleOverride`, `cloneDrawingStyleTemplate`, `dashPatternToStrokeDasharray`, `getDrawingStyleOverride`, `getDrawingStyleTemplate`, `listDrawingStyleOverrides`, `listDrawingStyleTemplates`, `normalizeDrawingStyleOverride`, `normalizeDrawingStyleTemplate`, `notifyAllDrawingStyleChanges`, `notifyDrawingStyleChange`, `overrideDrawingStyle`, `projectDrawingStyleUpdate`, `resolveDrawingStyle`, `restoreDrawingStyleTemplates`, `saveDrawingStyleTemplate`, `strokeDasharrayToDashPattern`, `subscribeDrawingStyle`, `subscribeDrawingStyleChanges`
 - Top-level variables:
-  - `current`, `dashPattern`, `drawingStyleChangeListeners`, `drawingStyleListeners`, `drawingStyleOverrides`, `listeners`, `normalized`, `override`
+  - `current`, `dashPattern`, `drawingStyleChangeListeners`, `drawingStyleListeners`, `drawingStyleOverrides`, `drawingStyleTemplates`, `listeners`, `nextStyle`, `normalized`, `override`, `overridePatch`, `resolvedStyle`, `template`
 
 ### `src/lib/drawing/history.ts`
 
 - Functions:
-  - `cloneDrawings`, `createDrawingHistory`, `historyReducer`
+  - `applyHistoryCommand`, `buildHistoryCommand`, `createDrawingHistory`, `historyReducer`, `indexDrawings`, `invertHistoryCommand`, `snapshotDrawings`
 - Top-level variables:
-  - `nextPast`, `previousPresent`
+  - `changes`, `command`, `groupEnd`, `groupStart`, `groupedInsertions`, `index`, `insertion`, `insertions`, `nextById`, `nextDrawings`, `nextPast`, `previousById`, `previousCommand`, `previousRecord`, `removals`, `replacements`, `targetIndex`, `uniqueRemovals`
 
 ### `src/lib/drawing/hitTest.ts`
 
 - Functions:
-  - `distanceToPolyline`, `distanceToSegment`, `getResizeHandleIndex`, `getTextBounds`, `hitTestAbcdPattern`, `hitTestChannelLike`, `hitTestDrawing`, `hitTestFibArc`, `hitTestFibTimeZone`, `hitTestFibonacciLike`, `hitTestLineLike`, `hitTestParallelChannel`, `hitTestPitchfork`, `hitTestPositionZones`, `hitTestRayLike`, `hitTestRectangleLike`, `hitTestRegressionChannel`, `pathBounds`, `pointInRect`, `toPixel`
+  - `distanceToPolyline`, `distanceToSegment`, `getResizeHandleIndex`, `getTextBounds`, `hitTestAbcdPattern`, `hitTestChannelLike`, `hitTestDrawing`, `hitTestFibArc`, `hitTestFibTimeZone`, `hitTestFibonacciLike`, `hitTestLineLike`, `hitTestParallelChannel`, `hitTestPitchfork`, `hitTestPositionZones`, `hitTestRayLike`, `hitTestRectangleLike`, `hitTestRegressionChannel`, `pathBounds`, `pointInPolygon`, `pointInRect`, `toPixel`
 - Top-level variables:
-  - `HIT_TOLERANCE`, `best`, `bounds`, `clipped`, `distance`, `distanceFromCenter`, `dx`, `dy`, `effectiveDrawing`, `end`, `fontSize`, `geometry`, `height`, `leftFork`, `length`, `lengthSquared`, `lower`, `maxX`, `maxY`, `median`, `metrics`, `middle`, `minX`, `minY`, `normal`, `offsetAnchor`, `offsetEnd`, `offsetStart`, `offsetVector`, `pixel`, `pixelDelta`, `pixels`, `point`, `priceDelta`, `rightFork`, `start`, `t`, `text`, `tolerance`, `upper`, `width`, `x`, `x1`, `x2`, `xs`, `y`, `y1`, `y2`, `ys`
+  - `HIT_TOLERANCE`, `best`, `bounds`, `clipped`, `current`, `distance`, `distanceFromCenter`, `dx`, `dy`, `effectiveDrawing`, `end`, `fontSize`, `geometry`, `height`, `inside`, `intersects`, `leftFork`, `length`, `lengthSquared`, `lower`, `maxX`, `maxY`, `median`, `metrics`, `middle`, `minX`, `minY`, `normal`, `offsetAnchor`, `offsetEnd`, `offsetStart`, `offsetVector`, `pixel`, `pixelDelta`, `pixels`, `point`, `previous`, `priceDelta`, `rightFork`, `start`, `t`, `text`, `tolerance`, `upper`, `width`, `x`, `x1`, `x2`, `xs`, `y`, `y1`, `y2`, `ys`
 
 ### `src/lib/drawing/hitTestTolerance.test.ts`
 
@@ -3525,7 +3583,7 @@ Generated at: `2026-05-12 22:01:08`
 - Functions:
   - `circleElement`, `clipSegmentToBox`, `extendLineThroughBox`, `interactiveProps`, `lineElement`, `numberFormatter`, `pathElement`, `polygonElement`, `polylineElement`, `rectElement`, `renderAbcdPattern`, `renderArrow`, `renderChannel`, `renderDateAndPriceRange`, `renderDrawingToSvg`, `renderExtendedLine`, `renderFibArc`, `renderFibExtension`, `renderFibTimeZone`, `renderFibonacci`, `renderHLine`, `renderLineWithHandles`, `renderLongPosition`, `renderParallelChannel`, `renderPitchfork`, `renderPolyline`, `renderPositionZones`, `renderRay`, `renderRectangle`, `renderRegressionChannel`, `renderShortPosition`, `renderText`, `renderTrendLine`, `renderVLine`, `selectionHandles`, `strokeDasharrayForStyle`, `textElement`, `toPixel`
 - Top-level variables:
-  - `DEFAULT_FIB_EXTENSION_LEVELS`, `DEFAULT_FIB_LEVELS`, `arcs`, `badge`, `badgeProps`, `badgeText`, `bars`, `base`, `bottom`, `clipped`, `dashedStroke`, `distance`, `dx`, `dy`, `edges`, `effectiveDrawing`, `element`, `elements`, `end`, `entryLine`, `entryY`, `extensionPrice`, `fill`, `geometry`, `headLength`, `headWidth`, `height`, `labels`, `left`, `leftFork`, `leftX`, `length`, `levels`, `line`, `lineProps`, `median`, `metrics`, `middle`, `negativeBoundary`, `normal`, `offsetAnchor`, `offsetEnd`, `offsetStart`, `offsetVector`, `path`, `percent`, `pixel`, `pixelDelta`, `pixels`, `point`, `polygon`, `positiveBoundary`, `price`, `priceDelta`, `px`, `py`, `r`, `ratio`, `ratioAB`, `ratioBC`, `rect`, `reward`, `right`, `rightFork`, `rightX`, `risk`, `riskReward`, `slZone`, `slZoneClass`, `start`, `stopLine`, `stopY`, `stroke`, `t0`, `t1`, `targetLine`, `targetY`, `text`, `top`, `tpZone`, `tpZoneClass`, `ux`, `uy`, `vector`, `width`, `x`, `y`
+  - `DEFAULT_FIB_EXTENSION_LEVELS`, `DEFAULT_FIB_LEVELS`, `arcs`, `badge`, `badgeProps`, `badgeText`, `bars`, `base`, `bottom`, `clipped`, `dashedStroke`, `distance`, `dx`, `dy`, `edges`, `effectiveDrawing`, `element`, `elements`, `end`, `entryLine`, `entryY`, `extensionPrice`, `fill`, `geometry`, `headLength`, `headWidth`, `height`, `labels`, `left`, `leftFork`, `leftX`, `length`, `levels`, `line`, `lineProps`, `median`, `metrics`, `middle`, `negativeBoundary`, `normal`, `offsetAnchor`, `offsetEnd`, `offsetStart`, `offsetVector`, `path`, `percent`, `pixel`, `pixelDelta`, `pixels`, `point`, `polygon`, `polygonProps`, `positiveBoundary`, `price`, `priceDelta`, `px`, `py`, `r`, `ratio`, `ratioAB`, `ratioBC`, `rect`, `reward`, `right`, `rightFork`, `rightX`, `risk`, `riskReward`, `slZone`, `slZoneClass`, `start`, `stopLine`, `stopY`, `stroke`, `t0`, `t1`, `targetLine`, `targetY`, `text`, `top`, `tpZone`, `tpZoneClass`, `ux`, `uy`, `vector`, `width`, `x`, `y`
 
 ### `src/lib/drawing/serialization.ts`
 
@@ -3550,12 +3608,19 @@ Generated at: `2026-05-12 22:01:08`
 - Top-level variables:
   - `DRAWING_SHORTCUTS`, `hasModifier`, `key`
 
+### `src/lib/drawing/snap.test.ts`
+
+- Functions:
+  - `createPlotData`, `createScales`
+- Top-level variables:
+  - `baseDate`, `day`, `endpointDrawing`, `falling`, `lineDrawing`, `nearbyEndpoint`, `rising`, `scales`, `snap`, `x`, `xScale`, `xScaleTicks`, `xTick`, `y`, `yScale`, `yScaleTicks`, `yTick`
+
 ### `src/lib/drawing/snap.ts`
 
 - Functions:
-  - `findNearestBar`, `findSnapPoint`, `getDatumDate`, `pickEndpointSnap`, `toDate`
+  - `bboxContainsPoint`, `chartPointFromPixel`, `collectAnchorSnap`, `collectGridSnap`, `collectIntersectionSnap`, `findNearestBar`, `findSnapPoint`, `getDatumDate`, `getDrawingSegments`, `getScaleTicks`, `getVisibleDrawings`, `isBetterCandidate`, `isFinitePoint`, `makeCandidate`, `pickEndpointSnap`, `pickOhlcSnap`, `pointNearSegmentEndpoint`, `resolveXTickPoint`, `resolveYTickPoint`, `segmentBoundingBox`, `segmentIntersection`, `toDate`
 - Top-level variables:
-  - `MAGNET_TOLERANCE`, `best`, `bestDistance`, `bestOhlc`, `candidates`, `date`, `distance`, `nearestBar`, `pixelPoint`, `pixelX`, `value`, `xAccessor`
+  - `GRID_TICK_COUNT`, `INTERSECTION_ENDPOINT_EPSILON`, `MAGNET_TOLERANCE`, `SNAP_PRIORITY`, `STRUCTURAL_TOLERANCE_MULTIPLIER`, `best`, `bestDistance`, `bestX`, `bestY`, `candidate`, `candidates`, `chartPoint`, `chartY`, `date`, `delta`, `denominator`, `distance`, `endChart`, `left`, `nearbySegments`, `nearestBar`, `nextCandidate`, `pickers`, `pixelPoint`, `pixelX`, `pixelY`, `point`, `points`, `r`, `resolvedDate`, `right`, `s`, `segments`, `startChart`, `structuralTolerance`, `t`, `u`, `value`, `visibleDrawings`, `x`, `xAccessor`, `xScale`, `xTicks`, `xValue`, `yScale`, `yTicks`, `yValue`
 
 ### `src/lib/drawing/stateMachine.ts`
 
@@ -3571,23 +3636,30 @@ Generated at: `2026-05-12 22:01:08`
 ### `src/lib/drawing/useDrawingInteraction.test.ts`
 
 - Functions:
-  - `DrawingGroupProbe`, `DrawingInteractionProbe`, `createTrendLineDrawing`, `makeDrawings`, `renderGroupProbe`, `renderInteractionProbe`
+  - `DrawingGroupProbe`, `DrawingInteractionProbe`, `DrawingLockedGroupProbe`, `createTrendLineDrawing`, `getDrawingZIndex`, `makeDrawings`, `makeLockedDrawings`, `renderGroupProbe`, `renderInteractionProbe`
 - Top-level variables:
   - `completeState`, `container`, `currentInteraction`, `currentRoot`, `d1`, `d2`, `d3`, `deletedSnapshot`, `drawing`, `drawingState`, `nextPoint`, `pushedState`, `reactActEnvironment`, `root`, `selectedSnapshot`, `selectedState`, `snapshot`, `snapshotPoints`, `startPoint`
 
 ### `src/lib/drawing/useDrawingInteraction.ts`
 
 - Functions:
-  - `cloneDrawingPoints`, `createDrawingInteractionState`, `deleteSelectedInteractionState`, `drawingInteractionReducer`, `getSelectedObjectIds`, `isHistoryAction`, `patchDrawing`, `replaceDrawingById`, `useDrawingInteraction`
+  - `cloneDrawingPoints`, `createDrawingInteractionState`, `deleteSelectedInteractionState`, `drawingInteractionReducer`, `getReorderTargetIds`, `getSelectedObjectIds`, `isHistoryAction`, `patchDrawing`, `reorderDrawingsByIds`, `replaceDrawingById`, `replaceDrawingsByIds`, `useDrawingInteraction`
 - Top-level variables:
-  - `cancelDrawing`, `deleteGroup`, `deleteSelected`, `didChange`, `ids`, `nextDrawings`, `nextHistory`, `redo`, `replaceDrawings`, `selectGroup`, `selectObject`, `selectedDrawings`, `selectedObjectIds`, `setSelectedObjects`, `startEditing`, `startMoving`, `startResizing`, `undo`, `updateDrawing`
+  - `bringSelectedToFront`, `cancelDrawing`, `currentMaxZIndex`, `currentMinZIndex`, `deleteGroup`, `deleteSelected`, `didChange`, `firstGroupId`, `groupDrawings`, `ids`, `nextDrawings`, `nextHistory`, `nextZIndex`, `nextZIndexById`, `orderedDrawings`, `redo`, `replaceDrawings`, `selectGroup`, `selectObject`, `selectedDrawings`, `selectedObjectIdSet`, `selectedObjectIds`, `sendSelectedToBack`, `setSelectedObjects`, `startEditing`, `startMoving`, `startResizing`, `targetDrawings`, `targetIds`, `targetObjectIds`, `undo`, `updateDrawing`, `updateSelectedDrawings`
+
+### `src/lib/drawing/useDrawingStorage.test.ts`
+
+- Functions:
+  - `StorageProbe`, `createStorageMock`, `renderStorageProbe`
+- Top-level variables:
+  - `adapter`, `container`, `currentRoot`, `handleLoad`, `latestDrawings`, `loadCalls`, `reactActEnvironment`, `root`, `seedDrawing`, `storageMock`, `store`
 
 ### `src/lib/drawing/useDrawingStorage.ts`
 
 - Functions:
   - `useDrawingStorage`
 - Top-level variables:
-  - `anchor`, `blob`, `clearAll`, `exportJSON`, `hydratedRef`, `importJSON`, `imported`, `loaded`, `payload`, `storage`, `timeoutId`, `url`
+  - `anchor`, `blob`, `clearAll`, `currentStorageKey`, `exportJSON`, `hydratedRef`, `importJSON`, `imported`, `loaded`, `payload`, `previousStorageKey`, `previousStorageKeyRef`, `storage`, `timeoutId`, `url`
 
 ### `src/lib/drawing/useLongPress.test.ts`
 
@@ -3623,6 +3695,11 @@ Generated at: `2026-05-12 22:01:08`
   - `GenericChartComponentWrapper`
 - Top-level variables:
   - `ALWAYS_TRUE_TYPES`, `canvasOriginX`, `canvasOriginY`, `chartConfig`, `chartContext`, `chartId`
+
+### `src/lib/GenericComponent.test.ts`
+
+- Top-level variables:
+  - `component`, `redraw`, `setCursorClass`, `unsubscribe`
 
 ### `src/lib/GenericComponent.tsx`
 
@@ -4646,9 +4723,9 @@ Generated at: `2026-05-12 22:01:08`
 ### `src/widget/__tests__/VNBrokerChart.contract.test.tsx`
 
 - Functions:
-  - `ThrowingChild`, `createAdapter`, `createDeferred`
+  - `ThrowingChild`, `createAdapter`, `createBars`, `createDeferred`, `getLatestDrawingLayerProps`, `isDrawingLayerProps`, `makeMoreProps`, `xAccessor`
 - Top-level variables:
-  - `VNBrokerChart`, `WidgetErrorBoundary`, `WidgetI18nProvider`, `abortSpy`, `act`, `adapter`, `container`, `createRoot`, `fetchDeferred`, `firstAdapter`, `firstFetch`, `originalConsoleError`, `promise`, `reactActEnvironment`, `ref`, `reject`, `resolve`, `root`, `secondAdapter`, `secondFetch`
+  - `VNBrokerChart`, `WidgetErrorBoundary`, `WidgetI18nProvider`, `abortSpy`, `act`, `actual`, `adapter`, `alertDrawing`, `bars`, `base`, `capturedGenericChartComponentProps`, `chartConfig`, `container`, `createEnd`, `createProps`, `createRoot`, `createStart`, `createdDrawing`, `createdEndPixel`, `createdStartPixel`, `cursorProps`, `cursorPropsAfterDeselect`, `cursorPropsAfterSelect`, `date`, `dragEnd`, `dragStart`, `drawing`, `drawingLayerProps`, `drawingPropsAfterMouseDown`, `fetchDeferred`, `firstAdapter`, `firstFetch`, `initialBars`, `lineMidpoint`, `nextBars`, `onAlert`, `onDrawingChange`, `onSelectionChange`, `onVisibleRangeChange`, `originalConsoleError`, `promise`, `reactActEnvironment`, `ref`, `reject`, `resolve`, `root`, `secondAdapter`, `secondFetch`, `seedDrawing`, `updatedDrawing`, `xScale`
 
 ### `src/widget/context/__tests__/WidgetI18nContext.test.tsx`
 
@@ -4694,9 +4771,9 @@ Generated at: `2026-05-12 22:01:08`
 ### `src/widget/VNBrokerChart.tsx`
 
 - Functions:
-  - `VNBrokerChart`, `VNBrokerChartContent`, `buildContinuousState`, `handleChartVisibleDomainChange`, `lookbackDays`, `mergeBarsByDate`, `resolveFetchWindow`, `scaledXExtents`, `timeXAccessor`
+  - `VNBrokerChart`, `VNBrokerChartContent`, `buildContinuousState`, `createDisabledDrawingStorageAdapter`, `getSelectedDrawingId`, `handleChartCurrentItemChange`, `handleChartVisibleDomainChange`, `handleChartVisibleRangeChange`, `handleDrawingKeyboardShortcuts`, `isEditableTarget`, `lookbackDays`, `mergeBarsByDate`, `resolveFetchWindow`, `scaledXExtents`, `timeXAccessor`
 - Top-level variables:
-  - `activeSymbol`, `activeTimeframe`, `axisStroke`, `axisTickFill`, `candidatePanes`, `chartInnerHeight`, `chartScaleState`, `computedXExtents`, `controller`, `current`, `dateFormat`, `diff`, `disposed`, `enrichedData`, `existingIndex`, `firstBar`, `firstIndex`, `hasExternalData`, `isDark`, `lastBar`, `lastIndex`, `minDiff`, `nearest`, `nextPanes`, `oneDay`, `paneHeights`, `plotData`, `previousTheme`, `priceFormat`, `provider`, `ready`, `resolveNearestIndex`, `resolvedTheme`, `resolvedXExtents`, `root`, `scaled`, `scaledData`, `scaledDisplayXAccessor`, `scaledXAccessor`, `shouldHideNonTradingDays`, `sortedBars`, `targetMs`, `themeState`, `to`, `toDomainDate`, `unsubscribe`, `visiblePanes`, `volumeFormat`
+  - `activeSymbol`, `activeTimeframe`, `alertEvents`, `alertSignatureRef`, `axisStroke`, `axisTickFill`, `candidatePanes`, `chartInnerHeight`, `chartScaleState`, `computedXExtents`, `controller`, `current`, `currentBar`, `dateFormat`, `diff`, `disposed`, `drawingInteraction`, `drawingRuntimeEnabled`, `drawingStorageAdapter`, `enrichedData`, `existingIndex`, `firstBar`, `firstIndex`, `hasExternalData`, `isDark`, `lastBar`, `lastIndex`, `minDiff`, `nearest`, `nextPanes`, `onDrawingAlert`, `onDrawingChange`, `onDrawingContextMenu`, `onDrawingSelectionChange`, `onDrawingToolUsed`, `oneDay`, `paneHeights`, `plotData`, `previousAlertBarRef`, `previousBar`, `previousTheme`, `priceFormat`, `provider`, `ready`, `resolveNearestIndex`, `resolvedTheme`, `resolvedXExtents`, `root`, `scaled`, `scaledData`, `scaledDisplayXAccessor`, `scaledXAccessor`, `selectedDrawing`, `selectedDrawingId`, `shouldHideNonTradingDays`, `signature`, `sortedBars`, `tagName`, `targetMs`, `themeState`, `to`, `toDomainDate`, `unsubscribe`, `visiblePanes`, `volumeFormat`
 
 ### `src/widget/WidgetEmptyState.tsx`
 
@@ -4878,6 +4955,13 @@ Generated at: `2026-05-12 22:01:08`
   - `heapUsed`
 - Top-level variables:
   - `adapter`, `baseline`, `deltaMb`, `eventCount`, `frozenCount`, `peak`, `unsubs`
+
+### `tests/soak/drawing_replay_alerts.test.ts`
+
+- Functions:
+  - `createBar`
+- Top-level variables:
+  - `alertDrawing`, `alertEvents`, `bars`, `close`, `controller`, `currentBar`, `date`, `previousBar`
 
 ### `tests/soak/render_heavy.test.ts`
 

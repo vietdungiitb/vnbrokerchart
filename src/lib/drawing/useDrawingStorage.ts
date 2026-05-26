@@ -17,13 +17,24 @@ export function useDrawingStorage(
 ): UseDrawingStorageReturn {
 	const storage = useMemo(() => adapter ?? createLocalStorageAdapter(), [adapter]);
 	const hydratedRef = useRef(false);
+	const previousStorageKeyRef = useRef<string | null>(null);
 
 	useEffect(() => {
+		const currentStorageKey = `${symbol}::${timeframe}`;
+		const previousStorageKey = previousStorageKeyRef.current;
+		previousStorageKeyRef.current = currentStorageKey;
 		hydratedRef.current = false;
 		const loaded = storage.load(symbol, timeframe);
-		onLoad(loaded);
+		if (loaded.hasData) {
+			onLoad(loaded.drawings);
+			hydratedRef.current = true;
+			return;
+		}
+		if (adapter === undefined && previousStorageKey !== null && previousStorageKey !== currentStorageKey) {
+			onLoad([]);
+		}
 		hydratedRef.current = true;
-	}, [onLoad, storage, symbol, timeframe]);
+	}, [adapter, onLoad, storage, symbol, timeframe]);
 
 	useEffect(() => {
 		if (!hydratedRef.current) {

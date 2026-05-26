@@ -1,4 +1,4 @@
-import { deserializeDrawings, serializeDrawings } from "./serialization";
+import { clearDrawingStyleTemplates, listDrawingStyleTemplates, restoreDrawingStyleTemplates } from "./drawingStyleRegistry";
 import type { DrawingObject, DrawingStyle, DrawingToolType, Point } from "./types";
 
 const DRAWING_TOOL_TYPES: DrawingToolType[] = [
@@ -25,6 +25,13 @@ const DRAWING_TOOL_TYPES: DrawingToolType[] = [
 	"regressionChannel",
 ];
 
+const DRAWING_ALERT_TRIGGERS: NonNullable<DrawingObject["alert"]>["trigger"][] = [
+	"touch",
+	"break",
+	"closeAbove",
+	"closeBelow",
+];
+
 export class DrawingImportError extends Error {
 	constructor(message: string) {
 		super(message);
@@ -34,7 +41,7 @@ export class DrawingImportError extends Error {
 
 export interface DrawingStorageAdapter {
 	save(symbol: string, timeframe: string, drawings: DrawingObject[]): void;
-	load(symbol: string, timeframe: string): DrawingObject[];
+	load(symbol: string, timeframe: string): { drawings: DrawingObject[]; hasData: boolean };
 	clear(symbol: string, timeframe: string): void;
 	exportJSON(drawings: readonly DrawingObject[]): string;
 	importJSON(payload: string): DrawingObject[];
@@ -71,6 +78,13 @@ function isRiskReward(value: unknown): value is NonNullable<DrawingObject["riskR
 		&& (typeof value.quantity === "undefined" || (typeof value.quantity === "number" && Number.isFinite(value.quantity)));
 }
 
+function isAlertConfig(value: unknown): value is NonNullable<DrawingObject["alert"]> {
+	return isRecord(value)
+		&& typeof value.enabled === "boolean"
+		&& typeof value.trigger === "string"
+		&& DRAWING_ALERT_TRIGGERS.includes(value.trigger as NonNullable<DrawingObject["alert"]>["trigger"]);
+}
+
 function normalizeDasharray(value: unknown): DrawingStyle["strokeDasharray"] {
 	if (typeof value !== "string") {
 		return undefined;
@@ -84,6 +98,18 @@ function normalizeDasharray(value: unknown): DrawingStyle["strokeDasharray"] {
 
 function isDrawingType(value: unknown): value is DrawingToolType {
 	return typeof value === "string" && DRAWING_TOOL_TYPES.includes(value as DrawingToolType);
+}
+
+function normalizeTemplateMap(value: unknown): Record<string, Partial<DrawingStyle>> {
+	if (!isRecord(value)) {
+		return {};
+	}
+
+	return Object.fromEntries(
+		Object.entries(value)
+			.filter(([toolType, style]) => isDrawingType(toolType) && isRecord(style))
+			.map(([toolType, style]) => [toolType, { ...(style as Record<string, unknown>) } as Partial<DrawingStyle>]),
+	);
 }
 
 function normalizeDrawingObject(value: unknown, index: number): DrawingObject {
@@ -138,6 +164,12 @@ function normalizeDrawingObject(value: unknown, index: number): DrawingObject {
 				quantity: value.riskReward.quantity,
 			}
 			: undefined,
+		alert: isAlertConfig(value.alert)
+			? {
+				enabled: value.alert.enabled,
+				trigger: value.alert.trigger,
+			}
+			: undefined,
 		extendLeft: typeof value.extendLeft === "boolean" ? value.extendLeft : undefined,
 		extendRight: typeof value.extendRight === "boolean" ? value.extendRight : undefined,
 		locked: typeof value.locked === "boolean" ? value.locked : undefined,
@@ -157,34 +189,68 @@ function normalizeDrawings(payload: unknown): DrawingObject[] {
 export function createLocalStorageAdapter(): DrawingStorageAdapter {
 	return {
 		save(symbol, timeframe, drawings) {
-			getStorage().setItem(getStorageKey(symbol, timeframe), serializeDrawings(drawings));
+			getStorage().setItem(getStorageKey(symbol, timeframe), JSON.stringify({
+				drawings,
+				styleTemplates: listDrawingStyleTemplates(),
+			}));
 		},
 		load(symbol, timeframe) {
 			const raw = getStorage().getItem(getStorageKey(symbol, timeframe));
 			if (!raw) {
-				return [];
+				clearDrawingStyleTemplates();
+				return { drawings: [], hasData: false };
 			}
 			try {
-				return normalizeDrawings(deserializeDrawings(raw));
+				const parsed = JSON.parse(raw) as unknown;
+				if (Array.isArray(parsed)) {
+					clearDrawingStyleTemplates();
+					return { drawings: normalizeDrawings(parsed), hasData: true };
+				}
+				if (!isRecord(parsed)) {
+					throw new DrawingImportError("Drawing payload must be an array or object");
+				}
+				const styleTemplates = normalizeTemplateMap(parsed.styleTemplates ?? parsed.templates);
+				restoreDrawingStyleTemplates(styleTemplates);
+				return { drawings: normalizeDrawings(parsed.drawings), hasData: true };
 			} catch (error) {
 				if (error instanceof DrawingImportError) {
 					getStorage().removeItem(getStorageKey(symbol, timeframe));
+					clearDrawingStyleTemplates();
 					console.warn(`Ignoring invalid drawing cache for ${symbol}/${timeframe}:`, error.message);
-					return [];
+					return { drawings: [], hasData: true };
 				}
-				return [];
+				clearDrawingStyleTemplates();
+				return { drawings: [], hasData: true };
 			}
 		},
 		clear(symbol, timeframe) {
 			getStorage().removeItem(getStorageKey(symbol, timeframe));
+			clearDrawingStyleTemplates();
 		},
 		exportJSON(drawings) {
-			return serializeDrawings(drawings);
+			return JSON.stringify({
+				drawings,
+				styleTemplates: listDrawingStyleTemplates(),
+			});
 		},
 		importJSON(payload) {
+			const previousTemplates = listDrawingStyleTemplates();
 			try {
-				return normalizeDrawings(deserializeDrawings(payload));
+				const parsed = JSON.parse(payload) as unknown;
+				if (Array.isArray(parsed)) {
+					const drawings = normalizeDrawings(parsed);
+					clearDrawingStyleTemplates();
+					return drawings;
+				}
+				if (!isRecord(parsed)) {
+					throw new DrawingImportError("Drawing payload must be an array or object");
+				}
+				const styleTemplates = normalizeTemplateMap(parsed.styleTemplates ?? parsed.templates);
+				const drawings = normalizeDrawings(parsed.drawings);
+				restoreDrawingStyleTemplates(styleTemplates);
+				return drawings;
 			} catch (error) {
+				restoreDrawingStyleTemplates(previousTemplates);
 				if (error instanceof DrawingImportError) {
 					throw error;
 				}

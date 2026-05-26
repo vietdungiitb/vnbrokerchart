@@ -82,7 +82,8 @@ module.exports = (env, argv) => {
       },
       compress: true,
       port: devServerPort,
-      hot: true,
+      hot: false,
+      liveReload: true,
       client: {
         overlay: false,
       },

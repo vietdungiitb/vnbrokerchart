@@ -7,3 +7,4 @@ export type { DataAdapter, KLineBar, GetBarsType, GetBarsParams, GetBarsResult }
 export { BinanceAdapter, binanceAdapter } from "./BinanceAdapter";
 export { LocalCacheAdapter } from "./LocalCacheAdapter";
 export { VNStocksAdapter } from "./VNStocksAdapter";
+export { VNInvestAdapter, createVNInvestAdapter } from "./VNInvestAdapter";

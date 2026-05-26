@@ -37,6 +37,20 @@ function pointInRect(px: number, py: number, rx: number, ry: number, rw: number,
 	return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh;
 }
 
+function pointInPolygon(points: Array<{ x: number; y: number }>, px: number, py: number) {
+	let inside = false;
+	for (let index = 0, previousIndex = points.length - 1; index < points.length; previousIndex = index, index += 1) {
+		const current = points[index];
+		const previous = points[previousIndex];
+		const intersects = ((current.y > py) !== (previous.y > py))
+			&& (px < ((previous.x - current.x) * (py - current.y)) / ((previous.y - current.y) || 1) + current.x);
+		if (intersects) {
+			inside = !inside;
+		}
+	}
+	return inside;
+}
+
 function distanceToPolyline(points: Array<{ x: number; y: number }>, px: number, py: number) {
 	if (points.length < 2) {
 		return Number.POSITIVE_INFINITY;
@@ -255,7 +269,8 @@ function hitTestAbcdPattern(drawing: DrawingObject, mouseX: number, mouseY: numb
 	}
 
 	const [a, b, c, d] = metrics.points;
-	return distanceToSegment(mouseX, mouseY, a.x, a.y, b.x, b.y) <= tolerance
+	return pointInPolygon(metrics.points, mouseX, mouseY)
+		|| distanceToSegment(mouseX, mouseY, a.x, a.y, b.x, b.y) <= tolerance
 		|| distanceToSegment(mouseX, mouseY, b.x, b.y, c.x, c.y) <= tolerance
 		|| distanceToSegment(mouseX, mouseY, c.x, c.y, d.x, d.y) <= tolerance;
 }

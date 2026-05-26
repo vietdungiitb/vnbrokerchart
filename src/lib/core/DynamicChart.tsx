@@ -55,6 +55,7 @@ export interface DynamicChartProps {
 	children?: ReactNode;
 	onClick?: (moreProps: { currentItem?: EnrichedDatum; currentCharts?: number[]; mouseXY?: [number, number] }, e: unknown) => void;
 	onContextMenu?: (moreProps: { currentItem?: EnrichedDatum; currentCharts?: number[]; mouseXY?: [number, number] }, e: unknown) => void;
+	onCurrentItemChange?: (currentItem: EnrichedDatum | null) => void;
 	onVisibleDomainChange?: (domain: [Date | number, Date | number]) => void;
 	onVisibleRangeChange?: (range: VisibleRange) => void;
 }
@@ -125,24 +126,34 @@ function dashPatternToSeriesDasharray(dashPattern?: number[]) {
 }
 
 /**
- * Creates a smart date formatter that adapts to zoom level (visible bar count).
- * Similar to KlineChart: intraday shows time, daily/weekly shows date.
+ * Creates a smart date formatter that adapts to the actual bar interval (not bar count).
+ * Detects intraday vs daily from the data timestamps so daily data always shows dates.
  */
-function createSmartDateFormatter(visibleBarCount: number): (date: Date) => string {
-	// Intelligent format selection based on zoom level
-	if (visibleBarCount <= 50) {
-		// Very zoomed in: show time with seconds
-		return timeFormat("%H:%M:%S");
+function createSmartDateFormatter(visibleBarCount: number, data?: readonly { date: Date }[]): (date: Date) => string {
+	// Detect interval from data when available
+	if (data && data.length >= 2) {
+		let minIntervalMs = Number.POSITIVE_INFINITY;
+		const sampleCount = Math.min(data.length - 1, 10);
+		for (let i = data.length - sampleCount - 1; i < data.length - 1; i++) {
+			const diff = data[i + 1].date.getTime() - data[i].date.getTime();
+			if (diff > 0 && diff < minIntervalMs) minIntervalMs = diff;
+		}
+		const DAY_MS = 24 * 60 * 60 * 1000;
+		if (minIntervalMs >= DAY_MS) {
+			// Daily or coarser: always show full date
+			return timeFormat("%Y-%m-%d");
+		}
+		if (minIntervalMs >= 60 * 60 * 1000) {
+			// Hourly bars: show date + hour
+			return timeFormat("%m-%d %H:%M");
+		}
+		// Sub-hourly: show time
+		return minIntervalMs < 60_000 ? timeFormat("%H:%M:%S") : timeFormat("%H:%M");
 	}
-	if (visibleBarCount <= 120) {
-		// Intraday: show time HH:MM
-		return timeFormat("%H:%M");
-	}
-	if (visibleBarCount <= 300) {
-		// Multi-day to few weeks: show date + time
-		return timeFormat("%m-%d %H:%M");
-	}
-	// Zoomed out: show date only
+	// Fallback to bar-count heuristic when data unavailable
+	if (visibleBarCount <= 50) return timeFormat("%H:%M:%S");
+	if (visibleBarCount <= 120) return timeFormat("%H:%M");
+	if (visibleBarCount <= 300) return timeFormat("%m-%d %H:%M");
 	return timeFormat("%Y-%m-%d");
 }
 
@@ -206,6 +217,14 @@ function resolveSeriesDisplayColor(item: SeriesConfig): string | undefined {
 	const params: Record<string, unknown> = { ...entry.defaultParams, ...item.params };
 	const paramColor = params.color;
 	return typeof paramColor === "string" && paramColor.length > 0 ? paramColor : undefined;
+}
+
+export function resolveBollingerBandFillColor(params: Record<string, unknown>): string {
+	const fill = params.fill;
+	if (typeof fill === "string" && fill.trim().length > 0) {
+		return fill;
+	}
+	return "#bfdbfe";
 }
 
 function buildTooltipEntriesForSeries(series: SeriesConfig[]): PaneTooltipEntry[] {
@@ -464,18 +483,19 @@ function renderSeries(series: SeriesConfig) {
 				/>
 			);
 		case "BollingerBand": {
-			// Sub-colors: middle, top, bottom — apply 53% alpha to band lines for visual clarity
+			// Keep the fill muted so the band never obscures candles or other panels.
 			const bbMidColor = sc("middle", lineColor);
 			const bbTopRaw   = sc("top",    lineColor);
 			const bbBotRaw   = sc("bottom", lineColor);
 			const withAlpha  = (c: string) => c.match(/^#[0-9a-fA-F]{6}$/) ? c + "88" : c;
+			const bbFillColor = resolveBollingerBandFillColor(params);
 			return (
 				<BollingerSeries
 					key={seriesKey}
 					yAccessor={(datum: EnrichedDatum) => resolveSeriesStructuredValue(datum, series) as IndicatorBandValue | undefined}
 					stroke={{ top: withAlpha(bbTopRaw), middle: bbMidColor, bottom: withAlpha(bbBotRaw) }}
-					fill={fillColor}
-					opacity={styleOverride?.opacity ?? 0.12}
+					fill={bbFillColor}
+					opacity={styleOverride?.opacity ?? 0.08}
 				/>
 			);
 		}
@@ -663,9 +683,8 @@ function renderDynamicChartChildren({
 	// Track how many slots have been rendered per pane (for tooltip y-stagger in splitScale panes)
 	const paneSlotCounter = new Map<string, number>();
 
-	// Use smart date formatter based on data length (zoom level estimate)
-	// This adapts format: very zoomed in shows seconds, zoomed out shows date only
-	const adaptiveDateFormat = createSmartDateFormatter(Math.max(1, data.length));
+	// Use smart date formatter based on actual bar interval (detects daily vs intraday)
+	const adaptiveDateFormat = createSmartDateFormatter(Math.max(1, data.length), data);
 	const xAxisDateFormat = createKlineXAxisFormatter(data);
 	const sampleXValue = data.length > 0 ? xAccessor(data[0]) : undefined;
 	const isDiscontinuousScale = typeof sampleXValue === "number";
@@ -823,6 +842,7 @@ const DynamicChartComponent = forwardRef<ChartHandle, DynamicChartProps>(functio
 			className={props.className}
 			onClick={props.onClick}
 			onContextMenu={props.onContextMenu}
+			onCurrentItemChange={props.onCurrentItemChange}
 			onVisibleDomainChange={props.onVisibleDomainChange}
 			onVisibleRangeChange={handleVisibleRangeChange}
 		>

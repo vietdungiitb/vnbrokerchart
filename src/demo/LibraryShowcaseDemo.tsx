@@ -24,6 +24,7 @@ import {
 	type YAxisSide,
 	type ReplaySpeed,
 		type StockDataAdapter,
+		type VisibleRange,
 	ChartSplitter,
 	useChartTheme,
 	VNBrokerChart,
@@ -52,9 +53,11 @@ import { PaneSettingsModal, type SettingsSection } from "./PaneSettingsModal";
 import { AboutDialog, BrandFooter, BrandMark, PATTokenModal, WhalePanel } from "./components";
 import { VNInvestClient } from "./dataSources/VNInvestClient";
 import { VNInvestDataSource, DemoDataSource, type DataSource } from "./dataSources";
+import { VNInvestAdapter } from "../lib/adapters/VNInvestAdapter";
 import type { WhaleFeedResponse } from "./vninvest/types";
 import { computeLoadedWindow, computeMissingSegments, computeTargetWindow, type MissingSegments, type TimeWindow } from "./historyWindowPlanner";
 import { HistoryFetchQueue } from "./historyFetchQueue";
+import { computeVNIViewportBackfillWindow } from "./vniViewportBackfill";
 import { useReleaseNotice } from "./release/useReleaseNotice";
 import "./demo.css";
 import "../lib/styles/pane-overlays.css";
@@ -120,6 +123,7 @@ function saveDemoSettings(settings: DemoSettings) {
 const priceFormat = format(".2f");
 const volumeFormat = format(".3s");
 const dateFormat = timeFormat("%d/%m/%Y %H:%M");
+const shortDateFormat = timeFormat("%d/%m/%Y");
 
 function klineBarToRawOHLCV(bar: KLineBar): RawOHLCV {
 	return { date: new Date(bar.timestamp), open: bar.open, high: bar.high, low: bar.low, close: bar.close, volume: bar.volume };
@@ -154,6 +158,23 @@ function normalizeVNITimeframe(input: string | null | undefined): string {
 	return "D";
 }
 const CANDLE_TYPE_STORAGE_KEY = "vnsc_candleType";
+
+/** Map a ChartRange button to the number of calendar days to request from the VNInvest API. */
+function chartRangeToDays(range: ChartRange): number {
+	switch (range) {
+		case "1D": return 3;
+		case "5D": return 8;
+		case "1M": return 40;
+		case "3M": return 100;
+		case "YTD": {
+			const now = new Date();
+			return Math.ceil((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86_400_000) + 10;
+		}
+		case "1Y": return 380;
+		case "All": return 1825;
+		default: return 90;
+	}
+}
 
 const CHART_TYPE_TO_SERIES: Record<ChartTypeId, SeriesTypeId> = {
 	candlestick: "Candlestick",
@@ -255,6 +276,23 @@ function getSelectedDrawingId(drawingState: { type: string; objectId?: string; o
 	}
 }
 
+function getSelectedDrawingIds(drawingState: { type: string; objectId?: string; objectIds?: string[]; object?: DrawingObject }) {
+	switch (drawingState.type) {
+		case "selected":
+			return drawingState.objectId ? [drawingState.objectId] : [];
+		case "selectedMultiple":
+			return drawingState.objectIds ?? [];
+		case "moving":
+		case "resizing":
+		case "editing":
+			return drawingState.objectId ? [drawingState.objectId] : [];
+		case "complete":
+			return drawingState.object?.id ? [drawingState.object.id] : [];
+		default:
+			return [];
+	}
+}
+
 function clonePoint(point: { x: number; y: number }) {
 	return { x: point.x, y: point.y };
 }
@@ -281,6 +319,45 @@ function isEditableTarget(target: EventTarget | null) {
 
 function normalizeDate(value: Date | number) {
 	return value instanceof Date ? value : new Date(value);
+}
+
+function estimateSeriesWarmupBars(series: readonly SeriesConfig[]): number {
+	return series.reduce((maxBars, config) => {
+		const params = config.params ?? {};
+		const period = Number(params.period ?? params.windowSize ?? 0);
+		const signal = Number(params.signal ?? 0);
+		const slow = Number(params.slow ?? 0);
+		const longPeriod = Number(params.long ?? 0);
+		const shortPeriod = Number(params.short ?? 0);
+
+		const bars = (() => {
+			switch (config.type) {
+				case "EMA":
+				case "MA":
+				case "BollingerBand":
+				case "RSI":
+				case "CCI":
+				case "WR":
+				case "VR":
+				case "MTM":
+				case "ROC":
+				case "PSY":
+					return period;
+				case "MACD":
+					return slow + signal;
+				case "KDJ":
+					return period + signal;
+				case "TRIX":
+					return period * 3;
+				case "DMA":
+					return Math.max(shortPeriod, longPeriod);
+				default:
+					return 0;
+			}
+		})();
+
+		return Math.max(maxBars, Number.isFinite(bars) ? bars : 0);
+	}, 0);
 }
 
 function formatSignedPrice(value: number) {
@@ -564,7 +641,7 @@ export default function LibraryShowcaseDemo() {
 	const lastPaperTradeClickRef = useRef<{ timestamp: number; index: number } | null>(null);
 	const lastPaperTradeSignatureRef = useRef<string | null>(null);
 	const drawingInteraction = useDrawingInteraction();
-	const { undo, redo, deleteSelected, cancelDrawing, selectObject, replaceDrawings, updateDrawing } = drawingInteraction;
+	const { undo, redo, deleteSelected, cancelDrawing, selectObject, replaceDrawings, updateDrawing, updateSelectedDrawings, bringSelectedToFront: reorderSelectedToFront, sendSelectedToBack: reorderSelectedToBack } = drawingInteraction;
 	const drawingClipboardRef = useRef<DrawingObject | null>(null);
 	const importInputRef = useRef<HTMLInputElement | null>(null);
 	const handleLoadDrawings = useCallback((drawings: DrawingObject[]) => {
@@ -608,16 +685,22 @@ export default function LibraryShowcaseDemo() {
 	const [dataError, setDataError] = useState<string>("");
 	const [historyStatus, setHistoryStatus] = useState<"idle" | "backfilling">("idle");
 	const [visibleDomain, setVisibleDomain] = useState<[Date, Date] | null>(null);
+	const [visibleRange, setVisibleRange] = useState<VisibleRange | null>(null);
+	const [hoveredItem, setHoveredItem] = useState<EnrichedDatum | null>(null);
 	const liveDataRef = useRef<RawOHLCV[]>([]);
 	const visibleDomainRef = useRef<[Date, Date] | null>(null);
 	const chartDataRef = useRef<EnrichedDatum[]>([]);
 	const maxVisibleBarsRef = useRef(maxVisibleBars);
-	const visibleRangeRef = useRef<{ startIndex: number; endIndex: number } | null>(null);
+	const visibleRangeRef = useRef<VisibleRange | null>(null);
 	const backfillInFlightRef = useRef(false);
 	const warmupInFlightRef = useRef(false);
-	const backfillDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const backfillDebounceRef = useRef<number | null>(null);
+	const vniViewportBackfillInFlightRef = useRef(false);
+	const vniViewportHistoryExhaustedAtRef = useRef<number | null>(null);
 	const mountedRef = useRef(true);
 	const initialWarmupRequestedRef = useRef(false);
+	const vniLoadingRef = useRef(false);
+	const activeSourceRef = useRef<"demo" | "vninvest">("demo");
 	const BACKFILL_PAGE_LIMIT = 1000;
 	const BACKFILL_MAX_PAGES = 20;
 	const SCHEDULER_TICK_MS = 250;
@@ -625,6 +708,7 @@ export default function LibraryShowcaseDemo() {
 	const SCHEDULER_RIGHT_PREFETCH_RATIO = 0.5;
 	const SCHEDULER_MAX_BACKWARD_PAGES = 8;
 	const SCHEDULER_MAX_FORWARD_PAGES = 2;
+	const VNI_VIEWPORT_BACKFILL_DEBOUNCE_MS = 120;
 	const INITIAL_HISTORY_TARGET_BARS = 5000;
 	const INITIAL_HISTORY_MAX_PAGES = 8;
 	const queueRef = useRef(new HistoryFetchQueue());
@@ -651,14 +735,17 @@ export default function LibraryShowcaseDemo() {
 	const [vniDays, setVniDays] = useState<number>(() => {
 		try {
 			const stored = typeof localStorage !== "undefined" && localStorage.getItem("vni_last_days");
-			return stored ? Math.max(1, Math.min(365, parseInt(stored, 10))) : 90;
+			return stored ? Math.max(1, Math.min(1825, parseInt(stored, 10))) : 90;
 		} catch {
 			return 90;
 		}
 	});
+	const vniDaysRef = useRef(vniDays);
 	const [patModalOpen, setPatModalOpen] = useState(false);
 	const [vniLoading, setVniLoading] = useState(false);
 	const [vniError, setVniError] = useState<string | null>(null);
+	const [sourceNotice, setSourceNotice] = useState<string | null>(null);
+	const [vniHistoryFloorDate, setVniHistoryFloorDate] = useState<Date | null>(null);
 	const [vniHasPAT, setVniHasPAT] = useState(() => {
 		try {
 			return typeof localStorage !== "undefined" && !!localStorage.getItem("vni_pat");
@@ -673,6 +760,8 @@ export default function LibraryShowcaseDemo() {
 
 	// VNInvest data sources
 	const vninvestClient = useMemo(() => new VNInvestClient(), []);
+	// VNInvestAdapter: widget-layer StockDataAdapter routed to core-api.
+	const vninvestAdapter = useMemo(() => new VNInvestAdapter(), []);
 	const demoDataSource = useMemo(() => new DemoDataSource(), []);
 	const vninvestDataSource = useMemo(() => new VNInvestDataSource(vninvestClient), [vninvestClient]);
 	const currentDataSource = useMemo<DataSource>(() => {
@@ -713,6 +802,18 @@ export default function LibraryShowcaseDemo() {
 	useEffect(() => {
 		liveDataRef.current = liveData;
 	}, [liveData]);
+
+	useEffect(() => {
+		activeSourceRef.current = activeSource;
+	}, [activeSource]);
+
+	useEffect(() => {
+		vniDaysRef.current = vniDays;
+	}, [vniDays]);
+
+	useEffect(() => {
+		vniLoadingRef.current = vniLoading;
+	}, [vniLoading]);
 
 	useEffect(() => {
 		visibleDomainRef.current = visibleDomain;
@@ -793,6 +894,13 @@ export default function LibraryShowcaseDemo() {
 	}, [drawingStorage]);
 	const drawingInspectorLabels = useMemo(() => ({
 		title: t("drawing.inspectorTitle"),
+		alert: t("drawing.alert"),
+		alertEnabled: t("drawing.alertEnabled"),
+		alertTrigger: t("drawing.alertTrigger"),
+		alertTouch: t("drawing.alertTouch"),
+		alertBreak: t("drawing.alertBreak"),
+		alertCloseAbove: t("drawing.alertCloseAbove"),
+		alertCloseBelow: t("drawing.alertCloseBelow"),
 		stroke: t("drawing.stroke"),
 		fill: t("drawing.fill"),
 		strokeWidth: t("drawing.strokeWidth"),
@@ -814,6 +922,7 @@ export default function LibraryShowcaseDemo() {
 	const drawingListPanelLabels = useMemo(() => ({
 		title: t("drawing.drawingsList"),
 		empty: t("drawing.drawingsListEmpty"),
+		alert: t("drawing.alert"),
 		visible: t("drawing.visible"),
 		hidden: t("drawing.hidden"),
 		locked: t("drawing.locked"),
@@ -903,52 +1012,83 @@ export default function LibraryShowcaseDemo() {
 		try {
 			localStorage.setItem("vni_pat", token);
 			vninvestClient.setPAT(token);
+			vninvestAdapter.setPAT(token);
 			setVniHasPAT(true);
 			setPatModalOpen(false);
 			setVniError(null);
+			setSourceNotice(null);
 		} catch {
 			setVniError(t("vninvest.error.patStorage") ?? "Failed to save token");
 		}
-	}, [vninvestClient, t]);
+	}, [vninvestClient, vninvestAdapter, t]);
+
+	const vniAbortRef = useRef<AbortController | null>(null);
+
+	const switchToDemoSource = useCallback(() => {
+		activeSourceRef.current = "demo";
+		vniLoadingRef.current = false;
+		vniViewportHistoryExhaustedAtRef.current = null;
+		setActiveSource("demo");
+		setDataAdapterName((cur) => (cur === "vnstocks" ? "binance" : cur));
+		setVisibleRange(null);
+		setHoveredItem(null);
+		setVniHistoryFloorDate(null);
+		setWhaleData(null);
+		setWhaleLoading(false);
+		setVniError(null);
+	}, []);
 
 	const handleLoadVNIChart = useCallback(async () => {
-		if (activeSource !== "vninvest" || !vniHasPAT) {
+		// Guard: chỉ chạy khi có PAT
+		if (!vninvestClient.hasPAT()) {
+			setVniHasPAT(false);
 			setVniError(t("vninvest.error.noPAT") ?? "PAT token not configured");
+			setDataStatus("error");
 			return;
 		}
 
+		// Cancel bất kỳ fetch cũ nào (user đổi range/symbol/timeframe nhanh)
+		vniAbortRef.current?.abort();
+		const abortController = new AbortController();
+		vniAbortRef.current = abortController;
+
+		vniViewportHistoryExhaustedAtRef.current = null;
+		// Update refs synchronously so viewport backfill guards see the loading state
+		// before the next render cycle (setState is async).
+		vniLoadingRef.current = true;
+		dataStatusRef.current = "loading";
 		setVniLoading(true);
 		setVniError(null);
+		setVniHistoryFloorDate(null);
+		setDataStatus("loading");
 
 		try {
-			// Fetch from VNInvest API
 			const rawData = await vninvestDataSource.loadBars(vniSymbol, {
 				timeframe: vniTimeframe,
 				days: vniDays,
 			});
 
-			if (rawData.length === 0) {
-				setVniError(t("vninvest.error.noData") ?? `No data found for ${vniSymbol}`);
-				setVniLoading(false);
+			// Bỏ qua kết quả nếu request đã bị cancel hoặc đã unmount hoặc source đã thay đổi
+			if (abortController.signal.aborted || !mountedRef.current || activeSourceRef.current !== "vninvest") {
 				return;
 			}
 
-			// Enrich and update chart data
-			const enrichedData = enrichData(rawData, {
-				series: paneState.panes.flatMap((p) => p.series),
-			});
+			if (rawData.length === 0) {
+				setVniError(t("vninvest.error.noData") ?? `No data found for ${vniSymbol}`);
+				setDataStatus("error");
+				return;
+			}
 
 			setLiveData(rawData);
-			setVisibleDomain(resolveChartRangeExtents(rawData, DEFAULT_CHART_RANGE));
+			setVisibleDomain(resolveChartRangeExtents(rawData, chartRangeRef.current));
 			setDataStatus("live");
 
-			// Fetch whale data in parallel
+			// Fetch whale data song song (optional)
 			vninvestClient.getWhaleFeed(vniSymbol)
-				.then((response) => setWhaleData(response))
-				.catch(() => {
-					// Whale data is optional
-					console.warn("Failed to fetch whale data");
-				});
+				.then((response) => {
+					if (mountedRef.current && !abortController.signal.aborted) setWhaleData(response);
+				})
+				.catch(() => {});
 
 			// Persist selections
 			if (typeof localStorage !== "undefined") {
@@ -956,32 +1096,55 @@ export default function LibraryShowcaseDemo() {
 					localStorage.setItem("vni_last_symbol", vniSymbol);
 					localStorage.setItem("vni_last_timeframe", vniTimeframe);
 					localStorage.setItem("vni_last_days", vniDays.toString());
+				} catch { /* ignore */ }
+			}
+		} catch (err: unknown) {
+			if (abortController.signal.aborted || !mountedRef.current) return;
+			const msg = err instanceof Error ? err.message : String(err);
+			if (msg.includes("401") || msg.includes("TOKEN_EXPIRED")) {
+				try {
+					if (typeof localStorage !== "undefined") {
+						localStorage.removeItem("vni_pat");
+					}
 				} catch {
 					// ignore storage errors
 				}
-			}
-		} catch (err: unknown) {
-			const msg = err instanceof Error ? err.message : String(err);
-			if (msg.includes("401")) {
-				setVniError(t("vninvest.error.tokenExpired") ?? "PAT token expired");
+				vninvestClient.clearPAT();
+				vninvestAdapter.setPAT("");
 				setVniHasPAT(false);
 				setPatModalOpen(true);
+				setSourceNotice(t("vninvest.notice.autoSwitchedToDemo") ?? "Switched to demo source because VNInvest token is invalid");
+				switchToDemoSource();
+				setDataStatus("loading");
+				return;
+			} else if (msg.includes("NO_PAT")) {
+				setVniError(t("vninvest.error.noPAT") ?? "PAT token not configured");
 			} else {
 				setVniError(msg);
 			}
+			setDataStatus("error");
 		} finally {
-			setVniLoading(false);
+			if (mountedRef.current && !abortController.signal.aborted) {
+				vniLoadingRef.current = false;
+				setVniLoading(false);
+			}
 		}
-	}, [activeSource, vniHasPAT, vninvestDataSource, vniSymbol, vniTimeframe, vniDays, paneState.panes, t]);
+	}, [switchToDemoSource, vninvestAdapter, vninvestClient, vninvestDataSource, vniSymbol, vniTimeframe, vniDays, t]);
 
-	// Auto-reload VNI chart when timeframe changes from the topbar combobox.
+	// Auto-trigger load when switching to VNI source, or when symbol/timeframe/days change.
+	// Matches vnstockchars pattern: handleLoadVNIChart changes when its deps (vniDays, vniSymbol,
+	// vniTimeframe) change, so this effect re-fires and re-fetches automatically.
 	const handleLoadVNIChartRef = useRef(handleLoadVNIChart);
 	useEffect(() => { handleLoadVNIChartRef.current = handleLoadVNIChart; }, [handleLoadVNIChart]);
 	useEffect(() => {
-		if (activeSource !== "vninvest" || !vniHasPAT) return;
-		void handleLoadVNIChartRef.current();
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [vniTimeframe]); // intentionally only on timeframe change
+		if (activeSource !== "vninvest") return;
+		if (!vniHasPAT) {
+			setVniError(t("vninvest.error.noPAT") ?? "PAT token not configured");
+			setDataStatus("error");
+			return;
+		}
+		void handleLoadVNIChart();
+	}, [activeSource, handleLoadVNIChart, vniHasPAT, t]); // fires on source switch + any dep change
 
 	const handleFetchWhaleData = useCallback(async () => {
 		if (activeSource !== "vninvest" || !vniHasPAT || !vniSymbol) {
@@ -1140,6 +1303,11 @@ export default function LibraryShowcaseDemo() {
 		// Update the ref synchronously so scheduleForViewport and future clamp checks are current.
 		visibleDomainRef.current = normalized;
 
+		if (isVNInvestSource) {
+			scheduleVNInvestViewportBackfill(visibleRangeRef.current);
+			return;
+		}
+
 		// Clamp the backfill viewport to maxVisibleBars so we don't request excessive history.
 		const data = chartDataRef.current;
 		const limit = maxVisibleBarsRef.current;
@@ -1156,10 +1324,135 @@ export default function LibraryShowcaseDemo() {
 		}
 
 		scheduleForViewport({ startMs, endMs });
-	}, [normalizeDomain, scheduleForViewport]);
+	}, [isVNInvestSource, normalizeDomain, scheduleForViewport, scheduleVNInvestViewportBackfill, setVniDays]);
+	const vniWarmupBars = useMemo(
+		() => Math.max(120, estimateSeriesWarmupBars(paneState.panes.flatMap((pane) => pane.series)) + 40),
+		[paneState.panes],
+	);
 
-	const handleVisibleRangeChange = useCallback((range: { startIndex: number; endIndex: number }) => {
+	const requestVNInvestViewportHistory = useCallback(async (range: VisibleRange) => {
+		if (!isVNInvestSource || !vniHasPAT || dataStatusRef.current !== "live" || vniLoadingRef.current) {
+			return;
+		}
+
+		const currentBars = liveDataRef.current;
+		if (currentBars.length === 0 || vniViewportBackfillInFlightRef.current) {
+			return;
+		}
+
+		const window = computeVNIViewportBackfillWindow(range, currentBars, {
+			minBufferBars: vniWarmupBars,
+			minTriggerBars: vniWarmupBars,
+			leftBufferRatio: 2.5,
+		});
+		if (!window) {
+			return;
+		}
+
+		const loadedStartMs = window.loadedStart.getTime();
+		if (vniViewportHistoryExhaustedAtRef.current === loadedStartMs) {
+			return;
+		}
+
+		vniViewportBackfillInFlightRef.current = true;
+		setHistoryStatus("backfilling");
+
+		try {
+			const normalizedTimeframe = normalizeVNITimeframe(vniTimeframe);
+			let olderBars = await vninvestAdapter.fetchBars(vniSymbol, normalizedTimeframe, window.fetchFrom, window.fetchTo);
+			if (olderBars.length === 0) {
+				olderBars = await vninvestAdapter.fetchMoreBars(
+					vniSymbol,
+					normalizedTimeframe,
+					window.loadedStart,
+					Math.max(range.barCount * 3, 90),
+				);
+			}
+
+			const normalizedOlderBars = olderBars
+				.filter((bar) => bar.date.valueOf() < loadedStartMs)
+				.map((bar) => ({ ...bar, date: new Date(bar.date) }));
+
+			if (normalizedOlderBars.length === 0) {
+				vniViewportHistoryExhaustedAtRef.current = loadedStartMs;
+				setVniHistoryFloorDate(new Date(window.loadedStart));
+				return;
+			}
+
+			const mergedBars = mergeBarsByDate(normalizedOlderBars, currentBars);
+			if (mergedBars.length === currentBars.length) {
+				vniViewportHistoryExhaustedAtRef.current = loadedStartMs;
+				setVniHistoryFloorDate(new Date(window.loadedStart));
+				return;
+			}
+
+			const viewportDomain = visibleDomainRef.current ?? [normalizeDate(range.startDate), normalizeDate(range.endDate)] as [Date, Date];
+			vniViewportHistoryExhaustedAtRef.current = null;
+			setVniHistoryFloorDate(null);
+			liveDataRef.current = mergedBars;
+			visibleDomainRef.current = viewportDomain;
+			setVisibleDomain(viewportDomain);
+			setLiveData(mergedBars);
+		} catch (err: unknown) {
+			if (!mountedRef.current) {
+				return;
+			}
+			const status = (err as any)?.status;
+			if (status === 429) {
+				// API throttled — stop backfill attempts for this position so we
+				// don't hammer the backend further. The circuit breaker in
+				// VNInvestClient will block subsequent requests automatically.
+				vniViewportHistoryExhaustedAtRef.current = loadedStartMs;
+				const remainSec = Math.ceil(((err as any)?.throttledUntil ?? 0) - Date.now()) / 1000;
+				console.warn(
+					`VNI viewport backfill throttled (429). Backfill paused ~${Math.max(0, Math.ceil(remainSec))}s.`
+				);
+			} else {
+				console.warn("VNI viewport backfill error:", err instanceof Error ? err.message : String(err));
+			}
+		} finally {
+			vniViewportBackfillInFlightRef.current = false;
+			if (mountedRef.current) {
+				setHistoryStatus("idle");
+			}
+		}
+	}, [isVNInvestSource, vniHasPAT, vninvestAdapter, vniSymbol, vniTimeframe, vniWarmupBars]);
+
+	useEffect(() => {
+		if (!isVNInvestSource || vniLoading || dataStatus !== "live") {
+			return;
+		}
+
+		const range = visibleRangeRef.current;
+		if (!range) {
+			return;
+		}
+
+		void requestVNInvestViewportHistory(range);
+	}, [dataStatus, isVNInvestSource, requestVNInvestViewportHistory, vniLoading]);
+
+	function scheduleVNInvestViewportBackfill(range: VisibleRange | null) {
+		if (!range) {
+			return;
+		}
+		if (backfillDebounceRef.current !== null) {
+			clearTimeout(backfillDebounceRef.current);
+		}
+		backfillDebounceRef.current = window.setTimeout(() => {
+			backfillDebounceRef.current = null;
+			void requestVNInvestViewportHistory(range);
+		}, VNI_VIEWPORT_BACKFILL_DEBOUNCE_MS);
+	}
+
+	const handleVisibleRangeChange = useCallback((range: VisibleRange) => {
 		visibleRangeRef.current = range;
+		setVisibleRange(range);
+		setHoveredItem(null);
+		if (isVNInvestSource) {
+			scheduleVNInvestViewportBackfill(range);
+			return;
+		}
+
 		const currentDomain = visibleDomainRef.current;
 		if (currentDomain) {
 			scheduleForViewport({
@@ -1167,7 +1460,7 @@ export default function LibraryShowcaseDemo() {
 				endMs: currentDomain[1].valueOf(),
 			});
 		}
-	}, [scheduleForViewport]);
+	}, [isVNInvestSource, scheduleVNInvestViewportBackfill, scheduleForViewport]);
 
 	const dataStatusRef = useRef(dataStatus);
 	useEffect(() => { dataStatusRef.current = dataStatus; }, [dataStatus]);
@@ -1188,12 +1481,26 @@ export default function LibraryShowcaseDemo() {
 	const handleChartRangeChange = useCallback((range: ChartRange) => {
 		setChartRange(range);
 		visibleRangeRef.current = null;
+		setVisibleRange(null);
+		setHoveredItem(null);
+		setVniHistoryFloorDate(null);
+
+		// For VNInvest source: map range → required days.
+		// Setting vniDays causes handleLoadVNIChart to be recreated (it depends on vniDays),
+		// which triggers the auto-load useEffect above to re-fetch the right history window.
+		if (isVNInvestSource && vniHasPAT) {
+			const days = chartRangeToDays(range);
+			vniDaysRef.current = days;
+			setVniDays(days);
+			return;
+		}
+
 		const currentBars = liveDataRef.current;
 		if (currentBars.length > 0) {
 			setVisibleDomain(resolveChartRangeExtents(currentBars, range));
 		}
 		void ensureRangeHistory(range);
-	}, [ensureRangeHistory]);
+	}, [ensureRangeHistory, isVNInvestSource, vniHasPAT]);
 
 	// Unified timeframe change: routes to the correct state depending on active source.
 	const handleTimeframeChange = useCallback((value: string) => {
@@ -1222,6 +1529,8 @@ export default function LibraryShowcaseDemo() {
 		queueRef.current.clearAll();
 		lastMissingRef.current = null;
 		visibleRangeRef.current = null;
+		setVisibleRange(null);
+		setHoveredItem(null);
 		setVisibleDomain(null);
 
 		dataAdapter.getBars({ type: "init", symbol: selectedSymbol, interval: timeframe, limit: BACKFILL_PAGE_LIMIT, timestamp: null, signal: abortController.signal })
@@ -1417,6 +1726,42 @@ export default function LibraryShowcaseDemo() {
 		return () => window.clearInterval(timer);
 	}, [BACKFILL_PAGE_LIMIT, SCHEDULER_MAX_BACKWARD_PAGES, SCHEDULER_MAX_FORWARD_PAGES, SCHEDULER_TICK_MS, dataAdapter, dataStatus, historyStatus, isVNInvestSource, selectedSymbol, timeframe]);
 
+	// Periodic polling for VNInvest real-time data updates.
+	// Binance source has its own forward-fetch mechanism above; this handles VNI REST polling.
+	useEffect(() => {
+		if (!isVNInvestSource || !vniHasPAT || dataStatus === "loading") {
+			return undefined;
+		}
+
+		// Poll every 60s — short enough to catch intraday candle updates, conservative enough for REST.
+		const POLL_INTERVAL_MS = 60_000;
+
+		const poll = () => {
+			if (!mountedRef.current) return;
+			void vninvestDataSource.loadBars(vniSymbol, {
+				timeframe: vniTimeframe,
+				days: Math.min(vniDays, 5),
+			}).then((latestBars) => {
+				if (!mountedRef.current || latestBars.length === 0) return;
+				const current = liveDataRef.current;
+				const merged = mergeBarsByDate(current, latestBars);
+				// Only update state when there is actually new/changed data.
+				const hasNew = merged.length > current.length
+					|| merged[merged.length - 1]?.close !== current[current.length - 1]?.close;
+				if (hasNew) {
+					liveDataRef.current = merged;
+					setLiveData(merged);
+				}
+			}).catch((err: unknown) => {
+				// Polling errors are non-fatal — log quietly.
+				console.warn("VNI poll error:", err instanceof Error ? err.message : String(err));
+			});
+		};
+
+		const timer = window.setInterval(poll, POLL_INTERVAL_MS);
+		return () => window.clearInterval(timer);
+	}, [isVNInvestSource, vniHasPAT, dataStatus, vninvestDataSource, vniSymbol, vniTimeframe, vniDays]);
+
 	const replayControllerRef = useRef<BarReplayController<RawOHLCV> | null>(null);
 	if (replayControllerRef.current === null) {
 		replayControllerRef.current = new BarReplayController<RawOHLCV>({
@@ -1535,10 +1880,25 @@ export default function LibraryShowcaseDemo() {
 		return base;
 	}, [visibleDomain, chartRange, chartData, maxVisibleBars]);
 	const lastBar = chartData[chartData.length - 1];
+	const visibleBarCount = visibleRange?.barCount ?? chartData.length;
+	const visibleEndIndex = visibleRange ? Math.min(visibleRange.endIndex, Math.max(chartData.length - 1, 0)) : chartData.length - 1;
+	const visibleLastBar = visibleEndIndex >= 0 ? chartData[visibleEndIndex] ?? null : null;
+	const hoveredBar = hoveredItem
+		? chartData.find((bar) => bar.date.valueOf() === hoveredItem.date.valueOf()) ?? hoveredItem
+		: null;
+	const ohlcBar = hoveredBar ?? visibleLastBar ?? lastBar ?? null;
 	const selectedDrawingId = useMemo(() => getSelectedDrawingId(drawingInteraction.drawingState), [drawingInteraction.drawingState]);
+	const selectedDrawingIds = useMemo(() => getSelectedDrawingIds(drawingInteraction.drawingState), [drawingInteraction.drawingState]);
+	const selectedDrawingCount = selectedDrawingIds.length;
 	const sortedDrawings = useMemo(() => sortDrawings(drawingInteraction.allDrawings), [drawingInteraction.allDrawings]);
 	const selectedDrawing = useMemo(() => sortedDrawings.find((drawing) => drawing.id === selectedDrawingId) ?? null, [selectedDrawingId, sortedDrawings]);
+	const selectedDrawingSet = useMemo(() => new Set(selectedDrawingIds), [selectedDrawingIds]);
+	const selectedDrawings = useMemo(() => drawingInteraction.allDrawings.filter((drawing) => selectedDrawingSet.has(drawing.id)), [drawingInteraction.allDrawings, selectedDrawingSet]);
+	const selectedAllLocked = selectedDrawingCount > 0 && selectedDrawings.every((drawing) => drawing.locked === true);
+	const selectedAllVisible = selectedDrawingCount > 0 && selectedDrawings.every((drawing) => drawing.visible !== false);
+	const selectedAnyLocked = selectedDrawingCount > 0 && selectedDrawings.some((drawing) => drawing.locked === true);
 	const isEditingText = drawingInteraction.drawingState.type === "editing"
+		&& selectedDrawingCount === 1
 		&& selectedDrawing?.type === "text"
 		&& drawingInteraction.drawingState.objectId === selectedDrawing.id;
 	const drawingContextMenuDrawing = useMemo(() => {
@@ -1873,7 +2233,16 @@ export default function LibraryShowcaseDemo() {
 	}, []);
 
 	const chartReady = dataStatus !== "loading" && chartWidth > 0 && chartHeight > 0 && chartData.length > 0 && paneState.visiblePanes.length > 0;
-	const chartAdapter = useMemo<StockDataAdapter>(() => ({
+	// Keep PAT in sync between VNInvestClient (demo data layer) and VNInvestAdapter (widget layer).
+	useEffect(() => {
+		if (typeof localStorage === "undefined") return;
+		try {
+			const token = localStorage.getItem("vni_pat");
+			if (token) vninvestAdapter.setPAT(token);
+		} catch { /* ignore */ }
+	}, [vninvestAdapter]);
+
+	const localChartAdapter = useMemo<StockDataAdapter>(() => ({
 		async fetchBars(_symbol: string, _timeframe: string, _from: Date, _to: Date) {
 			return widgetData.map((bar) => ({ ...bar, date: new Date(bar.date) }));
 		},
@@ -1883,19 +2252,20 @@ export default function LibraryShowcaseDemo() {
 				.slice(-limit)
 				.map((bar) => ({ ...bar, date: new Date(bar.date) }));
 		},
-		subscribeToBar() {
-			return () => undefined;
-		},
-		subscribeToTrades() {
-			return () => undefined;
-		},
-		subscribeToOrderbook() {
-			return () => undefined;
-		},
+		subscribeToBar() { return () => undefined; },
+		subscribeToTrades() { return () => undefined; },
+		subscribeToOrderbook() { return () => undefined; },
 		async searchSymbols() {
 			return [{ symbol: "BTCUSDT", name: "Bitcoin / Tether", exchange: "BINANCE" }];
 		},
 	}), [widgetData]);
+
+	// When activeSource is "vninvest" the widget routes through VNInvestAdapter
+	// so it reads live data from core-api:8100.  Any other source uses local data.
+	const chartAdapter = useMemo<StockDataAdapter>(
+		() => activeSource === "vninvest" ? vninvestAdapter : localChartAdapter,
+		[activeSource, vninvestAdapter, localChartAdapter],
+	);
 	const widgetMessages = language === "vi" ? widgetMessagesVi : widgetMessagesEn;
 
 	// Close panes menu when clicking outside
@@ -1943,45 +2313,57 @@ export default function LibraryShowcaseDemo() {
 	}, [openGroupId]);
 
 	const ratio = window.devicePixelRatio || 1;
-	const priceIsUp = (lastBar?.close ?? 0) >= (lastBar?.open ?? 0);
+	const priceIsUp = (ohlcBar?.close ?? 0) >= (ohlcBar?.open ?? 0);
+	const vniHistoryFloorLabel = vniHistoryFloorDate
+		? t("library.vniHistoryAvailableFrom", { date: shortDateFormat(vniHistoryFloorDate) })
+		: null;
 	const handleDrawingToolUsed = useCallback(() => setActiveTool("cursor"), []);
 	const updateSelectedDrawing = useCallback((patch: Partial<DrawingObject>) => {
-		if (!selectedDrawing) {
+		if (selectedDrawingCount === 0) {
 			return;
 		}
 
-		updateDrawing(selectedDrawing.id, patch);
-	}, [selectedDrawing, updateDrawing]);
+		if (selectedDrawingCount > 1) {
+			updateSelectedDrawings(patch);
+			return;
+		}
+
+		updateDrawing(selectedDrawing!.id, patch);
+	}, [selectedDrawing, selectedDrawingCount, updateDrawing, updateSelectedDrawings]);
 
 	const toggleSelectedLock = useCallback(() => {
-		if (!selectedDrawing) {
+		if (selectedDrawingCount === 0) {
 			return;
 		}
-		updateSelectedDrawing({ locked: !selectedDrawing.locked });
-	}, [selectedDrawing, updateSelectedDrawing]);
+
+		if (selectedDrawingCount > 1) {
+			updateSelectedDrawings({ locked: !selectedAllLocked });
+			return;
+		}
+
+		updateSelectedDrawing({ locked: !selectedDrawing!.locked });
+	}, [selectedAllLocked, selectedDrawing, selectedDrawingCount, updateSelectedDrawing, updateSelectedDrawings]);
 
 	const toggleSelectedVisible = useCallback(() => {
-		if (!selectedDrawing) {
+		if (selectedDrawingCount === 0) {
 			return;
 		}
-		updateSelectedDrawing({ visible: selectedDrawing.visible === false });
-	}, [selectedDrawing, updateSelectedDrawing]);
+
+		if (selectedDrawingCount > 1) {
+			updateSelectedDrawings({ visible: !selectedAllVisible });
+			return;
+		}
+
+		updateSelectedDrawing({ visible: selectedDrawing!.visible === false });
+	}, [selectedAllVisible, selectedDrawing, selectedDrawingCount, updateSelectedDrawing, updateSelectedDrawings]);
 
 	const bringSelectedToFront = useCallback(() => {
-		if (!selectedDrawing) {
-			return;
-		}
-		const maxZ = drawingInteraction.allDrawings.reduce((currentMax, drawing) => Math.max(currentMax, drawing.zIndex ?? 0), 0);
-		updateDrawing(selectedDrawing.id, { zIndex: maxZ + 1 });
-	}, [drawingInteraction.allDrawings, selectedDrawing, updateDrawing]);
+		reorderSelectedToFront();
+	}, [reorderSelectedToFront]);
 
 	const sendSelectedToBack = useCallback(() => {
-		if (!selectedDrawing) {
-			return;
-		}
-		const minZ = drawingInteraction.allDrawings.reduce((currentMin, drawing) => Math.min(currentMin, drawing.zIndex ?? 0), 0);
-		updateDrawing(selectedDrawing.id, { zIndex: minZ - 1 });
-	}, [drawingInteraction.allDrawings, selectedDrawing, updateDrawing]);
+		reorderSelectedToBack();
+	}, [reorderSelectedToBack]);
 
 	const cloneSelectedDrawing = useCallback(() => {
 		if (!selectedDrawing || chartWidth <= 0 || chartHeight <= 0 || plotData.length < 2) {
@@ -2200,7 +2582,19 @@ export default function LibraryShowcaseDemo() {
 	const isStockContext = isVNInvestSource;
 
 	const handleSourceChange = useCallback((source: "demo" | "vninvest") => {
+		activeSourceRef.current = source;
+		// Reset VNI loading guard so the new source can fetch immediately
+		vniLoadingRef.current = false;
+		vniViewportHistoryExhaustedAtRef.current = null;
 		setActiveSource(source);
+		if (source === "vninvest") {
+			const days = chartRangeToDays(chartRange);
+			vniDaysRef.current = days;
+			setVniDays(days);
+		}
+		setVisibleRange(null);
+		setHoveredItem(null);
+		setVniHistoryFloorDate(null);
 		// Keep adapter in sync: vnstocks <-> vninvest, binance <-> demo
 		if (source === "vninvest") {
 			setDataAdapterName((cur) => cur === "vnstocks" ? cur : "vnstocks");
@@ -2208,18 +2602,28 @@ export default function LibraryShowcaseDemo() {
 			setDataAdapterName((cur) => cur === "vnstocks" ? "binance" : cur);
 		}
 		setVniError(null);
-	}, []);
+		setSourceNotice(null);
+	}, [chartRange]);
 
 	const handleDataAdapterChange = useCallback((nextAdapter: string) => {
 		setDataAdapterName(nextAdapter);
 		// Keep activeSource in sync with adapter choice
 		if (nextAdapter === "vnstocks") {
+			activeSourceRef.current = "vninvest";
 			setActiveSource("vninvest");
+			const days = chartRangeToDays(chartRange);
+			vniDaysRef.current = days;
+			setVniDays(days);
 		} else {
+			activeSourceRef.current = "demo";
 			setActiveSource("demo");
 		}
+		setVisibleRange(null);
+		setHoveredItem(null);
+		setVniHistoryFloorDate(null);
 		setVniError(null);
-	}, []);
+		setSourceNotice(null);
+	}, [chartRange]);
 
 	useEffect(() => {
 		if (aboutOpen) {
@@ -2363,8 +2767,26 @@ export default function LibraryShowcaseDemo() {
 				</div>
 
 				<div className="gc-topbar__right">
-					{dataStatus === "live" && <span className="gc-live-badge">{t("common.liveBinance")}</span>}
+					{sourceNotice && (
+						<span className="gc-offline-badge" role="status" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+							{sourceNotice}
+							<button
+								type="button"
+								onClick={() => setSourceNotice(null)}
+								title={t("release.dismiss")}
+								aria-label={t("release.dismiss")}
+								className="gc-topbar-btn"
+								style={{ padding: "0 4px", minHeight: 18 }}
+							>
+								x
+							</button>
+						</span>
+					)}
+					{dataStatus === "live" && <span className="gc-live-badge">{t(isVNInvestSource ? "common.liveVNInvest" : "common.liveBinance")}</span>}
 					{historyStatus === "backfilling" && <span className="gc-loading-badge">{t("library.backfillingHistory")}</span>}
+					{isVNInvestSource && dataStatus === "live" && vniHistoryFloorLabel && historyStatus !== "backfilling" && (
+						<span className="gc-history-floor-badge">{vniHistoryFloorLabel}</span>
+					)}
 					{dataStatus === "offline" && <span className="gc-offline-badge" title={dataError}>{t("common.offlineFallback")}</span>}
 					{dataStatus === "loading" && <span className="gc-loading-badge">{t("common.loading")}</span>}
 					{/* Compact datasource badge — click để mở Settings tab Nguồn dữ liệu */}
@@ -2624,15 +3046,15 @@ export default function LibraryShowcaseDemo() {
 
 				<section className="gc-chart-area">
 					<div className="gc-ohlc-strip">
-						<span className="gc-ohlc-pair">{selectedSymbol} <span className="gc-ohlc-tf">· {timeframe}</span></span>
-						{dataStatus !== "loading" && lastBar ? (
+						<span className="gc-ohlc-pair">{isVNInvestSource ? vniSymbol : selectedSymbol} <span className="gc-ohlc-tf">· {isVNInvestSource ? vniTimeframe : timeframe}</span></span>
+						{dataStatus !== "loading" && ohlcBar ? (
 							<>
-								<span className="gc-ohlc-item">O <b>{priceFormat(lastBar.open)}</b></span>
-								<span className="gc-ohlc-item">H <b className="gc-col-up">{priceFormat(lastBar.high)}</b></span>
-								<span className="gc-ohlc-item">L <b className="gc-col-dn">{priceFormat(lastBar.low)}</b></span>
-								<span className="gc-ohlc-item">C <b className={priceIsUp ? "gc-col-up" : "gc-col-dn"}>{priceFormat(lastBar.close)}</b></span>
-								<span className="gc-ohlc-item gc-ohlc-vol">{t("library.volumeShort")} <b>{volumeFormat(lastBar.volume)}</b></span>
-								<span className="gc-ohlc-item gc-ohlc-bars">{t("library.pairBars", { count: data.length })}</span>
+								<span className="gc-ohlc-item">O <b>{priceFormat(ohlcBar.open)}</b></span>
+								<span className="gc-ohlc-item">H <b className="gc-col-up">{priceFormat(ohlcBar.high)}</b></span>
+								<span className="gc-ohlc-item">L <b className="gc-col-dn">{priceFormat(ohlcBar.low)}</b></span>
+								<span className="gc-ohlc-item">C <b className={priceIsUp ? "gc-col-up" : "gc-col-dn"}>{priceFormat(ohlcBar.close)}</b></span>
+								<span className="gc-ohlc-item gc-ohlc-vol">{t("library.volumeShort")} <b>{volumeFormat(ohlcBar.volume)}</b></span>
+								<span className="gc-ohlc-item gc-ohlc-bars">{t("library.pairBars", { count: visibleBarCount })}</span>
 							</>
 						) : (
 							<span className="gc-ohlc-loading">{t("library.loadingPriceData")}</span>
@@ -2667,6 +3089,7 @@ export default function LibraryShowcaseDemo() {
 								measurementEnabled={activeTool === "crosshair"}
 								onClick={handlePaperTradeClick}
 								onContextMenu={handleReplayContextMenu}
+								onCurrentItemChange={setHoveredItem}
 								onVisibleDomainChange={handleVisibleDomainChange}
 								onVisibleRangeChange={handleVisibleRangeChange}
 							>
@@ -2764,6 +3187,11 @@ export default function LibraryShowcaseDemo() {
 						<DrawingInspector
 							drawing={selectedDrawing}
 							labels={drawingInspectorLabels}
+							selectionCount={selectedDrawingCount}
+							selectionSummary={selectedDrawingCount > 1 ? t("drawing.selectedCount", { count: selectedDrawingCount }) : undefined}
+							selectionLocked={selectedDrawingCount > 1 ? selectedAllLocked : undefined}
+							selectionVisible={selectedDrawingCount > 1 ? selectedAllVisible : undefined}
+							selectionContainsLocked={selectedDrawingCount > 1 ? selectedAnyLocked : undefined}
 							textEditor={selectedDrawing?.type === "text" ? {
 								active: isEditingText,
 								value: drawingTextDraft,

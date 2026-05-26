@@ -267,6 +267,16 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		this.fullData = fullData;
 	}
 
+	componentDidMount() {
+		const visibleRange = this.getVisibleRange();
+		if (!visibleRange) {
+			return;
+		}
+
+		this.props.onVisibleRangeChange?.(visibleRange);
+		this.notifyVisibleDomainChange(this.state.xScale);
+	}
+
 	componentDidUpdate(prevProps: Readonly<AnyRecord>, prevState: Readonly<ChartCanvasState>) {
 		const reset = shouldResetChart(prevProps, this.props);
 		const sizeChanged = prevProps.width !== this.props.width || prevProps.height !== this.props.height;
@@ -493,6 +503,7 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 		this.triggerEvent("mousemove", { show: true, mouseXY, prevMouseXY: this.prevMouseXY, currentItem, currentCharts }, e);
 		this.prevMouseXY = mouseXY;
 		this.mutableState = { mouseXY, currentItem, currentCharts };
+		this.props.onCurrentItemChange?.(currentItem);
 
 		if (!this.waitingForMouseMoveAnimationFrame) {
 			this.waitingForMouseMoveAnimationFrame = true;
@@ -506,6 +517,7 @@ class ChartCanvas extends Component<ChartCanvasProps, ChartCanvasState> {
 
 	handleMouseLeave(e: unknown) {
 		this.triggerEvent("mouseleave", { show: false }, e);
+		this.props.onCurrentItemChange?.(undefined);
 		this.clearMouseCanvas();
 		this.draw({ trigger: "mouseleave" });
 	}
@@ -663,6 +675,7 @@ ChartCanvas.propTypes = {
 	zoomEvent: PropTypes.bool,
 	onSelect: PropTypes.func,
 	onClick: PropTypes.func,
+	onCurrentItemChange: PropTypes.func,
 	onVisibleDomainChange: PropTypes.func,
 	onVisibleRangeChange: PropTypes.func,
 	maintainPointsPerPixelOnResize: PropTypes.bool,
@@ -684,6 +697,7 @@ ChartCanvas.defaultProps = {
 	onLoadMore: noop,
 	onSelect: noop,
 	onClick: noop,
+	onCurrentItemChange: noop,
 	onVisibleDomainChange: noop,
 	onVisibleRangeChange: noop,
 	mouseMoveEvent: true,

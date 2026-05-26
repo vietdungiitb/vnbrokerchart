@@ -39,6 +39,13 @@ export interface DrawingStyle {
 	fontFamily?: string;
 }
 
+export type DrawingAlertTrigger = "touch" | "break" | "closeAbove" | "closeBelow";
+
+export interface DrawingAlertConfig {
+	enabled: boolean;
+	trigger: DrawingAlertTrigger;
+}
+
 export interface DrawingObject {
 	id: string;
 	type: DrawingToolType;
@@ -55,6 +62,7 @@ export interface DrawingObject {
 	clonedFrom?: string;
 	groupId?: string;
 	riskReward?: { entry: number; stop: number; target: number; quantity?: number };
+	alert?: DrawingAlertConfig;
 	extendLeft?: boolean;
 	extendRight?: boolean;
 	locked?: boolean;

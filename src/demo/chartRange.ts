@@ -2,7 +2,7 @@ export const CHART_RANGES = ["1D", "5D", "1M", "3M", "YTD", "1Y", "All"] as cons
 
 export type ChartRange = typeof CHART_RANGES[number];
 
-export const DEFAULT_CHART_RANGE: ChartRange = "5D";
+export const DEFAULT_CHART_RANGE: ChartRange = "1M";
 
 export const CHART_RANGE_LABEL_KEYS: Record<ChartRange, string> = {
 	"1D": "library.range.1d",

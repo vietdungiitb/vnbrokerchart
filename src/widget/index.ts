@@ -7,5 +7,6 @@ export type { WidgetI18nContextValue, WidgetI18nProviderProps } from "./context/
 export { widgetMessagesEn } from "./i18n/messages.en";
 export { widgetMessagesVi } from "./i18n/messages.vi";
 export type { WidgetLocale, WidgetMessages } from "./i18n/types";
-export type { VNBrokerChartProps } from "./VNBrokerChart";
+export type { VNBrokerChartDrawingConfig, VNBrokerChartProps } from "./VNBrokerChart";
 export type { StockDataAdapter, Timeframe } from "../lib/types/adapter";
+export { VNInvestAdapter, createVNInvestAdapter } from "../lib/adapters/VNInvestAdapter";

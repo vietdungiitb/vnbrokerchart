@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { getXValue } from "../utils/ChartDataUtil";
 import GenericChartComponent, { getMouseCanvas } from "../GenericChartComponent";
 import { createDraftFromTool, createTool, isDrawingToolName } from "./registry";
 import { appendPoint, replaceNextPoint, replacePoint } from "./shared";
 import type { DrawingObject, DrawingToolType, Point } from "./types";
-import { renderDrawingToCanvas, type RenderCanvasOptions } from "./renderCanvas";
+import { renderDrawingToCanvas, clipSegmentToBox, type RenderCanvasOptions } from "./renderCanvas";
 import { getResizeHandleIndex, hitTestDrawing } from "./hitTest";
 import { findSnapPoint, MAGNET_TOLERANCE, type MagnetSensitivity, type SnapResult } from "./snap";
 import type { UseDrawingInteractionReturn } from "./useDrawingInteraction";
@@ -12,6 +12,7 @@ import { getSelectedObjectIds } from "./stateMachine";
 import type { ChartConfig } from "../StockChartContext";
 import { subscribeDrawingStyleChanges } from "./drawingStyleRegistry";
 import { useLongPress } from "./useLongPress";
+import { chartPointToPixel } from "./coordinateUtils";
 
 export interface DrawingLayerProps {
 	activeTool: string;
@@ -175,9 +176,27 @@ function getVisibleDrawings(interaction: UseDrawingInteractionReturn) {
 	return sortVisibleDrawings(interaction.history.present);
 }
 
-function findHitDrawing(interaction: UseDrawingInteractionReturn, moreProps: any) {
-	const drawings = getVisibleDrawings(interaction);
-	return [...drawings].reverse().find((drawing) => {
+function findHitDrawing(
+	interaction: UseDrawingInteractionReturn,
+	moreProps: any,
+	hitIndexRef: MutableRefObject<SpatialIndexCache | null>,
+	styleRevision: number,
+) {
+	const cachedIndex = hitIndexRef.current;
+	const signature = buildSpatialIndexSignature(moreProps);
+	const spatialIndex = cachedIndex
+		&& cachedIndex.sourceDrawings === interaction.history.present
+		&& cachedIndex.styleRevision === styleRevision
+		&& cachedIndex.signature === signature
+		? cachedIndex
+		: (hitIndexRef.current = buildSpatialIndex(interaction.history.present, moreProps, styleRevision));
+	const candidateDrawings = querySpatialIndex(spatialIndex, moreProps);
+	if (candidateDrawings.length === 0) {
+		return undefined;
+	}
+
+	const drawingsToCheck = candidateDrawings;
+	return drawingsToCheck.find((drawing) => {
 		const chartConfig = resolveDrawingChartConfig(moreProps, drawing, true);
 		if (!chartConfig) {
 			return false;
@@ -404,6 +423,245 @@ function currentDrawing(drawings: readonly DrawingObject[], drawingState: UseDra
 	return drawings.find((drawing) => drawing.id === getSelectedDrawingId(drawingState));
 }
 
+const SPATIAL_INDEX_CELL_SIZE = 96;
+const SPATIAL_INDEX_PADDING = 48;
+
+interface SpatialBounds {
+	minX: number;
+	minY: number;
+	maxX: number;
+	maxY: number;
+}
+
+interface SpatialCandidate {
+	drawing: DrawingObject;
+	orderIndex: number;
+}
+
+interface SpatialIndexGroup {
+	chartConfig: ChartConfigLike;
+	buckets: Map<string, SpatialCandidate[]>;
+}
+
+interface SpatialIndexCache {
+	sourceDrawings: readonly DrawingObject[];
+	styleRevision: number;
+	signature: string;
+	groups: Map<string, SpatialIndexGroup>;
+}
+
+function getCellKey(xIndex: number, yIndex: number) {
+	return `${xIndex}:${yIndex}`;
+}
+
+function normalizeBounds(bounds: SpatialBounds, padding: number, width: number, height: number): SpatialBounds {
+	return {
+		minX: Math.max(0, bounds.minX - padding),
+		minY: Math.max(0, bounds.minY - padding),
+		maxX: Math.min(width, bounds.maxX + padding),
+		maxY: Math.min(height, bounds.maxY + padding),
+	};
+}
+
+function boundsFromPixels(points: ReadonlyArray<{ x: number; y: number }>, padding: number, width: number, height: number): SpatialBounds | null {
+	if (points.length === 0) {
+		return null;
+	}
+
+	const xs = points.map((point) => point.x);
+	const ys = points.map((point) => point.y);
+	return normalizeBounds({
+		minX: Math.min(...xs),
+		minY: Math.min(...ys),
+		maxX: Math.max(...xs),
+		maxY: Math.max(...ys),
+	}, padding, width, height);
+}
+
+function getTextBounds(drawing: DrawingObject, pixelPoint: { x: number; y: number }, padding: number, width: number, height: number): SpatialBounds {
+	const fontSize = drawing.style.fontSize ?? 12;
+	const text = drawing.text?.trim().length ? drawing.text : "Text";
+	const measuredWidth = Math.max(fontSize, text.length * fontSize * 0.6);
+	return normalizeBounds({
+		minX: pixelPoint.x - measuredWidth * 0.1,
+		minY: pixelPoint.y - fontSize * 0.5,
+		maxX: pixelPoint.x - measuredWidth * 0.1 + measuredWidth,
+		maxY: pixelPoint.y - fontSize * 0.5 + fontSize,
+	}, padding, width, height);
+}
+
+function getDrawingSpatialBounds(drawing: DrawingObject, renderScales: any, width: number, height: number): SpatialBounds | null {
+	const padding = Math.max(SPATIAL_INDEX_PADDING, (drawing.style.strokeWidth ?? 1) * 8);
+	const toPixels = drawing.points.map((point) => chartPointToPixel(point, renderScales));
+
+	switch (drawing.type) {
+		case "hLine": {
+			const point = toPixels[0];
+			if (!point) {
+				return null;
+			}
+			return normalizeBounds({ minX: 0, minY: point.y, maxX: width, maxY: point.y }, padding, width, height);
+		}
+		case "vLine": {
+			const point = toPixels[0];
+			if (!point) {
+				return null;
+			}
+			return normalizeBounds({ minX: point.x, minY: 0, maxX: point.x, maxY: height }, padding, width, height);
+		}
+		case "ray": {
+			const [startPoint, endPoint] = toPixels;
+			if (!startPoint || !endPoint) {
+				return null;
+			}
+			const clipped = clipSegmentToBox(
+				startPoint,
+				{ x: startPoint.x + (endPoint.x - startPoint.x) * 10_000, y: startPoint.y + (endPoint.y - startPoint.y) * 10_000 },
+				width,
+				height,
+			);
+			return clipped ? boundsFromPixels(clipped, padding, width, height) : null;
+		}
+		case "extendedLine": {
+			const [startPoint, endPoint] = toPixels;
+			if (!startPoint || !endPoint) {
+				return null;
+			}
+			const clipped = clipSegmentToBox(
+				{ x: startPoint.x - (endPoint.x - startPoint.x) * 10_000, y: startPoint.y - (endPoint.y - startPoint.y) * 10_000 },
+				{ x: startPoint.x + (endPoint.x - startPoint.x) * 10_000, y: startPoint.y + (endPoint.y - startPoint.y) * 10_000 },
+				width,
+				height,
+			);
+			return clipped ? boundsFromPixels(clipped, padding, width, height) : null;
+		}
+		case "text": {
+			const point = toPixels[0];
+			if (!point) {
+				return null;
+			}
+			return getTextBounds(drawing, point, padding, width, height);
+		}
+		default:
+			return boundsFromPixels(toPixels, padding, width, height);
+	}
+}
+
+function buildSpatialIndexSignature(moreProps: any) {
+	const chartConfigList = getChartConfigList(moreProps);
+	const chartSignature = chartConfigList.map((chartConfig) => `${chartConfig.id}:${chartConfig.paneId ?? ""}:${chartConfig.yScaleId ?? ""}:${chartConfig.width}x${chartConfig.height}:${chartConfig.origin[0]},${chartConfig.origin[1]}`).join("|");
+	const xScaleDomain = typeof moreProps.xScale?.domain === "function"
+		? moreProps.xScale.domain().map((value: any) => (value instanceof Date ? value.getTime() : value)).join(",")
+		: "";
+	const xScaleRange = typeof moreProps.xScale?.range === "function"
+		? moreProps.xScale.range().join(",")
+		: "";
+	const currentCharts = Array.isArray(moreProps.currentCharts) ? moreProps.currentCharts.join(",") : "";
+	const plotDataLength = Array.isArray(moreProps.plotData) ? moreProps.plotData.length : 0;
+	return `${chartSignature}::${xScaleDomain}::${xScaleRange}::${currentCharts}::${plotDataLength}`;
+}
+
+function buildSpatialIndex(drawings: readonly DrawingObject[], moreProps: any, styleRevision: number): SpatialIndexCache {
+	const visibleDrawings = sortVisibleDrawings(drawings);
+	const groups = new Map<string, SpatialIndexGroup>();
+	const signature = buildSpatialIndexSignature(moreProps);
+
+	visibleDrawings.forEach((drawing, orderIndex) => {
+		const chartConfig = resolveDrawingChartConfig(moreProps, drawing, true);
+		if (!chartConfig) {
+			return;
+		}
+
+		const renderScales = buildRenderScales(moreProps, chartConfig);
+		if (!renderScales) {
+			return;
+		}
+
+		const bounds = getDrawingSpatialBounds(drawing, renderScales, chartConfig.width, chartConfig.height);
+		if (!bounds) {
+			return;
+		}
+
+		const groupKey = String(chartConfig.id);
+		if (!groups.has(groupKey)) {
+			groups.set(groupKey, { chartConfig, buckets: new Map() });
+		}
+
+		const group = groups.get(groupKey)!;
+		const minCellX = Math.floor(bounds.minX / SPATIAL_INDEX_CELL_SIZE);
+		const maxCellX = Math.floor(bounds.maxX / SPATIAL_INDEX_CELL_SIZE);
+		const minCellY = Math.floor(bounds.minY / SPATIAL_INDEX_CELL_SIZE);
+		const maxCellY = Math.floor(bounds.maxY / SPATIAL_INDEX_CELL_SIZE);
+
+		for (let cellX = minCellX; cellX <= maxCellX; cellX += 1) {
+			for (let cellY = minCellY; cellY <= maxCellY; cellY += 1) {
+				const cellKey = getCellKey(cellX, cellY);
+				if (!group.buckets.has(cellKey)) {
+					group.buckets.set(cellKey, []);
+				}
+				group.buckets.get(cellKey)!.push({ drawing, orderIndex });
+			}
+		}
+	});
+
+	return {
+		sourceDrawings: drawings,
+		styleRevision,
+		signature,
+		groups,
+	};
+}
+
+function querySpatialIndex(index: SpatialIndexCache, moreProps: any) {
+	const candidates = new Map<string, SpatialCandidate>();
+	for (const group of index.groups.values()) {
+		const adjustedMousePosition = getAdjustedMousePosition(moreProps, group.chartConfig);
+		if (!adjustedMousePosition) {
+			continue;
+		}
+
+		const [mouseX, mouseY] = adjustedMousePosition;
+		const minCellX = Math.floor((mouseX - SPATIAL_INDEX_CELL_SIZE) / SPATIAL_INDEX_CELL_SIZE);
+		const maxCellX = Math.floor((mouseX + SPATIAL_INDEX_CELL_SIZE) / SPATIAL_INDEX_CELL_SIZE);
+		const minCellY = Math.floor((mouseY - SPATIAL_INDEX_CELL_SIZE) / SPATIAL_INDEX_CELL_SIZE);
+		const maxCellY = Math.floor((mouseY + SPATIAL_INDEX_CELL_SIZE) / SPATIAL_INDEX_CELL_SIZE);
+
+		for (let cellX = minCellX; cellX <= maxCellX; cellX += 1) {
+			for (let cellY = minCellY; cellY <= maxCellY; cellY += 1) {
+				const cellCandidates = group.buckets.get(getCellKey(cellX, cellY));
+				if (!cellCandidates) {
+					continue;
+				}
+
+				for (const candidate of cellCandidates) {
+					const existing = candidates.get(candidate.drawing.id);
+					if (!existing || candidate.orderIndex > existing.orderIndex) {
+						candidates.set(candidate.drawing.id, candidate);
+					}
+				}
+			}
+		}
+	}
+
+	return [...candidates.values()].sort((left, right) => right.orderIndex - left.orderIndex).map((candidate) => candidate.drawing);
+}
+
+function getSnapHintPalette(snapType: SnapResult["snapType"]) {
+	switch (snapType) {
+		case "intersection":
+			return { fill: "#10b981", stroke: "#064e3b", radius: 7 };
+		case "endpoint":
+			return { fill: "#3b82f6", stroke: "#1e3a8a", radius: 6 };
+		case "midpoint":
+			return { fill: "#8b5cf6", stroke: "#4c1d95", radius: 6 };
+		case "grid":
+			return { fill: "#64748b", stroke: "#0f172a", radius: 6 };
+		case "ohlc":
+		default:
+			return { fill: "#f5a623", stroke: "#ffffff", radius: 6 };
+	}
+}
+
 function isMultiStepTool(toolName: DrawingToolType) {
 	return toolName === "channel" || toolName === "parallelChannel" || toolName === "pitchfork" || toolName === "abcdPattern";
 }
@@ -418,7 +676,7 @@ function hasRemainingPlaceholder(drawing: DrawingObject) {
 }
 
 export default function DrawingLayer({ activeTool, interaction, magnetSensitivity = "normal", onToolUsed, onContextMenu }: DrawingLayerProps) {
-	const [, setStyleRevision] = useState(0);
+	const [styleRevision, setStyleRevision] = useState(0);
 	useEffect(() => subscribeDrawingStyleChanges(() => {
 		setStyleRevision((value) => value + 1);
 	}), []);
@@ -431,6 +689,7 @@ export default function DrawingLayer({ activeTool, interaction, magnetSensitivit
 		: undefined;
 	const canDragSelectedDrawing = activeTool === "cursor" && selectedDrawingId !== undefined && selectedDrawing?.locked !== true;
 	const snapRef = useRef<SnapResult | null>(null);
+	const hitIndexRef = useRef<SpatialIndexCache | null>(null);
 	const pendingResizeHandleRef = useRef<number | null>(null);
 	const dragSessionRef = useRef<{
 		mode: "move" | "resize";
@@ -480,12 +739,13 @@ export default function DrawingLayer({ activeTool, interaction, magnetSensitivit
 			const draftChartConfig = resolveDrawingChartConfig(moreProps, interaction.drawingState.object) || resolveActiveChartConfig(moreProps) || baseChartConfig;
 			const renderScales = buildRenderScales(moreProps, draftChartConfig);
 			if (renderScales) {
+				const snapPalette = getSnapHintPalette(snap.snapType);
 				withChartTranslation(ctx, baseChartConfig, draftChartConfig, () => {
 					ctx.save();
 					ctx.beginPath();
-					ctx.arc(snap.pixelPoint.x, snap.pixelPoint.y, 6, 0, Math.PI * 2);
-					ctx.fillStyle = "#f5a623";
-					ctx.strokeStyle = "#ffffff";
+					ctx.arc(snap.pixelPoint.x, snap.pixelPoint.y, snapPalette.radius, 0, Math.PI * 2);
+					ctx.fillStyle = snapPalette.fill;
+					ctx.strokeStyle = snapPalette.stroke;
 					ctx.lineWidth = 1.5;
 					ctx.setLineDash([]);
 					ctx.fill();
@@ -501,7 +761,7 @@ export default function DrawingLayer({ activeTool, interaction, magnetSensitivit
 			return false;
 		}
 
-		const hit = findHitDrawing(interaction, moreProps);
+		const hit = findHitDrawing(interaction, moreProps, hitIndexRef, styleRevision);
 		return hit != null;
 	}, [activeTool, interaction.history.present]);
 
@@ -657,7 +917,7 @@ export default function DrawingLayer({ activeTool, interaction, magnetSensitivit
 
 	const handleClick = useCallback((moreProps: any) => {
 		if (activeTool === "cursor" && interaction.drawingState.type !== "drawing") {
-			const hit = findHitDrawing(interaction, moreProps);
+			const hit = findHitDrawing(interaction, moreProps, hitIndexRef, styleRevision);
 
 			if (!hit) {
 				interaction.cancelDrawing();
@@ -730,7 +990,7 @@ export default function DrawingLayer({ activeTool, interaction, magnetSensitivit
 			return;
 		}
 
-		const hit = findHitDrawing(interaction, moreProps);
+		const hit = findHitDrawing(interaction, moreProps, hitIndexRef, styleRevision);
 		if (hit && selectedDrawingId !== hit.id) {
 			interaction.selectObject(hit.id);
 		}
@@ -743,7 +1003,7 @@ export default function DrawingLayer({ activeTool, interaction, magnetSensitivit
 
 	const handleDoubleClick = useCallback((moreProps: any) => {
 		if (activeTool === "cursor" && interaction.drawingState.type !== "drawing") {
-			const hit = findHitDrawing(interaction, moreProps);
+			const hit = findHitDrawing(interaction, moreProps, hitIndexRef, styleRevision);
 			if (hit?.type === "text" && hit.locked !== true) {
 				interaction.startEditing(hit.id, hit.text ?? "");
 				return;

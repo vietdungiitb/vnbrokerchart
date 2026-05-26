@@ -1,7 +1,10 @@
 import type { ChartScales } from "../coordinateUtils";
 import { chartPointToPixel } from "../coordinateUtils";
-import type { DrawingObject, DrawingToolDefinition } from "../types";
-import { createDrawingObject, replaceNextPoint } from "../shared";
+import type { DrawingObject, DrawingStyle, DrawingToolDefinition } from "../types";
+import { createDrawingObject, defaultDrawingStyle, replaceNextPoint } from "../shared";
+
+export const DEFAULT_ABCD_PATTERN_FILL = "#bfdbfe";
+export const DEFAULT_ABCD_PATTERN_FILL_OPACITY = 0.08;
 
 export interface AbcdPatternMetrics {
 	points: Array<{ x: number; y: number }>;
@@ -40,9 +43,23 @@ export function calculateAbcdPatternMetrics(drawing: DrawingObject, scales: Char
 	};
 }
 
+export function resolveAbcdPatternFillColor(style: DrawingStyle): string {
+	return style.fill && style.fill !== "transparent" ? style.fill : DEFAULT_ABCD_PATTERN_FILL;
+}
+
+export function resolveAbcdPatternFillOpacity(style: DrawingStyle): number {
+	return style.fillOpacity ?? DEFAULT_ABCD_PATTERN_FILL_OPACITY;
+}
+
 const AbcdPattern: DrawingToolDefinition = {
 	name: "abcdPattern",
-	createDraft: (startPoint) => createDrawingObject("abcdPattern", [startPoint, startPoint, startPoint, startPoint]),
+	createDraft: (startPoint) => createDrawingObject("abcdPattern", [startPoint, startPoint, startPoint, startPoint], {
+		style: {
+			...defaultDrawingStyle,
+			fill: DEFAULT_ABCD_PATTERN_FILL,
+			fillOpacity: DEFAULT_ABCD_PATTERN_FILL_OPACITY,
+		},
+	}),
 	updateDraft: (draft, nextPoint) => replaceNextPoint(draft, nextPoint),
 	render: () => undefined,
 };

@@ -5,7 +5,7 @@ import { resolveDrawingStyle } from "./drawingStyleRegistry";
 import type { DrawingObject, DrawingStyle } from "./types";
 import { calculateParallelChannelGeometry } from "./builtin/parallelChannel";
 import { calculatePitchforkGeometry } from "./builtin/pitchfork";
-import { calculateAbcdPatternMetrics } from "./builtin/abcdPattern";
+import { calculateAbcdPatternMetrics, resolveAbcdPatternFillColor, resolveAbcdPatternFillOpacity } from "./builtin/abcdPattern";
 import { calculateFibArcGeometry } from "./builtin/fibArc";
 import { calculateFibTimeZoneGeometry } from "./builtin/fibTimeZone";
 import { calculateRegressionChannelMetrics } from "./builtin/regressionChannel";
@@ -464,6 +464,7 @@ function renderAbcdPattern(drawing: DrawingObject, scales: ChartScales, options:
 	}
 
 	const [a, b, c, d] = metrics.points;
+	const fill = resolveAbcdPatternFillColor(drawing.style);
 	const lineProps = {
 		stroke: drawing.style.stroke,
 		strokeWidth: drawing.style.strokeWidth,
@@ -483,11 +484,22 @@ function renderAbcdPattern(drawing: DrawingObject, scales: ChartScales, options:
 		className: options.isSelected ? "rsc-drawing-selected" : undefined,
 		...interactiveProps(drawing, options),
 	};
+	const polygonProps = {
+		points: [a, b, c, d].map((point) => `${point.x},${point.y}`).join(" "),
+		fill,
+		fillOpacity: resolveAbcdPatternFillOpacity(drawing.style),
+		opacity: drawing.style.opacity ?? 1,
+		stroke: "none",
+		className: options.isSelected ? "rsc-drawing-selected" : undefined,
+		vectorEffect: "non-scaling-stroke",
+		...interactiveProps(drawing, options),
+	};
 
 	const ratioAB = metrics.bcToAb == null ? "BC/AB n/a" : `BC/AB ${metrics.bcToAb.toFixed(2)}`;
 	const ratioBC = metrics.cdToBc == null ? "CD/BC n/a" : `CD/BC ${metrics.cdToBc.toFixed(2)}`;
 
 	const elements = [
+		polygonElement(`${drawing.id}-abcd-fill`, polygonProps),
 		lineElement(`${drawing.id}-abcd-ab`, { x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...lineProps }),
 		lineElement(`${drawing.id}-abcd-bc`, { x1: b.x, y1: b.y, x2: c.x, y2: c.y, ...lineProps }),
 		lineElement(`${drawing.id}-abcd-cd`, { x1: c.x, y1: c.y, x2: d.x, y2: d.y, ...lineProps }),

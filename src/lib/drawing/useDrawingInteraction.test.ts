@@ -180,13 +180,14 @@ describe("useDrawingInteraction foundation", () => {
 		const snapshotPoints = currentInteraction?.allDrawings[0]?.points;
 		expect(snapshotPoints).not.toBe(drawing.points);
 	});
+
 });
 
 describe("CE19-02: groupId bulk operations", () => {
 	function makeDrawings() {
-		const d1 = createDrawingObject("trendLine", [startPoint, nextPoint], { id: "g1-a", groupId: "group-1" });
-		const d2 = createDrawingObject("hLine", [startPoint], { id: "g1-b", groupId: "group-1" });
-		const d3 = createDrawingObject("vLine", [startPoint], { id: "solo", groupId: undefined });
+		const d1 = createDrawingObject("trendLine", [startPoint, nextPoint], { id: "g1-a", groupId: "group-1", zIndex: 1 });
+		const d2 = createDrawingObject("hLine", [startPoint], { id: "g1-b", groupId: "group-1", zIndex: 3 });
+		const d3 = createDrawingObject("vLine", [startPoint], { id: "solo", groupId: undefined, zIndex: 10 });
 		return [d1, d2, d3];
 	}
 
@@ -209,6 +210,10 @@ describe("CE19-02: groupId bulk operations", () => {
 		return currentInteraction;
 	}
 
+	function getDrawingZIndex(objectId: string) {
+		return currentInteraction?.allDrawings.find((drawing) => drawing.id === objectId)?.zIndex ?? null;
+	}
+
 	it("selectGroup selects all drawings sharing the groupId", () => {
 		renderGroupProbe();
 		act(() => {
@@ -225,6 +230,99 @@ describe("CE19-02: groupId bulk operations", () => {
 		act(() => {
 			currentInteraction?.deleteGroup("group-1");
 		});
+		expect(currentInteraction?.allDrawings).toHaveLength(1);
+		expect(currentInteraction?.allDrawings[0].id).toBe("solo");
+	});
+
+	it("does not delete a locked group through deleteGroup", () => {
+		function makeLockedDrawings() {
+			const d1 = createDrawingObject("trendLine", [startPoint, nextPoint], { id: "g2-a", groupId: "group-2", zIndex: 1, locked: true });
+			const d2 = createDrawingObject("hLine", [startPoint], { id: "g2-b", groupId: "group-2", zIndex: 3 });
+			const d3 = createDrawingObject("vLine", [startPoint], { id: "solo-2", groupId: undefined, zIndex: 10 });
+			return [d1, d2, d3];
+		}
+
+		function DrawingLockedGroupProbe() {
+			currentInteraction = useDrawingInteraction(makeLockedDrawings());
+			return null;
+		}
+
+		act(() => {
+			const currentRoot = root;
+			if (!currentRoot) {
+				throw new Error("locked group probe root is not available");
+			}
+			currentRoot.render(createElement(DrawingLockedGroupProbe));
+		});
+
+		act(() => {
+			currentInteraction?.deleteGroup("group-2");
+		});
+
+		expect(currentInteraction?.allDrawings).toHaveLength(3);
+		expect(currentInteraction?.allDrawings[0]).toMatchObject({ id: "g2-a", locked: true });
+	});
+
+	it("brings a selected group to the front as a single layer", () => {
+		renderGroupProbe();
+
+		act(() => {
+			currentInteraction?.selectObject("g1-a");
+		});
+
+		act(() => {
+			currentInteraction?.bringSelectedToFront();
+		});
+
+		expect(getDrawingZIndex("g1-a")).toBeGreaterThan(getDrawingZIndex("solo") ?? -1);
+		expect(getDrawingZIndex("g1-b")).toBeGreaterThan(getDrawingZIndex("solo") ?? -1);
+		expect(getDrawingZIndex("g1-a")).toBeLessThan(getDrawingZIndex("g1-b") ?? Number.POSITIVE_INFINITY);
+	});
+
+	it("sends a selected group to the back as a single layer", () => {
+		renderGroupProbe();
+
+		act(() => {
+			currentInteraction?.selectObject("g1-b");
+		});
+
+		act(() => {
+			currentInteraction?.sendSelectedToBack();
+		});
+
+		expect(getDrawingZIndex("g1-a")).toBeLessThan(getDrawingZIndex("solo") ?? 0);
+		expect(getDrawingZIndex("g1-b")).toBeLessThan(getDrawingZIndex("solo") ?? 0);
+		expect(getDrawingZIndex("g1-a")).toBeLessThan(getDrawingZIndex("g1-b") ?? Number.POSITIVE_INFINITY);
+	});
+
+	it("applies batch mutations to every selected drawing", () => {
+		renderGroupProbe();
+
+		act(() => {
+			currentInteraction?.setSelectedObjects(["g1-a", "g1-b"]);
+		});
+
+		act(() => {
+			currentInteraction?.updateSelectedDrawings({ locked: true, visible: false });
+		});
+
+		expect(currentInteraction?.allDrawings[0]).toMatchObject({ id: "g1-a", locked: true, visible: false });
+		expect(currentInteraction?.allDrawings[1]).toMatchObject({ id: "g1-b", locked: true, visible: false });
+		expect(currentInteraction?.allDrawings[2]).toMatchObject({ id: "solo", visible: true });
+	});
+
+	it("deletes every selected drawing when multiple objects are selected", () => {
+		renderGroupProbe();
+
+		act(() => {
+			currentInteraction?.setSelectedObjects(["g1-a", "g1-b"]);
+		});
+
+		act(() => {
+			currentInteraction?.deleteSelected();
+		});
+
+		expect(currentInteraction?.drawingState).toEqual({ type: "idle" });
 		expect(currentInteraction?.allDrawings).toHaveLength(1);
 		expect(currentInteraction?.allDrawings[0].id).toBe("solo");
 	});

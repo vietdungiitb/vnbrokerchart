@@ -157,10 +157,13 @@ class GenericComponent extends Component<GenericComponentProps, GenericComponent
 	}
 
 	componentWillUnmount() {
-		const { unsubscribe, setCursorClass } = this.context;
+		const { unsubscribe, setCursorClass, redraw, chartCanvasType } = this.context;
 		unsubscribe(this.suscriberId);
 		if (this.iSetTheCursorClass) {
 			setCursorClass?.(null);
+		}
+		if (this.props.canvasDraw && chartCanvasType !== "svg") {
+			redraw?.();
 		}
 	}
 

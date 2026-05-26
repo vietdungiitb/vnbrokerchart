@@ -6,6 +6,7 @@ import { createDrawingHistory, historyReducer } from "./history";
 import type { ChartScales, PlotDatum } from "./coordinateUtils";
 import { chartPointToPixel, pixelToChartPoint } from "./coordinateUtils";
 import { measurementPointToPixel, resolveMeasurementPoint, summarizeMeasurement } from "./measuring";
+import { evaluateDrawingAlerts } from "./drawingAlerts";
 import { createLocalStorageAdapter, DrawingImportError } from "./DrawingStorage";
 import {
 	deserializeDrawingHistory,
@@ -95,6 +96,7 @@ export {
 	measurementPointToPixel,
 	resolveMeasurementPoint,
 	summarizeMeasurement,
+		evaluateDrawingAlerts,
 	createDrawingInteractionState,
 	deleteSelectedInteractionState,
 	drawingInteractionReducer,
@@ -115,6 +117,8 @@ export type {
 export type { DrawingHistory } from "./history";
 
 export type {
+	DrawingAlertConfig,
+	DrawingAlertTrigger,
 	DrawingObject,
 	DrawingPluginDefinition,
 	DrawingStyle,
@@ -122,6 +126,8 @@ export type {
 	DrawingToolType,
 	Point,
 } from "./types";
+
+export type { DrawingAlertEvent } from "./drawingAlerts";
 
 export type { DrawingStyleOverride } from "./drawingStyleRegistry";
 

@@ -3,7 +3,7 @@ import { resolveDrawingStyle } from "./drawingStyleRegistry";
 import type { DrawingObject, DrawingStyle } from "./types";
 import { calculateParallelChannelGeometry } from "./builtin/parallelChannel";
 import { calculatePitchforkGeometry } from "./builtin/pitchfork";
-import { calculateAbcdPatternMetrics } from "./builtin/abcdPattern";
+import { calculateAbcdPatternMetrics, resolveAbcdPatternFillColor, resolveAbcdPatternFillOpacity } from "./builtin/abcdPattern";
 import { calculateFibArcGeometry } from "./builtin/fibArc";
 import { calculateFibTimeZoneGeometry } from "./builtin/fibTimeZone";
 import { calculateRegressionChannelMetrics } from "./builtin/regressionChannel";
@@ -410,6 +410,7 @@ function drawAbcdPattern(drawing: DrawingObject, scales: ChartScales, ctx: Canva
 	}
 
 	const [a, b, c, d] = metrics.points;
+	drawPolygonFill(ctx, [a, b, c, d], resolveAbcdPatternFillColor(drawing.style), resolveAbcdPatternFillOpacity(drawing.style) * (drawing.style.opacity ?? 1));
 	drawLine(ctx, a, b, drawing.style);
 	drawLine(ctx, b, c, drawing.style);
 	drawLine(ctx, c, d, drawing.style);

@@ -98,8 +98,15 @@ export interface WhaleOrder {
 export interface WhaleOrderSummary {
   buy_value: number;
   sell_value: number;
+  shark_buy?: number;
+  shark_sell?: number;
+  whale_buy?: number;
+  whale_sell?: number;
+  small_buy?: number;
+  small_sell?: number;
   shark_value?: number;
   whale_value?: number;
+  small_value?: number;
   [key: string]: any;
 }
 

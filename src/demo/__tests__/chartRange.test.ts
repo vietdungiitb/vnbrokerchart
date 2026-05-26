@@ -8,16 +8,16 @@ function buildBars(startDate: Date, count: number) {
 }
 
 describe("resolveChartRangeExtents", () => {
-	it("uses the recent five-day window by default", () => {
-		const data = buildBars(new Date(2026, 4, 1), 10);
+	it("uses the recent one-month window by default", () => {
+		const data = buildBars(new Date(2026, 1, 1), 100);
 		const [start, end] = resolveChartRangeExtents(data, DEFAULT_CHART_RANGE);
 
 		expect(start.getFullYear()).toBe(2026);
-		expect(start.getMonth()).toBe(4);
-		expect(start.getDate()).toBe(5);
+		expect(start.getMonth()).toBe(3);
+		expect(start.getDate()).toBe(11);
 		expect(end.getFullYear()).toBe(2026);
 		expect(end.getMonth()).toBe(4);
-		expect(end.getDate()).toBe(10);
+		expect(end.getDate()).toBe(11);
 	});
 
 	it("clamps the YTD range to the first available bar", () => {

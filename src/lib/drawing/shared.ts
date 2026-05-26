@@ -1,4 +1,5 @@
 import type { DrawingObject, DrawingStyle, DrawingToolType, Point } from "./types";
+import { applyDrawingStyleTemplate } from "./drawingStyleRegistry";
 
 let drawingIdSeed = 0;
 
@@ -25,7 +26,7 @@ export function createDrawingObject(type: DrawingToolType, points: Point[], patc
 		id: patch.id ?? createDrawingId(),
 		type,
 		points: points.map(clonePoint),
-		style: { ...defaultDrawingStyle, ...patch.style },
+		style: applyDrawingStyleTemplate(type, { ...defaultDrawingStyle, ...patch.style }),
 		paneId: patch.paneId,
 		yScaleId: patch.yScaleId,
 		text: patch.text,
@@ -37,6 +38,7 @@ export function createDrawingObject(type: DrawingToolType, points: Point[], patc
 		clonedFrom: patch.clonedFrom,
 		groupId: patch.groupId,
 		riskReward: patch.riskReward ? { ...patch.riskReward } : undefined,
+		alert: patch.alert ? { ...patch.alert } : undefined,
 		extendLeft: patch.extendLeft,
 		extendRight: patch.extendRight,
 		locked: patch.locked,

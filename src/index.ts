@@ -42,6 +42,7 @@ export {
 	isDrawingToolName,
 	listDrawingTools,
 	listDrawingPlugins,
+	evaluateDrawingAlerts,
 	resolveMeasurementPoint,
 	pixelToChartPoint,
 	registerDrawingTool,
@@ -97,6 +98,9 @@ export type {
 	DrawingShortcutTool,
 	DrawingContextMenuItem,
 	DrawingContextMenuProps,
+	DrawingAlertConfig,
+	DrawingAlertEvent,
+	DrawingAlertTrigger,
 	MagnetSensitivity,
 	MeasurementPoint,
 	MeasurementSelection,
@@ -128,6 +132,6 @@ export type { DrawingStyleOverride } from "./lib/drawing";
 
 export { MeasurementOverlay, VNBrokerChart, WidgetErrorBoundary, WidgetEmptyState, WidgetI18nContext, WidgetI18nProvider, useWidgetI18n } from "./widget";
 export { widgetMessagesEn, widgetMessagesVi } from "./widget";
-export type { VNBrokerChartProps, WidgetLocale, WidgetMessages, WidgetI18nContextValue, WidgetI18nProviderProps } from "./widget";
+export type { VNBrokerChartDrawingConfig, VNBrokerChartProps, WidgetLocale, WidgetMessages, WidgetI18nContextValue, WidgetI18nProviderProps } from "./widget";
 
 export const version = "1.0.0";

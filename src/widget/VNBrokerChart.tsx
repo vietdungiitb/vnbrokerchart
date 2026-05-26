@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { format } from "d3-format";
 import { scaleTime } from "d3-scale";
 import { timeFormat } from "d3-time-format";
 import { DynamicChart, DEFAULT_PANES, type PaneDescriptor, type ChartTheme, type VisibleRange, useChartTheme } from "../lib/core";
+import { DrawingLayer, evaluateDrawingAlerts, useDrawingInteraction, useDrawingStorage, type DrawingAlertEvent, type DrawingObject, type MagnetSensitivity } from "../lib/drawing";
 import { discontinuousTimeScaleProviderBuilder } from "../lib/scale/discontinuousTimeScaleProvider";
 import type { EnrichedDatum } from "../lib/core/calculators/types";
 import { enrichData } from "../lib/core/calculators/enrichData";
@@ -14,6 +15,19 @@ import { WidgetEmptyState } from "./WidgetEmptyState";
 import MeasurementOverlay from "./MeasurementOverlay";
 import { WidgetI18nProvider } from "./context/WidgetI18nContext";
 import type { WidgetLocale, WidgetMessages } from "./i18n/types";
+import type { DrawingStorageAdapter } from "../lib/drawing/DrawingStorage";
+
+export interface VNBrokerChartDrawingConfig {
+	enabled?: boolean;
+	activeTool?: string;
+	magnetSensitivity?: MagnetSensitivity;
+	initialDrawings?: readonly DrawingObject[];
+	onChange?: (drawings: readonly DrawingObject[]) => void;
+	onSelectionChange?: (drawing: DrawingObject | null) => void;
+	onAlert?: (alert: DrawingAlertEvent) => void;
+	onToolUsed?: () => void;
+	onContextMenu?: (moreProps: { hitDrawing?: DrawingObject | null }, event: unknown) => void;
+}
 
 export interface VNBrokerChartProps {
 	adapter: StockDataAdapter;
@@ -26,11 +40,13 @@ export interface VNBrokerChartProps {
 	panes?: readonly PaneDescriptor[];
 	xExtents?: readonly [Date | number, Date | number];
 	children?: ReactNode;
+	drawing?: VNBrokerChartDrawingConfig;
 	className?: string;
 	style?: CSSProperties;
 	measurementEnabled?: boolean;
 	onClick?: (moreProps: { currentItem?: EnrichedDatum; currentCharts?: number[]; mouseXY?: [number, number] }, event: unknown) => void;
 	onContextMenu?: (moreProps: { currentItem?: EnrichedDatum; currentCharts?: number[]; mouseXY?: [number, number] }, event: unknown) => void;
+	onCurrentItemChange?: (currentItem: EnrichedDatum | null) => void;
 	onVisibleDomainChange?: (domain: [Date | number, Date | number]) => void;
 	onVisibleRangeChange?: (range: VisibleRange) => void;
 	showNonTradingDays?: boolean;
@@ -84,6 +100,37 @@ function mergeBarsByDate(previousBars: readonly OHLCVBar[], nextBar: OHLCVBar): 
 	return [...previousBars, nextBar].sort((left, right) => left.date.getTime() - right.date.getTime());
 }
 
+function getSelectedDrawingId(drawingState: { type: string; objectId?: string }) {
+	switch (drawingState.type) {
+		case "selected":
+		case "moving":
+		case "resizing":
+		case "editing":
+			return drawingState.objectId;
+		default:
+			return undefined;
+	}
+}
+
+function createDisabledDrawingStorageAdapter(initialDrawings: readonly DrawingObject[]): DrawingStorageAdapter {
+	return {
+		save: () => {},
+		load: () => ({ drawings: [...initialDrawings], hasData: false }),
+		clear: () => {},
+		exportJSON: () => JSON.stringify(initialDrawings),
+		importJSON: () => [...initialDrawings],
+	};
+}
+
+function isEditableTarget(target: EventTarget | null) {
+	if (!(target instanceof HTMLElement)) {
+		return false;
+	}
+
+	const tagName = target.tagName.toLowerCase();
+	return target.isContentEditable || tagName === "input" || tagName === "textarea" || tagName === "select";
+}
+
 function VNBrokerChartContent({
 	adapter,
 	data,
@@ -93,11 +140,13 @@ function VNBrokerChartContent({
 	panes,
 	xExtents: controlledXExtents,
 	children,
+	drawing,
 	className,
 	style,
 	measurementEnabled,
 	onClick,
 	onContextMenu,
+	onCurrentItemChange,
 	onVisibleDomainChange,
 	onVisibleRangeChange,
 	showNonTradingDays,
@@ -158,6 +207,109 @@ function VNBrokerChartContent({
 		}
 		return [...bars].sort((left, right) => left.date.getTime() - right.date.getTime());
 	}, [bars]);
+	const drawingRuntimeEnabled = drawing?.enabled ?? Boolean(
+		drawing?.activeTool
+		|| drawing?.onChange
+		|| drawing?.onSelectionChange
+		|| drawing?.onAlert
+		|| drawing?.onToolUsed
+		|| drawing?.onContextMenu
+		|| (drawing?.initialDrawings?.length ?? 0) > 0,
+	);
+	const drawingInteraction = useDrawingInteraction(drawing?.initialDrawings ?? []);
+	const drawingStorageAdapter = useMemo(() => (
+		drawingRuntimeEnabled ? undefined : createDisabledDrawingStorageAdapter(drawing?.initialDrawings ?? [])
+	), [drawing?.initialDrawings, drawingRuntimeEnabled]);
+	useDrawingStorage(activeSymbol, activeTimeframe, drawingInteraction.allDrawings, drawingInteraction.replaceDrawings, drawingStorageAdapter);
+	const selectedDrawingId = useMemo(() => getSelectedDrawingId(drawingInteraction.drawingState), [drawingInteraction.drawingState]);
+	const selectedDrawing = useMemo(
+		() => drawingInteraction.allDrawings.find((candidate) => candidate.id === selectedDrawingId) ?? null,
+		[drawingInteraction.allDrawings, selectedDrawingId],
+	);
+	const onDrawingChange = drawing?.onChange;
+	const onDrawingSelectionChange = drawing?.onSelectionChange;
+	const onDrawingAlert = drawing?.onAlert;
+	const onDrawingToolUsed = drawing?.onToolUsed;
+	const onDrawingContextMenu = drawing?.onContextMenu;
+	const previousAlertBarRef = useRef<OHLCVBar | null>(null);
+	const alertSignatureRef = useRef(new Map<string, string>());
+
+	useEffect(() => {
+		previousAlertBarRef.current = null;
+		alertSignatureRef.current.clear();
+	}, [activeSymbol, activeTimeframe]);
+
+	useEffect(() => {
+		if (!drawingRuntimeEnabled || !onDrawingChange) {
+			return;
+		}
+
+		onDrawingChange(drawingInteraction.allDrawings);
+	}, [drawingInteraction.allDrawings, drawingRuntimeEnabled, onDrawingChange]);
+
+	useEffect(() => {
+		if (!drawingRuntimeEnabled || !onDrawingSelectionChange) {
+			return;
+		}
+
+		onDrawingSelectionChange(selectedDrawing);
+	}, [drawingRuntimeEnabled, onDrawingSelectionChange, selectedDrawing]);
+
+	useEffect(() => {
+		const currentBar = sortedBars[sortedBars.length - 1];
+		if (!currentBar) {
+			previousAlertBarRef.current = null;
+			return;
+		}
+
+		const previousBar = previousAlertBarRef.current;
+		previousAlertBarRef.current = currentBar;
+
+		if (!drawingRuntimeEnabled || !onDrawingAlert || !previousBar) {
+			return;
+		}
+
+		const alertEvents = evaluateDrawingAlerts(drawingInteraction.allDrawings, previousBar, currentBar, {
+			symbol: activeSymbol,
+			timeframe: activeTimeframe,
+		});
+
+		alertEvents.forEach((event) => {
+			const signature = `${event.drawing.id}:${event.drawing.updatedAt}:${event.trigger}:${event.bar.date.getTime()}`;
+			if (alertSignatureRef.current.get(event.drawing.id) === signature) {
+				return;
+			}
+
+			alertSignatureRef.current.set(event.drawing.id, signature);
+			onDrawingAlert(event);
+		});
+	}, [activeSymbol, activeTimeframe, drawingInteraction.allDrawings, drawingRuntimeEnabled, onDrawingAlert, sortedBars]);
+
+	useEffect(() => {
+		if (!drawingRuntimeEnabled) {
+			return undefined;
+		}
+
+		const handleDrawingKeyboardShortcuts = (event: KeyboardEvent) => {
+			if (isEditableTarget(event.target)) {
+				return;
+			}
+
+			if (event.key === "Delete" || event.key === "Backspace") {
+				event.preventDefault();
+				drawingInteraction.deleteSelected();
+				return;
+			}
+
+			if (event.key === "Escape") {
+				event.preventDefault();
+				drawingInteraction.cancelDrawing();
+			}
+		};
+
+		window.addEventListener("keydown", handleDrawingKeyboardShortcuts);
+		return () => window.removeEventListener("keydown", handleDrawingKeyboardShortcuts);
+	}, [drawingInteraction, drawingRuntimeEnabled]);
 
 	const enrichedData = useMemo<EnrichedDatum[]>(() => {
 		return enrichData(sortedBars, {
@@ -359,6 +511,16 @@ function VNBrokerChartContent({
 			chartScaleState.toDomainDate(domain[1]),
 		]);
 	};
+	const handleChartVisibleRangeChange = (range: VisibleRange) => {
+		onVisibleRangeChange?.({
+			...range,
+			startDate: chartScaleState.toDomainDate(range.startDate),
+			endDate: chartScaleState.toDomainDate(range.endDate),
+		});
+	};
+	const handleChartCurrentItemChange = (currentItem: EnrichedDatum | null | undefined) => {
+		onCurrentItemChange?.(currentItem ?? null);
+	};
 
 	return (
 		<div
@@ -394,8 +556,9 @@ function VNBrokerChartContent({
 				useCrossHairStyleCursor
 				onClick={onClick}
 				onContextMenu={onContextMenu}
+				onCurrentItemChange={handleChartCurrentItemChange}
 				onVisibleDomainChange={handleChartVisibleDomainChange}
-				onVisibleRangeChange={onVisibleRangeChange}
+				onVisibleRangeChange={handleChartVisibleRangeChange}
 				axisStroke={axisStroke}
 				axisTickFill={axisTickFill}
 				isDark={isDark}
@@ -405,6 +568,15 @@ function VNBrokerChartContent({
 				className={className}
 			>
 				{children}
+				{drawingRuntimeEnabled && (
+					<DrawingLayer
+						activeTool={drawing?.activeTool ?? "cursor"}
+						interaction={drawingInteraction}
+						magnetSensitivity={drawing?.magnetSensitivity}
+						onToolUsed={onDrawingToolUsed}
+						onContextMenu={onDrawingContextMenu}
+					/>
+				)}
 				<MeasurementOverlay
 					enabled={measurementEnabled ?? false}
 					isDark={isDark}

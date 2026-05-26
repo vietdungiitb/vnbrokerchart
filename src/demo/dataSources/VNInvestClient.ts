@@ -9,6 +9,8 @@ import {
   StockItem,
   TickerResponse,
   WhaleFeedResponse,
+  WhaleOrder,
+  WhaleOrderSummary,
   IntradayResponse,
   TechnicalIndicators,
 } from '../vninvest/types';
@@ -116,14 +118,195 @@ export const TIMEFRAME_MAP = {
   'Y': 'Y',
 } as const;
 
+type WhaleSummaryBucket = 'shark' | 'whale' | 'small';
+
+interface CanonicalWhaleSummary {
+  buy_value: number;
+  sell_value: number;
+  shark_buy: number;
+  shark_sell: number;
+  whale_buy: number;
+  whale_sell: number;
+  small_buy: number;
+  small_sell: number;
+  shark_value: number;
+  whale_value: number;
+  small_value: number;
+}
+
+function parseNumericCandidate(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value.replace(/,/g, '').trim());
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return 0;
+}
+
+function pickNumericField(source: Record<string, unknown>, keys: string[]): number {
+  for (const key of keys) {
+    if (key in source) {
+      const parsed = parseNumericCandidate(source[key]);
+      if (parsed !== 0 || source[key] === 0 || source[key] === '0') {
+        return parsed;
+      }
+    }
+  }
+  return 0;
+}
+
+function classifySizeClass(sizeClass: unknown): WhaleSummaryBucket {
+  if (typeof sizeClass !== 'string') {
+    return 'small';
+  }
+
+  const normalized = sizeClass.trim().toLowerCase();
+  if (normalized === 'whale') {
+    return 'whale';
+  }
+  if (normalized === 'shark') {
+    return 'shark';
+  }
+  return 'small';
+}
+
+function summarizeOrders(orders: WhaleOrder[]): CanonicalWhaleSummary {
+  const summary: CanonicalWhaleSummary = {
+    buy_value: 0,
+    sell_value: 0,
+    shark_buy: 0,
+    shark_sell: 0,
+    whale_buy: 0,
+    whale_sell: 0,
+    small_buy: 0,
+    small_sell: 0,
+    shark_value: 0,
+    whale_value: 0,
+    small_value: 0,
+  };
+
+  for (const order of orders) {
+    const matchedValue = parseNumericCandidate(order.matched_value);
+    const side = typeof order.side === 'string' ? order.side.toUpperCase() : '';
+    const bucket = classifySizeClass(order.size_class);
+    const isSell = side === 'SELL';
+
+    if (isSell) {
+      summary.sell_value += matchedValue;
+    } else {
+      summary.buy_value += matchedValue;
+    }
+
+    if (bucket === 'shark') {
+      if (isSell) {
+        summary.shark_sell += matchedValue;
+      } else {
+        summary.shark_buy += matchedValue;
+      }
+      summary.shark_value += matchedValue;
+    } else if (bucket === 'whale') {
+      if (isSell) {
+        summary.whale_sell += matchedValue;
+      } else {
+        summary.whale_buy += matchedValue;
+      }
+      summary.whale_value += matchedValue;
+    } else {
+      if (isSell) {
+        summary.small_sell += matchedValue;
+      } else {
+        summary.small_buy += matchedValue;
+      }
+      summary.small_value += matchedValue;
+    }
+  }
+
+  return summary;
+}
+
+function normalizeWhaleSummary(rawSummary: unknown, orders: WhaleOrder[]): WhaleOrderSummary {
+  const source = (rawSummary && typeof rawSummary === 'object' ? rawSummary : {}) as Record<string, unknown>;
+  const orderSummary = summarizeOrders(orders);
+
+  const normalized: CanonicalWhaleSummary = {
+    buy_value: pickNumericField(source, ['buy_value', 'buyValue', 'total_buy', 'totalBuy']) || orderSummary.buy_value,
+    sell_value: pickNumericField(source, ['sell_value', 'sellValue', 'total_sell', 'totalSell']) || orderSummary.sell_value,
+    shark_buy: pickNumericField(source, ['shark_buy', 'shark_buy_value', 'sharkBuy']) || orderSummary.shark_buy,
+    shark_sell: pickNumericField(source, ['shark_sell', 'shark_sell_value', 'sharkSell']) || orderSummary.shark_sell,
+    whale_buy: pickNumericField(source, ['whale_buy', 'whale_buy_value', 'whaleBuy']) || orderSummary.whale_buy,
+    whale_sell: pickNumericField(source, ['whale_sell', 'whale_sell_value', 'whaleSell']) || orderSummary.whale_sell,
+    small_buy: pickNumericField(source, ['small_buy', 'small_buy_value', 'smallBuy']) || orderSummary.small_buy,
+    small_sell: pickNumericField(source, ['small_sell', 'small_sell_value', 'smallSell']) || orderSummary.small_sell,
+    shark_value: 0,
+    whale_value: 0,
+    small_value: 0,
+  };
+
+  normalized.shark_value = pickNumericField(source, ['shark_value', 'sharkValue']) || (normalized.shark_buy + normalized.shark_sell);
+  normalized.whale_value = pickNumericField(source, ['whale_value', 'whaleValue']) || (normalized.whale_buy + normalized.whale_sell);
+  normalized.small_value = pickNumericField(source, ['small_value', 'smallValue']) || (normalized.small_buy + normalized.small_sell);
+
+  return {
+    ...source,
+    ...normalized,
+  };
+}
+
+function normalizeWhaleOrders(rawOrders: unknown): WhaleOrder[] {
+  if (!Array.isArray(rawOrders)) {
+    return [];
+  }
+
+  return rawOrders.map((order): WhaleOrder => {
+    const item = (order && typeof order === 'object' ? order : {}) as Record<string, unknown>;
+    const volume = parseNumericCandidate(item.volume);
+    const price = parseNumericCandidate(item.price);
+    const matchedValue = parseNumericCandidate(item.matched_value) || price * volume;
+    const side = (typeof item.side === 'string' ? item.side.toUpperCase() : 'BUY') as WhaleOrder['side'];
+
+    return {
+      ts: typeof item.ts === 'string' ? item.ts : '',
+      price,
+      volume,
+      matched_value: matchedValue,
+      side: side === 'SELL' ? 'SELL' : 'BUY',
+      size_class: typeof item.size_class === 'string' ? item.size_class : 'small',
+    };
+  });
+}
+
+function normalizeWhaleFeedResponse(rawData: unknown, symbol: string): WhaleFeedResponse {
+  const source = (rawData && typeof rawData === 'object' ? rawData : {}) as Record<string, unknown>;
+  const whaleOrders = normalizeWhaleOrders(source.whale_orders);
+  const normalizedSummary = normalizeWhaleSummary(source.summary, whaleOrders);
+
+  return {
+    symbol: typeof source.symbol === 'string' ? source.symbol : symbol.toUpperCase(),
+    whale_orders: whaleOrders,
+    summary: normalizedSummary,
+    timestamp: typeof source.timestamp === 'string' ? source.timestamp : undefined,
+  };
+}
+
 /**
  * VNInvest API Client
  */
 export class VNInvestClient {
   private patToken: string;
+  /** Epoch ms until which ALL requests are blocked due to a 429 response. */
+  private throttledUntil = 0;
 
   constructor(patToken?: string) {
     this.patToken = patToken ? patToken.trim() : "";
+  }
+
+  /** Returns ms remaining in the current throttle window, or 0 if not throttled. */
+  get throttleRemainingMs(): number {
+    return Math.max(0, this.throttledUntil - Date.now());
   }
 
   /**
@@ -134,6 +317,13 @@ export class VNInvestClient {
       throw new Error("PAT token is required");
     }
     this.patToken = token.trim();
+  }
+
+  /**
+   * Clear current PAT token (used when backend reports token revoked/expired)
+   */
+  clearPAT(): void {
+    this.patToken = "";
   }
 
   /**
@@ -151,12 +341,27 @@ export class VNInvestClient {
   }
 
   /**
-   * Make authenticated HTTP request to VNInvest API
+   * Make authenticated HTTP request to VNInvest API.
+   * Implements a client-side 429 circuit breaker: when the server throttles
+   * requests, all subsequent calls are rejected immediately (without hitting
+   * the network) until the Retry-After window expires.
    */
   private async request<T>(
     url: string,
     options?: RequestInit
   ): Promise<{ data: T; status: number }> {
+    // Circuit breaker: fail fast if still inside throttle window
+    const remainingMs = this.throttleRemainingMs;
+    if (remainingMs > 0) {
+      const remainSec = Math.ceil(remainingMs / 1000);
+      const err = new Error(
+        `API Error (429): Request was throttled. Expected available in ${remainSec} seconds.`
+      );
+      (err as any).status = 429;
+      (err as any).throttledUntil = this.throttledUntil;
+      throw err;
+    }
+
     try {
       const response = await fetch(url, {
         ...options,
@@ -167,7 +372,39 @@ export class VNInvestClient {
         },
       });
 
-      const data = await response.json();
+      const rawText = await response.text();
+      let data: any;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        // Backend returned non-JSON (e.g. 504 proxy error page, nginx error)
+        const preview = rawText.substring(0, 120);
+        const err = new Error(
+          `Backend unreachable (HTTP ${response.status}): ${preview}`
+        );
+        (err as any).status = response.status;
+        throw err;
+      }
+
+      if (response.status === 429) {
+        // Parse retry-after from response header or detail message
+        let retryAfterSec = 60; // conservative default
+        const retryHeader = response.headers.get('Retry-After');
+        if (retryHeader && /^\d+$/.test(retryHeader.trim())) {
+          retryAfterSec = parseInt(retryHeader.trim(), 10);
+        } else if (typeof data?.detail === 'string') {
+          const match = /(\d+)\s*second/i.exec(data.detail);
+          if (match) retryAfterSec = parseInt(match[1], 10);
+        }
+        // Add a small buffer so we don't fire exactly at the boundary
+        this.throttledUntil = Date.now() + retryAfterSec * 1000 + 2000;
+
+        const detail = typeof data?.detail === 'string' ? data.detail : `throttled for ${retryAfterSec}s`;
+        const error = new Error(`API Error (429): ${detail}`);
+        (error as any).status = 429;
+        (error as any).throttledUntil = this.throttledUntil;
+        throw error;
+      }
 
       if (!response.ok) {
         const error = new Error(
@@ -343,8 +580,8 @@ export class VNInvestClient {
    */
   async getWhaleFeed(symbol: string): Promise<WhaleFeedResponse> {
     const url = `${VNI_ENDPOINTS.WHALE_FEED_SIGNALS}?symbol=${encodeURIComponent(symbol)}`;
-    const { data } = await this.request<WhaleFeedResponse>(url);
-    return data;
+    const { data } = await this.request<unknown>(url);
+    return normalizeWhaleFeedResponse(data, symbol);
   }
 
   /**

@@ -177,6 +177,13 @@ describe("drawing history", () => {
 
 		expect(pushedHistory.present).toHaveLength(1);
 		expect(pushedHistory.present[0]).toEqual(drawing);
+		expect(pushedHistory.past[0]).toEqual({
+			changes: [{
+				id: drawing.id,
+				after: drawing,
+				afterIndex: 0,
+			}],
+		});
 
 		const undoneHistory = historyReducer(pushedHistory, { type: "UNDO" });
 		expect(undoneHistory.present).toHaveLength(0);

@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDrawingObject } from "./shared";
-import { clearDrawingStyleOverride, clearDrawingStyleOverrides, getDrawingStyleOverride, listDrawingStyleOverrides, overrideDrawingStyle, resolveDrawingStyle, subscribeDrawingStyle, subscribeDrawingStyleChanges } from "./drawingStyleRegistry";
+import { applyDrawingStyleTemplate, clearDrawingStyleTemplate, clearDrawingStyleTemplates, clearDrawingStyleOverride, clearDrawingStyleOverrides, getDrawingStyleOverride, getDrawingStyleTemplate, listDrawingStyleOverrides, listDrawingStyleTemplates, overrideDrawingStyle, projectDrawingStyleUpdate, resolveDrawingStyle, saveDrawingStyleTemplate, subscribeDrawingStyle, subscribeDrawingStyleChanges } from "./drawingStyleRegistry";
 
 afterEach(() => {
 	clearDrawingStyleOverrides();
+	clearDrawingStyleTemplates();
 	vi.restoreAllMocks();
 });
 
@@ -26,6 +27,96 @@ describe("drawing style override registry", () => {
 			strokeWidth: 3,
 			strokeDasharray: "dashed",
 		});
+	});
+
+	it("projects resolved style updates back into the object snapshot and override layer", () => {
+		const drawing = createDrawingObject("trendLine", [
+			{ x: 10, y: 20 },
+			{ x: 20, y: 30 },
+		], {
+			id: "drawing-3",
+			style: {
+				stroke: "#111111",
+				strokeWidth: 1,
+				strokeDasharray: "dashed",
+				fill: "#222222",
+			},
+		});
+
+		overrideDrawingStyle(drawing.id, { color: "#ff0000" });
+
+		const { drawingPatch, overridePatch } = projectDrawingStyleUpdate(drawing, { strokeWidth: 4, strokeDasharray: "solid", fill: "#333333" });
+
+		expect(drawingPatch.style).toMatchObject({
+			stroke: "#ff0000",
+			strokeWidth: 4,
+			strokeDasharray: "solid",
+			fill: "#333333",
+		});
+		expect(overridePatch).toEqual({
+			lineWidth: 4,
+			dashPattern: [],
+		});
+	});
+
+	it("saves and applies templates by tool type", () => {
+		saveDrawingStyleTemplate("trendLine", {
+			stroke: "#ff0000",
+			strokeWidth: 3,
+			fill: "#ffeeee",
+		});
+		saveDrawingStyleTemplate("fibonacci", {
+			stroke: "#00aa88",
+			strokeDasharray: "dotted",
+		});
+
+		expect(getDrawingStyleTemplate("trendLine")).toEqual({
+			stroke: "#ff0000",
+			strokeWidth: 3,
+			fill: "#ffeeee",
+		});
+		expect(listDrawingStyleTemplates()).toEqual({
+			trendLine: {
+				stroke: "#ff0000",
+				strokeWidth: 3,
+				fill: "#ffeeee",
+			},
+			fibonacci: {
+				stroke: "#00aa88",
+				strokeDasharray: "dotted",
+			},
+		});
+
+		const trendLine = createDrawingObject("trendLine", [
+			{ x: 10, y: 20 },
+			{ x: 20, y: 30 },
+		]);
+		const fibonacci = createDrawingObject("fibonacci", [
+			{ x: 10, y: 20 },
+			{ x: 20, y: 30 },
+		]);
+
+		expect(trendLine.style).toMatchObject({
+			stroke: "#ff0000",
+			strokeWidth: 3,
+			fill: "#ffeeee",
+		});
+		expect(fibonacci.style).toMatchObject({
+			stroke: "#00aa88",
+			strokeDasharray: "dotted",
+		});
+		expect(applyDrawingStyleTemplate("trendLine", trendLine.style)).toMatchObject({
+			stroke: "#ff0000",
+			strokeWidth: 3,
+			fill: "#ffeeee",
+		});
+		expect(applyDrawingStyleTemplate("fibonacci", fibonacci.style)).toMatchObject({
+			stroke: "#00aa88",
+			strokeDasharray: "dotted",
+		});
+
+		clearDrawingStyleTemplate("trendLine");
+		expect(getDrawingStyleTemplate("trendLine")).toBeUndefined();
 	});
 
 	it("notifies subscribers and clears overrides", () => {
