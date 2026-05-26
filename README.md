@@ -124,7 +124,7 @@ Bản này là **Community (open-source, MPL-2.0)**. Phiên bản **Pro+** dành
 | **History chunk store** — incremental persistence, gap fill, trim window | ❌ | ✅ |
 | **Whale / CVD / Dark Flow overlays** — WhaleMarketBubble, CVDIndicator, ExternalCVD, DarkFlowBadge, whaleDetector | cơ bản | đầy đủ |
 | **Drawing workspace nâng cao** — ~2x tools (Community) vs ~8x tools (Pro+): multi-select batch, floating selection toolbar, harmonic ratio validation, Gann Fan math, touch stylus | ❌ | ✅ |
-| **Modular engine packages** — `vn-kline-engine-core` + `vn-kline-engine-react`; dual runtime: D3 SVG/Canvas legacy ⊕ KLineChart Canvas fork | ❌ | ✅ |
+| **Modular engine packages** — `vn-kline-engine-core` + `vn-kline-engine-react`; dual runtime: D3 SVG/Canvas| ❌ | ✅ |
 | **Custom render context API** — `WidgetPaneToolbarRenderContext`, `WidgetDrawingChromeRenderContext` | ❌ | ✅ |
 | Hỗ trợ thương mại & SLA | ❌ | ✅ |
 
