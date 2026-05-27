@@ -2,7 +2,7 @@
 
 ## Project summary
 
-`react-stockcharts-master` là repo charting demo-first với core chart library và nhiều demo surfaces. Mục tiêu ngắn hạn là hoàn thiện demo shell và correctness runtime. Mục tiêu dài hạn là tách thành widget nhúng được.
+`VNSBrokerChart` là repo charting demo-first với core chart library và nhiều demo surfaces. Mục tiêu ngắn hạn là hoàn thiện demo shell và correctness runtime. Mục tiêu dài hạn là tách thành widget nhúng được.
 
 ## Read first
 
