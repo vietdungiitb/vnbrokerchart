@@ -7,7 +7,7 @@
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-stockchart.edusuccess.vn-brightgreen)](https://stockchart.edusuccess.vn/)
 
 > **🔗 Live Demo: [stockchart.edusuccess.vn](https://stockchart.edusuccess.vn/)**
-> **🔗 Facebook hỗ trọ: [VNInvest - Hệ thống hỗ trợ ra quyết định đầu tư chứng khoán Việt Nam](https://www.facebook.com/share/p/1EGyhw5665/)**
+> **🔗 Facebook hỗ trợ: [VNInvest - Hệ thống hỗ trợ ra quyết định đầu tư chứng khoán Việt Nam](https://www.facebook.com/share/p/1EGyhw5665/)**
 
 Thư viện biểu đồ kỹ thuật cho thị trường chứng khoán Việt Nam. Xây dựng trên React 19 + D3 v7 với kiến trúc hybrid SVG/Canvas, SSOT canonical indicator store, và drawing tool layer có FSM interaction.
 
